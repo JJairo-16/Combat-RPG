@@ -1,7 +1,7 @@
 package rpgcombat.models.breeds;
 
 import rpgcombat.models.characters.Character;
-import rpgcombat.models.weapons.AttackResult;
+import rpgcombat.weapons.attack.AttackResult;
 
 public class Tiefling extends Character {
     public Tiefling(String name, int age, int[] stats) {

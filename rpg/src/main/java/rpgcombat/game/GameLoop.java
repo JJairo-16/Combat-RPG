@@ -11,16 +11,16 @@ import rpgcombat.combat.Winner;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
-import rpgcombat.models.weapons.Arsenal;
-import rpgcombat.models.weapons.Weapon;
-import rpgcombat.models.weapons.WeaponType;
-
 import rpgcombat.utils.cache.TextWrapCache;
 import rpgcombat.utils.input.Menu;
 import rpgcombat.utils.input.WeaponMenu;
 import rpgcombat.utils.ui.Ansi;
 import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.Prettier;
+import rpgcombat.weapons.Arsenal;
+import rpgcombat.weapons.Weapon;
+import rpgcombat.weapons.config.WeaponDefinition;
+import rpgcombat.weapons.config.WeaponType;
 
 /**
  * Controla el bucle principal del combat per torns entre dos jugadors.
@@ -43,7 +43,7 @@ public class GameLoop {
     private final TextWrapCache wrapCache = new TextWrapCache();
 
     // Cache d'armes (assumim que no canvia durant la partida)
-    private final List<Arsenal> entries = Arsenal.getSortedWeapons();
+    private final List<WeaponDefinition> entries = Arsenal.values();
 
     public GameLoop(Character player1, Character player2) {
         this.player1 = player1;
@@ -147,7 +147,7 @@ public class GameLoop {
         do {
             cls.clear();
 
-            Arsenal selected = WeaponMenu.chooseWeaponEntryWithFilters(
+            WeaponDefinition selected = WeaponMenu.chooseWeaponEntryWithFilters(
                     entries,
                     "Armes de l'arsenal",
                     stats,

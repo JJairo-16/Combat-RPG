@@ -9,20 +9,19 @@ import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.StackingRule;
-import rpgcombat.models.weapons.AttackResult;
-import rpgcombat.models.weapons.Weapon;
-import rpgcombat.models.weapons.WeaponType;
-import rpgcombat.models.weapons.passives.HitContext;
+import rpgcombat.weapons.Weapon;
+import rpgcombat.weapons.attack.AttackResult;
+import rpgcombat.weapons.config.WeaponType;
+import rpgcombat.weapons.passives.HitContext;
 
 /**
- * Representa un personatge del joc amb estadístiques, raça i arma equipable.
- * Inclou validacions bàsiques a la construcció i accions de combat.
+ * Representa un personatge amb estadístiques, raça, arma i efectes.
  */
 public class Character {
 
     private static final int TOTAL_POINTS = 140;
     private static final int MIN_STAT = 10;
-    /** Mínim específic per a la Constitució (vida). */
+    /** Mínim de constitució. */
     private static final int MIN_CONSTITUTION = MIN_STAT + 2;
 
     protected final String name;
@@ -35,17 +34,7 @@ public class Character {
     protected final Random rng = new Random();
     protected final List<Effect> effects = new ArrayList<>();
 
-    /**
-     * Crea un personatge i valida: nom, edat, longitud d'stats (7), mínims i suma
-     * total ({@value #TOTAL_POINTS}).
-     *
-     * @param name  nom del personatge
-     * @param age   edat del personatge
-     * @param stats estadístiques en ordre: força, destresa, constitució,
-     *              intel·ligència, saviesa, carisma, sort
-     * @param breed raça usada per calcular les estadístiques efectives
-     * @throws IllegalArgumentException si alguna validació falla
-     */
+   /** Crea un personatge validant nom, edat i estadístiques. */
     public Character(String name, int age, int[] stats, Breed breed) {
         validateName(name);
         validateAge(age);
@@ -79,13 +68,7 @@ public class Character {
         return weapon;
     }
 
-    /**
-     * Prova d'equipar una arma si compleix els requisits de
-     * {@link Weapon#canEquip(Statistics)}.
-     *
-     * @param w arma a equipar
-     * @return {@code true} si s'ha equipat; {@code false} si no compleix requisits
-     */
+   /** Equipa una arma si compleix els requisits. */
     public boolean setWeapon(Weapon w) {
         if (w == null) {
             return false;
@@ -99,7 +82,7 @@ public class Character {
         return true;
     }
 
-   /** Ataca amb l'arma equipada o, si no n'hi ha, amb dany bàsic físic. */
+   /** Ataca amb l'arma equipada o sense arma. */
     public AttackResult attack() {
         if (weapon == null) {
             return attackUnarmed();
@@ -108,18 +91,14 @@ public class Character {
         return weapon.attack(stats, rng);
     }
 
+   /** Executa un atac sense arma. */
     protected AttackResult attackUnarmed() {
         return new AttackResult(
                 WeaponType.PHYSICAL.getBasicDamage(5, stats),
                 "ataca amb les mans desnudes.");
     }
 
-    /**
-     * Defensa reduint el dany rebut.
-     *
-     * @param attack dany entrant
-     * @return resultat amb dany rebut i missatge
-     */
+   /** Defensa reduint el dany rebut. */
     public Result defend(double attack) {
         if (attack <= 0) {
             return new Result(0, name + " ha bloquejat... sense raó aparent.");
@@ -130,12 +109,7 @@ public class Character {
         return new Result(recived, name + " ha bloquejat l'atac.");
     }
 
-    /**
-     * Intenta esquivar en funció de destresa i sort. Si falla, rep el dany sencer.
-     *
-     * @param attack dany entrant
-     * @return resultat amb dany rebut i missatge
-     */
+   /** Intenta esquivar; si falla, rep tot el dany. */
     public Result dodge(double attack) {
         DodgeResult dodgeResult = internalDodge(attack);
         if (dodgeResult.noAttack)
@@ -151,9 +125,11 @@ public class Character {
         return new Result(recived, name + " ha rebut l'atac de ple.");
     }
 
+   /** Resultat intern d'una esquiva. */
     protected record DodgeResult(double recived, boolean noAttack) {
     }
 
+   /** Resol internament el càlcul de l'esquiva. */
     protected DodgeResult internalDodge(double attack) {
         if (attack <= 0) {
             return new DodgeResult(0, true);
@@ -166,6 +142,7 @@ public class Character {
         return new DodgeResult(recived, false);
     }
 
+   /** Calcula la probabilitat d'esquiva. */
     protected double tryToDodge() {
         double dexComponent = (stats.getDexterity() - 10) * 0.02;
         double luckComponent = stats.getLuck() * 0.0015;
@@ -175,45 +152,28 @@ public class Character {
         return Math.clamp(dodgeProb, 0.05, 0.75);
     }
 
-    /**
-     * Aplica dany directe (sense bloqueig ni esquiva).
-     *
-     * @param attack dany entrant
-     * @return resultat amb dany rebut i missatge
-     */
+   /** Aplica dany directe. */
     public Result getDamage(double attack) {
         stats.damage(attack);
         return new Result(attack, name + " ha rebut l'atac de ple.");
     }
 
+   /** Indica si el personatge continua viu. */
     public boolean isAlive() {
         return stats.getHealth() > 0;
     }
 
+   /** Aplica la regeneració base. */
     public void regen() {
         stats.reg();
     }
 
+   /** Retorna el generador aleatori del personatge. */
     public Random rng() {
         return rng;
     }
 
-    /**
-     * Aplica un efecte al personatge segons la seva {@link StackingRule}.
-     *
-     * <p>
-     * Si ja existeix un efecte amb la mateixa {@link Effect#key()}, aplica la
-     * regla:
-     * </p>
-     * <ul>
-     * <li>IGNORE: no fa res</li>
-     * <li>REPLACE: substitueix l'antic</li>
-     * <li>REFRESH / STACK: crida {@link Effect#mergeFrom(Effect)} sobre
-     * l'existent</li>
-     * </ul>
-     *
-     * @param incoming efecte entrant
-     */
+   /** Afegeix un efecte segons la seva regla d'acumulació. */
     public void addEffect(Effect incoming) {
         if (incoming == null) {
             return;
@@ -251,13 +211,7 @@ public class Character {
         effects.sort(Comparator.comparingInt(Effect::priority).reversed());
     }
 
-    /**
-     * Executa els efectes del personatge en una fase del combat.
-     *
-     * <p>
-     * Retorna missatges per log i elimina els efectes expirats.
-     * </p>
-     */
+   /** Executa els efectes d'una fase i retorna els missatges. */
     public List<String> triggerEffects(HitContext ctx, HitContext.Phase phase, Random rng) {
         if (effects.isEmpty()) {
             return List.of();
@@ -268,19 +222,7 @@ public class Character {
         return messages;
     }
 
-    /**
-     * Executa els efectes del personatge en una fase del combat.
-     *
-     * <p>
-     * Afegeix els missatges al paràmetre {@code out} i elimina els efectes
-     * expirats.
-     * </p>
-     *
-     * @param ctx   context de l'impacte
-     * @param phase fase del combat
-     * @param rng   generador aleatori a utilitzar
-     * @param out   llista on s'afegeixen els missatges
-     */
+   /** Executa els efectes d'una fase i afegeix els missatges a la sortida. */
     public void triggerEffects(HitContext ctx, HitContext.Phase phase, Random rng, List<String> out) {
         if (effects.isEmpty()) {
             return;
@@ -309,18 +251,10 @@ public class Character {
         effects.removeIf(Effect::isExpired);
     }
 
-    /**
-     * Exposa una vista dels efectes (útil per UI/debug).
-     *
-     * @return llista immutable d'efectes actuals
-     */
+   /** Retorna una còpia immutable dels efectes actius. */
     public List<Effect> getEffects() {
         return List.copyOf(effects);
     }
-
-    // -------------------------------------------------------------------------
-    // Helpers de validació i càlcul
-    // -------------------------------------------------------------------------
 
     private static void validateName(String name) {
         if (name == null || name.isBlank()) {
@@ -334,6 +268,7 @@ public class Character {
         }
     }
 
+   /** Valida longitud, mínims i suma de les estadístiques. */
     private static void validateStats(int[] stats) {
         if (stats == null) {
             throw new IllegalArgumentException("L'array d'estadístiques no pot ser nul");
@@ -362,6 +297,7 @@ public class Character {
         }
     }
 
+   /** Aplica els modificadors de raça a les estadístiques base. */
     protected static int[] applyBreed(int[] stats, Breed breed) {
         Stat[] statValues = Stat.values();
         int[] effectiveStats = stats.clone();

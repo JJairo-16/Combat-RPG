@@ -2,8 +2,8 @@ package rpgcombat.models.effects;
 
 import java.util.Random;
 
-import rpgcombat.models.weapons.passives.HitContext;
 import rpgcombat.models.characters.Character;
+import rpgcombat.weapons.passives.HitContext;
 
 /**
  * Efecte genèric per fases (com les passives), però amb estat propi.

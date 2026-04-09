@@ -1,7 +1,7 @@
-package rpgcombat.models.weapons;
+package rpgcombat.weapons;
 
-import static rpgcombat.models.weapons.Target.SELF;
 import static rpgcombat.utils.ui.Ansi.*;
+import static rpgcombat.weapons.attack.Target.SELF;
 
 import java.util.Random;
 import java.util.Scanner;
@@ -10,6 +10,8 @@ import java.util.regex.Pattern;
 
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.utils.rng.GrimoriCodeGenerator;
+import rpgcombat.weapons.attack.AttackResult;
+import rpgcombat.weapons.attack.Target;
 
 /**
  * Habilitats especials relacionades amb armes.

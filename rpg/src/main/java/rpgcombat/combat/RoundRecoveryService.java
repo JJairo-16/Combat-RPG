@@ -4,8 +4,12 @@ import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Result;
 import rpgcombat.models.characters.Statistics;
 
+/**
+ * Gestiona els bonus de regeneració associats a la defensa.
+ */
 public class RoundRecoveryService {
 
+   /** Registra bonus segons l'èxit d'esquiva o defensa. */
     public void registerDefenseBonus(
             Action defenderAction,
             Result defenderResult,
@@ -28,6 +32,7 @@ public class RoundRecoveryService {
         }
     }
 
+   /** Aplica la regeneració acumulada al final de la ronda. */
     public void applyEndRoundBonus(Character character, EndRoundRegenBonus bonus) {
         if (character == null || bonus == null) {
             return;
@@ -47,10 +52,12 @@ public class RoundRecoveryService {
         }
     }
 
+   /** Indica si l'esquiva ha evitat tot el dany. */
     private boolean wasSuccessfulDodge(double damageReceived, double incomingDamage) {
         return incomingDamage > 0 && damageReceived == 0;
     }
 
+   /** Indica si la defensa ha reduït el dany rebut. */
     private boolean wasSuccessfulDefense(double damageReceived, double incomingDamage) {
         return incomingDamage > 0 && damageReceived < incomingDamage;
     }

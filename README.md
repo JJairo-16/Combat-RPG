@@ -9,6 +9,8 @@
 
 **Combat RPG** és un joc de rol per torns (1vs1) on dos jugadors creen els seus personatges i s'enfronten en combat estratègic.
 
+Aquest projecte es pot considerar un **remake/rework** de la seva primera versió, amb millores en l’arquitectura, el sistema de combat i una major flexibilitat en la personalització dels personatges.
+
 Cada jugador personalitza el seu personatge repartint punts d'estadístiques, escollint raça i equipant armes amb habilitats úniques.
 
 ---
@@ -109,11 +111,27 @@ La partida finalitza quan un personatge arriba a 0 de vida.
 
 ---
 
+## ▌Dependències
+
+Aquest projecte utilitza les següents llibreries:
+
+- **JUnit (junit-jupiter-engine, junit-platform-runner)**  
+  Utilitzat per a la creació i execució de tests.
+
+- **Gson**  
+  Llibreria de Google per gestionar JSON (lectura i escriptura de configuracions i dades).
+
+- **dynamic-menu**  
+  Llibreria pròpia utilitzada per gestionar menús dinàmics dins del joc.  
+  Disponible a: https://github.com/JJairo-16/dynamic-menu
+
+---
+
 ## ▌Instal·lació
 
 Abans d’executar el projecte, cal assegurar-se que les dependències (JARs) estan instal·lades al repositori local de Maven.
 
-Aquest projecte inclou un script de PowerShell que automatitza aquest procés a partir del directori `libs`.
+Aquest projecte inclou un script de PowerShell i un script de Bash que automatitzen aquest procés a partir del directori `libs`.
 
 ### Instal·lació de dependències (Windows)
 
@@ -129,12 +147,28 @@ El script:
 - Utilitza la configuració definida a `libs/artifacts.json`
 - Instal·la automàticament cada dependència amb Maven
 
+### Instal·lació de dependències (Linux / Mac)
+
+```bash
+./install-jars.sh
+```
+
+El script:
+
+- Llegeix els fitxers `.jar` dins de `libs/`
+- Utilitza la configuració definida a `libs/artifacts.json`
+- Instal·la automàticament cada dependència amb Maven
+
 ### Opcional
 
 Si vols que el procés s’aturi en cas d’error:
 
 ```powershell
 .\install-jars.ps1 -StopOnError
+```
+
+```bash
+./install-jars.sh --stop-on-error
 ```
 
 ---

@@ -1,31 +1,37 @@
-```md
-# `HitContext`: el context central del cop
+# `HitContext`: el context mutable del cop
 
-## Per què existeix
+## Per què existix
 
-Sense `HitContext`, cada passiva o efecte hauria de conèixer massa detalls del motor. El context crea un espai compartit i mutable perquè totes les capes del combat puguin llegir i modificar l'estat del cop.
+`HitContext` centralitza l'estat d'un atac mentre es resol.
+
+Sense aquest objecte, cada passiva hauria de rebre massa informació separada o acoblar-se al motor de combat. Amb el context, totes les capes poden llegir i modificar el mateix estat del cop.
 
 ## Què conté
 
 ### Participants
+
 - `attacker`
 - `defender`
 - `weapon`
 - `rng`
 
 ### Accions
+
 - `attackerAction`
 - `defenderAction`
 
 ### Resultat base
+
 - `attackResult`
 
 ### Dany
+
 - `baseDamage`
-- llista de modificadors plans
-- llista de multiplicadors
+- modificadors plans acumulats
+- multiplicadors acumulats
 
 ### Crític
+
 - `criticalChance`
 - `criticalMultiplier`
 - `criticalForced`
@@ -33,19 +39,22 @@ Sense `HitContext`, cada passiva o efecte hauria de conèixer massa detalls del 
 - `criticalResolved`
 - `critical`
 
-### Resultat final
+### Resultat defensiu i aplicació real
+
 - `defenderResult`
 - `damageDealt`
 
 ### Metadades flexibles
+
 - `Map<String, Object> meta`
 
 ### Esdeveniments
+
 - `EnumSet<Event> events`
 
 ## Fases disponibles
 
-L'enum `Phase` defineix l'ordre del pipeline:
+L'ordre de fases definit a `HitContext.Phase` és:
 
 1. `START_TURN`
 2. `BEFORE_ATTACK`
@@ -56,7 +65,11 @@ L'enum `Phase` defineix l'ordre del pipeline:
 7. `AFTER_HIT`
 8. `END_TURN`
 
+Aquest ordre és important perquè les passives fan el despatx segons aquestes fases.
+
 ## Esdeveniments disponibles
+
+A `HitContext.Event` hi ha actualment:
 
 - `ON_CRIT`
 - `ON_HIT`
@@ -66,49 +79,126 @@ L'enum `Phase` defineix l'ordre del pipeline:
 - `ON_DEFEND`
 - `ON_KILL`
 
-## Operacions habituals que faran les teves passives o efectes
+El context permet marcar-los i consultar-los durant la resolució.
 
-### Modificar dany pla
+## Dany base i modificadors
 
-```java
-ctx.addFlatDamage(15.0);
-```
+### `setBaseDamage(double)`
+Fixa el dany base inicial del cop.
 
-### Multiplicar dany
+### `addFlatDamage(double)`
+Afig un bonus o penalització plana.
 
-```java
-ctx.multiplyDamage(1.20);
-```
+### `multiplyDamage(double)`
+Afig un multiplicador. Només accepta valors positius.
 
-### Forçar o prohibir crític
+### `flatDamageBonus()`
+Suma tots els modificadors plans.
 
-El context ja té camps per a això. Segons els mètodes disponibles, la teva passiva pot intervenir abans de `resolveCritical()`.
+### `damageMultiplier()`
+Multiplica tots els multiplicadors acumulats.
 
-### Guardar metadades
-
-```java
-ctx.putMeta("BLEED_STACKS", 3);
-```
-
-### Consultar esdeveniments
+### `damageToResolve()`
+Calcula el dany final abans de defensa:
 
 ```java
-if (ctx.hasEvent(HitContext.Event.ON_HIT)) { ... }
+double d = (baseDamage + flatDamageBonus()) * damageMultiplier();
+return Math.max(0, round2(d));
 ```
 
-## Idea de càlcul del dany final
-
-El context separa:
+Això és important perquè separa clarament:
 
 - dany base
-- bonus plans
+- modificadors plans
 - multiplicadors
-- crític
-- resultat defensiu final
+- defensa posterior
 
-Això evita haver de recalcular-ho tot a cada passiva.
+## Sistema de crític
+
+### Configuració
+
+El context pot rebre:
+
+- `setCriticalChance(...)`
+- `setCriticalMultiplier(...)`
+
+I també pot forçar o prohibir el crític:
+
+- `forceCritical()`
+- `forbidCritical()`
+
+### Resolució
+
+`resolveCritical()` aplica aquesta política:
+
+1. si el crític està forçat, és crític
+2. si està prohibit, no és crític
+3. si no, es tira `rng.nextDouble() < criticalChance`
+
+Si hi ha crític:
+
+- multiplica `baseDamage` per `criticalMultiplier`
+- registra l'esdeveniment `ON_CRIT`
+- guarda `CRIT = true` a les metadades
+
+A més, el mètode només resol una vegada; si es torna a cridar, reutilitza el resultat ja decidit.
+
+## Resultat real després de defensar
+
+### `setDefenderResult(...)`
+Guarda el resultat defensiu del cop.
+
+### `setDamageDealt(...)`
+Guarda el dany real aplicat després de defensa.
+
+### `damageDealt()`
+És el valor que després usen passives com `lifeSteal(...)`.
+
+## Objectiu del colp
+
+### `target()`
+
+Retorna l'objectiu definit per l'`AttackResult`.
+
+Si encara no n'hi ha cap, assumix `Target.ENEMY`.
+
+Això permet que el pipeline sàpia si el cop va cap a l'enemic o cap al mateix atacant.
+
+## Metadades
+
+Les metadades servixen per guardar informació auxiliar sense haver d'afegir un camp nou cada vegada.
+
+### Operacions disponibles
+
+- `putMeta(String key, Object value)`
+- `getMeta(String key)`
+- `getMeta(String key, Class<T> type, T def)`
+
+Exemples útils:
+
+- `CRIT`
+- comptadors de colps
+- claus internes d'una skill
+- marques temporals d'una passiva
+
+## Esdeveniments
+
+### `registerEvent(Event)`
+Marca que un esdeveniment ha ocorregut.
+
+### `hasEvent(Event)`
+Permet consultar-lo.
+
+### `events()`
+Retorna una còpia del conjunt d'esdeveniments actuals.
 
 ## Recomanació de disseny
 
-Quan afegeixis mecàniques noves, prioritza tocar el `HitContext` i el pipeline abans que posar lògica ad hoc a `CombatSystem`.
-```
+Quan vulgues afegir mecàniques noves, el patró més net és:
+
+1. deixar que la skill cree l'`AttackResult`
+2. reconstruir o ajustar el colp dins del `HitContext`
+3. aplicar les passives per fases
+4. usar metadades i esdeveniments per comunicar estat temporal
+
+Això evita escampar lògica ad hoc per moltes classes diferents.

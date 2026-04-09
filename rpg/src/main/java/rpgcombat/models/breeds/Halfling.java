@@ -3,8 +3,8 @@ package rpgcombat.models.breeds;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Stat;
 import rpgcombat.models.characters.Statistics;
-import rpgcombat.models.weapons.AttackResult;
-import rpgcombat.models.weapons.WeaponType;
+import rpgcombat.weapons.attack.AttackResult;
+import rpgcombat.weapons.config.WeaponType;
 
 public class Halfling extends Character {
     private final Statistics modStats;

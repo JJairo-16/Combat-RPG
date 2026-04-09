@@ -1,7 +1,8 @@
-package rpgcombat.models.weapons;
+package rpgcombat.weapons.attack;
 
 import java.util.Random;
 import rpgcombat.models.characters.Statistics;
+import rpgcombat.weapons.Weapon;
 
 /**
  * Representa el comportament d'una acció d'atac.

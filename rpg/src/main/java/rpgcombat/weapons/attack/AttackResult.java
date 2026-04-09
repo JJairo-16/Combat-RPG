@@ -1,4 +1,4 @@
-package rpgcombat.models.weapons;
+package rpgcombat.weapons.attack;
 
 /**
  * Representa el resultat d'una acció d'atac.

@@ -1,4 +1,4 @@
-package rpgcombat.models.weapons.passives;
+package rpgcombat.weapons.passives;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -11,9 +11,9 @@ import java.util.Set;
 import rpgcombat.combat.Action;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Result;
-import rpgcombat.models.weapons.AttackResult;
-import rpgcombat.models.weapons.Target;
-import rpgcombat.models.weapons.Weapon;
+import rpgcombat.weapons.Weapon;
+import rpgcombat.weapons.attack.AttackResult;
+import rpgcombat.weapons.attack.Target;
 
 /**
  * Context mutable d'una resolució d'atac.

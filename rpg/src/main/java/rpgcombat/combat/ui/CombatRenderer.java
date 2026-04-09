@@ -7,6 +7,9 @@ import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.utils.ui.Ansi;
 
+/**
+ * Mostra per consola la informació visual del combat.
+ */
 public class CombatRenderer {
     private static final int BAR_SIZE = 20;
     private static final int DIV_WIDTH = 44;
@@ -14,6 +17,7 @@ public class CombatRenderer {
     private static final String DIV = Ansi.DARK_GRAY + "─".repeat(DIV_WIDTH) + Ansi.RESET;
     private static final String BIG_DIV = Ansi.DARK_GRAY + "═".repeat(DIV_WIDTH) + Ansi.RESET;
 
+   /** Imprimeix la capçalera d'una ronda. */
     public void printRoundHeader() {
         System.out.println(BIG_DIV);
         System.out.println(Ansi.BOLD + "          COMBAT ROUND" + Ansi.RESET);
@@ -21,12 +25,14 @@ public class CombatRenderer {
         System.out.println();
     }
 
+   /** Imprimeix la capçalera de regeneració. */
     public void printRegenHeader() {
         System.out.println(BIG_DIV);
         System.out.println(Ansi.CYAN + Ansi.BOLD + "           REGENERACIÓ" + Ansi.RESET);
         System.out.println(BIG_DIV);
     }
 
+   /** Imprimeix el resultat visual d'un torn. */
     public void printTurnResult(TurnResult result) {
         if (result == null) {
             return;
@@ -44,6 +50,7 @@ public class CombatRenderer {
         printPassiveMessages(result.endTurnMessages());
     }
 
+   /** Imprimeix el resum del dany rebut al final de la ronda. */
     public void printRoundSummary(Character character, double damageTaken) {
         System.out.println(DIV);
 
@@ -55,6 +62,7 @@ public class CombatRenderer {
         System.out.println();
     }
 
+   /** Imprimeix el resum de la regeneració aplicada. */
     public void printRegenSummary(Character character, double hpRegen, double manaRegen) {
         System.out.printf("%s%s%s recupera %s+%.2f%s vida i %s+%.2f%s mana.%n",
                 Ansi.BOLD, character.getName(), Ansi.RESET,
@@ -65,6 +73,7 @@ public class CombatRenderer {
         System.out.println();
     }
 
+   /** Imprimeix les barres de vida i mana del personatge. */
     public void printStatusBars(Character character) {
         Statistics stats = character.getStatistics();
 
@@ -89,6 +98,7 @@ public class CombatRenderer {
                 maxMana);
     }
 
+   /** Afegeix les barres d'estat a un text existent. */
     public void appendStatusBars(StringBuilder sb, Character character) {
         Statistics stats = character.getStatistics();
 
@@ -111,6 +121,7 @@ public class CombatRenderer {
         sb.append("\n");
     }
 
+   /** Imprimeix una línia simple si conté text. */
     private void printRawLine(String line) {
         if (line == null || line.isBlank()) {
             return;
@@ -118,6 +129,7 @@ public class CombatRenderer {
         System.out.println(Ansi.BOLD + line + Ansi.RESET);
     }
 
+   /** Imprimeix línies especials amb estil secundari. */
     private void printSpecialLines(List<String> lines) {
         if (lines == null || lines.isEmpty()) {
             return;
@@ -131,6 +143,7 @@ public class CombatRenderer {
         }
     }
 
+   /** Imprimeix missatges passius amb signe positiu o negatiu. */
     private void printPassiveMessages(List<String> msgs) {
         if (msgs == null || msgs.isEmpty()) {
             return;
@@ -157,6 +170,7 @@ public class CombatRenderer {
         }
     }
 
+   /** Retorna el color segons el percentatge de vida. */
     private String healthColor(double current, double max) {
         if (max <= 0) {
             return Ansi.BRIGHT_RED;
@@ -173,6 +187,7 @@ public class CombatRenderer {
         return Ansi.BRIGHT_RED;
     }
 
+   /** Construeix una barra visual proporcional al valor actual. */
     private String buildBar(double current, double max, int size, String color) {
         if (max <= 0) {
             return "[ERROR]";
@@ -205,6 +220,7 @@ public class CombatRenderer {
         return bar.toString();
     }
 
+   /** Arrodoneix un valor a 2 decimals. */
     private double round2(double n) {
         return Math.round(n * 100.0) / 100.0;
     }

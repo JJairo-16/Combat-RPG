@@ -1,61 +1,74 @@
 package rpgcombat.utils.cache;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import rpgcombat.models.weapons.Arsenal;
+import rpgcombat.weapons.Arsenal;
+import rpgcombat.weapons.config.WeaponDefinition;
 
 /**
  * Memòria cau de "cards" d'armes, indexada per una clau compacta.
  *
- * <p>
- * La clau combina l'arma ({@link Arsenal#ordinal()}) i dues banderes booleanes:
- * {@code showEquipTag} i {@code equippable}.
- * </p>
+ * Ara funciona amb Arsenal dinàmic (JSON) en comptes d'enum.
  */
 public final class WeaponCardCache {
 
-    /** Mida exacta necessària: armes * combinacions de banderes (2 booleans = 4). */
-    private static final int CACHE_SIZE = Arsenal.values().length * 4;
+    private final String[] cache;
 
-    private final String[] cache = new String[CACHE_SIZE];
+    /** Map per convertir ID → índex (equivalent a ordinal). */
+    private final Map<String, Integer> indexById;
 
-    /**
-     * Calcula la clau de memòria cau a partir de l'arma i banderes.
-     *
-     * @param w            arma (no pot ser {@code null})
-     * @param showEquipTag si s'ha de mostrar l'etiqueta d'equipament
-     * @param equippable   si l'arma és equipable
-     * @return clau enter per indexar la memòria cau
-     * @throws IllegalArgumentException si {@code w} és {@code null}
-     */
-    public int keyOf(Arsenal w, boolean showEquipTag, boolean equippable) {
-        if (w == null) {
+    public WeaponCardCache() {
+        List<WeaponDefinition> defs = Arsenal.values();
+
+        this.indexById = HashMap.newHashMap(defs.size());
+
+        for (int i = 0; i < defs.size(); i++) {
+            indexById.put(defs.get(i).getId(), i);
+        }
+
+        // 2 booleans → 4 combinacions
+        this.cache = new String[defs.size() * 4];
+    }
+
+   /** Calcula la clau de memòria cau a partir de l'arma i banderes. */
+    public int keyOf(WeaponDefinition def, boolean showEquipTag, boolean equippable) {
+        if (def == null) {
             throw new IllegalArgumentException("weapon null");
         }
 
-        int key = w.ordinal();
+        Integer base = indexById.get(def.getId());
+        if (base == null) {
+            throw new IllegalArgumentException("weapon not registered: " + def.getId());
+        }
+
+        int key = base;
         key = (key << 1) | (showEquipTag ? 1 : 0);
         key = (key << 1) | (equippable ? 1 : 0);
 
         return key;
     }
 
-    /**
-     * Recupera una card de la memòria cau.
-     *
-     * @param key clau de la memòria cau
-     * @return la card, o {@code null} si no existeix o la clau és fora de rang
-     */
+   /** Overload útil si tens una Weapon en comptes de Definition */
+    public int keyOf(String weaponId, boolean showEquipTag, boolean equippable) {
+        Integer base = indexById.get(weaponId);
+        if (base == null) {
+            throw new IllegalArgumentException("weapon not registered: " + weaponId);
+        }
+
+        int key = base;
+        key = (key << 1) | (showEquipTag ? 1 : 0);
+        key = (key << 1) | (equippable ? 1 : 0);
+
+        return key;
+    }
+
     public String cardOf(int key) {
         return (key >= 0 && key < cache.length) ? cache[key] : null;
     }
 
-    /**
-     * Desa una card a la memòria cau.
-     *
-     * @param key  clau de la memòria cau
-     * @param card contingut de la card
-     */
     public void save(int key, String card) {
         if (key < 0 || key >= cache.length) {
             return;
@@ -63,7 +76,6 @@ public final class WeaponCardCache {
         cache[key] = card;
     }
 
-   /** Buida completament la memòria cau. */
     public void clear() {
         Arrays.fill(cache, null);
     }

@@ -4,12 +4,27 @@ import java.util.List;
 import java.util.Random;
 
 import rpgcombat.models.characters.Character;
-import rpgcombat.models.weapons.Weapon;
-import rpgcombat.models.weapons.passives.HitContext;
-import rpgcombat.models.weapons.passives.HitContext.Phase;
+import rpgcombat.weapons.Weapon;
+import rpgcombat.weapons.passives.HitContext;
+import rpgcombat.weapons.passives.HitContext.Phase;
 
+/**
+ * Gestiona l'execució de les fases d'efectes durant el combat.
+ */
 public class EffectPipeline {
 
+    /**
+     * Executa una fase aplicant efectes de l'atacant, defensor i arma (si n'hi ha).
+     *
+     * @param ctx Context de l'impacte
+     * @param phase Fase actual
+     * @param attacker Personatge atacant
+     * @param defender Personatge defensor
+     * @param weapon Arma utilitzada (pot ser null)
+     * @param attackerRng Generador aleatori de l'atacant
+     * @param defenderRng Generador aleatori del defensor
+     * @param out Llista de sortida de missatges
+     */
     public void runPhase(
             HitContext ctx,
             Phase phase,
@@ -28,6 +43,15 @@ public class EffectPipeline {
         }
     }
 
+    /**
+     * Executa una fase només amb els efectes de l'atacant.
+     *
+     * @param ctx Context de l'impacte
+     * @param phase Fase actual
+     * @param attacker Personatge atacant
+     * @param attackerRng Generador aleatori de l'atacant
+     * @param out Llista de sortida de missatges
+     */
     public void runAttackerOnly(
             HitContext ctx,
             Phase phase,

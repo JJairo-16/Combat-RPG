@@ -2,11 +2,19 @@ package rpgcombat.combat;
 
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Result;
-import rpgcombat.models.weapons.AttackResult;
-import rpgcombat.models.weapons.Target;
+import rpgcombat.weapons.attack.AttackResult;
+import rpgcombat.weapons.attack.Target;
 
+/**
+ * Gestiona la resolució d’atacs i la selecció d’objectius.
+ */
 public class AttackResolver {
 
+    /**
+     * Resol l’efecte d’un atac segons l’acció defensiva.
+     *
+     * @return resultat aplicat al defensor
+     */
     public Result resolveAttack(double damage, Character target, Action targetAction) {
         return switch (targetAction) {
             case DODGE -> target.dodge(damage);
@@ -20,6 +28,7 @@ public class AttackResolver {
         };
     }
 
+   /** Determina qui rep l’atac (enemic o propi atacant). */
     public Character chooseTarget(Character attacker, Character defender, AttackResult attackResult) {
         Target target = attackResult.target();
         if (target == null || target == Target.ENEMY) {

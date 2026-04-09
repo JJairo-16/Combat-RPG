@@ -5,13 +5,14 @@ import java.util.List;
 import java.util.Scanner;
 
 import rpgcombat.models.characters.Statistics;
-import rpgcombat.models.weapons.Arsenal;
-import rpgcombat.models.weapons.WeaponType;
 import rpgcombat.utils.cache.TextWrapCache;
 import rpgcombat.utils.cache.WeaponCardCache;
 import rpgcombat.utils.ui.Ansi;
 import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.Prettier;
+import rpgcombat.weapons.Arsenal;
+import rpgcombat.weapons.config.WeaponDefinition;
+import rpgcombat.weapons.config.WeaponType;
 
 /**
  * Menú especialitzat per mostrar i seleccionar armes amb una aparença "card
@@ -52,7 +53,7 @@ public final class WeaponMenu {
      * @param title   títol del menú
      * @return índex 0-based de la llista (0..n-1) o -1 si "Cancelar"
      */
-    public static int chooseWeapon(List<Arsenal> weapons, String title) {
+    public static int chooseWeapon(List<WeaponDefinition> weapons, String title) {
         if (weapons == null || weapons.isEmpty()) {
             Prettier.warn("No hi ha armes disponibles.");
             Menu.pause();
@@ -95,7 +96,7 @@ public final class WeaponMenu {
      * Aquesta funció assumeix que la llista ja està en l'ordre de visualització.
      * Recomanat: passar {@link Arsenal#getSortedWeapons()}.
      */
-    public static Arsenal chooseWeaponEntry(List<Arsenal> weapons, String title) {
+    public static WeaponDefinition chooseWeaponEntry(List<WeaponDefinition> weapons, String title) {
         if (weapons == null || weapons.isEmpty()) {
             throw new IllegalArgumentException();
         }
@@ -120,7 +121,7 @@ public final class WeaponMenu {
      *
      * @return índex 0-based sobre la llista ORIGINAL (weapons), o -1 si Cancelar.
      */
-    public static int chooseWeaponWithFilters(List<Arsenal> weapons, String title, Statistics stats) {
+    public static int chooseWeaponWithFilters(List<WeaponDefinition> weapons, String title, Statistics stats) {
         if (weapons == null || weapons.isEmpty()) {
             Prettier.warn("No hi ha armes disponibles.");
             Menu.pause();
@@ -186,7 +187,7 @@ public final class WeaponMenu {
      * Variant còmoda del menú amb filtres: retorna directament l'{@link Arsenal} (o
      * {@code null} si es cancel·la).
      */
-    public static Arsenal chooseWeaponEntryWithFilters(List<Arsenal> weapons, String title, Statistics stats) {
+    public static WeaponDefinition chooseWeaponEntryWithFilters(List<WeaponDefinition> weapons, String title, Statistics stats) {
         int idx = chooseWeaponWithFilters(weapons, title, stats);
         if (weapons == null) {
             return null;
@@ -194,7 +195,7 @@ public final class WeaponMenu {
         return (idx < 0) ? null : weapons.get(idx);
     }
 
-    public static int chooseWeaponWithFilters(List<Arsenal> weapons, String title, Statistics stats,
+    public static int chooseWeaponWithFilters(List<WeaponDefinition> weapons, String title, Statistics stats,
             FilterState state) {
         if (weapons == null || weapons.isEmpty()) {
             Prettier.warn("No hi ha armes disponibles.");
@@ -268,8 +269,8 @@ public final class WeaponMenu {
         }
     }
 
-    public static Arsenal chooseWeaponEntryWithFilters(
-            List<Arsenal> weapons, String title, Statistics stats, FilterState state) {
+    public static WeaponDefinition chooseWeaponEntryWithFilters(
+            List<WeaponDefinition> weapons, String title, Statistics stats, FilterState state) {
         int idx = chooseWeaponWithFilters(weapons, title, stats, state);
         return (idx < 0) ? null : weapons.get(idx);
     }
@@ -286,7 +287,7 @@ public final class WeaponMenu {
      * canvis visuals.
      */
     private record MenuRenderCache(
-            List<Arsenal> weaponsRef,
+            List<WeaponDefinition> weaponsRef,
             String title,
             Statistics statsRef,
             boolean onlyEquippable,
@@ -300,7 +301,7 @@ public final class WeaponMenu {
      * calcula també l'etiqueta d'equipable una sola vegada.
      */
     private static List<FilteredItem> buildFilteredItems(
-            List<Arsenal> weapons,
+            List<WeaponDefinition> weapons,
             Statistics stats,
             boolean onlyEquippable,
             TypeFilter typeFilter) {
@@ -308,7 +309,7 @@ public final class WeaponMenu {
         List<FilteredItem> out = new ArrayList<>();
 
         for (int i = 0; i < weapons.size(); i++) {
-            Arsenal w = weapons.get(i);
+            WeaponDefinition w = weapons.get(i);
             WeaponType wt = w.getType();
 
             if (!typeFilter.matches(wt)) {
@@ -399,7 +400,7 @@ public final class WeaponMenu {
                 .append('\n');
     }
 
-    private static void appendWeapons(StringBuilder sb, List<Arsenal> weapons) {
+    private static void appendWeapons(StringBuilder sb, List<WeaponDefinition> weapons) {
         sb.append(Ansi.DARK_GRAY).append(Ansi.BOLD).append("1.").append(Ansi.RESET)
                 .append(' ')
                 .append(Ansi.DARK_GRAY).append("Cancelar").append(Ansi.RESET)
@@ -409,14 +410,14 @@ public final class WeaponMenu {
         int num = 2;
 
         for (int i = 0; i < n; i++) {
-            Arsenal w = weapons.get(i);
+            WeaponDefinition w = weapons.get(i);
             appendWeaponCard(sb, num++, w, null, false);
         }
     }
 
     private static void appendWeaponsFiltered(
             StringBuilder sb,
-            List<Arsenal> weapons,
+            List<WeaponDefinition> weapons,
             List<FilteredItem> filtered,
             Statistics stats) {
 
@@ -435,7 +436,7 @@ public final class WeaponMenu {
 
         int num = 2;
         for (FilteredItem it : filtered) {
-            Arsenal w = weapons.get(it.index);
+            WeaponDefinition w = weapons.get(it.index);
             appendWeaponCard(sb, num++, w, stats, it.equippable);
         }
     }
@@ -443,7 +444,7 @@ public final class WeaponMenu {
     private static void appendWeaponCard(
             StringBuilder out,
             int optionNumber,
-            Arsenal w,
+            WeaponDefinition w,
             Statistics stats,
             boolean equippable) {
 
@@ -522,7 +523,7 @@ public final class WeaponMenu {
         out.append(cardStr);
     }
 
-    private static String buildPlainMenu(List<Arsenal> weapons, String title) {
+    private static String buildPlainMenu(List<WeaponDefinition> weapons, String title) {
         StringBuilder sb = new StringBuilder(32_768);
 
         appendTitle(sb, title);
@@ -534,7 +535,7 @@ public final class WeaponMenu {
     }
 
     private static String buildFilteredMenu(
-            List<Arsenal> weapons,
+            List<WeaponDefinition> weapons,
             String title,
             Statistics stats,
             List<FilteredItem> filtered,
@@ -554,7 +555,7 @@ public final class WeaponMenu {
     }
 
     private static String getOrBuildFilteredMenu(
-            List<Arsenal> weapons,
+            List<WeaponDefinition> weapons,
             String title,
             Statistics stats,
             List<FilteredItem> filtered,
@@ -697,8 +698,8 @@ public final class WeaponMenu {
         StringBuilder sink = new StringBuilder(512);
         Statistics dummyStats = DUMMY_STATS;
 
-        final Arsenal[] weapons = Arsenal.values();
-        for (Arsenal w : weapons) {
+        final List<WeaponDefinition> weapons = Arsenal.values();
+        for (WeaponDefinition w : weapons) {
             sink.setLength(0);
             appendWeaponCard(sink, 1, w, null, false);
 

@@ -1,4 +1,4 @@
-package rpgcombat.models.weapons;
+package rpgcombat.weapons.config;
 
 import rpgcombat.models.characters.Statistics;
 

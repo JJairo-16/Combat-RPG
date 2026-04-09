@@ -1,10 +1,15 @@
 package rpgcombat;
 
+import java.io.IOException;
+import java.nio.file.Path;
+
 import rpgcombat.creator.CharacterCreator;
+import rpgcombat.game.GameLoop;
 import rpgcombat.models.characters.Character;
 import rpgcombat.utils.input.WeaponMenu;
 import rpgcombat.utils.ui.LoadingIntro;
-import rpgcombat.game.GameLoop;
+import rpgcombat.utils.ui.Prettier;
+import rpgcombat.weapons.Arsenal;
 
 public class App {
     public static void main(String[] args) {
@@ -12,10 +17,16 @@ public class App {
         app.run();
     }
 
-    private static final boolean DEBUG_MODE = true;
+    private static final String WEAPONS_CONFIG_PATH = "rpg/data/weapons.json";
+    private static final boolean DEBUG_MODE = false;
 
     private void preload() {
-        WeaponMenu.preloadCards();
+        try {
+            Arsenal.preload(Path.of(WEAPONS_CONFIG_PATH));
+            WeaponMenu.preloadCards();
+        } catch (IOException e) {
+            Prettier.error("");
+        }
     }
 
     public void run() {

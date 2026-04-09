@@ -6,7 +6,7 @@ import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.EffectState;
-import rpgcombat.models.weapons.passives.HitContext;
+import rpgcombat.weapons.passives.HitContext;
 
 public abstract class ConstantDamageEffect implements Effect {
     protected static String key = "ConstantDamageEffect";

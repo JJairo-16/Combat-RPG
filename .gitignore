@@ -48,7 +48,7 @@ nbdist/
 .vscode/
 
 # =========================
-# Sistema operativo
+# Sistema operatiu
 # =========================
 # Mac
 .DS_Store
@@ -59,7 +59,7 @@ ehthumbs.db
 Desktop.ini
 
 # =========================
-# Archivos temporales
+# Fitxers temporals
 # =========================
 *.tmp
 *.swp
@@ -73,7 +73,7 @@ logs/
 *.log
 
 # =========================
-# Archivos sensibles (opcional)
+# Fitxers sensibles
 # =========================
 .env
 *.env

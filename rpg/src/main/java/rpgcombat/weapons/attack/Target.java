@@ -1,4 +1,4 @@
-package rpgcombat.models.weapons;
+package rpgcombat.weapons.attack;
 
 /**
  * Defineix el tipus d'objectiu al qual es dirigeix un atac.

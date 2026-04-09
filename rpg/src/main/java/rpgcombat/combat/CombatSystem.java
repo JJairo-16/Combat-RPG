@@ -10,6 +10,9 @@ import rpgcombat.combat.turnservice.TurnResolver;
 import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.combat.ui.CombatRenderer;
 
+/**
+ * Coordina una ronda de combat entre dos personatges.
+ */
 public class CombatSystem {
     private final Character player1;
     private final Character player2;
@@ -23,16 +26,19 @@ public class CombatSystem {
     private final RoundRecoveryService recoveryService = new RoundRecoveryService();
     private final TurnResolver turnResolver = new TurnResolver(attackResolver, effectPipeline, recoveryService);
 
+   /** Crea el sistema amb la política de prioritat per defecte. */
     public CombatSystem(Character p1, Character p2) {
         this(p1, p2, new DefaultTurnPriorityPolicy());
     }
 
+   /** Crea el sistema amb una política de prioritat concreta. */
     public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy) {
         this.player1 = p1;
         this.player2 = p2;
         this.priorityPolicy = policy;
     }
 
+   /** Executa una ronda, la mostra per pantalla i retorna el guanyador. */
     public Winner play(Action a1, Action a2) {
         CombatRoundResult round = playRound(a1, a2);
 
@@ -57,6 +63,7 @@ public class CombatSystem {
         return Winner.NONE;
     }
 
+   /** Resol internament una ronda completa de combat. */
     public CombatRoundResult playRound(Action a1, Action a2) {
         Statistics p1Stats = player1.getStatistics();
         Statistics p2Stats = player2.getStatistics();
@@ -128,6 +135,7 @@ public class CombatSystem {
                 Winner.NONE);
     }
 
+   /** Determina el guanyador segons qui continua viu. */
     private Winner resolveWinner(Character p1, Character p2) {
         boolean player1Alive = p1.isAlive();
         boolean player2Alive = p2.isAlive();
@@ -144,11 +152,12 @@ public class CombatSystem {
         return Winner.TIE;
     }
 
-    // Compatibilidad con código existente como GameLoop
+   /** Imprimeix les barres d'estat d'un personatge. */
     public static void printStatusBars(Character character) {
         new CombatRenderer().printStatusBars(character);
     }
 
+   /** Afegeix les barres d'estat a un text. */
     public static void appendStatusBars(StringBuilder sb, Character character) {
         new CombatRenderer().appendStatusBars(sb, character);
     }

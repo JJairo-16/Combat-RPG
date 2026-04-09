@@ -1,9 +1,9 @@
-package rpgcombat.models.weapons.passives;
+package rpgcombat.weapons.passives;
 
 import java.util.Random;
 
-import rpgcombat.models.weapons.Weapon;
-import rpgcombat.models.weapons.passives.HitContext.Phase;
+import rpgcombat.weapons.Weapon;
+import rpgcombat.weapons.passives.HitContext.Phase;
 
 /**
  * Passiu d'arma flexible per fases.

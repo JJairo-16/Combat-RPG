@@ -11,21 +11,27 @@ import rpgcombat.combat.AttackResolver;
 import rpgcombat.combat.EffectPipeline;
 import rpgcombat.combat.EndRoundRegenBonus;
 import rpgcombat.combat.RoundRecoveryService;
+
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Result;
 import rpgcombat.models.characters.Statistics;
-import rpgcombat.models.weapons.Arsenal;
-import rpgcombat.models.weapons.AttackResult;
-import rpgcombat.models.weapons.Weapon;
-import rpgcombat.models.weapons.passives.HitContext;
-import rpgcombat.models.weapons.passives.HitContext.Event;
-import rpgcombat.models.weapons.passives.HitContext.Phase;
 
+import rpgcombat.weapons.Weapon;
+import rpgcombat.weapons.attack.AttackResult;
+import rpgcombat.weapons.passives.HitContext;
+import rpgcombat.weapons.passives.HitContext.Event;
+import rpgcombat.weapons.passives.HitContext.Phase;
+
+/**
+ * Resol un torn de combat entre dos personatges,
+ * gestionant atacs, efectes i resultats finals.
+ */
 public class TurnResolver {
     private final AttackResolver attackResolver;
     private final EffectPipeline effectPipeline;
     private final RoundRecoveryService recoveryService;
 
+   /** Constructor amb dependències necessàries. */
     public TurnResolver(
             AttackResolver attackResolver,
             EffectPipeline effectPipeline,
@@ -35,6 +41,11 @@ public class TurnResolver {
         this.recoveryService = recoveryService;
     }
 
+    /**
+     * Resol completament un torn de combat.
+     *
+     * @return resultat final del torn
+     */
     public TurnResult resolveTurn(
             Character attacker,
             Character defender,
@@ -144,6 +155,7 @@ public class TurnResolver {
                 critical);
     }
 
+   /** Resol un torn sense atac (defensa, esquiva, etc.). */
     private TurnResult resolveNonAttackTurn(Character defender, Action defenderAction) {
         Result defenderResult = attackResolver.resolveAttack(0, defender, defenderAction);
         String defenseMessage = defenderResult.message();
@@ -160,6 +172,7 @@ public class TurnResolver {
                 false);
     }
 
+   /** Inicialitza el context de cop amb dades de dany i crítics. */
     private void configureHitContext(
             HitContext ctx,
             Character attacker,
@@ -199,6 +212,7 @@ public class TurnResolver {
         ctx.putMeta("CRIT", false);
     }
 
+   /** Registra esdeveniments de combat segons el resultat. */
     private void registerCombatEvents(HitContext ctx, Character defender, Action defenderAction) {
         if (defenderAction == Action.DODGE) {
             ctx.registerEvent(Event.ON_DODGE);
@@ -217,14 +231,16 @@ public class TurnResolver {
         }
     }
 
+   /** Comprova si l'arma és el Grimori. */
     private static boolean isGrimori(Weapon w) {
         try {
-            return w != null && w.getId() == Arsenal.GRIMORIE;
+            return w != null && w.getId().equals("GRIMORIE");
         } catch (Exception e) {
             return false;
         }
     }
 
+   /** Arrodoneix a 2 decimals. */
     private static double round2(double n) {
         return Math.round(n * 100.0) / 100.0;
     }

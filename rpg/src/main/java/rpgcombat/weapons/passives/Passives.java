@@ -1,11 +1,11 @@
-package rpgcombat.models.weapons.passives;
+package rpgcombat.weapons.passives;
 
 import java.util.Random;
 
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
-import rpgcombat.models.weapons.Weapon;
 import rpgcombat.utils.ui.Ansi;
+import rpgcombat.weapons.Weapon;
 
 /**
  * Fàbrica d'efectes passius d'arma.

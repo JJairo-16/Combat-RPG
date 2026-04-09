@@ -1,144 +1,154 @@
-```md
-# Sistema d'efectes i passives
+# Sistema de passives d'arma
 
-## Dues famílies diferents
+## Abast real d'aquest paquet
 
-El projecte té **dues capes d'extensió** que sovint semblen similars, però no són exactament el mateix.
+En el codi pujat dins `weapons.zip`, el sistema documentat ací és el de **passives d'arma**. No hi apareixen classes d'un sistema general d'`Effect` dins aquest paquet concret.
 
-### 1. `WeaponPassive`
-Passives lligades a una arma concreta.
+Per això, la capa actual i verificable és:
 
-- viuen dins `Weapon`
-- s'executen via `weapon.triggerPhase(...)`
-- no tenen estat propi persistent per defecte
-- són ideals per a comportaments de l'arma
-
-### 2. `Effect`
-Efectes associats a un personatge.
-
-- viuen a `Character.effects`
-- tenen `EffectState`
-- es poden apilar, refrescar o reemplaçar
-- són ideals per a buffs, debuffs i estats persistents
-
----
-
-## `EffectPipeline`
-
-`EffectPipeline` no té estat intern. És un executor.
-
-### `runPhase(...)`
-
-Ordre d'execució:
-
-1. efectes de l'atacant
-2. efectes del defensor
-3. passives de l'arma
-
-```java
-attacker.triggerEffects(ctx, phase, attackerRng, out);
-defender.triggerEffects(ctx, phase, defenderRng, out);
-
-if (weapon != null) {
-    weapon.triggerPhase(ctx, attackerRng, phase, out);
-}
-```
-
-Això és molt important perquè defineix la precedència real.
-
-### `runAttackerOnly(...)`
-
-Només dispara efectes de l'atacant. Es fa servir a `START_TURN` i `END_TURN`.
-
----
+- `WeaponPassive`
+- `Passives`
+- `PassiveFactory`
+- configuració `PassiveConfig`
+- integració amb `Weapon` i `HitContext`
 
 ## `WeaponPassive`
 
-És una interfície amb mètodes default per fase.
+`WeaponPassive` és una interfície orientada a fases del cop.
+
+Cada mètode retorna opcionalment un `String` per al log:
+
+- `startTurn(...)`
+- `beforeAttack(...)`
+- `rollCrit(...)`
+- `modifyDamage(...)`
+- `beforeDefense(...)`
+- `afterDefense(...)`
+- `afterHit(...)`
+- `endTurn(...)`
+
+La interfície també oferix `onPhase(...)`, que fa el despatx segons `HitContext.Phase`.
+
+### Quan usar una `WeaponPassive`
+
+És la millor opció si l'efecte:
+
+- depén de l'arma
+- no necessita un contenidor extern de persistència
+- actua sobre el cop actual
+- s'ha de resoldre per fases del pipeline
+
+## Integració amb `Weapon`
+
+`Weapon.triggerPhase(...)` recorre totes les passives de l'arma i executa la fase demanada.
+
+Això fa possible que una arma:
+
+- modifique dany
+- reaccione després del colp
+- genere missatges de log
+- amplie comportament sense tocar la implementació de la skill
+
+## `PassiveFactory`
+
+`PassiveFactory` convertix una configuració JSON en una passiva real.
+
+### Entrada
+
+Rep un `PassiveConfig`, que té:
+
+- `type`
+- `params`
+
+### Resolució actual
+
+Tipus suportats actualment:
+
+- `lifeSteal`
+- `trueHarm`
+- `executor`
+
+Si falta el tipus, falta un paràmetre o el nom és desconegut, es llança `IllegalArgumentException`.
+
+## `PassiveConfig`
+
+`PassiveConfig` és un `record` molt simple:
 
 ```java
-default String modifyDamage(Weapon weapon, HitContext ctx, Random rng) { return null; }
+public record PassiveConfig(String type, Map<String, Object> params) {}
 ```
 
-Retorna un `String` opcional per al log.
+Això permet definir passives des de JSON amb una estructura flexible.
 
-### Quan usar una passiva
-
-Fes servir `WeaponPassive` si l'efecte:
-
-- depèn de l'arma
-- no necessita durar múltiples turns
-- vol actuar sobre el cop actual
-- ha d'estar encapsulat dins l'arma
-
----
-
-## `Effect`
-
-És una interfície més rica.
-
-### Mètodes clau
-
-- `key()`
-- `priority()`
-- `stackingRule()`
-- `maxCharges()`
-- `maxStacks()`
-- `state()`
-- `mergeFrom(Effect incoming)`
-- `onPhase(...)`
-
-### `EffectState`
-
-Guarda:
-
-- càrregues
-- stacks
-- turns restants
-- cooldown
-
-### Caducitat
-
-Per defecte, `Effect.isExpired()` mira principalment càrregues. Tot i així, `EffectState` també té helpers per duració. Això indica que el sistema està preparat per a efectes amb duració, però la política final la decideix l'efecte o el contenidor.
-
-### `EffectResult`
-
-Permet retornar missatges o canvis visibles des d'un `Effect`.
-
-### `StackingRule`
-
-El projecte contempla:
-
-- `IGNORE`
-- `REPLACE`
-- `REFRESH`
-- `STACK`
-
-## Exemple real existent: `ConstantDamageEffect`
-
-Hi ha una plantilla a `models/effects/templates/ConstantDamageEffect.java`. Serveix com a model per veure com implementar un efecte amb estat propi i comportament per fase.
-
-## Passives actuals a `Passives.java`
+## Passives existents a `Passives`
 
 ### `lifeSteal(pct)`
-Després de `AFTER_HIT`, cura l'atacant segons `ctx.damageDealt()`.
+
+S'executa a `AFTER_HIT`.
+
+Comportament:
+
+1. calcula `healAmount = ctx.damageDealt() * pct`
+2. cura l'atacant amb `heal(...)`
+3. si la curació real és major que 0, genera missatge
+
+Punts importants:
+
+- es basa en `damageDealt()`, no en el dany teòric previ
+- per tant, la curació depén del dany real després de defensa i resolució
 
 ### `trueHarm(pct)`
-Després de `AFTER_HIT`, aplica dany extra directe a la vida màxima del defensor.
+
+També s'executa a `AFTER_HIT`.
+
+Comportament:
+
+1. llig la vida màxima del defensor
+2. calcula `extra = maxHealth * pct`
+3. aplica aquest dany directament amb `damage(extra)`
+4. genera un missatge percentual
+
+Punts importants:
+
+- no usa `ctx.damageDealt()`
+- el càlcul depén de la vida màxima del rival
+- el dany extra s'aplica després de l'impacte principal
 
 ### `executor(thresholdLife, damageBonus)`
-A `MODIFY_DAMAGE`, si la vida relativa del defensor està per sota d'un llindar, multiplica el dany.
 
-## Quan triar `Effect` o `WeaponPassive`
+S'executa a `MODIFY_DAMAGE`.
 
-### Usa `WeaponPassive` si...
-- el comportament és inherent a l'arma
-- no necessita estat persistent entre rounds
-- no ha de sobreviure a canvis d'arma o target
+Comportament:
 
-### Usa `Effect` si...
-- és un buff/debuff de personatge
-- necessita stacks, duració o cooldown
-- s'ha d'aplicar encara que canviï l'arma
-- vols reutilitzar-lo fora del sistema d'armes
-```
+1. calcula el percentatge actual de vida del defensor
+2. si està per damunt del llindar, no fa res
+3. si està al llindar o per davall, aplica `ctx.multiplyDamage(1.0 + damageBonus)`
+4. genera un missatge d'execució
+
+Punts importants:
+
+- modifica el dany abans de la defensa
+- treballa sobre la vida relativa actual del defensor
+- és una passiva contextual, no un efecte persistent
+
+## Diferència entre skill i passiva
+
+En aquest paquet convé separar molt bé les dues capes:
+
+### Skill
+- es resol quan es crida `Attack.execute(...)`
+- crea l'`AttackResult` base
+- sol decidir dany inicial, missatge i objectiu
+
+### Passiva
+- s'executa després, per fases
+- modifica el `HitContext`
+- pot alterar crític, dany o efectes posteriors
+- pot escriure missatges addicionals al log
+
+## Patró per afegir una passiva nova
+
+1. crear un nou helper a `Passives`
+2. afegir el cas corresponent a `PassiveFactory`
+3. definir el seu format dins del JSON
+4. assegurar que actua en la fase adequada del `HitContext`
