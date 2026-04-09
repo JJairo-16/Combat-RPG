@@ -1,4 +1,4 @@
-package rpgcombat.combat;
+package rpgcombat.combat.turnservice;
 
 import static rpgcombat.combat.Action.ATTACK;
 
@@ -6,6 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import rpgcombat.combat.Action;
+import rpgcombat.combat.AttackResolver;
+import rpgcombat.combat.EffectPipeline;
+import rpgcombat.combat.EndRoundRegenBonus;
+import rpgcombat.combat.RoundRecoveryService;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Result;
 import rpgcombat.models.characters.Statistics;

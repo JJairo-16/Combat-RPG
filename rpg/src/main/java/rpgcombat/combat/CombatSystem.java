@@ -4,6 +4,10 @@ import java.util.Random;
 
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
+import rpgcombat.combat.turnservice.DefaultTurnPriorityPolicy;
+import rpgcombat.combat.turnservice.TurnPriorityPolicy;
+import rpgcombat.combat.turnservice.TurnResolver;
+import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.combat.ui.CombatRenderer;
 
 public class CombatSystem {

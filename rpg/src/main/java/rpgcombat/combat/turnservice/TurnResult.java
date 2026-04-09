@@ -1,4 +1,4 @@
-package rpgcombat.combat;
+package rpgcombat.combat.turnservice;
 
 import java.util.List;
 

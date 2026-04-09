@@ -2,9 +2,9 @@ package rpgcombat.combat.ui;
 
 import java.util.List;
 
+import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
-import rpgcombat.combat.TurnResult;
 import rpgcombat.utils.ui.Ansi;
 
 public class CombatRenderer {

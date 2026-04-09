@@ -1,7 +1,8 @@
-package rpgcombat.combat;
+package rpgcombat.combat.turnservice;
 
 import java.util.Random;
 
+import rpgcombat.combat.Action;
 import rpgcombat.models.characters.Character;
 
 /**

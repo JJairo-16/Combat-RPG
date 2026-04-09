@@ -1,5 +1,7 @@
 package rpgcombat.combat;
 
+import rpgcombat.combat.turnservice.TurnResult;
+
 public record CombatRoundResult(
         TurnResult firstTurn,
         TurnResult secondTurn,
