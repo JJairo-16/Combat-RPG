@@ -1,0 +1,14 @@
+{
+	"defaults": {
+		"groupId": "com.example",
+		"packaging": "jar",
+		"generatePom": false
+	},
+	"artifacts": [
+		{
+			"file": "dynamic-menu-1.3.4.jar",
+			"artifactId": "dynamic-menu",
+			"version": "1.3.4"
+		}
+	]
+}

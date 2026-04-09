@@ -2,15 +2,19 @@ package rpgcombat.game;
 
 import java.util.List;
 
+import menu.DynamicMenu;
+
 import rpgcombat.combat.Action;
 import rpgcombat.combat.CombatSystem;
 import rpgcombat.combat.Winner;
+
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.models.weapons.Arsenal;
 import rpgcombat.models.weapons.Weapon;
 import rpgcombat.models.weapons.WeaponType;
+
 import rpgcombat.utils.cache.TextWrapCache;
 import rpgcombat.utils.input.Menu;
 import rpgcombat.utils.input.WeaponMenu;
@@ -22,13 +26,11 @@ import rpgcombat.utils.ui.Prettier;
  * Controla el bucle principal del combat per torns entre dos jugadors.
  */
 public class GameLoop {
+    private final DynamicMenu<Action, Character> baseMenuAction = MenuBuilder.build(this::changeWeapon,
+            this::showPlayerInfoWrapper);
+    private final DynamicMenu<Action, Character> menuAction1;
+    private final DynamicMenu<Action, Character> menuAction2;
 
-    private static final List<String> OPTIONS = List.of(
-            "Canviar arma",
-            "Atacar",
-            "Defensar-se",
-            "Esquivar",
-            "Veure informació");
 
     private static final String HR = " " + Ansi.DARK_GRAY + "────────────────────────────────────────────────────────"
             + Ansi.RESET + "\n";
@@ -47,6 +49,12 @@ public class GameLoop {
         this.player1 = player1;
         this.player2 = player2;
         this.combatSystem = new CombatSystem(player1, player2);
+
+        this.menuAction1 = baseMenuAction.createChildMenu("Accions de " + player1.getName(), player1);
+        this.menuAction2 = baseMenuAction.createChildMenu("Accions de " + player2.getName(), player2);
+
+        this.menuAction1.saveCurrentAs("base");
+        this.menuAction2.saveCurrentAs("base");
     }
 
     /**
@@ -69,7 +77,7 @@ public class GameLoop {
         finish(winner);
     }
 
-   /** Mostra el resultat final del combat. */
+    /** Mostra el resultat final del combat. */
     private void finish(Winner winner) {
         StringBuilder sb = new StringBuilder(2048);
 
@@ -107,43 +115,19 @@ public class GameLoop {
         System.out.print(sb.toString());
     }
 
-   /** Gestiona el torn d'un jugador fins que triï una acció vàlida. */
+    /** Gestiona el torn d'un jugador fins que triï una acció vàlida. */
     private Action playTurn(Character player) {
-        Action action = null;
+        if (player == player1) {
+            return menuAction1.run();
+        } else {
+            return menuAction2.run();
+        }
+    }
 
-        do {
-            cls.clear();
-            int option = Menu.getOption(OPTIONS, "Accions de " + player.getName());
-
-            switch (option) {
-                case 1:
-                    changeWeapon(player);
-                    break;
-
-                case 2:
-                    action = Action.ATTACK;
-                    break;
-
-                case 3:
-                    action = Action.DEFEND;
-                    break;
-
-                case 4:
-                    action = Action.DODGE;
-                    break;
-
-                case 5:
-                    cls.clear();
-                    getPlayerInfo(player);
-                    Menu.pause();
-                    break;
-
-                default:
-                    break;
-            }
-        } while (action == null);
-
-        return action;
+    private void showPlayerInfoWrapper(Character player) {
+        cls.clear();
+        getPlayerInfo(player);
+        Menu.pause();
     }
 
     /**

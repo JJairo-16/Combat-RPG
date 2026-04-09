@@ -109,6 +109,36 @@ La partida finalitza quan un personatge arriba a 0 de vida.
 
 ---
 
+## ▌Instal·lació
+
+Abans d’executar el projecte, cal assegurar-se que les dependències (JARs) estan instal·lades al repositori local de Maven.
+
+Aquest projecte inclou un script de PowerShell que automatitza aquest procés a partir del directori `libs`.
+
+### Instal·lació de dependències (Windows)
+
+Executa el següent script des de l’arrel del projecte:
+
+```powershell
+.\install-jars.ps1
+```
+
+El script:
+
+- Llegeix els fitxers `.jar` dins de `libs/`
+- Utilitza la configuració definida a `libs/artifacts.json`
+- Instal·la automàticament cada dependència amb Maven
+
+### Opcional
+
+Si vols que el procés s’aturi en cas d’error:
+
+```powershell
+.\install-jars.ps1 -StopOnError
+```
+
+---
+
 ## ▌Execució
 
 Compilar i executar la classe principal:
