@@ -80,9 +80,7 @@ public enum Breed {
         return description;
     }
 
-    /**
-     * Aplica el multiplicador racial si l'estadística coincideix amb el bonus.
-     */
+   /** Aplica el multiplicador racial si l'estadística coincideix amb el bonus. */
     public static int effectiveStat(int base, Stat stat, Breed breed) {
         if (breed.bonusStat() != stat) return base;
         return (int) Math.round(base * STAT_BONUS_BY_BREED);

@@ -99,9 +99,7 @@ public class Character {
         return true;
     }
 
-    /**
-     * Ataca amb l'arma equipada o, si no n'hi ha, amb dany bàsic físic.
-     */
+   /** Ataca amb l'arma equipada o, si no n'hi ha, amb dany bàsic físic. */
     public AttackResult attack() {
         if (weapon == null) {
             return attackUnarmed();
@@ -293,7 +291,7 @@ public class Character {
                 continue;
             }
 
-            EffectResult r = e.onPhase(ctx, phase, rng);
+            EffectResult r = e.onPhase(ctx, phase, rng, this);
             if (r != null && r.message() != null && !r.message().isBlank()) {
                 out.add(r.message());
             }
@@ -302,9 +300,7 @@ public class Character {
         cleanupExpiredEffects();
     }
 
-    /**
-     * Elimina efectes expirats.
-     */
+   /** Elimina efectes expirats. */
     protected void cleanupExpiredEffects() {
         if (effects.isEmpty()) {
             return;

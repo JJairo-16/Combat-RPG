@@ -2,6 +2,7 @@ package rpgcombat.models.effects.templates;
 
 import java.util.Random;
 
+import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.EffectState;
@@ -29,7 +30,7 @@ public abstract class ConstantDamageEffect implements Effect {
     }
 
     @Override
-    public EffectResult endTurn(HitContext ctx, Random rng) {
+    public EffectResult endTurn(HitContext ctx, Random rng, Character owner) {
         if (isExpired()) {
             return EffectResult.none();
         }

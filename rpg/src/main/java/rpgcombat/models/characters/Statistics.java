@@ -93,9 +93,7 @@ public class Statistics {
         return maxMana;
     }
 
-    /**
-     * Regenera vida i mana segons constitució i intel·ligència, sense superar els màxims.
-     */
+   /** Regenera vida i mana segons constitució i intel·ligència, sense superar els màxims. */
     public void reg() {
         double hp = calculateHealthRegen(constitution);
 
@@ -155,6 +153,22 @@ public class Statistics {
     }
 
     /**
+     * Cura vida sense límit màxim i retorna la curació real aplicada (pot sobrecarregar).
+     * 
+     * @param amount quantitat de curació sol·licitada
+     * @return quantitat real curada
+     */
+    public double overloadHeal(double amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+
+        double before = health;
+        health += amount;
+        return health - before;
+    }
+
+    /**
      * Restaura mana fins al màxim i retorna la quantitat real restaurada.
      *
      * @param amount quantitat de restauració sol·licitada
@@ -171,16 +185,28 @@ public class Statistics {
     }
 
     /**
-     * Calcula la vida màxima amb soft cap suau a partir de 20 de constitució.
+     * Restaura mana sense límit màxim i retorna la quantitat real restaurada (pot sobrecarregar).
+     * 
+     * @param amount quantitat de restauració sol·licitada
+     * @return quantitat real restaurada
      */
+    public double overloadRestoreMana(double amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+
+        double before = mana;
+        mana += amount;
+        return mana - before;
+    }
+
+   /** Calcula la vida màxima amb soft cap suau a partir de 20 de constitució. */
     private double calculateMaxHealth(int con) {
         double effectiveCon = softenStat(con, MAX_CONSTITUTION_FULL_EFFECT, HEALTH_SOFTCAP_FACTOR);
         return effectiveCon * CONSTITUTION_VALUE;
     }
 
-    /**
-     * Calcula la regeneració de vida amb un soft cap una mica més fort que la vida màxima.
-     */
+   /** Calcula la regeneració de vida amb un soft cap una mica més fort que la vida màxima. */
     private double calculateHealthRegen(double con) {
         double effectiveCon = softenStat(con, MAX_CONSTITUTION_FULL_EFFECT, REGEN_SOFTCAP_FACTOR);
         return effectiveCon * 2.35;
@@ -199,9 +225,7 @@ public class Statistics {
         return threshold + (extra / (1.0 + extra * factor));
     }
 
-    /**
-     * Aplica un increment i limita el resultat dins del rang indicat.
-     */
+   /** Aplica un increment i limita el resultat dins del rang indicat. */
     private double affectClamp(double act, double amount, double max, double min) {
         return Math.clamp(act + amount, min, max);
     }

@@ -63,9 +63,7 @@ public final class WeaponCardCache {
         cache[key] = card;
     }
 
-    /**
-     * Buida completament la memòria cau.
-     */
+   /** Buida completament la memòria cau. */
     public void clear() {
         Arrays.fill(cache, null);
     }

@@ -13,9 +13,7 @@ package rpgcombat.models.weapons;
  */
 public record AttackResult(double damage, String message, Target target) {
 
-    /**
-     * Crea un resultat d'atac assumint que l'objectiu és l'enemic.
-     */
+   /** Crea un resultat d'atac assumint que l'objectiu és l'enemic. */
     public AttackResult(double damage, String message) {
         this(damage, message, Target.ENEMY);
     }

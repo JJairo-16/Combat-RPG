@@ -1,6 +1,7 @@
 package rpgcombat.creator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -92,9 +93,7 @@ public class CharacterCreator {
 
     private static int id = 1;
 
-    /**
-     * Constructor privat per evitar instàncies.
-     */
+   /** Constructor privat per evitar instàncies. */
     private CharacterCreator() {
     }
 
@@ -378,6 +377,7 @@ public class CharacterCreator {
         return lines;
     }
 
+   /** Converteix les dades de nom, edat i generació (estadístiques + raça) en una instància concreta de {@link Character} segons la raça seleccionada. */
     private static Character convert(String name, int age, Generation g) {
         Breed b = g.breed();
         int[] stats = g.stats;
@@ -391,5 +391,20 @@ public class CharacterCreator {
             case HALFLING -> new Halfling(name, age, stats);
             default -> new Character(name, age, stats, b);
         };
+    }
+
+   /** Crea un personatge de prova amb el nom "Dummy", edat mínima i una distribució equitativa de punts entre les estadístiques, associat a la raça Orc. */
+    public static Character dummy() {
+        int base = TOTAL_POINTS / 7;
+        int remainder = TOTAL_POINTS % 7;
+
+        int[] stats = new int[7];
+        Arrays.fill(stats, base);
+
+        for (int i = 0; i < remainder; i++) {
+            stats[i]++;
+        }
+
+        return convert("Dummy", MIN_AGE, new Generation(stats, Breed.ORC));
     }
 }

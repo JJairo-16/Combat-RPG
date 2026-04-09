@@ -215,16 +215,12 @@ public enum Arsenal {
                     .thenComparing(Arsenal::getName))
             .toArray(Arsenal[]::new);
 
-    /**
-     * @return llista d'armes ordenades (per tipus i nom)
-     */
+   /** @return llista d'armes ordenades (per tipus i nom) */
     public static List<Arsenal> getSortedWeapons() {
         return List.of(weaponsSorted);
     }
 
-    /**
-     * Llista preparada per mostrar al menú de selecció d'armes (ordenada).
-     */
+   /** Llista preparada per mostrar al menú de selecció d'armes (ordenada). */
     private static final List<String> namesList = Arrays.stream(weaponsSorted)
             .map(Arsenal::formatForMenu)
             .toList();

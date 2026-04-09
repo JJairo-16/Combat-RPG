@@ -32,9 +32,7 @@ import rpgcombat.models.weapons.Weapon;
  */
 public final class HitContext {
 
-    /**
-     * Fases on poden actuar les passives i efectes.
-     */
+   /** Fases on poden actuar les passives i efectes. */
     public enum Phase {
         START_TURN,
         BEFORE_ATTACK,
@@ -127,53 +125,39 @@ public final class HitContext {
 
     // ── Participants / info bàsica ───────────────────────────────
 
-    /**
-     * @return personatge atacant
-     */
+   /** @return personatge atacant */
     public Character attacker() {
         return attacker;
     }
 
-    /**
-     * @return personatge defensor
-     */
+   /** @return personatge defensor */
     public Character defender() {
         return defender;
     }
 
-    /**
-     * @return arma emprada en el cop, o {@code null} si no n'hi ha
-     */
+   /** @return arma emprada en el cop, o {@code null} si no n'hi ha */
     public Weapon weapon() {
         return weapon;
     }
 
-    /**
-     * @return generador aleatori associat al cop
-     */
+   /** @return generador aleatori associat al cop */
     public Random rng() {
         return rng;
     }
 
-    /**
-     * @return acció triada per l'atacant
-     */
+   /** @return acció triada per l'atacant */
     public Action attackerAction() {
         return attackerAction;
     }
 
-    /**
-     * @return acció triada pel defensor
-     */
+   /** @return acció triada pel defensor */
     public Action defenderAction() {
         return defenderAction;
     }
 
     // ── AttackResult base ────────────────────────────────────────
 
-    /**
-     * @return resultat base de l'atac generat per l'arma/habilitat
-     */
+   /** @return resultat base de l'atac generat per l'arma/habilitat */
     public AttackResult attackResult() {
         return attackResult;
     }
@@ -204,9 +188,7 @@ public final class HitContext {
         this.baseDamage = Math.max(0, baseDamage);
     }
 
-    /**
-     * @return dany base abans de crític i modificadors
-     */
+   /** @return dany base abans de crític i modificadors */
     public double baseDamage() {
         return baseDamage;
     }
@@ -241,9 +223,7 @@ public final class HitContext {
         }
     }
 
-    /**
-     * @return suma de tots els modificadors plans
-     */
+   /** @return suma de tots els modificadors plans */
     public double flatDamageBonus() {
         double total = 0;
         for (double v : flatDamageModifiers) {
@@ -252,9 +232,7 @@ public final class HitContext {
         return total;
     }
 
-    /**
-     * @return producte de tots els multiplicadors de dany
-     */
+   /** @return producte de tots els multiplicadors de dany */
     public double damageMultiplier() {
         double total = 1.0;
         for (double v : damageMultipliers) {
@@ -284,9 +262,7 @@ public final class HitContext {
         this.criticalChance = Math.clamp(chance, 0.0, 1.0);
     }
 
-    /**
-     * @return probabilitat actual de crític
-     */
+   /** @return probabilitat actual de crític */
     public double criticalChance() {
         return criticalChance;
     }
@@ -300,9 +276,7 @@ public final class HitContext {
         this.criticalMultiplier = Math.max(1.0, multiplier);
     }
 
-    /**
-     * @return multiplicador actual de crític
-     */
+   /** @return multiplicador actual de crític */
     public double criticalMultiplier() {
         return criticalMultiplier;
     }
@@ -331,16 +305,12 @@ public final class HitContext {
         this.criticalForced = false;
     }
 
-    /**
-     * @return {@code true} si el crític s'ha forçat explícitament
-     */
+   /** @return {@code true} si el crític s'ha forçat explícitament */
     public boolean isCriticalForced() {
         return criticalForced;
     }
 
-    /**
-     * @return {@code true} si el crític s'ha prohibit explícitament
-     */
+   /** @return {@code true} si el crític s'ha prohibit explícitament */
     public boolean isCriticalForbidden() {
         return criticalForbidden;
     }
@@ -354,9 +324,7 @@ public final class HitContext {
         return criticalResolved;
     }
 
-    /**
-     * @return {@code true} si el cop resolt ha estat crític
-     */
+   /** @return {@code true} si el cop resolt ha estat crític */
     public boolean wasCritical() {
         return critical;
     }
@@ -396,9 +364,7 @@ public final class HitContext {
 
     // ── Resultat real després de defensar ────────────────────────
 
-    /**
-     * @return resultat de la defensa aplicada
-     */
+   /** @return resultat de la defensa aplicada */
     public Result defenderResult() {
         return defenderResult;
     }
@@ -412,9 +378,7 @@ public final class HitContext {
         this.defenderResult = defenderResult;
     }
 
-    /**
-     * @return dany real infligit després de la defensa
-     */
+   /** @return dany real infligit després de la defensa */
     public double damageDealt() {
         return damageDealt;
     }

@@ -81,58 +81,42 @@ public class Weapon {
 
     // ── Getters ──────────────────────────────────────────────────
 
-    /**
-     * @return nom de l'arma
-     */
+   /** @return nom de l'arma */
     public String getName() {
         return name;
     }
 
-    /**
-     * @return descripció de l'arma
-     */
+   /** @return descripció de l'arma */
     public String getDescription() {
         return description;
     }
 
-    /**
-     * @return dany base intern de l'arma
-     */
+   /** @return dany base intern de l'arma */
     public int getBaseDamage() {
         return damage;
     }
 
-    /**
-     * @return probabilitat base de crític
-     */
+   /** @return probabilitat base de crític */
     public double getCriticalProb() {
         return criticalProb;
     }
 
-    /**
-     * @return multiplicador base de crític
-     */
+   /** @return multiplicador base de crític */
     public double getCriticalDamage() {
         return criticalDamage;
     }
 
-    /**
-     * @return tipus de l'arma
-     */
+   /** @return tipus de l'arma */
     public WeaponType getType() {
         return type;
     }
 
-    /**
-     * @return cost de mana de l'atac especial
-     */
+   /** @return cost de mana de l'atac especial */
     public double getManaPrice() {
         return manaPrice;
     }
 
-    /**
-     * @return identificador de catàleg de l'arma
-     */
+   /** @return identificador de catàleg de l'arma */
     public Arsenal getId() {
         return id;
     }

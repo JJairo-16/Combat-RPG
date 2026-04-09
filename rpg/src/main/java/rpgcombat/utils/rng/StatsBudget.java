@@ -65,9 +65,7 @@ public final class StatsBudget {
             baseStats = (baseStats == null) ? null : baseStats.clone();
         }
 
-        /**
-         * Evita filtracions accidentals a logs o depuració.
-         */
+       /** Evita filtracions accidentals a logs o depuració. */
         @Override
         public String toString() {
             return "Result[ocult]";
@@ -550,9 +548,7 @@ public final class StatsBudget {
 
     // --- Auto-paràmetres (privat) ---
 
-    /**
-     * Escala límits (min/max) en funció del total de punts.
-     */
+   /** Escala límits (min/max) en funció del total de punts. */
     public static ScaledLimits scaleLimits(int totalPoints) {
         int statCount = STAT_COUNT;
 
@@ -580,9 +576,7 @@ public final class StatsBudget {
         return new ScaledLimits(minValue, maxValue);
     }
 
-    /**
-     * Càlcul automàtic de quantes stats es focusegen.
-     */
+   /** Càlcul automàtic de quantes stats es focusegen. */
     private static int autoFocusCount() {
         // Mateixa heurística que abans, però sempre respectant el límit de stats
         // focusejables
@@ -593,9 +587,7 @@ public final class StatsBudget {
         return Math.clamp(focusCount, 1, maxFocusCount);
     }
 
-    /**
-     * Paràmetres automàtics segons el "slack" del pressupost.
-     */
+   /** Paràmetres automàtics segons el "slack" del pressupost. */
     private static AutoParams autoParams(int totalPoints) {
         int statCount = STAT_COUNT;
 

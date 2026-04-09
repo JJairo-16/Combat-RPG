@@ -52,16 +52,12 @@ public class DefaultTurnPriorityPolicy implements TurnPriorityPolicy {
         return rng.nextBoolean();
     }
 
-    /**
-     * Accions que considerem "ràpides" (lliga superior).
-     */
+   /** Accions que considerem "ràpides" (lliga superior). */
     private boolean isFastAction(Action a) {
         return a == Action.DEFEND || a == Action.DODGE;
     }
 
-    /**
-     * Calcula un score d'iniciativa per desempatar dins la mateixa lliga.
-     */
+   /** Calcula un score d'iniciativa per desempatar dins la mateixa lliga. */
     private double initiativeScore(Character c, Random rng) {
         Statistics s = c.getStatistics();
 

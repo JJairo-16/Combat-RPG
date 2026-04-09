@@ -3,6 +3,7 @@ package rpgcombat.models.effects;
 import java.util.Random;
 
 import rpgcombat.models.weapons.passives.HitContext;
+import rpgcombat.models.characters.Character;
 
 /**
  * Efecte genèric per fases (com les passives), però amb estat propi.
@@ -126,16 +127,16 @@ public interface Effect {
      * @param rng generador aleatori
      * @return resultat de l'execució
      */
-    default EffectResult onPhase(HitContext ctx, HitContext.Phase phase, Random rng) {
+    default EffectResult onPhase(HitContext ctx, HitContext.Phase phase, Random rng, Character owner) {
         return switch (phase) {
-            case START_TURN -> startTurn(ctx, rng);
-            case BEFORE_ATTACK -> beforeAttack(ctx, rng);
-            case ROLL_CRIT -> rollCrit(ctx, rng);
-            case MODIFY_DAMAGE -> modifyDamage(ctx, rng);
-            case BEFORE_DEFENSE -> beforeDefense(ctx, rng);
-            case AFTER_DEFENSE -> afterDefense(ctx, rng);
-            case AFTER_HIT -> afterHit(ctx, rng);
-            case END_TURN -> endTurn(ctx, rng);
+            case START_TURN -> startTurn(ctx, rng, owner);
+            case BEFORE_ATTACK -> beforeAttack(ctx, rng, owner);
+            case ROLL_CRIT -> rollCrit(ctx, rng, owner);
+            case MODIFY_DAMAGE -> modifyDamage(ctx, rng, owner);
+            case BEFORE_DEFENSE -> beforeDefense(ctx, rng, owner);
+            case AFTER_DEFENSE -> afterDefense(ctx, rng, owner);
+            case AFTER_HIT -> afterHit(ctx, rng, owner);
+            case END_TURN -> endTurn(ctx, rng, owner);
         };
     }
 
@@ -146,7 +147,7 @@ public interface Effect {
      * @param rng generador aleatori
      * @return resultat de l'efecte
      */
-    default EffectResult startTurn(HitContext ctx, Random rng) {
+    default EffectResult startTurn(HitContext ctx, Random rng, Character owner) {
         return EffectResult.none();
     }
 
@@ -157,7 +158,7 @@ public interface Effect {
      * @param rng generador aleatori
      * @return resultat de l'efecte
      */
-    default EffectResult beforeAttack(HitContext ctx, Random rng) {
+    default EffectResult beforeAttack(HitContext ctx, Random rng, Character owner) {
         return EffectResult.none();
     }
 
@@ -178,7 +179,7 @@ public interface Effect {
      * @param rng generador aleatori
      * @return resultat de l'efecte
      */
-    default EffectResult rollCrit(HitContext ctx, Random rng) {
+    default EffectResult rollCrit(HitContext ctx, Random rng, Character owner) {
         return EffectResult.none();
     }
 
@@ -189,7 +190,7 @@ public interface Effect {
      * @param rng generador aleatori
      * @return resultat de l'efecte
      */
-    default EffectResult modifyDamage(HitContext ctx, Random rng) {
+    default EffectResult modifyDamage(HitContext ctx, Random rng, Character owner) {
         return EffectResult.none();
     }
 
@@ -200,7 +201,7 @@ public interface Effect {
      * @param rng generador aleatori
      * @return resultat de l'efecte
      */
-    default EffectResult beforeDefense(HitContext ctx, Random rng) {
+    default EffectResult beforeDefense(HitContext ctx, Random rng, Character owner) {
         return EffectResult.none();
     }
 
@@ -211,7 +212,7 @@ public interface Effect {
      * @param rng generador aleatori
      * @return resultat de l'efecte
      */
-    default EffectResult afterDefense(HitContext ctx, Random rng) {
+    default EffectResult afterDefense(HitContext ctx, Random rng, Character owner) {
         return EffectResult.none();
     }
 
@@ -222,7 +223,7 @@ public interface Effect {
      * @param rng generador aleatori
      * @return resultat de l'efecte
      */
-    default EffectResult afterHit(HitContext ctx, Random rng) {
+    default EffectResult afterHit(HitContext ctx, Random rng, Character owner) {
         return EffectResult.none();
     }
 
@@ -237,7 +238,7 @@ public interface Effect {
      * @param rng generador aleatori
      * @return resultat de l'efecte
      */
-    default EffectResult endTurn(HitContext ctx, Random rng) {
+    default EffectResult endTurn(HitContext ctx, Random rng, Character owner) {
         state().tickCooldown();
         state().tickDuration();
         return EffectResult.none();

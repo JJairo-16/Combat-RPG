@@ -69,9 +69,7 @@ public class GameLoop {
         finish(winner);
     }
 
-    /**
-     * Mostra el resultat final del combat.
-     */
+   /** Mostra el resultat final del combat. */
     private void finish(Winner winner) {
         StringBuilder sb = new StringBuilder(2048);
 
@@ -109,9 +107,7 @@ public class GameLoop {
         System.out.print(sb.toString());
     }
 
-    /**
-     * Gestiona el torn d'un jugador fins que triï una acció vàlida.
-     */
+   /** Gestiona el torn d'un jugador fins que triï una acció vàlida. */
     private Action playTurn(Character player) {
         Action action = null;
 

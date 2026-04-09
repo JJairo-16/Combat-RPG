@@ -30,9 +30,7 @@ public class TextWrapCache {
 
     private final int maxEntries;
 
-    /**
-     * Caché LRU: accessOrder=true per expulsar les entrades menys recents.
-     */
+   /** Caché LRU: accessOrder=true per expulsar les entrades menys recents. */
     private final Map<Key, List<String>> cache;
 
     /**
@@ -66,9 +64,7 @@ public class TextWrapCache {
         };
     }
 
-    /**
-     * Retorna el text amb wrap aplicat, utilitzant caché si ja s'ha calculat.
-     */
+   /** Retorna el text amb wrap aplicat, utilitzant caché si ja s'ha calculat. */
     public List<String> get(String text, int width) {
         if (text == null)
             return List.of();
@@ -91,23 +87,17 @@ public class TextWrapCache {
         return wrapped;
     }
 
-    /**
-     * Permet buidar la caché manualment.
-     */
+   /** Permet buidar la caché manualment. */
     public void clear() {
         cache.clear();
     }
 
-    /**
-     * (Opcional) Retorna el nombre d'entrades actuals (útil per debug).
-     */
+   /** (Opcional) Retorna el nombre d'entrades actuals (útil per debug). */
     public int size() {
         return cache.size();
     }
 
-    /**
-     * Algoritme simple de wrap.
-     */
+   /** Algoritme simple de wrap. */
     private List<String> wrap(String text, int maxWidth) {
         final int textLength = text.length();
         if (textLength <= maxWidth) {
