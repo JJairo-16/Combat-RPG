@@ -68,21 +68,21 @@
 ---
 
 ## Resultats d'execució
-| Cas | Estat (Correcte / Error) | Observacions                                                                                                     |
-| --- | ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
-| 1   | Correcte                 | JSON carregat sense errors                                                                                       |
-| 2   | Correcte                 | Modificació del menú correcta                                                                                    |
-| 3   | Correcte                 | Sense duplicació d’opcions                                                                                       |
-| 4   | Correcte                 | Efectes expirats ignorats                                                                                        |
-| 5   | Correcte                 | Aplicació correcta de rangs                                                                                      |
-| 6   | Error                    | El sistema detecta quan s'ha d'afegir modificadors però no quan eliminar en cas de no haver efectes o modificadors |
+| Cas | Estat (Correcte / Error) | Observacions                                                                                                       |
+| --- | ------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| 1   | Correcte                 | JSON carregat sense errors                                                                                         |
+| 2   | Correcte                 | Modificació del menú correcta                                                                                      |
+| 3   | Correcte                 | Sense duplicació d’opcions                                                                                         |
+| 4   | Correcte                 | Efectes expirats ignorats                                                                                          |
+| 5   | Correcte                 | Aplicació correcta de rangs                                                                                        |
+| 6   | Correcte                 | El sistema detecta quan s'ha d'afegir modificadors però no quan eliminar en cas de no haver efectes o modificadors |
 
 ---
 
 ## Incidències detectades
 
 ### Incidència 1
-- Tipus: Comportament inesperat
+- Tipus: Comportament inesperat.
 - Descripció: El sistema detecta quan s'ha d'afegir modificadors però no quan eliminar en cas de no haver efectes o modificadors.
 - Com s’ha detectat: S'ha detectat durant el disseny i execució de proves unitàries.
 - Causa probable: Els early returns no permeten restaurar o actualitzar l'estat del menú.
@@ -91,7 +91,7 @@
 ---
 
 ### Incidència 2
-- Tipus: Millora
+- Tipus: Millora.
 - Descripció: El sistema reconstrueix el menú inclús quan no hi ha modificacions, la qual cosa pot causar micro-tirons.
 - Com s’ha detectat: S'ha detectat mentre es mitigava la incidència anterior.
 - Causa probable: ---

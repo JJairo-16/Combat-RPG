@@ -71,16 +71,12 @@ public class MenuStatusModifier {
         rememberAppliedState(currentHash);
     }
 
-    /**
-     * Indica si no hi ha dades per generar modificadors.
-     */
+   /** Indica si no hi ha dades per generar modificadors. */
     private boolean hasNoSourceData(List<Effect> effects) {
         return effects.isEmpty() || modifiers.isEmpty();
     }
 
-    /**
-     * Restaura el menú si abans hi havia modificadors aplicats.
-     */
+   /** Restaura el menú si abans hi havia modificadors aplicats. */
     private void clearMenuIfNeeded(String baseSnap) {
         if (lastModifiers == 0) {
             return;
@@ -90,17 +86,13 @@ public class MenuStatusModifier {
         resetAppliedState();
     }
 
-    /**
-     * Reinicia l'estat cachejat.
-     */
+   /** Reinicia l'estat cachejat. */
     private void resetAppliedState() {
         lastModifiers = 0;
         lastHash = 0L;
     }
 
-    /**
-     * Recull els modificadors aplicables a partir dels efectes.
-     */
+   /** Recull els modificadors aplicables a partir dels efectes. */
     private void collectPendingMods(List<Effect> effects) {
         pending.clear();
 
@@ -109,9 +101,7 @@ public class MenuStatusModifier {
         }
     }
 
-    /**
-     * Afegeix els modificadors d'un efecte si compleixen les condicions.
-     */
+   /** Afegeix els modificadors d'un efecte si compleixen les condicions. */
     private void collectEffectMods(Effect effect) {
         if (effect == null || effect.isExpired()) {
             return;
@@ -124,31 +114,27 @@ public class MenuStatusModifier {
 
         EffectState state = effect.state();
         for (StatusMod mod : effectMods) {
-            if (matches(state, mod)) {
-                pending.add(mod);
+            if (!matches(state, mod) || !mod.isAvailable(player, effect)) {
+                continue;
             }
+
+            pending.add(mod);
         }
     }
 
-    /**
-     * Ordena els modificadors per prioritat descendent si cal.
-     */
+   /** Ordena els modificadors per prioritat descendent si cal. */
     private void sortPendingIfNeeded() {
         if (pending.size() > 1) {
             pending.sort(PRIORITY_DESC);
         }
     }
 
-    /**
-     * Comprova si el resultat actual difereix de l'anterior.
-     */
+   /** Comprova si el resultat actual difereix de l'anterior. */
     private boolean hasChanged(long currentHash) {
         return lastModifiers != pending.size() || lastHash != currentHash;
     }
 
-    /**
-     * Aplica els modificadors al menú reconstruint-lo des del snapshot base.
-     */
+   /** Aplica els modificadors al menú reconstruint-lo des del snapshot base. */
     private void applyPendingToMenu(String baseSnap) {
         menu.useSnapshot(baseSnap);
 
@@ -157,26 +143,20 @@ public class MenuStatusModifier {
         }
     }
 
-    /**
-     * Desa l'estat actual per evitar recomputacions futures.
-     */
+   /** Desa l'estat actual per evitar recomputacions futures. */
     private void rememberAppliedState(long currentHash) {
         lastModifiers = pending.size();
         lastHash = currentHash;
     }
 
-    /**
-     * Verifica si un modificador compleix les condicions de l'estat.
-     */
+   /** Verifica si un modificador compleix les condicions de l'estat. */
     private boolean matches(EffectState state, StatusMod mod) {
         return inRange(state.charges(), mod.minCharges(), mod.maxCharges())
                 && inRange(state.stacks(), mod.minStacks(), mod.maxStacks())
                 && inRange(state.remainingTurns(), mod.minRemainingTurns(), mod.maxRemainingTurns());
     }
 
-    /**
-     * Comprova si un valor està dins d'un rang (amb límits opcionals).
-     */
+   /** Comprova si un valor està dins d'un rang (amb límits opcionals). */
     private boolean inRange(int value, Integer min, Integer max) {
         if (min != null && value < min)
             return false;
@@ -187,9 +167,7 @@ public class MenuStatusModifier {
         return value <= max;
     }
 
-    /**
-     * Genera un hash del conjunt de modificadors per detectar canvis.
-     */
+   /** Genera un hash del conjunt de modificadors per detectar canvis. */
     private long computeHash(List<StatusMod> mods) {
         long hash = 1469598103934665603L;
 

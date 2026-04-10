@@ -26,11 +26,8 @@ public class MenuCenter {
         this.menu1 = baseMenuAction.createChildMenu("Accions de " + player1.getName(), player1);
         this.menu2 = baseMenuAction.createChildMenu("Accions de " + player2.getName(), player2);
 
-        this.menu1.saveCurrentAs(BASE_SNAP);
-        this.menu2.saveCurrentAs(BASE_SNAP);
-
-        this.mod1 = new MenuStatusModifier(player1, menu1, modifiers);
-        this.mod2 = new MenuStatusModifier(player2, menu2, modifiers);
+        this.mod1 = configMenu(menu1, player1, modifiers);
+        this.mod2 = configMenu(menu2, player2, modifiers);
     }
 
     public Action playPlayer1() {
@@ -41,5 +38,23 @@ public class MenuCenter {
     public Action playPlayer2() {
         mod2.mod(BASE_SNAP);
         return menu2.run();
+    }
+
+    public DynamicMenu<Action, Character> getMenu1() {
+        mod1.mod(BASE_SNAP);
+        return menu1;
+    }
+
+    public DynamicMenu<Action, Character> getMenu2() {
+        mod2.mod(BASE_SNAP);
+        return menu2;
+    }
+
+    private static MenuStatusModifier configMenu(DynamicMenu<Action, Character> menu, Character player,
+            Map<String, List<StatusMod>> modifiers) {
+        menu.modifiableDuringRun(true);
+
+        menu.saveCurrentAs(BASE_SNAP);
+        return new MenuStatusModifier(player, menu, modifiers);
     }
 }

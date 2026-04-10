@@ -82,7 +82,7 @@
     "id": "BLOODPIERCER_THROWING_DAGGER",
     "name": "Daga Perforasang",
     "description": "Una daga lleugera dissenyada per travessar defenses.",
-    "baseDamage": 28,
+    "baseDamage": 38,
     "criticalProb": 0.16,
     "criticalDamage": 1.41,
     "type": "RANGE",

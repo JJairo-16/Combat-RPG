@@ -1,7 +1,6 @@
 package rpgcombat.combat.ui;
 
 import java.util.List;
-import java.util.Map;
 
 import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.models.characters.Character;

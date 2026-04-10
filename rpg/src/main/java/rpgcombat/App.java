@@ -12,6 +12,7 @@ import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.game.modifier.config.StatusModLoader;
 import rpgcombat.models.characters.Character;
 import rpgcombat.utils.input.WeaponMenu;
+import rpgcombat.utils.rng.D20Terminal;
 import rpgcombat.utils.ui.LoadingIntro;
 import rpgcombat.utils.ui.Prettier;
 import rpgcombat.weapons.Arsenal;
@@ -25,7 +26,7 @@ public class App {
     private static final String WEAPONS_CONFIG_PATH = "rpg/data/weapons.json";
     private static final String STATUS_MENU_MODIFIER_PATH = "rpg/data/menuModifiers.json";
 
-    private static final boolean DEBUG_MODE = true;
+    private static final boolean DEBUG_MODE = false;
 
     private Map<String, List<StatusMod>> modifiers;
 
@@ -38,6 +39,8 @@ public class App {
         } catch (IOException e) {
             Prettier.error("Ha hagut un error durant la precarrega.");
         }
+
+        D20Terminal.preloadFrames();
     }
 
     public void run() {

@@ -1,0 +1,102 @@
+@startuml
+title Diagrama de classe - Sistema d'efectes
+
+top to bottom direction
+scale 1.4
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+package "effects" {
+
+  package "impl" {
+    class BurnEffect {
+      +BurnEffect(turns : int, damagePerTurn : double)
+      +endTurn(ctx : HitContext, rng : Random, owner : Character) : EffectResult
+    }
+
+    class PoisonEffect {
+      +PoisonEffect(turns : int, damagePerTurn : double)
+      +endTurn(ctx : HitContext, rng : Random, owner : Character) : EffectResult
+    }
+
+    class BleedEffect {
+      +BleedEffect(turns : int, damagePerTurn : double)
+      +endTurn(ctx : HitContext, rng : Random, owner : Character) : EffectResult
+    }
+  }
+
+  package "templates" {
+    abstract class ConstantDamageEffect {
+      #key : String
+      #state : EffectState
+      #damagePerTurn : double
+      --
+      #ConstantDamageEffect(turns : int, damagePerTurn : double)
+      +key() : String
+      +state() : EffectState
+      +endTurn(ctx : HitContext, rng : Random, owner : Character) : EffectResult
+      +isExpired() : boolean
+    }
+  }
+
+  interface Effect {
+    +key() : String
+    +stackingRule() : StackingRule
+    +state() : EffectState
+    +isExpired() : boolean
+    +onPhase(ctx : HitContext, phase : HitContext.Phase, rng : Random, owner : Character) : EffectResult
+  }
+
+  class EffectState {
+    -charges : int
+    -stacks : int
+    -remainingTurns : int
+    -cooldownTurns : int
+    --
+    +ofCharges(charges : int) : EffectState
+    +ofDuration(turns : int) : EffectState
+    +ofStacks(stacks : int) : EffectState
+    +tickDuration() : void
+    +tickCooldown() : void
+  }
+
+  class EffectResult <<record>> {
+    +message : String
+    +consumedCharge : boolean
+    +changedState : boolean
+    --
+    +none() : EffectResult
+    +msg(message : String) : EffectResult
+    +consumed(message : String) : EffectResult
+    +changed(message : String) : EffectResult
+  }
+
+  enum StackingRule {
+    IGNORE
+    REPLACE
+    REFRESH
+    STACK
+  }
+}
+
+' =========================
+' HERENÇA / IMPLEMENTACIÓ
+' =========================
+ConstantDamageEffect ..|> Effect
+
+BurnEffect --|> ConstantDamageEffect
+PoisonEffect --|> ConstantDamageEffect
+BleedEffect --|> ConstantDamageEffect
+
+' =========================
+' RELACIONES PRINCIPALES
+' =========================
+Effect --> EffectState : utilitza
+Effect --> EffectResult : torna
+Effect --> StackingRule : regla
+
+ConstantDamageEffect --> EffectState
+ConstantDamageEffect --> EffectResult
+
+@enduml

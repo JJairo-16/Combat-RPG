@@ -105,6 +105,9 @@ public class CombatSystem {
                     winner);
         }
 
+        player1.tickSpiritualCallingCooldown();
+        player2.tickSpiritualCallingCooldown();
+
         double p1HealthPreRegen = p1Stats.getHealth();
         double p1ManaPreRegen = p1Stats.getMana();
 

@@ -23,6 +23,7 @@ public class Character {
     private static final int MIN_STAT = 10;
     /** Mínim de constitució. */
     private static final int MIN_CONSTITUTION = MIN_STAT + 2;
+    private static final double SPIRITUAL_CALLING_THRESHOLD = 0.20;
 
     protected final String name;
     protected final int age;
@@ -33,6 +34,8 @@ public class Character {
 
     protected final Random rng = new Random();
     protected final List<Effect> effects = new ArrayList<>();
+
+    private int spiritualCallingCooldown = 0;
 
     /** Crea un personatge validant nom, edat i estadístiques. */
     public Character(String name, int age, int[] stats, Breed breed) {
@@ -66,6 +69,49 @@ public class Character {
 
     public Weapon getWeapon() {
         return weapon;
+    }
+
+    public int getSpiritualCallingCooldown() {
+        return spiritualCallingCooldown;
+    }
+
+    public void setSpiritualCallingCooldown(int turns) {
+        this.spiritualCallingCooldown = Math.max(0, turns);
+    }
+
+    public void tickSpiritualCallingCooldown() {
+        if (spiritualCallingCooldown > 0) {
+            spiritualCallingCooldown--;
+        }
+    }
+
+    public boolean hasEffect(String key) {
+        if (key == null || key.isBlank()) {
+            return false;
+        }
+
+        for (Effect effect : effects) {
+            if (effect != null && !effect.isExpired() && key.equals(effect.key())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean isAtOrBelowHealthRatio(double ratio) {
+        double maxHealth = stats.getMaxHealth();
+        if (maxHealth <= 0) {
+            return false;
+        }
+
+        return (stats.getHealth() / maxHealth) <= ratio;
+    }
+
+    public boolean canUseSpiritualCalling() {
+        return hasEffect("CAN_CALL_SPIRITS")
+                && spiritualCallingCooldown <= 0
+                && isAtOrBelowHealthRatio(SPIRITUAL_CALLING_THRESHOLD);
     }
 
     /** Equipa una arma si compleix els requisits. */

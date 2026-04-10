@@ -1,46 +1,52 @@
 package rpgcombat.game.modifier;
 
 import java.util.Map;
+import java.util.function.Predicate;
 
 import menu.action.MenuAction;
 import rpgcombat.combat.Action;
 import rpgcombat.game.modifier.config.StatusModConfig;
-
 import rpgcombat.models.characters.Character;
 
 public final class StatusModFactory {
-    private StatusModFactory() {}
+    private StatusModFactory() {
+    }
 
     public static StatusMod create(StatusModConfig cfg) {
         validate(cfg);
 
         return new StatusMod(
-            cfg.priority(),
-            cfg.minCharges(),
-            cfg.maxCharges(),
-            cfg.minStacks(),
-            cfg.maxStacks(),
-            cfg.minRemainingTurns(),
-            cfg.maxRemainingTurns(),
-            cfg.label(),
-            StatusModActionRegistry.resolve(cfg.actionKey())
-        );
+                cfg.priority(),
+                cfg.minCharges(),
+                cfg.maxCharges(),
+                cfg.minStacks(),
+                cfg.maxStacks(),
+                cfg.minRemainingTurns(),
+                cfg.maxRemainingTurns(),
+                cfg.label(),
+                cfg.actionKey(),
+                StatusModActionRegistry.resolve(cfg.actionKey()),
+                StatusModActionRegistry.resolveAvailability(cfg.actionKey()));
     }
 
-    public static StatusMod create(StatusModConfig cfg, Map<String, MenuAction<Action, Character>> customActions) {
+    public static StatusMod create(
+            StatusModConfig cfg,
+            Map<String, MenuAction<Action, Character>> customActions,
+            Map<String, Predicate<Character>> customAvailability) {
         validate(cfg);
 
         return new StatusMod(
-            cfg.priority(),
-            cfg.minCharges(),
-            cfg.maxCharges(),
-            cfg.minStacks(),
-            cfg.maxStacks(),
-            cfg.minRemainingTurns(),
-            cfg.maxRemainingTurns(),
-            cfg.label(),
-            StatusModActionRegistry.resolve(cfg.actionKey(), customActions)
-        );
+                cfg.priority(),
+                cfg.minCharges(),
+                cfg.maxCharges(),
+                cfg.minStacks(),
+                cfg.maxStacks(),
+                cfg.minRemainingTurns(),
+                cfg.maxRemainingTurns(),
+                cfg.label(),
+                cfg.actionKey(),
+                StatusModActionRegistry.resolve(cfg.actionKey(), customActions),
+                StatusModActionRegistry.resolveAvailability(cfg.actionKey(), customAvailability));
     }
 
     private static void validate(StatusModConfig cfg) {

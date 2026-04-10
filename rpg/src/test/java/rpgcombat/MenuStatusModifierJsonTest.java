@@ -50,9 +50,9 @@ class MenuStatusModifierJsonTest {
             .create();
 
     private static final Map<String, MenuAction<Action, Character>> TEST_ACTIONS = Map.of(
-            "ignite", c -> MenuResult.repeatLoop(),
-            "explode", c -> MenuResult.repeatLoop(),
-            "shatter", c -> MenuResult.repeatLoop());
+            "ignite", p -> MenuResult.repeatLoop(),
+            "explode", p -> MenuResult.repeatLoop(),
+            "shatter", p -> MenuResult.repeatLoop());
 
     private Character player;
     private DynamicMenu<Action, Character> menu;

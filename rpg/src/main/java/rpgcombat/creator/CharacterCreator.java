@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 
 import rpgcombat.models.breeds.*;
 import rpgcombat.models.characters.Character;
+import rpgcombat.models.effects.impl.SpiritualCallingFlag;
 import rpgcombat.utils.input.Getters;
 import rpgcombat.utils.input.Menu;
 import rpgcombat.utils.rng.StatsBudget;
@@ -87,7 +88,7 @@ public class CharacterCreator {
 
     private static int id = 1;
 
-   /** Constructor privat per evitar instàncies. */
+    /** Constructor privat per evitar instàncies. */
     private CharacterCreator() {
     }
 
@@ -371,12 +372,12 @@ public class CharacterCreator {
         return lines;
     }
 
-   /** Converteix les dades de nom, edat i generació (estadístiques + raça) en una instància concreta de {@link Character} segons la raça seleccionada. */
+    /** Converteix les dades de nom, edat i generació (estadístiques + raça) en una instància concreta de {@link Character} segons la raça seleccionada. */
     private static Character convert(String name, int age, Generation g) {
         Breed b = g.breed();
-        int[] stats = g.stats;
+        int[] stats = g.stats();
 
-        return switch (b) {
+        Character character = switch (b) {
             case ORC -> new Orc(name, age, stats);
             case ELF -> new Elf(name, age, stats);
             case DWARF -> new Dwarf(name, age, stats);
@@ -385,9 +386,12 @@ public class CharacterCreator {
             case HALFLING -> new Halfling(name, age, stats);
             default -> new Character(name, age, stats, b);
         };
+
+        character.addEffect(new SpiritualCallingFlag());
+        return character;
     }
 
-   /** Crea un personatge de prova amb el nom "Dummy", edat mínima i una distribució equitativa de punts entre les estadístiques, associat a la raça Orc. */
+    /** Crea un personatge de prova amb el nom "Dummy", edat mínima i una distribució equitativa de punts entre les estadístiques, associat a la raça Orc. */
     public static Character dummy() {
         int base = TOTAL_POINTS / 7;
         int remainder = TOTAL_POINTS % 7;

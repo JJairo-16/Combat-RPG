@@ -1,21 +1,26 @@
 package rpgcombat.game.modifier;
 
+import java.util.function.Predicate;
+
 import menu.action.MenuAction;
 import rpgcombat.combat.Action;
 import rpgcombat.models.characters.Character;
+import rpgcombat.models.effects.Effect;
 
 public record StatusMod(
-            int priority,
-            Integer minCharges,
-            Integer maxCharges,
-            Integer minStacks,
-            Integer maxStacks,
-            Integer minRemainingTurns,
-            Integer maxRemainingTurns,
-            String label,
-            MenuAction<Action, Character> action) {
+        int priority,
+        Integer minCharges,
+        Integer maxCharges,
+        Integer minStacks,
+        Integer maxStacks,
+        Integer minRemainingTurns,
+        Integer maxRemainingTurns,
+        String label,
+        String actionKey,
+        MenuAction<Action, Character> action,
+        Predicate<Character> availability) {
 
-        public StatusMod(
+    public StatusMod(
             int priority,
             int minCharges,
             int maxCharges,
@@ -24,17 +29,30 @@ public record StatusMod(
             int minRemainingTurns,
             int maxRemainingTurns,
             String label,
-            MenuAction<Action, Character> action
-        ) {
-            this(
+            String actionKey,
+            MenuAction<Action, Character> action,
+            Predicate<Character> availability) {
+        this(
                 priority,
                 Integer.valueOf(minCharges), Integer.valueOf(maxCharges),
                 Integer.valueOf(minStacks), Integer.valueOf(maxStacks),
                 Integer.valueOf(minRemainingTurns), Integer.valueOf(maxRemainingTurns),
-                label, action);
-        }
-
-        public StatusMod(int priority, String label, MenuAction<Action, Character> action) {
-            this(priority, 0, -1, 0, -1, 1, -1, label, action);
-        }
+                label,
+                actionKey,
+                action,
+                availability);
     }
+
+    public StatusMod(
+            int priority,
+            String label,
+            String actionKey,
+            MenuAction<Action, Character> action,
+            Predicate<Character> availability) {
+        this(priority, 0, -1, 0, -1, 1, -1, label, actionKey, action, availability);
+    }
+
+    public boolean isAvailable(Character player, Effect effect) {
+        return availability != null && availability.test(player);
+    }
+}
