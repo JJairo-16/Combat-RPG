@@ -1,0 +1,39 @@
+{
+  "BURN": [
+    {
+      "priority": 20,
+      "minCharges": 0,
+      "maxCharges": -1,
+      "minStacks": 1,
+      "maxStacks": -1,
+      "minRemainingTurns": 1,
+      "maxRemainingTurns": -1,
+      "label": "Aviar les flames",
+      "actionKey": "ignite"
+    },
+    {
+      "priority": 10,
+      "minCharges": 2,
+      "maxCharges": 4,
+      "minStacks": 3,
+      "maxStacks": 5,
+      "minRemainingTurns": 2,
+      "maxRemainingTurns": 6,
+      "label": "Explosió d'incendi",
+      "actionKey": "explode"
+    }
+  ],
+  "FREEZE": [
+    {
+      "priority": 15,
+      "minCharges": 0,
+      "maxCharges": -1,
+      "minStacks": 1,
+      "maxStacks": 2,
+      "minRemainingTurns": 1,
+      "maxRemainingTurns": 3,
+      "label": "Trencaglaç",
+      "actionKey": "shatter"
+    }
+  ]
+}

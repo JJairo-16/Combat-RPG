@@ -1,22 +1,25 @@
 package rpgcombat.game;
 
 import java.util.List;
-
-import menu.DynamicMenu;
+import java.util.Map;
 
 import rpgcombat.combat.Action;
 import rpgcombat.combat.CombatSystem;
 import rpgcombat.combat.Winner;
 
+import rpgcombat.game.modifier.StatusMod;
+
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
+
 import rpgcombat.utils.cache.TextWrapCache;
 import rpgcombat.utils.input.Menu;
 import rpgcombat.utils.input.WeaponMenu;
 import rpgcombat.utils.ui.Ansi;
 import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.Prettier;
+
 import rpgcombat.weapons.Arsenal;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.config.WeaponDefinition;
@@ -26,11 +29,7 @@ import rpgcombat.weapons.config.WeaponType;
  * Controla el bucle principal del combat per torns entre dos jugadors.
  */
 public class GameLoop {
-    private final DynamicMenu<Action, Character> baseMenuAction = MenuBuilder.build(this::changeWeapon,
-            this::showPlayerInfoWrapper);
-    private final DynamicMenu<Action, Character> menuAction1;
-    private final DynamicMenu<Action, Character> menuAction2;
-
+    private final MenuCenter menu;
 
     private static final String HR = " " + Ansi.DARK_GRAY + "────────────────────────────────────────────────────────"
             + Ansi.RESET + "\n";
@@ -45,16 +44,12 @@ public class GameLoop {
     // Cache d'armes (assumim que no canvia durant la partida)
     private final List<WeaponDefinition> entries = Arsenal.values();
 
-    public GameLoop(Character player1, Character player2) {
+    public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers) {
         this.player1 = player1;
         this.player2 = player2;
         this.combatSystem = new CombatSystem(player1, player2);
 
-        this.menuAction1 = baseMenuAction.createChildMenu("Accions de " + player1.getName(), player1);
-        this.menuAction2 = baseMenuAction.createChildMenu("Accions de " + player2.getName(), player2);
-
-        this.menuAction1.saveCurrentAs("base");
-        this.menuAction2.saveCurrentAs("base");
+        this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers);
     }
 
     /**
@@ -66,8 +61,8 @@ public class GameLoop {
 
         Winner winner;
         do {
-            Action action1 = playTurn(player1);
-            Action action2 = playTurn(player2);
+            Action action1 = menu.playPlayer1();
+            Action action2 = menu.playPlayer2();
 
             cls.clear();
             winner = combatSystem.play(action1, action2);
@@ -113,15 +108,6 @@ public class GameLoop {
         sb.append("====================================\n");
 
         System.out.print(sb.toString());
-    }
-
-    /** Gestiona el torn d'un jugador fins que triï una acció vàlida. */
-    private Action playTurn(Character player) {
-        if (player == player1) {
-            return menuAction1.run();
-        } else {
-            return menuAction2.run();
-        }
     }
 
     private void showPlayerInfoWrapper(Character player) {

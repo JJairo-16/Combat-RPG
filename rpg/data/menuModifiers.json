@@ -1,0 +1,15 @@
+{
+  "EXAMPLE": [
+    {
+      "priority": 10,
+      "minCharges": 0,
+      "maxCharges": -1,
+      "minStacks": 1,
+      "maxStacks": -1,
+      "minRemainingTurns": 1,
+      "maxRemainingTurns": -1,
+      "label": "example label",
+      "actionKey": "exampleKey"
+    }
+  ]
+}

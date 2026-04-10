@@ -5,13 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import rpgcombat.models.breeds.Breed;
-import rpgcombat.models.breeds.Dwarf;
-import rpgcombat.models.breeds.Elf;
-import rpgcombat.models.breeds.Gnome;
-import rpgcombat.models.breeds.Halfling;
-import rpgcombat.models.breeds.Orc;
-import rpgcombat.models.breeds.Tiefling;
+import rpgcombat.models.breeds.*;
 import rpgcombat.models.characters.Character;
 import rpgcombat.utils.input.Getters;
 import rpgcombat.utils.input.Menu;
