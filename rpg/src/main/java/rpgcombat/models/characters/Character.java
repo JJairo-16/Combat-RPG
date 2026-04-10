@@ -34,7 +34,7 @@ public class Character {
     protected final Random rng = new Random();
     protected final List<Effect> effects = new ArrayList<>();
 
-   /** Crea un personatge validant nom, edat i estadístiques. */
+    /** Crea un personatge validant nom, edat i estadístiques. */
     public Character(String name, int age, int[] stats, Breed breed) {
         validateName(name);
         validateAge(age);
@@ -68,7 +68,7 @@ public class Character {
         return weapon;
     }
 
-   /** Equipa una arma si compleix els requisits. */
+    /** Equipa una arma si compleix els requisits. */
     public boolean setWeapon(Weapon w) {
         if (w == null) {
             return false;
@@ -82,7 +82,7 @@ public class Character {
         return true;
     }
 
-   /** Ataca amb l'arma equipada o sense arma. */
+    /** Ataca amb l'arma equipada o sense arma. */
     public AttackResult attack() {
         if (weapon == null) {
             return attackUnarmed();
@@ -91,14 +91,14 @@ public class Character {
         return weapon.attack(stats, rng);
     }
 
-   /** Executa un atac sense arma. */
+    /** Executa un atac sense arma. */
     protected AttackResult attackUnarmed() {
         return new AttackResult(
                 WeaponType.PHYSICAL.getBasicDamage(5, stats),
                 "ataca amb les mans desnudes.");
     }
 
-   /** Defensa reduint el dany rebut. */
+    /** Defensa reduint el dany rebut. */
     public Result defend(double attack) {
         if (attack <= 0) {
             return new Result(0, name + " ha bloquejat... sense raó aparent.");
@@ -109,7 +109,7 @@ public class Character {
         return new Result(recived, name + " ha bloquejat l'atac.");
     }
 
-   /** Intenta esquivar; si falla, rep tot el dany. */
+    /** Intenta esquivar; si falla, rep tot el dany. */
     public Result dodge(double attack) {
         DodgeResult dodgeResult = internalDodge(attack);
         if (dodgeResult.noAttack)
@@ -125,11 +125,11 @@ public class Character {
         return new Result(recived, name + " ha rebut l'atac de ple.");
     }
 
-   /** Resultat intern d'una esquiva. */
+    /** Resultat intern d'una esquiva. */
     protected record DodgeResult(double recived, boolean noAttack) {
     }
 
-   /** Resol internament el càlcul de l'esquiva. */
+    /** Resol internament el càlcul de l'esquiva. */
     protected DodgeResult internalDodge(double attack) {
         if (attack <= 0) {
             return new DodgeResult(0, true);
@@ -142,7 +142,7 @@ public class Character {
         return new DodgeResult(recived, false);
     }
 
-   /** Calcula la probabilitat d'esquiva. */
+    /** Calcula la probabilitat d'esquiva. */
     protected double tryToDodge() {
         double dexComponent = (stats.getDexterity() - 10) * 0.02;
         double luckComponent = stats.getLuck() * 0.0015;
@@ -152,28 +152,28 @@ public class Character {
         return Math.clamp(dodgeProb, 0.05, 0.75);
     }
 
-   /** Aplica dany directe. */
+    /** Aplica dany directe. */
     public Result getDamage(double attack) {
         stats.damage(attack);
         return new Result(attack, name + " ha rebut l'atac de ple.");
     }
 
-   /** Indica si el personatge continua viu. */
+    /** Indica si el personatge continua viu. */
     public boolean isAlive() {
         return stats.getHealth() > 0;
     }
 
-   /** Aplica la regeneració base. */
+    /** Aplica la regeneració base. */
     public void regen() {
         stats.reg();
     }
 
-   /** Retorna el generador aleatori del personatge. */
+    /** Retorna el generador aleatori del personatge. */
     public Random rng() {
         return rng;
     }
 
-   /** Afegeix un efecte segons la seva regla d'acumulació. */
+    /** Afegeix un efecte segons la seva regla d'acumulació. */
     public void addEffect(Effect incoming) {
         if (incoming == null) {
             return;
@@ -211,7 +211,11 @@ public class Character {
         effects.sort(Comparator.comparingInt(Effect::priority).reversed());
     }
 
-   /** Executa els efectes d'una fase i retorna els missatges. */
+    public void clearEffects() {
+        effects.clear();
+    }
+
+    /** Executa els efectes d'una fase i retorna els missatges. */
     public List<String> triggerEffects(HitContext ctx, HitContext.Phase phase, Random rng) {
         if (effects.isEmpty()) {
             return List.of();
@@ -222,7 +226,7 @@ public class Character {
         return messages;
     }
 
-   /** Executa els efectes d'una fase i afegeix els missatges a la sortida. */
+    /** Executa els efectes d'una fase i afegeix els missatges a la sortida. */
     public void triggerEffects(HitContext ctx, HitContext.Phase phase, Random rng, List<String> out) {
         if (effects.isEmpty()) {
             return;
@@ -242,7 +246,7 @@ public class Character {
         cleanupExpiredEffects();
     }
 
-   /** Elimina efectes expirats. */
+    /** Elimina efectes expirats. */
     protected void cleanupExpiredEffects() {
         if (effects.isEmpty()) {
             return;
@@ -251,7 +255,7 @@ public class Character {
         effects.removeIf(Effect::isExpired);
     }
 
-   /** Retorna una còpia immutable dels efectes actius. */
+    /** Retorna una còpia immutable dels efectes actius. */
     public List<Effect> getEffects() {
         return List.copyOf(effects);
     }
@@ -268,7 +272,7 @@ public class Character {
         }
     }
 
-   /** Valida longitud, mínims i suma de les estadístiques. */
+    /** Valida longitud, mínims i suma de les estadístiques. */
     private static void validateStats(int[] stats) {
         if (stats == null) {
             throw new IllegalArgumentException("L'array d'estadístiques no pot ser nul");
@@ -297,7 +301,7 @@ public class Character {
         }
     }
 
-   /** Aplica els modificadors de raça a les estadístiques base. */
+    /** Aplica els modificadors de raça a les estadístiques base. */
     protected static int[] applyBreed(int[] stats, Breed breed) {
         Stat[] statValues = Stat.values();
         int[] effectiveStats = stats.clone();

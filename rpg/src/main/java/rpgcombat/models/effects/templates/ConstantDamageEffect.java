@@ -3,30 +3,41 @@ package rpgcombat.models.effects.templates;
 import java.util.Random;
 
 import rpgcombat.models.characters.Character;
-import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
-import rpgcombat.models.effects.EffectState;
 import rpgcombat.weapons.passives.HitContext;
 
-public abstract class ConstantDamageEffect implements Effect {
-    protected static String key = "ConstantDamageEffect";
+/**
+ * Base per a efectes de dany constant per torn.
+ *
+ * Exemples:
+ * - verí
+ * - cremada
+ * - sagnat
+ *
+ * Aplica dany al portador al final del torn.
+ */
+public abstract class ConstantDamageEffect extends TimedEffect {
 
-    protected final EffectState state;
-    protected double damagePerTurn;
+    protected final double damagePerTurn;
 
-    protected ConstantDamageEffect(int turns, double damagePerTurn) {
-        this.state = EffectState.ofDuration(turns);
+    protected ConstantDamageEffect(String key, int turns, double damagePerTurn) {
+        super(key, turns);
+
+        if (damagePerTurn < 0) {
+            throw new IllegalArgumentException("El dany per torn no pot ser negatiu");
+        }
+
         this.damagePerTurn = damagePerTurn;
     }
 
-    @Override
-    public String key() {
-        return key;
+   /** Permet modificar el dany del tick (per stats, RNG, etc.). */
+    protected double resolveTickDamage(HitContext ctx, Random rng, Character owner) {
+        return damagePerTurn;
     }
 
-    @Override
-    public EffectState state() {
-        return state;
+   /** Missatge per defecte. */
+    protected String buildMessage(double appliedDamage, Character owner) {
+        return owner.getName() + " rep " + appliedDamage + " de dany per efecte.";
     }
 
     @Override
@@ -35,13 +46,18 @@ public abstract class ConstantDamageEffect implements Effect {
             return EffectResult.none();
         }
 
+        double damage = Math.max(0.0, resolveTickDamage(ctx, rng, owner));
+
+        if (damage > 0) {
+            owner.getStatistics().damage(damage);
+        }
+
         state.tickDuration();
 
-        return EffectResult.none();
-    }
+        if (damage > 0) {
+            return EffectResult.changed(buildMessage(damage, owner));
+        }
 
-    @Override
-    public boolean isExpired() {
-        return state.remainingTurns() <= 0;
+        return EffectResult.changed(null);
     }
 }

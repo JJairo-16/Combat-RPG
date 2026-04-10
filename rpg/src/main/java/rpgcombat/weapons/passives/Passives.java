@@ -62,7 +62,7 @@ public final class Passives {
 
                 ctx.defender().getStatistics().damage(extra);
 
-                return String.format("%s connecta un dany verdader del %d%%",
+                return String.format("%s connecta un dany verdader del %.2f%%",
                         ctx.attacker().getName(),
                         roundPercent(pct));
             }
@@ -96,7 +96,7 @@ public final class Passives {
         };
     }
 
-    private static int roundPercent(double n) {
-        return (int) Math.round(n * 100.0);
+    private static double roundPercent(double n) {
+        return n * 100.0;
     }
 }
