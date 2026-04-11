@@ -11,6 +11,12 @@ public class LoadingIntro {
     private final String madeByText;
     private final long minDisplayTime;
 
+    /** Seqüència ANSI per amagar el cursor. */
+    private static final String HIDE_CURSOR = "\u001B[?25l";
+
+    /** Seqüència ANSI per mostrar el cursor. */
+    private static final String SHOW_CURSOR = "\u001B[?25h";
+
     public LoadingIntro(long frameMillis, String[] loadingFrames, String creator, long minDisplayTime) {
         if (frameMillis <= 0)
             throw new IllegalArgumentException("frameMillis ha de ser major que 0");
@@ -48,6 +54,7 @@ public class LoadingIntro {
             throw new IllegalArgumentException("task no pot ser null");
 
         new Cleaner().clear();
+        hideCursor();
 
         Thread worker = new Thread(task, "loading-intro-task");
         worker.start();
@@ -79,14 +86,17 @@ public class LoadingIntro {
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+        } finally {
+            showCursor();
         }
     }
 
+    /** Mostra el text de l'autor amb animació. */
     private void showCreator() throws InterruptedException {
         if (madeByText == null || madeByText.isBlank()) {
             return;
         }
-        
+
         int width = visibleLength(madeByText);
 
         for (int i = 1; i <= madeByText.length(); i++) {
@@ -105,9 +115,22 @@ public class LoadingIntro {
         }
     }
 
+    /** Neteja la línia actual. */
     private void clearLine() {
         int width = Math.max(loadingMaxWidth(), visibleLength(madeByText)) + 4;
         out.print("\r" + " ".repeat(width) + "\r");
+        out.flush();
+    }
+
+    /** Amaga el cursor del terminal. */
+    private void hideCursor() {
+        out.print(HIDE_CURSOR);
+        out.flush();
+    }
+
+    /** Torna a mostrar el cursor del terminal. */
+    private void showCursor() {
+        out.print(SHOW_CURSOR);
         out.flush();
     }
 
@@ -156,6 +179,6 @@ public class LoadingIntro {
             }
         });
 
-        System.out.println("Programa iniciado.");
+        System.out.println("Programa iniciat.");
     }
 }
