@@ -52,8 +52,6 @@ public class MenuCenter {
 
     private static MenuStatusModifier configMenu(DynamicMenu<Action, Character> menu, Character player,
             Map<String, List<StatusMod>> modifiers) {
-        menu.modifiableDuringRun(true);
-
         menu.saveCurrentAs(BASE_SNAP);
         return new MenuStatusModifier(player, menu, modifiers);
     }

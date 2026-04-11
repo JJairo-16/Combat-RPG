@@ -98,7 +98,7 @@ public class TextWrapCache {
     }
 
    /** Algoritme simple de wrap. */
-    private List<String> wrap(String text, int maxWidth) {
+    public static List<String> wrap(String text, int maxWidth) {
         final int textLength = text.length();
         if (textLength <= maxWidth) {
             return List.of(text);

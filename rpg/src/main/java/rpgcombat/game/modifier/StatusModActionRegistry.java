@@ -10,12 +10,10 @@ import rpgcombat.models.characters.Character;
 public final class StatusModActionRegistry {
 
     private static final Map<String, MenuAction<Action, Character>> ACTIONS = Map.of(
-            "exampleKey", Actions::exampleKey,
             "spiritualCalling", Actions::spiritualCalling
     );
 
     private static final Map<String, Predicate<Character>> AVAILABILITY = Map.of(
-            "exampleKey", player -> true,
             "spiritualCalling", Character::canUseSpiritualCalling
     );
 

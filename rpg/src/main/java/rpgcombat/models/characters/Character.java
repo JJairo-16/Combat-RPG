@@ -9,6 +9,7 @@ import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.StackingRule;
+import rpgcombat.models.effects.impl.SpiritualCallingFlag;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;
 import rpgcombat.weapons.config.WeaponType;
@@ -109,7 +110,7 @@ public class Character {
     }
 
     public boolean canUseSpiritualCalling() {
-        return hasEffect("CAN_CALL_SPIRITS")
+        return hasEffect(SpiritualCallingFlag.GLOBAL_EFFECT_KEY)
                 && spiritualCallingCooldown <= 0
                 && isAtOrBelowHealthRatio(SPIRITUAL_CALLING_THRESHOLD);
     }

@@ -9,16 +9,8 @@ import rpgcombat.utils.ui.Prettier;
  * Utilitat per gestionar la tirada del "Llamado de los espíritus".
  *
  * <p>
- * Aquesta classe separa tres responsabilitats:
- * </p>
- * <ul>
- * <li>Tirada del dau (1–20) amb possible avantatge segons la sort</li>
- * <li>Càlcul del percentatge de curació a partir de la tirada</li>
- * <li>(Externament) animació del resultat</li>
- * </ul>
- *
- * <p>
- * Això permet desacoblar la lògica del RNG de la representació visual.
+ * Inclou una distribució suau que redueix lleugerament la probabilitat
+ * de valors alts (15–20) sense fer-ho evident.
  * </p>
  */
 public final class SpiritualCallingDie {
@@ -32,7 +24,9 @@ public final class SpiritualCallingDie {
     /** Percentatge màxim de curació (20%). */
     private static final double MAX = 0.20;
 
-    public static double roll(Random rng, Statistics stats) {
+    public record RollResult(int face, double percent) {}
+
+    public static RollResult roll(Random rng, Statistics stats) {
         int face = rollFace(rng, stats);
 
         try {
@@ -41,20 +35,11 @@ public final class SpiritualCallingDie {
             Prettier.error("Ha hagut un error amb l'animació. El resultat ha sigut " + face + ".");
         }
 
-        return computeHealPercent(face);
-
+        return new RollResult(face, computeHealPercent(face));
     }
 
     /**
-     * Realitza la tirada del dau de 20 cares.
-     *
-     * <p>
-     * Pot aplicar avantatge en funció de la sort del personatge.
-     * </p>
-     *
-     * @param rng   generador aleatori del personatge
-     * @param stats estadístiques del personatge
-     * @return valor entre 1 i 20 (inclòs)
+     * Realitza la tirada del dau amb possible avantatge.
      */
     private static int rollFace(Random rng, Statistics stats) {
         int roll1 = rollBell(rng);
@@ -66,35 +51,48 @@ public final class SpiritualCallingDie {
                 ? Math.max(roll1, roll2)
                 : roll1;
 
-        return applyHouseBias(chosen);
+        return applySoftHighBias(chosen);
     }
 
+    /**
+     * Distribució base amb forma de campana suau.
+     */
     private static int rollBell(Random rng) {
         double t = (rng.nextDouble() + rng.nextDouble() + rng.nextDouble()) / 3.0;
         int face = 1 + (int) Math.round(t * 19.0);
         return clamp1to20(face);
     }
 
-    private static int applyHouseBias(int face) {
+    /**
+     * Aplica una penalització molt suau als valors alts (15–20).
+     *
+     * <p>
+     * Només afecta la part alta de la distribució i ho fa de manera progressiva.
+     * Això evita que es noti artificial.
+     * </p>
+     */
+    private static int applySoftHighBias(int face) {
         double t = (face - 1) / 19.0;
 
-        // Exponente > 1 desplaza ligeramente hacia valores bajos.
-        double biased = Math.pow(t, 1.15);
+        // Llindar aproximat per començar a penalitzar (15/20 ≈ 0.74)
+        double threshold = 0.74;
 
-        int result = 1 + (int) Math.round(biased * 19.0);
+        if (t <= threshold) {
+            return face;
+        }
+
+        // Compressió suau del tram superior
+        double excess = (t - threshold) / (1.0 - threshold);
+
+        // Funció suau (no lineal) per reduir lleugerament els valors alts
+        double reduced = threshold + (Math.pow(excess, 1.25) * (1.0 - threshold));
+
+        int result = 1 + (int) Math.round(reduced * 19.0);
         return clamp1to20(result);
     }
 
     /**
      * Calcula el percentatge de curació a partir de la cara del dau.
-     *
-     * <p>
-     * El valor es normalitza i es transforma mitjançant una interpolació lineal
-     * entre {@link #MIN} i {@link #MAX}.
-     * </p>
-     *
-     * @param face resultat del dau (1–20)
-     * @return percentatge de curació (entre MIN i MAX)
      */
     private static double computeHealPercent(int face) {
         double normalized = (face - 1) / 19.0;
@@ -102,12 +100,7 @@ public final class SpiritualCallingDie {
     }
 
     /**
-     * Interpolació lineal entre dos valors.
-     *
-     * @param a valor mínim
-     * @param b valor màxim
-     * @param t factor normalitzat (0–1)
-     * @return valor interpolat
+     * Interpolació lineal.
      */
     private static double lerp(double a, double b, double t) {
         return a + (b - a) * t;
