@@ -11,6 +11,7 @@ import rpgcombat.game.GameLoop;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.game.modifier.config.StatusModLoader;
 import rpgcombat.models.characters.Character;
+import rpgcombat.utils.input.WeaponMenu;
 import rpgcombat.utils.rng.D20Terminal;
 import rpgcombat.utils.ui.LoadingIntro;
 import rpgcombat.utils.ui.Prettier;
@@ -32,6 +33,7 @@ public class App {
     private void preload() {
         try {
             Arsenal.preload(Path.of(WEAPONS_CONFIG_PATH));
+            WeaponMenu.preloadTerminal();
 
             modifiers = StatusModLoader.load(Path.of(STATUS_MENU_MODIFIER_PATH));
         } catch (IOException e) {

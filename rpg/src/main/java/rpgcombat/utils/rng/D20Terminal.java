@@ -26,16 +26,12 @@ public final class D20Terminal {
 
     private static List<String> preloadedFrames;
 
-    /**
-     * Carrega manualment els frames si encara no existeixen.
-     */
+   /** Carrega manualment els frames si encara no existeixen. */
     public static void preloadFrames() {
         ensureFramesLoaded();
     }
 
-    /**
-     * Inicia l'animació amb un RNG per defecte.
-     */
+   /** Inicia l'animació amb un RNG per defecte. */
     public static void animateDie(int finalResult) throws InterruptedException {
         animateDie(finalResult, new Random());
     }
@@ -105,17 +101,13 @@ public final class D20Terminal {
         }
     }
 
-    /**
-     * Retorna els frames, carregant-los en el primer ús si cal.
-     */
+   /** Retorna els frames, carregant-los en el primer ús si cal. */
     private static List<String> getFrames() {
         ensureFramesLoaded();
         return preloadedFrames;
     }
 
-    /**
-     * Garanteix la càrrega lazy dels frames.
-     */
+   /** Garanteix la càrrega lazy dels frames. */
     private static void ensureFramesLoaded() {
         if (preloadedFrames != null) {
             return;
@@ -128,9 +120,7 @@ public final class D20Terminal {
         }
     }
 
-    /**
-     * Precalcula tots els frames del dau.
-     */
+   /** Precalcula tots els frames del dau. */
     private static List<String> buildPreloadedFrames() {
         List<String> frames = new ArrayList<>(FACES);
 
@@ -152,9 +142,7 @@ public final class D20Terminal {
         return ColorGradient.getColor(percent);
     }
 
-    /**
-     * Calcula el següent valor animat segons la fase temporal.
-     */
+   /** Calcula el següent valor animat segons la fase temporal. */
     private static int nextAnimatedValue(int current, double t, Random rng) {
         if (t < 0.22) {
             return advance(current, randomBetween(rng, 3, 6));
@@ -171,9 +159,7 @@ public final class D20Terminal {
         return advance(current, 1);
     }
 
-    /**
-     * Calcula el retard entre frames segons el progrés.
-     */
+   /** Calcula el retard entre frames segons el progrés. */
     private static long calculateDelay(double t) {
         if (t < 0.18) return 18L;
         if (t < 0.34) return 28L;
@@ -184,9 +170,7 @@ public final class D20Terminal {
         return 150L;
     }
 
-    /**
-     * Calcula el retard final en funció de la distància al resultat.
-     */
+   /** Calcula el retard final en funció de la distància al resultat. */
     private static long calculateFinishingDelay(int current, int target) {
         int distance = circularDistance(current, target);
 
@@ -200,38 +184,28 @@ public final class D20Terminal {
         };
     }
 
-    /**
-     * Avança el valor circularment dins del rang del dau.
-     */
+   /** Avança el valor circularment dins del rang del dau. */
     private static int advance(int value, int steps) {
         return ((value - 1 + steps) % FACES) + 1;
     }
 
-    /**
-     * Distància circular entre dos valors del dau.
-     */
+   /** Distància circular entre dos valors del dau. */
     private static int circularDistance(int from, int to) {
         return (to - from + FACES) % FACES;
     }
 
-    /**
-     * Genera un enter aleatori dins d'un rang.
-     */
+   /** Genera un enter aleatori dins d'un rang. */
     private static int randomBetween(Random rng, int min, int max) {
         return rng.nextInt(max - min + 1) + min;
     }
 
-    /**
-     * Construeix el frame de text a mostrar.
-     */
+   /** Construeix el frame de text a mostrar. */
     private static String buildFrame(int value, String colorPrefix) {
         String number = colorPrefix + "==" + String.format("%2d", value) + "==" + ColorGradient.RESET;
         return TITLE + "\n" + center(number, NUMBER_WIDTH);
     }
 
-    /**
-     * Centra un text dins d'un ample fix.
-     */
+   /** Centra un text dins d'un ample fix. */
     private static String center(String text, int width) {
         if (text.length() >= width) {
             return text;
@@ -242,17 +216,13 @@ public final class D20Terminal {
         return " ".repeat(leftSpaces) + text + " ".repeat(rightSpaces);
     }
 
-    /**
-     * Imprimeix un bloc a la terminal.
-     */
+   /** Imprimeix un bloc a la terminal. */
     private static void printBlock(String block) {
         System.out.print(block);
         System.out.flush();
     }
 
-    /**
-     * Esborra un bloc anterior de la terminal.
-     */
+   /** Esborra un bloc anterior de la terminal. */
     private static void clearBlock(int lines) {
         if (lines <= 0) {
             return;
@@ -278,9 +248,7 @@ public final class D20Terminal {
         System.out.flush();
     }
 
-    /**
-     * Compta les línies d'un text.
-     */
+   /** Compta les línies d'un text. */
     private static int countLines(String text) {
         int lines = 1;
         for (int i = 0; i < text.length(); i++) {

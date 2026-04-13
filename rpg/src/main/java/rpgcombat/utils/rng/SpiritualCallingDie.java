@@ -38,9 +38,7 @@ public final class SpiritualCallingDie {
         return new RollResult(face, computeHealPercent(face));
     }
 
-    /**
-     * Realitza la tirada del dau amb possible avantatge.
-     */
+   /** Realitza la tirada del dau amb possible avantatge. */
     private static int rollFace(Random rng, Statistics stats) {
         int roll1 = rollBell(rng);
         int roll2 = rollBell(rng);
@@ -54,9 +52,7 @@ public final class SpiritualCallingDie {
         return applySoftHighBias(chosen);
     }
 
-    /**
-     * Distribució base amb forma de campana suau.
-     */
+   /** Distribució base amb forma de campana suau. */
     private static int rollBell(Random rng) {
         double t = (rng.nextDouble() + rng.nextDouble() + rng.nextDouble()) / 3.0;
         int face = 1 + (int) Math.round(t * 19.0);
@@ -91,17 +87,13 @@ public final class SpiritualCallingDie {
         return clamp1to20(result);
     }
 
-    /**
-     * Calcula el percentatge de curació a partir de la cara del dau.
-     */
+   /** Calcula el percentatge de curació a partir de la cara del dau. */
     private static double computeHealPercent(int face) {
         double normalized = (face - 1) / 19.0;
         return lerp(MIN, MAX, normalized);
     }
 
-    /**
-     * Interpolació lineal.
-     */
+   /** Interpolació lineal. */
     private static double lerp(double a, double b, double t) {
         return a + (b - a) * t;
     }
