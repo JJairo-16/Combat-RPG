@@ -5,7 +5,6 @@ import java.util.function.Predicate;
 import menu.action.MenuAction;
 import rpgcombat.combat.Action;
 import rpgcombat.models.characters.Character;
-import rpgcombat.models.effects.Effect;
 
 public record StatusMod(
         int priority,
@@ -52,7 +51,7 @@ public record StatusMod(
         this(priority, 0, -1, 0, -1, 1, -1, label, actionKey, action, availability);
     }
 
-    public boolean isAvailable(Character player, Effect effect) {
+    public boolean isAvailable(Character player) {
         return availability != null && availability.test(player);
     }
 }

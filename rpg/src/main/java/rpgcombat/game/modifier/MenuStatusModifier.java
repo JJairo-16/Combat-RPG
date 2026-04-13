@@ -114,7 +114,7 @@ public class MenuStatusModifier {
 
         EffectState state = effect.state();
         for (StatusMod mod : effectMods) {
-            if (!matches(state, mod) || !mod.isAvailable(player, effect)) {
+            if (!matches(state, mod) || !mod.isAvailable(player)) {
                 continue;
             }
 

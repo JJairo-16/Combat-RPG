@@ -2,6 +2,7 @@ package rpgcombat.game;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import rpgcombat.combat.Action;
 import rpgcombat.combat.CombatSystem;
@@ -16,6 +17,7 @@ import rpgcombat.models.characters.Statistics;
 import rpgcombat.utils.cache.TextWrapCache;
 import rpgcombat.utils.input.Menu;
 import rpgcombat.utils.input.WeaponMenu;
+import rpgcombat.utils.rng.DivineCharismaAffinity;
 import rpgcombat.utils.ui.Ansi;
 import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.Prettier;
@@ -50,6 +52,8 @@ public class GameLoop {
         this.combatSystem = new CombatSystem(player1, player2);
 
         this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers);
+
+        DivineCharismaAffinity.rollForRun(new Random());
     }
 
     /**
@@ -200,6 +204,8 @@ public class GameLoop {
             sb.append(HR);
         }
 
+        appendDivineAffinityCard(sb, player);
+
         System.out.print(sb.toString());
     }
 
@@ -296,6 +302,70 @@ public class GameLoop {
 
         sb.append('\n');
         sb.append(HR);
+    }
+
+    private void appendDivineAffinityCard(StringBuilder out, Character player) {
+        int charisma = player.getStatistics().getCharisma();
+
+        DivineCharismaAffinity.Band band = DivineCharismaAffinity.classifyBand(charisma);
+
+        String label;
+        String description;
+        String color;
+
+        switch (band) {
+            case DISLIKED_LOW:
+                label = "Molt desfavorable";
+                description = "Els déus aparten la mirada del teu esperit; avui no et contemplen amb cap favor.";
+                color = Ansi.RED;
+                break;
+
+            case NEUTRAL_LOW:
+                label = "Freda";
+                description = "Els déus et toleren amb una certa distància; no et rebutgen, però tampoc et beneeixen.";
+                color = Ansi.YELLOW;
+                break;
+
+            case FAVORED:
+                label = "Propícia";
+                description = "Els déus et contemplen amb una simpatia poc habitual; el teu carisma els resulta agradable.";
+                color = Ansi.GREEN;
+                break;
+
+            case NEUTRAL_HIGH:
+                label = "Acceptable";
+                description = "Els déus no et són hostils; hi ha una lleu disposició favorable en la seva mirada.";
+                color = Ansi.CYAN;
+                break;
+
+            case DISLIKED_HIGH:
+                label = "Incòmoda";
+                description = "Els déus et jutgen amb recel; hi ha alguna cosa en la teva presència que no els complau.";
+                color = Ansi.ORANGE;
+                break;
+
+            default:
+                label = "Desconeguda";
+                description = "La voluntat dels déus és impossible d'interpretar.";
+                color = Ansi.DARK_GRAY;
+                break;
+        }
+
+        out.append(' ')
+                .append(Ansi.WHITE).append(Ansi.BOLD).append("Favor dels déus").append(Ansi.RESET)
+                .append("  ")
+                .append(Ansi.DARK_GRAY).append('·').append(Ansi.RESET)
+                .append("  ")
+                .append(color).append(Ansi.BOLD).append(label).append(Ansi.RESET)
+                .append('\n');
+
+        for (String line : wrapCache.get(description, 78)) {
+            out.append("   ")
+                    .append(Ansi.DARK_GRAY).append(line).append(Ansi.RESET)
+                    .append('\n');
+        }
+
+        out.append(HR);
     }
 
     private String statChip(String label, int value) {

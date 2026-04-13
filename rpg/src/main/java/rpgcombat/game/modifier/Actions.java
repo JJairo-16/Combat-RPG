@@ -7,6 +7,7 @@ import rpgcombat.game.modifier.ui.Messages.CALL_SPIRITS;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.impl.SpiritualCallingFlag;
 import rpgcombat.utils.input.Menu;
+import rpgcombat.utils.rng.DivineCharismaAffinity;
 import rpgcombat.utils.rng.SpiritualCallingDie;
 import rpgcombat.utils.rng.SpiritualCallingDie.RollResult;
 import rpgcombat.utils.ui.Cleaner;
@@ -30,6 +31,10 @@ public final class Actions {
         cleaner.clear();
 
         CALL_SPIRITS.CALL_INIT.print();
+
+        int charisma = player.getStatistics().getCharisma();
+        System.out.println(DivineCharismaAffinity.classifyStanding(charisma).toString());
+
         Menu.pause();
         System.out.println();
 
@@ -55,7 +60,9 @@ public final class Actions {
     }
 
     private static void printSpiritMessage(int face) {
-        if (face <= 5)
+        if (face == 1)
+            CALL_SPIRITS.UNFORTUNATE.print();
+        else if (face <= 5)
             CALL_SPIRITS.VERY_LOW.print();
         else if (face <= 10)
             CALL_SPIRITS.LOW.print();
