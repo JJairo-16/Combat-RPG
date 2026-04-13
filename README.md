@@ -125,6 +125,9 @@ Aquest projecte utilitza les següents llibreries:
   Llibreria pròpia utilitzada per gestionar menús dinàmics dins del joc.  
   Disponible a: https://github.com/JJairo-16/dynamic-menu
 
+- **Jline**  
+  Llibreria utilitzada per gestionar l’entrada interactiva per consola, especialment per al menú d’armes i accions durant combat.
+
 ---
 
 ## ▌Instal·lació

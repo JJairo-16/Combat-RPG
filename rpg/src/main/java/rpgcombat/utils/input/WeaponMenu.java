@@ -1,57 +1,45 @@
 package rpgcombat.utils.input;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
+import java.util.Objects;
+
+import org.jline.keymap.BindingReader;
+import org.jline.keymap.KeyMap;
+import org.jline.terminal.Attributes;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+import org.jline.utils.InfoCmp.Capability;
 
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.utils.cache.TextWrapCache;
-import rpgcombat.utils.cache.WeaponCardCache;
 import rpgcombat.utils.ui.Ansi;
-import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.Prettier;
-import rpgcombat.weapons.Arsenal;
 import rpgcombat.weapons.config.WeaponDefinition;
 import rpgcombat.weapons.config.WeaponType;
 
 /**
- * Menú especialitzat per mostrar i seleccionar armes amb una aparença "card
- * style".
- *
- * <p>
- * Retorna un índex 0-based sobre la llista d'armes (o -1 si es cancel·la).
- * </p>
+ * Menú d'armes amb navegació dinàmica i vista compacta.
  */
 public final class WeaponMenu {
 
-    private static final Cleaner cls = new Cleaner();
-    private static final Scanner scanner = new Scanner(System.in);
     private static final TextWrapCache WRAP_CACHE = new TextWrapCache();
-    private static final WeaponCardCache weaponCardCache = new WeaponCardCache();
 
-    // Separador reutilitzable per evitar concatenacions repetides
-    private static final String CARD_SEPARATOR = "   " + Ansi.DARK_GRAY
-            + "────────────────────────────────────────────────────────" + Ansi.RESET + "\n";
-
-    /**
-     * Guarda l'última UI renderitzada del menú filtrat per poder reutilitzar-la
-     * mentre no canviï l'estat visual.
-     */
-    private static MenuRenderCache lastMenuRender;
+    private static final int NAME_WIDTH = 28;
+    private static final int TYPE_WIDTH = 16;
+    private static final int EQUIP_WIDTH = 13;
+    private static final int DETAIL_WRAP_WIDTH = 78;
 
     private WeaponMenu() {
     }
 
     /**
-     * Mostra un menú d'armes amb una opció inicial de "Cancelar".
+     * Mostra un menú d'armes sense filtres.
      *
-     * IMPORTANT:
-     * Aquesta funció assumeix que la llista ja està en l'ordre de visualització.
-     * Recomanat: passar {@link Arsenal#getSortedWeapons()}.
-     *
-     * @param weapons llista d'armes (Arsenal) a mostrar
+     * @param weapons armes a mostrar
      * @param title   títol del menú
-     * @return índex 0-based de la llista (0..n-1) o -1 si "Cancelar"
+     * @return índex 0-based o -1 si es cancel·la
      */
     public static int chooseWeapon(List<WeaponDefinition> weapons, String title) {
         if (weapons == null || weapons.isEmpty()) {
@@ -60,41 +48,16 @@ public final class WeaponMenu {
             return -1;
         }
 
-        final String renderedMenu = buildPlainMenu(weapons, title);
-
-        while (true) {
-            cls.clear();
-            System.out.print(renderedMenu);
-
-            int option = getInteger();
-            if (option == -1) {
-                Menu.pause();
-                continue;
-            }
-
-            if (option == 1) {
-                return -1;
-            }
-
-            int idx = option - 2;
-            if (idx >= 0 && idx < weapons.size()) {
-                return idx;
-            }
-
-            Prettier.warn("L'opció introduïda ha de estar entre 1 i %d. Si us plau, torni a intentar-ho.",
-                    weapons.size() + 1);
-            Menu.pause();
-        }
+        State state = new State();
+        return runInteractiveMenu(weapons, title, null, state, false);
     }
 
     /**
-     * Variant còmoda: retorna directament l'{@link Arsenal} escollit (o
-     * {@code null}
-     * si es cancel·la).
+     * Retorna directament l'arma escollida.
      *
-     * IMPORTANT:
-     * Aquesta funció assumeix que la llista ja està en l'ordre de visualització.
-     * Recomanat: passar {@link Arsenal#getSortedWeapons()}.
+     * @param weapons armes a mostrar
+     * @param title   títol del menú
+     * @return arma escollida o {@code null} si es cancel·la
      */
     public static WeaponDefinition chooseWeaponEntry(List<WeaponDefinition> weapons, String title) {
         if (weapons == null || weapons.isEmpty()) {
@@ -106,20 +69,12 @@ public final class WeaponMenu {
     }
 
     /**
-     * Menú d'armes amb filtres:
-     * <ul>
-     * <li>[F] mostrar només equipables (ON/OFF)</li>
-     * <li>[T] filtrar per tipus (Tots, Rang, Físic, Màgic)</li>
-     * </ul>
+     * Mostra un menú d'armes amb filtres.
      *
-     * Entrada:
-     * <ul>
-     * <li>número: seleccionar</li>
-     * <li>f: alternar equipables</li>
-     * <li>t: canviar tipus</li>
-     * </ul>
-     *
-     * @return índex 0-based sobre la llista ORIGINAL (weapons), o -1 si Cancelar.
+     * @param weapons armes a mostrar
+     * @param title   títol del menú
+     * @param stats   estadístiques per calcular si l'arma és equipable
+     * @return índex 0-based o -1 si es cancel·la
      */
     public static int chooseWeaponWithFilters(List<WeaponDefinition> weapons, String title, Statistics stats) {
         if (weapons == null || weapons.isEmpty()) {
@@ -128,75 +83,40 @@ public final class WeaponMenu {
             return -1;
         }
 
-        boolean onlyEquippable = false;
-        TypeFilter typeFilter = TypeFilter.ALL;
-
-        while (true) {
-            List<FilteredItem> filtered = buildFilteredItems(weapons, stats, onlyEquippable, typeFilter);
-
-            String renderedMenu = buildFilteredMenu(
-                    weapons,
-                    title,
-                    stats,
-                    filtered,
-                    onlyEquippable,
-                    typeFilter);
-
-            cls.clear();
-            System.out.print(renderedMenu);
-
-            String in = getInput();
-            if (in == null) {
-                Menu.pause();
-                continue;
-            }
-
-            if (in.equalsIgnoreCase("f")) {
-                onlyEquippable = !onlyEquippable;
-                continue;
-            }
-
-            if (in.equalsIgnoreCase("t")) {
-                typeFilter = typeFilter.next();
-                continue;
-            }
-
-            Integer opt = tryParseInt(in);
-            if (opt == null) {
-                Prettier.warn("Introdueix un número, o bé 'f' / 't'.");
-                Menu.pause();
-                continue;
-            }
-
-            if (opt == 1) {
-                return -1;
-            }
-
-            int idxInFiltered = opt - 2;
-            if (idxInFiltered < 0 || idxInFiltered >= filtered.size()) {
-                Prettier.warn("L'opció introduïda ha d'estar entre 1 i %d.", filtered.size() + 1);
-                Menu.pause();
-                continue;
-            }
-
-            return filtered.get(idxInFiltered).index;
-        }
+        State state = new State();
+        return runInteractiveMenu(weapons, title, stats, state, true);
     }
 
     /**
-     * Variant còmoda del menú amb filtres: retorna directament l'{@link Arsenal} (o
-     * {@code null} si es cancel·la).
+     * Retorna directament l'arma escollida amb filtres.
+     *
+     * @param weapons armes a mostrar
+     * @param title   títol del menú
+     * @param stats   estadístiques per calcular si l'arma és equipable
+     * @return arma escollida o {@code null} si es cancel·la
      */
-    public static WeaponDefinition chooseWeaponEntryWithFilters(List<WeaponDefinition> weapons, String title, Statistics stats) {
+    public static WeaponDefinition chooseWeaponEntryWithFilters(
+            List<WeaponDefinition> weapons, String title, Statistics stats) {
+        ensureWeapons(weapons);
         int idx = chooseWeaponWithFilters(weapons, title, stats);
-        if (weapons == null) {
-            return null;
-        }
         return (idx < 0) ? null : weapons.get(idx);
     }
 
-    public static int chooseWeaponWithFilters(List<WeaponDefinition> weapons, String title, Statistics stats,
+    /**
+     * Mostra un menú d'armes amb estat de filtres persistent.
+     *
+     * @param weapons armes a mostrar
+     * @param title   títol del menú
+     * @param stats   estadístiques per calcular si l'arma és equipable
+     * @param state   estat extern dels filtres
+     * @return índex 0-based o -1 si es cancel·la
+     */
+    public static int chooseWeaponWithFilters(
+            List<WeaponDefinition> weapons,
+            String title,
+            Statistics stats,
             FilterState state) {
+
         if (weapons == null || weapons.isEmpty()) {
             Prettier.warn("No hi ha armes disponibles.");
             Menu.pause();
@@ -207,411 +127,106 @@ public final class WeaponMenu {
             state = new FilterState();
         }
 
-        boolean onlyEquippable = state.isOnlyEquippable();
-        TypeFilter typeFilter = state.getTypeFilter();
+        State internal = new State();
+        internal.cursor = 0;
+        internal.onlyEquippable = state.isOnlyEquippable();
+        internal.typeFilter = state.getTypeFilter();
 
-        while (true) {
-            List<FilteredItem> filtered = buildFilteredItems(weapons, stats, onlyEquippable, typeFilter);
+        int result = runInteractiveMenu(weapons, title, stats, internal, true);
 
-            String renderedMenu = getOrBuildFilteredMenu(
-                    weapons,
-                    title,
-                    stats,
-                    filtered,
-                    onlyEquippable,
-                    typeFilter);
+        state.setOnlyEquippable(internal.onlyEquippable);
+        state.setTypeFilter(internal.typeFilter);
 
-            cls.clear();
-            System.out.print(renderedMenu);
-
-            String in = getInput();
-            if (in == null) {
-                Menu.pause();
-                continue;
-            }
-
-            if (in.equalsIgnoreCase("f")) {
-                onlyEquippable = !onlyEquippable;
-                state.setOnlyEquippable(onlyEquippable);
-                continue;
-            }
-
-            if (in.equalsIgnoreCase("t")) {
-                typeFilter = typeFilter.next();
-                state.setTypeFilter(typeFilter);
-                continue;
-            }
-
-            Integer opt = tryParseInt(in);
-            if (opt == null) {
-                Prettier.warn("Introdueix un número, o bé 'f' / 't'.");
-                Menu.pause();
-                continue;
-            }
-
-            if (opt == 1) {
-                state.setOnlyEquippable(onlyEquippable);
-                state.setTypeFilter(typeFilter);
-                return -1;
-            }
-
-            int idxInFiltered = opt - 2;
-            if (idxInFiltered < 0 || idxInFiltered >= filtered.size()) {
-                Prettier.warn("L'opció introduïda ha d'estar entre 1 i %d.", filtered.size() + 1);
-                Menu.pause();
-                continue;
-            }
-
-            state.setOnlyEquippable(onlyEquippable);
-            state.setTypeFilter(typeFilter);
-
-            return filtered.get(idxInFiltered).index;
-        }
+        return result;
     }
 
+    /**
+     * Retorna directament l'arma escollida amb estat de filtres persistent.
+     *
+     * @param weapons armes a mostrar
+     * @param title   títol del menú
+     * @param stats   estadístiques per calcular si l'arma és equipable
+     * @param state   estat extern dels filtres
+     * @return arma escollida o {@code null} si es cancel·la
+     */
     public static WeaponDefinition chooseWeaponEntryWithFilters(
-            List<WeaponDefinition> weapons, String title, Statistics stats, FilterState state) {
+            List<WeaponDefinition> weapons,
+            String title,
+            Statistics stats,
+            FilterState state) {
+
+        ensureWeapons(weapons);
+
         int idx = chooseWeaponWithFilters(weapons, title, stats, state);
         return (idx < 0) ? null : weapons.get(idx);
     }
 
     /**
-     * Element filtrat: guarda l'índex original i si és equipable (per evitar cridar
-     * canEquip(stats) més d'un cop per repintat).
+     * Estat extern dels filtres.
+     */
+    public static final class FilterState {
+
+        private boolean onlyEquippable = false;
+        private TypeFilter typeFilter = TypeFilter.ALL;
+
+        public FilterState() {
+        }
+
+        public FilterState(boolean onlyEquippable, TypeFilter typeFilter) {
+            this.onlyEquippable = onlyEquippable;
+            this.typeFilter = (typeFilter == null) ? TypeFilter.ALL : typeFilter;
+        }
+
+        public boolean isOnlyEquippable() {
+            return onlyEquippable;
+        }
+
+        public void setOnlyEquippable(boolean onlyEquippable) {
+            this.onlyEquippable = onlyEquippable;
+        }
+
+        public TypeFilter getTypeFilter() {
+            return typeFilter;
+        }
+
+        public void setTypeFilter(TypeFilter typeFilter) {
+            this.typeFilter = (typeFilter == null) ? TypeFilter.ALL : typeFilter;
+        }
+    }
+
+    /**
+     * Element filtrat amb índex original.
      */
     private record FilteredItem(int index, boolean equippable) {
     }
 
     /**
-     * Captura mínima de l'últim menú renderitzat per reutilitzar-lo si no hi ha
-     * canvis visuals.
+     * Estat intern del menú.
      */
-    private record MenuRenderCache(
-            List<WeaponDefinition> weaponsRef,
-            String title,
-            Statistics statsRef,
-            boolean onlyEquippable,
-            TypeFilter typeFilter,
-            int filteredHash,
-            String renderedMenu) {
+    private static final class State {
+        private int cursor = 0;
+        private boolean onlyEquippable = false;
+        private TypeFilter typeFilter = TypeFilter.ALL;
     }
 
     /**
-     * Construeix la llista d'elements filtrats (índexos originals) i, si cal,
-     * calcula també l'etiqueta d'equipable una sola vegada.
+     * Accions del menú.
      */
-    private static List<FilteredItem> buildFilteredItems(
-            List<WeaponDefinition> weapons,
-            Statistics stats,
-            boolean onlyEquippable,
-            TypeFilter typeFilter) {
-
-        List<FilteredItem> out = new ArrayList<>();
-
-        for (int i = 0; i < weapons.size(); i++) {
-            WeaponDefinition w = weapons.get(i);
-            WeaponType wt = w.getType();
-
-            if (!typeFilter.matches(wt)) {
-                continue;
-            }
-
-            boolean equippable = false;
-            if (stats != null && wt != null) {
-                equippable = wt.canEquip(stats);
-            }
-
-            if (onlyEquippable && !equippable) {
-                continue;
-            }
-
-            out.add(new FilteredItem(i, equippable));
-        }
-
-        return out;
+    private enum Action {
+        UP,
+        DOWN,
+        LEFT,
+        RIGHT,
+        TOGGLE_EQUIPPABLE,
+        SELECT,
+        QUIT,
+        NONE
     }
 
-    private static String colorByType(WeaponType type) {
-        if (type == null) {
-            return Ansi.WHITE;
-        }
-
-        return switch (type) {
-            case PHYSICAL -> Ansi.MAGENTA;
-            case RANGE -> Ansi.BRIGHT_BLUE;
-            case MAGICAL -> Ansi.ORANGE;
-            default -> Ansi.WHITE;
-        };
-    }
-
-    private static int getInteger() {
-        String input = scanner.nextLine().trim();
-        if (input.isEmpty()) {
-            Prettier.warn("L'opció introduïda no pot estar en blanc. Si us plau, torni a intentar-ho.");
-            return -1;
-        }
-
-        try {
-            return Integer.parseInt(input);
-        } catch (NumberFormatException e) {
-            Prettier.warn("L'opció introduïda ha de ser un nombre enter positiu. Si us plau, torni a intentar-ho.");
-        } catch (Exception e) {
-            Prettier.warn("Ha hagut un error. Si us plau, torni a intentar-ho.");
-        }
-
-        return -1;
-    }
-
-    private static String getInput() {
-        try {
-            String s = scanner.nextLine();
-            if (s == null) {
-                return null;
-            }
-
-            s = s.trim();
-            if (s.isEmpty()) {
-                Prettier.warn("L'entrada no pot estar en blanc.");
-                return null;
-            }
-
-            return s;
-        } catch (Exception e) {
-            Prettier.warn("Ha hagut un error. Si us plau, torni a intentar-ho.");
-            return null;
-        }
-    }
-
-    private static void appendTitle(StringBuilder sb, String title) {
-        sb.append(Ansi.BOLD).append(title).append(Ansi.RESET).append("\n\n");
-    }
-
-    private static void appendFilterBar(StringBuilder sb, boolean onlyEquippable, TypeFilter typeFilter) {
-        String eq = onlyEquippable ? (Ansi.GREEN + "ON" + Ansi.RESET) : (Ansi.DARK_GRAY + "OFF" + Ansi.RESET);
-        String type = Ansi.BOLD + typeFilter.getLabel() + Ansi.RESET;
-
-        sb.append(Ansi.DARK_GRAY)
-                .append("Filtres:")
-                .append(Ansi.RESET)
-                .append("  [F] Equipables: ")
-                .append(eq)
-                .append("   [T] Tipus: ")
-                .append(type)
-                .append('\n');
-    }
-
-    private static void appendWeapons(StringBuilder sb, List<WeaponDefinition> weapons) {
-        sb.append(Ansi.DARK_GRAY).append(Ansi.BOLD).append("1.").append(Ansi.RESET)
-                .append(' ')
-                .append(Ansi.DARK_GRAY).append("Cancelar").append(Ansi.RESET)
-                .append('\n');
-
-        final int n = weapons.size();
-        int num = 2;
-
-        for (int i = 0; i < n; i++) {
-            WeaponDefinition w = weapons.get(i);
-            appendWeaponCard(sb, num++, w, null, false);
-        }
-    }
-
-    private static void appendWeaponsFiltered(
-            StringBuilder sb,
-            List<WeaponDefinition> weapons,
-            List<FilteredItem> filtered,
-            Statistics stats) {
-
-        sb.append(Ansi.DARK_GRAY).append(Ansi.BOLD).append("1.").append(Ansi.RESET)
-                .append(' ')
-                .append(Ansi.DARK_GRAY).append("Cancelar").append(Ansi.RESET)
-                .append('\n');
-
-        if (filtered.isEmpty()) {
-            sb.append(Ansi.DARK_GRAY)
-                    .append("  (No hi ha armes amb aquests filtres. Prem 'f' o 't' per canviar.)")
-                    .append(Ansi.RESET)
-                    .append('\n');
-            return;
-        }
-
-        int num = 2;
-        for (FilteredItem it : filtered) {
-            WeaponDefinition w = weapons.get(it.index);
-            appendWeaponCard(sb, num++, w, stats, it.equippable);
-        }
-    }
-
-    private static void appendWeaponCard(
-            StringBuilder out,
-            int optionNumber,
-            WeaponDefinition w,
-            Statistics stats,
-            boolean equippable) {
-
-        if (w == null) {
-            return;
-        }
-
-        final boolean showEquipTag = (stats != null);
-        final int key = weaponCardCache.keyOf(w, showEquipTag, equippable);
-
-        String cachedCard = weaponCardCache.cardOf(key);
-        if (cachedCard != null) {
-            out.append(Ansi.CYAN).append(Ansi.BOLD).append(optionNumber).append(".").append(Ansi.RESET);
-            out.append(cachedCard);
-            return;
-        }
-
-        StringBuilder card = new StringBuilder(256);
-
-        card.append(' ')
-                .append(Ansi.WHITE).append(Ansi.BOLD).append(w.getName()).append(Ansi.RESET)
-                .append(' ');
-
-        WeaponType wt = w.getType();
-        String typeName = (wt == null) ? "?" : wt.getName();
-
-        card.append(colorByType(wt))
-                .append('[').append(typeName).append(']')
-                .append(Ansi.RESET);
-
-        if (showEquipTag) {
-            card.append(' ');
-            if (equippable) {
-                card.append(Ansi.GREEN).append(Ansi.BOLD).append("(EQUIPABLE)").append(Ansi.RESET);
-            } else {
-                card.append(Ansi.DARK_GRAY).append("(NO EQUIPABLE)").append(Ansi.RESET);
-            }
-        }
-
-        card.append('\n');
-
-        String desc = w.getDescription();
-        if (desc != null && !desc.isBlank()) {
-            for (String line : WRAP_CACHE.get(desc, 78)) {
-                card.append("   ").append(Ansi.DARK_GRAY).append(line).append(Ansi.RESET).append('\n');
-            }
-        }
-
-        card.append("   ")
-                .append(Ansi.GREEN).append("Dany: ").append(Ansi.RESET).append(Ansi.BOLD).append(w.getBaseDamage())
-                .append(Ansi.RESET)
-                .append("   ")
-                .append(Ansi.YELLOW).append("Crit: ").append(Ansi.RESET).append(Ansi.BOLD)
-                .append(roundPer(w.getCriticalProb())).append("%").append(Ansi.RESET)
-                .append("   ")
-                .append(Ansi.YELLOW).append("Mult: ").append(Ansi.RESET).append(Ansi.BOLD).append("x")
-                .append(round2(w.getCriticalDamage())).append(Ansi.RESET)
-                .append("   ");
-
-        double manaPrice = w.getManaPrice();
-        if (manaPrice > 0) {
-            card.append(Ansi.BRIGHT_BLUE).append("Mana: ").append(Ansi.RESET).append(Ansi.BOLD)
-                    .append(Math.round(manaPrice))
-                    .append(Ansi.RESET);
-        } else {
-            card.append(Ansi.DARK_GRAY).append("Mana: -").append(Ansi.RESET);
-        }
-
-        card.append('\n');
-        card.append(CARD_SEPARATOR);
-
-        String cardStr = card.toString();
-        weaponCardCache.save(key, cardStr);
-
-        out.append(Ansi.CYAN).append(Ansi.BOLD).append(optionNumber).append(".").append(Ansi.RESET);
-        out.append(cardStr);
-    }
-
-    private static String buildPlainMenu(List<WeaponDefinition> weapons, String title) {
-        StringBuilder sb = new StringBuilder(32_768);
-
-        appendTitle(sb, title);
-        appendWeapons(sb, weapons);
-        sb.append('\n');
-        sb.append("Seleccioni una arma, si us plau: ");
-
-        return sb.toString();
-    }
-
-    private static String buildFilteredMenu(
-            List<WeaponDefinition> weapons,
-            String title,
-            Statistics stats,
-            List<FilteredItem> filtered,
-            boolean onlyEquippable,
-            TypeFilter typeFilter) {
-
-        StringBuilder sb = new StringBuilder(64_000);
-
-        appendTitle(sb, title);
-        appendFilterBar(sb, onlyEquippable, typeFilter);
-        sb.append('\n');
-        appendWeaponsFiltered(sb, weapons, filtered, stats);
-        sb.append('\n');
-        sb.append("Opció (número), [F] equipables, [T] tipus: ");
-
-        return sb.toString();
-    }
-
-    private static String getOrBuildFilteredMenu(
-            List<WeaponDefinition> weapons,
-            String title,
-            Statistics stats,
-            List<FilteredItem> filtered,
-            boolean onlyEquippable,
-            TypeFilter typeFilter) {
-
-        int filteredHash = hashFiltered(filtered);
-
-        if (lastMenuRender != null
-                && lastMenuRender.weaponsRef() == weapons
-                && lastMenuRender.statsRef() == stats
-                && equalsNullable(lastMenuRender.title(), title)
-                && lastMenuRender.onlyEquippable() == onlyEquippable
-                && lastMenuRender.typeFilter() == typeFilter
-                && lastMenuRender.filteredHash() == filteredHash) {
-            return lastMenuRender.renderedMenu();
-        }
-
-        String renderedMenu = buildFilteredMenu(weapons, title, stats, filtered, onlyEquippable, typeFilter);
-
-        lastMenuRender = new MenuRenderCache(
-                weapons,
-                title,
-                stats,
-                onlyEquippable,
-                typeFilter,
-                filteredHash,
-                renderedMenu);
-
-        return renderedMenu;
-    }
-
-    private static int hashFiltered(List<FilteredItem> filtered) {
-        int hash = 1;
-
-        for (FilteredItem item : filtered) {
-            hash = 31 * hash + item.index();
-            hash = 31 * hash + (item.equippable() ? 1 : 0);
-        }
-
-        return hash;
-    }
-
-    private static boolean equalsNullable(Object a, Object b) {
-        return a == b || (a != null && a.equals(b));
-    }
-
-    private static Integer tryParseInt(String s) {
-        try {
-            return Integer.parseInt(s.trim());
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private enum TypeFilter {
+    /**
+     * Filtres de tipus d'arma.
+     */
+    public enum TypeFilter {
         ALL("Tots"),
         RANGE("Rang"),
         PHYSICAL("Físic"),
@@ -652,61 +267,534 @@ public final class WeaponMenu {
                 case MAGICAL -> ALL;
             };
         }
-    }
 
-    public static final class FilterState {
-
-        private boolean onlyEquippable = false;
-        private TypeFilter typeFilter = TypeFilter.ALL;
-
-        public FilterState() {
-        }
-
-        public FilterState(boolean onlyEquippable, TypeFilter typeFilter) {
-            this.onlyEquippable = onlyEquippable;
-            this.typeFilter = (typeFilter == null) ? TypeFilter.ALL : typeFilter;
-        }
-
-        public boolean isOnlyEquippable() {
-            return onlyEquippable;
-        }
-
-        public void setOnlyEquippable(boolean onlyEquippable) {
-            this.onlyEquippable = onlyEquippable;
-        }
-
-        public TypeFilter getTypeFilter() {
-            return typeFilter;
-        }
-
-        public void setTypeFilter(TypeFilter typeFilter) {
-            this.typeFilter = (typeFilter == null) ? TypeFilter.ALL : typeFilter;
+        public TypeFilter previous() {
+            return switch (this) {
+                case ALL -> MAGICAL;
+                case RANGE -> ALL;
+                case PHYSICAL -> RANGE;
+                case MAGICAL -> PHYSICAL;
+            };
         }
     }
 
+    /**
+     * Executa el menú interactiu.
+     */
+    private static int runInteractiveMenu(
+            List<WeaponDefinition> weapons,
+            String title,
+            Statistics stats,
+            State state,
+            boolean allowFilters) {
+
+        try (Terminal terminal = TerminalBuilder.builder()
+                .system(true)
+                .nativeSignals(true)
+                .build()) {
+
+            return runMenuLoop(terminal, weapons, title, stats, state, allowFilters);
+
+        } catch (Exception e) {
+            Prettier.warn("No s'ha pogut obrir el menú interactiu: %s", e.getMessage());
+            Menu.pause();
+            return -1;
+        }
+    }
+
+    /**
+     * Bucle principal del menú.
+     */
+    private static int runMenuLoop(
+            Terminal terminal,
+            List<WeaponDefinition> weapons,
+            String title,
+            Statistics stats,
+            State state,
+            boolean allowFilters) {
+
+        Attributes originalAttributes = terminal.enterRawMode();
+        BindingReader reader = new BindingReader(terminal.reader());
+        KeyMap<Action> keyMap = buildKeyMap(terminal, allowFilters);
+
+        boolean dirty = true;
+
+        try {
+            terminal.puts(Capability.keypad_xmit);
+            terminal.puts(Capability.cursor_invisible);
+            terminal.flush();
+
+            while (true) {
+                List<FilteredItem> filtered = buildFilteredItems(
+                        weapons,
+                        stats,
+                        allowFilters && state.onlyEquippable,
+                        allowFilters ? state.typeFilter : TypeFilter.ALL);
+
+                normalizeCursor(state, filtered.size());
+
+                if (dirty) {
+                    clearScreen(terminal);
+                    renderMenu(terminal, weapons, filtered, title, stats, state, allowFilters);
+                    dirty = false;
+                }
+
+                Action action = reader.readBinding(keyMap);
+                if (action == null) {
+                    action = Action.NONE;
+                }
+
+                if (action == Action.SELECT) {
+                    if (!filtered.isEmpty()) {
+                        return filtered.get(state.cursor).index();
+                    }
+                    continue;
+                }
+
+                if (action == Action.QUIT) {
+                    return -1;
+                }
+
+                dirty = applyAction(action, state, filtered.size(), allowFilters);
+            }
+        } finally {
+            terminal.setAttributes(originalAttributes);
+            terminal.puts(Capability.keypad_local);
+            terminal.puts(Capability.cursor_visible);
+            terminal.flush();
+        }
+    }
+
+    /**
+     * Ajusta el cursor als límits de la llista filtrada.
+     */
+    private static void normalizeCursor(State state, int filteredSize) {
+        if (filteredSize <= 0) {
+            state.cursor = 0;
+            return;
+        }
+
+        if (state.cursor < 0) {
+            state.cursor = 0;
+        } else if (state.cursor >= filteredSize) {
+            state.cursor = filteredSize - 1;
+        }
+    }
+
+    /**
+     * Aplica una acció de teclat.
+     */
+    private static boolean applyAction(Action action, State state, int filteredSize, boolean allowFilters) {
+        switch (action) {
+            case UP -> {
+                if (filteredSize > 0 && state.cursor > 0) {
+                    state.cursor--;
+                    return true;
+                }
+                return false;
+            }
+            case DOWN -> {
+                if (filteredSize > 0 && state.cursor < filteredSize - 1) {
+                    state.cursor++;
+                    return true;
+                }
+                return false;
+            }
+            case LEFT -> {
+                if (!allowFilters) {
+                    return false;
+                }
+
+                TypeFilter previous = state.typeFilter.previous();
+                if (previous != state.typeFilter) {
+                    state.typeFilter = previous;
+                    state.cursor = 0;
+                    return true;
+                }
+                return false;
+            }
+            case RIGHT -> {
+                if (!allowFilters) {
+                    return false;
+                }
+
+                TypeFilter next = state.typeFilter.next();
+                if (next != state.typeFilter) {
+                    state.typeFilter = next;
+                    state.cursor = 0;
+                    return true;
+                }
+                return false;
+            }
+            case TOGGLE_EQUIPPABLE -> {
+                if (!allowFilters) {
+                    return false;
+                }
+
+                state.onlyEquippable = !state.onlyEquippable;
+                state.cursor = 0;
+                return true;
+            }
+            case NONE, SELECT, QUIT -> {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Renderitza el menú complet.
+     */
+    private static void renderMenu(
+            Terminal terminal,
+            List<WeaponDefinition> weapons,
+            List<FilteredItem> filtered,
+            String title,
+            Statistics stats,
+            State state,
+            boolean allowFilters) {
+
+        PrintWriter out = terminal.writer();
+
+        out.println(Ansi.BOLD + safe(title) + Ansi.RESET);
+        out.println();
+
+        if (allowFilters) {
+            String eq = state.onlyEquippable
+                    ? Ansi.GREEN + "ON" + Ansi.RESET
+                    : Ansi.DARK_GRAY + "OFF" + Ansi.RESET;
+
+            out.println(
+                    Ansi.DARK_GRAY + "Filtres:" + Ansi.RESET
+                            + " [E] Equipables: " + eq
+                            + "   [←/→ o A/D] Tipus: " + Ansi.BOLD + state.typeFilter.getLabel() + Ansi.RESET);
+        } else {
+            out.println(
+                    Ansi.DARK_GRAY + "Navegació:" + Ansi.RESET
+                            + " [↑/↓ o W/S] moure   [Enter] seleccionar   [Q] cancel·lar");
+        }
+
+        out.println();
+
+        renderCompactList(out, weapons, filtered, stats, state.cursor);
+
+        out.println();
+        out.println(Ansi.DARK_GRAY + "────────────────────────────────────────────────────────" + Ansi.RESET);
+
+        if (!filtered.isEmpty()) {
+            FilteredItem selectedItem = filtered.get(state.cursor);
+            WeaponDefinition selected = weapons.get(selectedItem.index());
+            renderSelectedWeaponDetail(out, selected, stats, selectedItem.equippable());
+        } else {
+            out.println(Ansi.DARK_GRAY + "Sense selecció." + Ansi.RESET);
+        }
+
+        out.println(Ansi.DARK_GRAY + "────────────────────────────────────────────────────────" + Ansi.RESET);
+
+        if (allowFilters) {
+            out.println("[↑/↓ o W/S] moure   [←/→ o A/D] canviar tipus");
+            out.println("[E] toggle equipables   [Enter] seleccionar   [Q] cancel·lar");
+        } else {
+            out.println("[↑/↓ o W/S] moure   [Enter] seleccionar   [Q] cancel·lar");
+        }
+
+        terminal.flush();
+    }
+
+    /**
+     * Renderitza la llista superior en columnes fixes.
+     */
+    private static void renderCompactList(
+            PrintWriter out,
+            List<WeaponDefinition> weapons,
+            List<FilteredItem> filtered,
+            Statistics stats,
+            int cursor) {
+
+        if (filtered.isEmpty()) {
+            out.println(Ansi.DARK_GRAY + "No hi ha armes amb aquests filtres." + Ansi.RESET);
+            return;
+        }
+
+        for (int i = 0; i < filtered.size(); i++) {
+            FilteredItem item = filtered.get(i);
+            WeaponDefinition weapon = weapons.get(item.index());
+
+            String pointer = (i == cursor)
+                    ? Ansi.CYAN + Ansi.BOLD + ">" + Ansi.RESET
+                    : " ";
+
+            String plainName = fixed(safe(weapon.getName()), NAME_WIDTH);
+            String plainType = fixed("[" + shortTypeName(weapon.getType()) + "]", TYPE_WIDTH);
+
+            out.print(pointer);
+            out.print(" ");
+            out.print(Ansi.WHITE + Ansi.BOLD + plainName + Ansi.RESET);
+            out.print(" ");
+            out.print(colorByType(weapon.getType()) + plainType + Ansi.RESET);
+
+            if (stats != null) {
+                String equipText = item.equippable() ? "EQUIPABLE" : "NO EQUIPABLE";
+                String plainEquip = fixed(equipText, EQUIP_WIDTH);
+
+                out.print(" ");
+                out.print(item.equippable()
+                        ? Ansi.GREEN + Ansi.BOLD + plainEquip + Ansi.RESET
+                        : Ansi.DARK_GRAY + plainEquip + Ansi.RESET);
+            }
+
+            out.println();
+        }
+    }
+
+    /**
+     * Renderitza el panell inferior amb el detall de l'arma seleccionada.
+     */
+    private static void renderSelectedWeaponDetail(
+            PrintWriter out,
+            WeaponDefinition weapon,
+            Statistics stats,
+            boolean equippable) {
+
+        if (weapon == null) {
+            return;
+        }
+
+        out.print(Ansi.WHITE + Ansi.BOLD + safe(weapon.getName()) + Ansi.RESET);
+        out.print(" ");
+        out.print(colorByType(weapon.getType()) + "[" + typeName(weapon.getType()) + "]" + Ansi.RESET);
+
+        if (stats != null) {
+            out.print(" ");
+            out.print(equippable
+                    ? Ansi.GREEN + Ansi.BOLD + "(EQUIPABLE)" + Ansi.RESET
+                    : Ansi.DARK_GRAY + "(NO EQUIPABLE)" + Ansi.RESET);
+        }
+
+        out.println();
+        out.println();
+
+        String desc = weapon.getDescription();
+        if (desc != null && !desc.isBlank()) {
+            for (String line : WRAP_CACHE.get(desc, DETAIL_WRAP_WIDTH)) {
+                out.println(Ansi.DARK_GRAY + line + Ansi.RESET);
+            }
+            out.println();
+        }
+
+        out.print(Ansi.GREEN + "Dany: " + Ansi.RESET + Ansi.BOLD + weapon.getBaseDamage() + Ansi.RESET);
+        out.print("   ");
+        out.print(Ansi.YELLOW + "Crit: " + Ansi.RESET + Ansi.BOLD + roundPer(weapon.getCriticalProb()) + "%"
+                + Ansi.RESET);
+        out.print("   ");
+        out.print(Ansi.YELLOW + "Mult: " + Ansi.RESET + Ansi.BOLD + "x" + round2(weapon.getCriticalDamage())
+                + Ansi.RESET);
+        out.print("   ");
+
+        double manaPrice = weapon.getManaPrice();
+        if (manaPrice > 0) {
+            out.print(Ansi.BRIGHT_BLUE + "Mana: " + Ansi.RESET + Ansi.BOLD + Math.round(manaPrice) + Ansi.RESET);
+        } else {
+            out.print(Ansi.DARK_GRAY + "Mana: -" + Ansi.RESET);
+        }
+
+        out.println();
+    }
+
+    /**
+     * Construeix la llista filtrada.
+     */
+    private static List<FilteredItem> buildFilteredItems(
+            List<WeaponDefinition> weapons,
+            Statistics stats,
+            boolean onlyEquippable,
+            TypeFilter typeFilter) {
+
+        List<FilteredItem> out = new ArrayList<>();
+
+        for (int i = 0; i < weapons.size(); i++) {
+            WeaponDefinition weapon = weapons.get(i);
+            WeaponType weaponType = (weapon == null) ? null : weapon.getType();
+
+            if (!typeFilter.matches(weaponType)) {
+                continue;
+            }
+
+            boolean equippable = false;
+            if (stats != null && weaponType != null) {
+                equippable = weaponType.canEquip(stats);
+            }
+
+            if (!onlyEquippable || equippable) {
+                out.add(new FilteredItem(i, equippable));
+            }
+        }
+
+        return out;
+    }
+
+    /**
+     * Crea el mapa de tecles del menú.
+     */
+    private static KeyMap<Action> buildKeyMap(Terminal terminal, boolean allowFilters) {
+        KeyMap<Action> map = new KeyMap<>();
+
+        map.bind(Action.UP, "w", "W");
+        map.bind(Action.DOWN, "s", "S");
+        map.bind(Action.SELECT, "\r", "\n");
+        map.bind(Action.QUIT, "q", "Q");
+
+        if (allowFilters) {
+            map.bind(Action.LEFT, "a", "A");
+            map.bind(Action.RIGHT, "d", "D");
+            map.bind(Action.TOGGLE_EQUIPPABLE, "e", "E");
+        }
+
+        String up = KeyMap.key(terminal, Capability.key_up);
+        String down = KeyMap.key(terminal, Capability.key_down);
+
+        if (up != null) {
+            map.bind(Action.UP, up);
+        }
+        if (down != null) {
+            map.bind(Action.DOWN, down);
+        }
+
+        if (allowFilters) {
+            String left = KeyMap.key(terminal, Capability.key_left);
+            String right = KeyMap.key(terminal, Capability.key_right);
+
+            if (left != null) {
+                map.bind(Action.LEFT, left);
+            }
+            if (right != null) {
+                map.bind(Action.RIGHT, right);
+            }
+        }
+
+        return map;
+    }
+
+    /**
+     * Neteja la pantalla del terminal.
+     */
+    private static void clearScreen(Terminal terminal) {
+        if (terminal.puts(Capability.clear_screen)) {
+            terminal.flush();
+            return;
+        }
+
+        terminal.writer().print("\033[H\033[2J");
+        terminal.flush();
+    }
+
+    /**
+     * Retorna el color segons el tipus d'arma.
+     */
+    private static String colorByType(WeaponType type) {
+        if (type == null) {
+            return Ansi.WHITE;
+        }
+
+        return switch (type) {
+            case PHYSICAL -> Ansi.MAGENTA;
+            case RANGE -> Ansi.BRIGHT_BLUE;
+            case MAGICAL -> Ansi.ORANGE;
+            default -> Ansi.WHITE;
+        };
+    }
+
+    /**
+     * Retorna el nom complet del tipus.
+     */
+    private static String typeName(WeaponType type) {
+        return (type == null) ? "?" : safe(type.getName());
+    }
+
+    /**
+     * Retorna el nom curt del tipus per a la llista compacta.
+     */
+    private static String shortTypeName(WeaponType type) {
+        if (type == null) {
+            return "?";
+        }
+
+        return switch (type) {
+            case PHYSICAL -> "física";
+            case RANGE -> "de rang";
+            case MAGICAL -> "màgica";
+            default -> safe(type.getName());
+        };
+    }
+
+    /**
+     * Retalla o omple un text fins a una amplada fixa.
+     */
+    private static String fixed(String text, int width) {
+        return padRight(trimToWidth(text, width), width);
+    }
+
+    /**
+     * Omple a la dreta fins a l'amplada indicada.
+     */
+    private static String padRight(String text, int width) {
+        if (text == null) {
+            text = "";
+        }
+
+        if (text.length() >= width) {
+            return text;
+        }
+
+        return text + " ".repeat(width - text.length());
+    }
+
+    /**
+     * Retalla un text si supera l'amplada indicada.
+     */
+    private static String trimToWidth(String text, int width) {
+        if (text == null) {
+            return "";
+        }
+
+        if (width <= 0) {
+            return "";
+        }
+
+        if (text.length() <= width) {
+            return text;
+        }
+
+        if (width == 1) {
+            return "…";
+        }
+
+        return text.substring(0, width - 1) + "…";
+    }
+
+    /**
+     * Evita nulls en textos.
+     */
+    private static String safe(String text) {
+        return (text == null) ? "" : text;
+    }
+
+    /**
+     * Arrodoneix a 2 decimals.
+     */
     private static double round2(double n) {
         return Math.round(n * 100.0) / 100.0;
     }
 
+    /**
+     * Converteix una probabilitat a percentatge enter.
+     */
     private static int roundPer(double n) {
         return (int) Math.round(n * 100.0);
     }
 
-    private static final Statistics DUMMY_STATS = new Statistics(new int[] { 20, 20, 20, 20, 20, 20, 20 });
-
-    public static void preloadCards() {
-        StringBuilder sink = new StringBuilder(512);
-        Statistics dummyStats = DUMMY_STATS;
-
-        final List<WeaponDefinition> weapons = Arsenal.values();
-        for (WeaponDefinition w : weapons) {
-            sink.setLength(0);
-            appendWeaponCard(sink, 1, w, null, false);
-
-            sink.setLength(0);
-            appendWeaponCard(sink, 1, w, dummyStats, false);
-        }
-
-        sink.setLength(0);
+    private static void ensureWeapons(List<WeaponDefinition> weapons) {
+        Objects.requireNonNull(weapons, "La llista d'armes no pot ser nul·la.");
     }
 }
