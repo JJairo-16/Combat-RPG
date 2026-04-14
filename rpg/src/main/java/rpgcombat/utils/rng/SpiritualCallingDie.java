@@ -9,8 +9,10 @@ import rpgcombat.utils.ui.Prettier;
  * Utilitat per gestionar la tirada del "Llamado de los espíritus".
  *
  * <p>
- * Inclou una distribució suau que redueix lleugerament la probabilitat
- * de valors alts (15–20) sense fer-ho evident.
+ * La distribució base es manté relativament estable, però incorpora pics
+ * direccionals ocasionals. El carisma no altera la part central de la tirada:
+ * només inclina suaument la direcció i intensitat d'aquests pics segons la
+ * predisposició dels déus envers el personatge.
  * </p>
  */
 public final class SpiritualCallingDie {
@@ -24,7 +26,21 @@ public final class SpiritualCallingDie {
     /** Percentatge màxim de curació (20%). */
     private static final double MAX = 0.20;
 
-    public record RollResult(int face, double percent) {}
+    public record RollResult(int face, double percent) {
+    }
+
+    /**
+     * Paràmetres interns per controlar la tirada direccional.
+     *
+     * @param downwardChance probabilitat que el pic vagi cap avall
+     * @param lowExponent    intensitat de la caiguda (menor = més extrema)
+     * @param highExponent   intensitat de la pujada (menor = més extrema)
+     */
+    private record SpikeProfile(
+            double downwardChance,
+            double lowExponent,
+            double highExponent) {
+    }
 
     public static RollResult roll(Random rng, Statistics stats) {
         int face = rollFace(rng, stats);
@@ -38,70 +54,146 @@ public final class SpiritualCallingDie {
         return new RollResult(face, computeHealPercent(face));
     }
 
-    /**
-     * Realitza la tirada del dau amb possible avantatge.
-     */
-    private static int rollFace(Random rng, Statistics stats) {
-        int roll1 = rollBell(rng);
-        int roll2 = rollBell(rng);
+    /** Realitza la tirada del dau amb possible avantatge. */
+    public static int rollFace(Random rng, Statistics stats) {
+        int charisma = stats.getCharisma();
+
+        int roll1 = rollBell(rng, charisma);
+        int roll2 = rollBell(rng, charisma);
 
         double advantageChance = Math.min(0.30, stats.getLuck() * 0.01);
 
-        int chosen = (rng.nextDouble() < advantageChance)
-                ? Math.max(roll1, roll2)
-                : roll1;
+        if (rng.nextDouble() < advantageChance) {
+            return Math.max(roll1, roll2);
+        }
 
-        return applySoftHighBias(chosen);
+        return roll1;
     }
 
-    /**
-     * Distribució base amb forma de campana suau.
-     */
-    private static int rollBell(Random rng) {
-        double t = (rng.nextDouble() + rng.nextDouble() + rng.nextDouble()) / 3.0;
+    /** Distribució base amb forma de campana suau i pics direccionals ocasionals. */
+    private static int rollBell(Random rng, int charisma) {
+        double specialChance = 0.15;
+
+        if (rng.nextDouble() < specialChance) {
+            return rollDirectionalSpike(rng, charisma);
+        }
+
+        double uniform = rng.nextDouble();
+        double softBell = (rng.nextDouble() + rng.nextDouble()) / 2.0;
+
+        // 0.0 = uniforme
+        // 1.0 = campana suau completa
+        double bellWeight = 0.18;
+
+        double t = lerp(uniform, softBell, bellWeight);
         int face = 1 + (int) Math.round(t * 19.0);
         return clamp1to20(face);
     }
 
     /**
-     * Aplica una penalització molt suau als valors alts (15–20).
+     * Genera un pic direccional ocasional.
      *
      * <p>
-     * Només afecta la part alta de la distribució i ho fa de manera progressiva.
-     * Això evita que es noti artificial.
+     * El carisma no força un resultat, però inclina lleugerament:
+     * <ul>
+     *   <li>si cau bé als déus, hi ha més tendència a pujada,</li>
+     *   <li>si cau malament, hi ha més tendència a baixada,</li>
+     *   <li>si és neutral, es manté la base.</li>
+     * </ul>
      * </p>
      */
-    private static int applySoftHighBias(int face) {
-        double t = (face - 1) / 19.0;
+    private static int rollDirectionalSpike(Random rng, int charisma) {
+        SpikeProfile profile = resolveSpikeProfile(charisma);
 
-        // Llindar aproximat per començar a penalitzar (15/20 ≈ 0.74)
-        double threshold = 0.74;
-
-        if (t <= threshold) {
-            return face;
+        boolean downward = rng.nextDouble() < profile.downwardChance();
+        if (downward) {
+            return rollLowSpike(rng, profile.lowExponent());
         }
 
-        // Compressió suau del tram superior
-        double excess = (t - threshold) / (1.0 - threshold);
-
-        // Funció suau (no lineal) per reduir lleugerament els valors alts
-        double reduced = threshold + (Math.pow(excess, 1.25) * (1.0 - threshold));
-
-        int result = 1 + (int) Math.round(reduced * 19.0);
-        return clamp1to20(result);
+        return rollHighSpike(rng, profile.highExponent());
     }
 
     /**
-     * Calcula el percentatge de curació a partir de la cara del dau.
+     * Resol els paràmetres del pic segons la relació del personatge amb els déus.
+     *
+     * <p>
+     * L'efecte ha de ser visible però no determinant. Per això:
+     * <ul>
+     *   <li>la direcció es mou uns quants punts percentuals,</li>
+     *   <li>la intensitat es modula lleugerament segons el tram exacte.</li>
+     * </ul>
+     * </p>
      */
+    private static SpikeProfile resolveSpikeProfile(int charisma) {
+        DivineCharismaAffinity.Standing standing =
+                DivineCharismaAffinity.classifyStanding(charisma);
+
+        DivineCharismaAffinity.Band band =
+                DivineCharismaAffinity.classifyBand(charisma);
+
+        double downwardChance = 0.65;
+        double lowExponent = 2.00;
+        double highExponent = 2.00;
+
+        if (standing == DivineCharismaAffinity.Standing.FAVORED) {
+            downwardChance = 0.57;
+            lowExponent = 2.10;
+            highExponent = 1.80;
+        } else if (standing == DivineCharismaAffinity.Standing.DISLIKED) {
+            downwardChance = 0.73;
+            lowExponent = 1.80;
+            highExponent = 2.10;
+        }
+
+        if (band == DivineCharismaAffinity.Band.FAVORED) {
+            downwardChance -= 0.03;
+            highExponent -= 0.08;
+        } else if (band == DivineCharismaAffinity.Band.DISLIKED_LOW
+                || band == DivineCharismaAffinity.Band.DISLIKED_HIGH) {
+            downwardChance += 0.03;
+            lowExponent -= 0.08;
+        }
+
+        downwardChance = Math.clamp(downwardChance, 0.52, 0.78);
+        lowExponent = Math.clamp(lowExponent, 1.65, 2.30);
+        highExponent = Math.clamp(highExponent, 1.65, 2.30);
+
+        return new SpikeProfile(downwardChance, lowExponent, highExponent);
+    }
+
+    /**
+     * Pic cap avall.
+     *
+     * <p>
+     * Exponents més baixos carreguen més la tirada cap als valors baixos.
+     * </p>
+     */
+    private static int rollLowSpike(Random rng, double exponent) {
+        double t = Math.pow(rng.nextDouble(), exponent);
+        int face = 1 + (int) Math.round(t * 8.0);
+        return clamp1to20(face);
+    }
+
+    /**
+     * Pic cap amunt.
+     *
+     * <p>
+     * Exponents més baixos carreguen més la tirada cap als valors alts.
+     * </p>
+     */
+    private static int rollHighSpike(Random rng, double exponent) {
+        double t = 1.0 - Math.pow(rng.nextDouble(), exponent);
+        int face = 20 - (int) Math.round((1.0 - t) * 8.0);
+        return clamp1to20(face);
+    }
+
+    /** Calcula el percentatge de curació a partir de la cara del dau. */
     private static double computeHealPercent(int face) {
         double normalized = (face - 1) / 19.0;
         return lerp(MIN, MAX, normalized);
     }
 
-    /**
-     * Interpolació lineal.
-     */
+    /** Interpolació lineal. */
     private static double lerp(double a, double b, double t) {
         return a + (b - a) * t;
     }

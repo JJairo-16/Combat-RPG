@@ -163,12 +163,20 @@ public class CombatRenderer {
             if (content.startsWith("[")) {
                 int end = content.indexOf(']');
                 if (end > 1) {
-                    explicitColor = content.substring(1, end).trim().toUpperCase();
+                    String tag = content.substring(1, end).trim();
                     content = content.substring(end + 1).trim();
+
+                    ParsedStyle style = parseStyleTag(tag);
+                    if (style.color() != null && !style.color().isBlank()) {
+                        explicitColor = style.color();
+                    }
+                    if (style.symbol() != null && !style.symbol().isBlank()) {
+                        symbol = style.symbol();
+                    }
                 }
             }
 
-            if (content.startsWith("-")) {
+            if ("+".equals(symbol) && content.startsWith("-")) {
                 symbol = "-";
                 content = content.substring(1).trim();
             }
@@ -187,6 +195,36 @@ public class CombatRenderer {
         if (!sb.isEmpty()) {
             System.out.print(sb);
         }
+    }
+
+    private ParsedStyle parseStyleTag(String tag) {
+        if (tag == null || tag.isBlank()) {
+            return new ParsedStyle(null, null);
+        }
+
+        String color = null;
+        String symbol = null;
+
+        String[] parts = tag.split("\\|", -1);
+
+        if (parts.length >= 1) {
+            String first = parts[0].trim();
+            if (!first.isBlank()) {
+                color = first.toUpperCase();
+            }
+        }
+
+        if (parts.length >= 2) {
+            String second = parts[1].trim();
+            if (!second.isBlank()) {
+                symbol = second;
+            }
+        }
+
+        return new ParsedStyle(color, symbol);
+    }
+
+    private record ParsedStyle(String color, String symbol) {
     }
 
     private String getMessageColor(String symbol, String explicitColor) {

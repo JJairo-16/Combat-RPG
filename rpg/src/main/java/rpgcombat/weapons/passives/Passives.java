@@ -4,6 +4,7 @@ import java.util.Random;
 
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
+import rpgcombat.models.effects.impl.BlindEffect;
 import rpgcombat.utils.ui.Ansi;
 import rpgcombat.weapons.Weapon;
 
@@ -92,6 +93,24 @@ public final class Passives {
                 return String.format("%s prepara una execució (+%d%% de dany)",
                         ctx.attacker().getName(),
                         roundPercent(damageBonus));
+            }
+        };
+    }
+
+    public static WeaponPassive blindOnHit(double applyProb, double missProb, int duration) {
+        return new WeaponPassive() {
+            @Override
+            public String afterHit(Weapon weapon, HitContext ctx, Random rng) {
+                if (ctx.damageDealt() <= 0) {
+                    return null;
+                }
+
+                if (rng.nextDouble() > applyProb) {
+                    return null;
+                }
+
+                ctx.defender().addEffect(new BlindEffect(duration, missProb));
+                return ctx.defender().getName() + " queda encegat temporalment.";
             }
         };
     }

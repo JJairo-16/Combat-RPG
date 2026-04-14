@@ -368,8 +368,7 @@ public final class StatsBudget {
                 continue;
             }
 
-            // Si primary és DEX, permetem STR com a sinergia, però evitem qualsevol intent
-            // d'introduir l'altre atac oposat.
+            // Si primary és DEX, permetem STR com a sinergia, però evitem qualsevol intent d'introduir l'altre atac oposat.
             // (ja està cobert per forbidden=INT)
             candidates[c++] = i;
         }
@@ -476,8 +475,7 @@ public final class StatsBudget {
      * <ul>
      * <li>Mai bonifica l'atac prohibit (STR↔INT; o INT si DEX és principal).</li>
      * <li>Preferència suau per bonificar l'atac principal.</li>
-     * <li>Si l'atac principal és STR o INT, també pot valorar DEX com a sinergia
-     * (lleu).</li>
+     * <li>Si l'atac principal és STR o INT, també pot valorar DEX com a sinergia (lleu).</li>
      * <li>Si l'atac principal és DEX, valora STR com a sinergia (lleu).</li>
      * </ul>
      * </p>
@@ -578,8 +576,7 @@ public final class StatsBudget {
 
    /** Càlcul automàtic de quantes stats es focusegen. */
     private static int autoFocusCount() {
-        // Mateixa heurística que abans, però sempre respectant el límit de stats
-        // focusejables
+        // Mateixa heurística que abans, però sempre respectant el límit de stats focusejables
         int focusCount = Math.clamp((int) Math.round(STAT_COUNT * 0.35), 2, Math.min(4, STAT_COUNT));
 
         int maxFocusCount = 1 + Math.max(0, Stat.focusableCount() - 2);
