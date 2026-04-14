@@ -28,6 +28,48 @@ public final class DivineCharismaAffinity {
     }
 
     /**
+     * Rang real esperat del carisma.
+     *
+     * <p>
+     * Amb 7 stats i 140 punts totals, el generador base treballa sobre una
+     * mitjana de 20 punts per stat i estableix:
+     * </p>
+     *
+     * <ul>
+     * <li>mínim aproximat: 10</li>
+     * <li>màxim aproximat: 30</li>
+     * </ul>
+     *
+     * <p>
+     * Aquest rang és el que es fa servir per generar i validar la preferència
+     * divina, evitant perfils desalineats amb el sistema real d'estadístiques.
+     * </p>
+     */
+    private static final int MIN_CHARISMA = 10;
+    private static final int MAX_CHARISMA = 30;
+
+    /**
+     * Radi del tram preferit.
+     *
+     * <p>
+     * Exemple amb centre 25 i radi 3:
+     * 22..28 = "cau bé".
+     * </p>
+     */
+    private static final int DEFAULT_FAVORED_RADIUS = 2;
+
+    /**
+     * Radi total del tram neutral al voltant del centre preferit.
+     *
+     * <p>
+     * Exemple amb centre 25 i radi 7:
+     * 18..21 i 29..32 = "normal".
+     * Fora d'aquí = "cau malament".
+     * </p>
+     */
+    private static final int DEFAULT_NEUTRAL_RADIUS = 5;
+
+    /**
      * Classificació resumida del carisma davant dels déus.
      */
     public enum Standing {
@@ -37,7 +79,7 @@ public final class DivineCharismaAffinity {
 
         private final String msg;
 
-        private Standing(String message) {
+        Standing(String message) {
             this.msg = message;
         }
 
@@ -59,7 +101,7 @@ public final class DivineCharismaAffinity {
 
         private final String msg;
 
-        private Band(String message) {
+        Band(String message) {
             this.msg = message;
         }
 
@@ -79,14 +121,23 @@ public final class DivineCharismaAffinity {
     public record Profile(int favoredCenter, int favoredRadius, int neutralRadius) {
 
         public Profile {
-            if (favoredCenter < 1 || favoredCenter > 20) {
-                throw new IllegalArgumentException("favoredCenter ha d'estar entre 1 i 20");
+            if (favoredCenter < MIN_CHARISMA || favoredCenter > MAX_CHARISMA) {
+                throw new IllegalArgumentException(
+                        "favoredCenter ha d'estar entre " + MIN_CHARISMA + " i " + MAX_CHARISMA);
             }
+
             if (favoredRadius < 0) {
                 throw new IllegalArgumentException("favoredRadius ha de ser >= 0");
             }
+
             if (neutralRadius < favoredRadius) {
                 throw new IllegalArgumentException("neutralRadius ha de ser >= favoredRadius");
+            }
+
+            if (favoredCenter - neutralRadius < MIN_CHARISMA
+                    || favoredCenter + neutralRadius > MAX_CHARISMA) {
+                throw new IllegalArgumentException(
+                        "El perfil surt del rang real de carisma i produiria trams irregulars.");
             }
         }
     }
@@ -97,19 +148,26 @@ public final class DivineCharismaAffinity {
      * Genera una nova preferència divina per a la partida actual.
      *
      * <p>
-     * El centre preferit es genera dins del rang 1..20.
-     * Els radis actuals es deixen fixos per mantenir un comportament estable:
+     * El centre preferit es genera deixant marge suficient perquè existeixin
+     * els 5 trams complets dins del rang real de carisma:
+     * </p>
      *
-     * <ul>
-     * <li>favoredRadius = 2</li>
-     * <li>neutralRadius = 5</li>
-     * </ul>
+     * <pre>
+     * cau malament - normal - cau bé - normal - cau malament
+     * </pre>
      */
     public static void rollForRun(Random rng) {
         Objects.requireNonNull(rng, "El RNG no pot ser nul.");
 
-        int favoredCenter = rng.nextInt(20) + 1;
-        currentProfile = new Profile(favoredCenter, 2, 5);
+        int favoredRadius = DEFAULT_FAVORED_RADIUS;
+        int neutralRadius = DEFAULT_NEUTRAL_RADIUS;
+
+        int minCenter = MIN_CHARISMA + neutralRadius;
+        int maxCenter = MAX_CHARISMA - neutralRadius;
+
+        int favoredCenter = minCenter + rng.nextInt(maxCenter - minCenter + 1);
+
+        currentProfile = new Profile(favoredCenter, favoredRadius, neutralRadius);
     }
 
     /**
@@ -117,6 +175,7 @@ public final class DivineCharismaAffinity {
      *
      * <p>
      * Útil per tests, debug o partides deterministes.
+     * </p>
      */
     public static void setProfile(Profile profile) {
         currentProfile = Objects.requireNonNull(profile, "El perfil no pot ser nul.");
@@ -127,6 +186,7 @@ public final class DivineCharismaAffinity {
      *
      * <p>
      * Després d'això, qualsevol consulta requerirà tornar a inicialitzar-lo.
+     * </p>
      */
     public static void clear() {
         currentProfile = null;
@@ -172,11 +232,13 @@ public final class DivineCharismaAffinity {
     public static Band classifyBand(int charisma, Profile profile) {
         Objects.requireNonNull(profile, "El perfil no pot ser nul.");
 
+        int safeCharisma = clampCharisma(charisma);
+
         int center = profile.favoredCenter();
         int favoredRadius = profile.favoredRadius();
         int neutralRadius = profile.neutralRadius();
 
-        int delta = charisma - center;
+        int delta = safeCharisma - center;
         int abs = Math.abs(delta);
 
         if (abs <= favoredRadius) {
@@ -223,6 +285,7 @@ public final class DivineCharismaAffinity {
      *
      * <p>
      * Pot ser útil si en el futur vols graduar la intensitat d'un efecte.
+     * </p>
      */
     public static int distanceFromFavorite(int charisma) {
         return distanceFromFavorite(charisma, currentProfile());
@@ -233,6 +296,24 @@ public final class DivineCharismaAffinity {
      */
     public static int distanceFromFavorite(int charisma, Profile profile) {
         Objects.requireNonNull(profile, "El perfil no pot ser nul.");
-        return Math.abs(charisma - profile.favoredCenter());
+        return Math.abs(clampCharisma(charisma) - profile.favoredCenter());
+    }
+
+    /**
+     * Retorna el mínim de carisma esperat pel sistema.
+     */
+    public static int minCharisma() {
+        return MIN_CHARISMA;
+    }
+
+    /**
+     * Retorna el màxim de carisma esperat pel sistema.
+     */
+    public static int maxCharisma() {
+        return MAX_CHARISMA;
+    }
+
+    private static int clampCharisma(int charisma) {
+        return Math.clamp(charisma, MIN_CHARISMA, MAX_CHARISMA);
     }
 }

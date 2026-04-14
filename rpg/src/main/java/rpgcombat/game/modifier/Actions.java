@@ -52,25 +52,10 @@ public final class Actions {
         player.setSpiritualCallingCooldown(SPIRITUAL_CALLING_COOLDOWN);
 
         System.out.println();
-        printSpiritMessage(face);
+        CALL_SPIRITS.classifyShot(face).print();
 
         Menu.pause();
 
         return MenuResult.repeatLoop();
-    }
-
-    private static void printSpiritMessage(int face) {
-        if (face == 1)
-            CALL_SPIRITS.UNFORTUNATE.print();
-        else if (face <= 5)
-            CALL_SPIRITS.VERY_LOW.print();
-        else if (face <= 10)
-            CALL_SPIRITS.LOW.print();
-        else if (face <= 15)
-            CALL_SPIRITS.LOW.print();
-        else if (face <= 19)
-            CALL_SPIRITS.VERY_HIGH.print();
-        else
-            CALL_SPIRITS.EXCEDED.print();
     }
 }

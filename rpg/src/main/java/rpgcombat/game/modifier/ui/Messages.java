@@ -3,7 +3,8 @@ package rpgcombat.game.modifier.ui;
 import rpgcombat.utils.cache.TextWrapCache;
 
 public class Messages {
-    private Messages() {}
+    private Messages() {
+    }
 
     private static final int WIDTH = 78;
 
@@ -17,7 +18,8 @@ public class Messages {
     }
 
     public enum CALL_SPIRITS {
-        CALL_IN_COOLDOWN("Els espirits t'ajudaram quan considerin que és el moment adequat; no intentis forçar la mà dels déus."),
+        CALL_IN_COOLDOWN(
+                "Els espirits t'ajudaram quan considerin que és el moment adequat; no intentis forçar la mà dels déus."),
         CALL_INIT("Els espirits et donen una oportunitat a l'atzar; sigui quin sigui el resultat, sigues-ne agraït."),
         UNFORTUNATE("Els esperits et concedeixen una ajuda gairebé simbòlica."),
         VERY_LOW("Una mica d'ajuda dels esperits per mantenir-te dret."),
@@ -34,6 +36,23 @@ public class Messages {
 
         public void print() {
             System.out.println(msg);
+        }
+
+        public static CALL_SPIRITS classifyShot(int face) {
+            if (face < 1 || face > 20)
+                throw new IllegalArgumentException("La cara del dau ha de estar entre 1 i 20.");
+
+            if (face == 1)
+                return UNFORTUNATE;
+            if (face <= 5)
+                return VERY_LOW;
+            if (face <= 10)
+                return LOW;
+            if (face <= 15)
+                return HIGH;
+            if (face <= 19)
+                return VERY_HIGH;
+            return EXCEDED;
         }
     }
 }
