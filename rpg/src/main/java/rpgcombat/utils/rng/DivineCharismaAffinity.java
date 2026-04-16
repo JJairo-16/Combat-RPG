@@ -46,7 +46,7 @@ public final class DivineCharismaAffinity {
      * </p>
      */
     private static final int MIN_CHARISMA = 10;
-    private static final int MAX_CHARISMA = 30;
+    private static final int MAX_CHARISMA = 25;
 
     /**
      * Radi del tram preferit.
@@ -56,7 +56,7 @@ public final class DivineCharismaAffinity {
      * 22..28 = "cau bé".
      * </p>
      */
-    private static final int DEFAULT_FAVORED_RADIUS = 2;
+    private static final int DEFAULT_FAVORED_RADIUS = 1;
 
     /**
      * Radi total del tram neutral al voltant del centre preferit.
@@ -67,7 +67,7 @@ public final class DivineCharismaAffinity {
      * Fora d'aquí = "cau malament".
      * </p>
      */
-    private static final int DEFAULT_NEUTRAL_RADIUS = 5;
+    private static final int DEFAULT_NEUTRAL_RADIUS = 3;
 
     /**
      * Classificació resumida del carisma davant dels déus.

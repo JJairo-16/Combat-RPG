@@ -23,7 +23,6 @@ import rpgcombat.weapons.config.WeaponDefinition;
 import rpgcombat.weapons.config.WeaponType;
 
 public final class WeaponMenu {
-
     private static final TextWrapCache WRAP_CACHE = new TextWrapCache();
 
     private static final int NAME_WIDTH = 28;
