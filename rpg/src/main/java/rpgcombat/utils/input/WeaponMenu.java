@@ -8,6 +8,7 @@ import java.util.Objects;
 import org.jline.keymap.BindingReader;
 import org.jline.keymap.KeyMap;
 import org.jline.terminal.Attributes;
+import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.AttributedStringBuilder;
@@ -21,21 +22,6 @@ import rpgcombat.utils.ui.Prettier;
 import rpgcombat.weapons.config.WeaponDefinition;
 import rpgcombat.weapons.config.WeaponType;
 
-/**
- * Menú d'armes interactiu amb JLine.
- *
- * <p>Aquesta implementació només conserva la variant amb filtres per simplificar
- * el codi. Quan només canvia la selecció, es redibuixen únicament:
- *
- * <ul>
- *   <li>la fila anterior,</li>
- *   <li>la fila actual,</li>
- *   <li>el bloc de detall inferior.</li>
- * </ul>
- *
- * <p>Quan canvien els filtres, es fa un redibuix complet perquè la llista
- * visible pot canviar de mida i contingut.
- */
 public final class WeaponMenu {
 
     private static final TextWrapCache WRAP_CACHE = new TextWrapCache();
@@ -44,14 +30,28 @@ public final class WeaponMenu {
     private static final int TYPE_WIDTH = 16;
     private static final int EQUIP_WIDTH = 13;
     private static final int DETAIL_WRAP_WIDTH = 78;
+
+    private static final int HEADER_ROWS = 4;
     private static final int LIST_START_ROW = 5;
-    private static final int DETAIL_BLOCK_HEIGHT = 18;
+
+    private static final int LIST_DETAIL_SPACER_ROWS = 1;
+    private static final int DETAIL_CONTROLS_SPACER_ROWS = 1;
+    private static final int CONTROL_ROWS = 2;
+
+    private static final int BOTTOM_SAFE_MARGIN_ROWS = 1;
+    private static final int RESIZE_COMPENSATION_ROWS = 2;
+
+    private static final int MIN_VISIBLE_ROWS = 1;
+    private static final int MIN_DETAIL_ROWS = 4;
+
+    private static final int DEFAULT_TERMINAL_HEIGHT = 24;
+    private static final int DEFAULT_TERMINAL_WIDTH = 80;
+
     private static final String SEPARATOR = "────────────────────────────────────────────────────────";
 
     private WeaponMenu() {
     }
 
-    /** Mostra el menú amb filtres. */
     public static int chooseWeaponWithFilters(List<WeaponDefinition> weapons, String title, Statistics stats) {
         if (weapons == null || weapons.isEmpty()) {
             Prettier.warn("No hi ha armes disponibles.");
@@ -63,19 +63,16 @@ public final class WeaponMenu {
         return runInteractiveMenu(weapons, title, stats, state);
     }
 
-    /** Retorna directament l'arma escollida amb filtres. */
     public static WeaponDefinition chooseWeaponEntryWithFilters(
             List<WeaponDefinition> weapons,
             String title,
             Statistics stats) {
 
         ensureWeapons(weapons);
-
         int idx = chooseWeaponWithFilters(weapons, title, stats);
         return idx < 0 ? null : weapons.get(idx);
     }
 
-    /** Mostra el menú amb estat extern de filtres. */
     public static int chooseWeaponWithFilters(
             List<WeaponDefinition> weapons,
             String title,
@@ -94,6 +91,7 @@ public final class WeaponMenu {
 
         State internal = new State();
         internal.cursor = 0;
+        internal.viewportStart = 0;
         internal.onlyEquippable = state.isOnlyEquippable();
         internal.typeFilter = state.getTypeFilter();
 
@@ -105,7 +103,6 @@ public final class WeaponMenu {
         return result;
     }
 
-    /** Retorna directament l'arma escollida amb estat extern. */
     public static WeaponDefinition chooseWeaponEntryWithFilters(
             List<WeaponDefinition> weapons,
             String title,
@@ -113,14 +110,11 @@ public final class WeaponMenu {
             FilterState state) {
 
         ensureWeapons(weapons);
-
         int idx = chooseWeaponWithFilters(weapons, title, stats, state);
         return idx < 0 ? null : weapons.get(idx);
     }
 
-    /** Estat extern dels filtres. */
     public static final class FilterState {
-
         private boolean onlyEquippable = false;
         private TypeFilter typeFilter = TypeFilter.ALL;
 
@@ -149,7 +143,6 @@ public final class WeaponMenu {
         }
     }
 
-    /** Filtres de tipus d'arma. */
     public enum TypeFilter {
         ALL("Tots"),
         RANGE("Rang"),
@@ -170,7 +163,6 @@ public final class WeaponMenu {
             if (this == ALL) {
                 return true;
             }
-
             if (type == null) {
                 return false;
             }
@@ -217,37 +209,27 @@ public final class WeaponMenu {
         }
     }
 
-    /** Element filtrat amb índex original. */
     private record FilteredItem(int index, boolean equippable) {
     }
 
-    /** Estat intern del menú. */
     private static final class State {
         private int cursor = 0;
+        private int viewportStart = 0;
         private boolean onlyEquippable = false;
         private TypeFilter typeFilter = TypeFilter.ALL;
+        private int lastTerminalWidth = -1;
+        private int lastTerminalHeight = -1;
+        private boolean resizePending = false;
     }
 
-    /** Accions del menú. */
     private enum Action {
-        UP,
-        DOWN,
-        LEFT,
-        RIGHT,
-        TOGGLE_EQUIPPABLE,
-        SELECT,
-        QUIT,
-        NONE
+        UP, DOWN, LEFT, RIGHT, TOGGLE_EQUIPPABLE, SELECT, QUIT, NONE
     }
 
-    /** Tipus de redibuix necessari després d'una acció. */
     private enum RedrawMode {
-        NONE,
-        SELECTION_ONLY,
-        FULL
+        NONE, SELECTION_ONLY, FULL
     }
 
-    /** Obre el menú interactiu. */
     private static int runInteractiveMenu(
             List<WeaponDefinition> weapons,
             String title,
@@ -264,7 +246,6 @@ public final class WeaponMenu {
         }
     }
 
-    /** Bucle principal del menú. */
     private static int runMenuLoop(
             Terminal terminal,
             List<WeaponDefinition> weapons,
@@ -275,32 +256,38 @@ public final class WeaponMenu {
         Attributes originalAttributes = terminal.enterRawMode();
         BindingReader reader = new BindingReader(terminal.reader());
         KeyMap<Action> keyMap = buildKeyMap(terminal);
+        Terminal.SignalHandler previousWinchHandler = terminal.handle(
+                Terminal.Signal.WINCH,
+                signal -> state.resizePending = true);
 
         boolean firstRender = true;
 
         try {
+            terminal.puts(Capability.enter_ca_mode);
             terminal.puts(Capability.keypad_xmit);
             terminal.puts(Capability.cursor_invisible);
             terminal.flush();
 
             while (true) {
                 List<FilteredItem> filtered = buildFilteredItems(
-                        weapons,
-                        stats,
-                        state.onlyEquippable,
-                        state.typeFilter);
+                        weapons, stats, state.onlyEquippable, state.typeFilter);
 
                 normalizeCursor(state, filtered.size());
 
-                if (firstRender) {
+                int visibleRows = computeVisibleRows(terminal);
+                adjustViewport(state, filtered.size(), visibleRows);
+
+                boolean sizeChanged = refreshTerminalSize(terminal, state);
+                if (firstRender || state.resizePending || sizeChanged) {
+                    state.resizePending = false;
                     clearScreen(terminal);
-                    renderMenu(terminal, weapons, filtered, title, stats, state);
+                    renderMenu(terminal, weapons, filtered, title, stats, state, visibleRows);
                     firstRender = false;
                 }
 
                 Action action = reader.readBinding(keyMap);
                 if (action == null) {
-                    action = Action.NONE;
+                    continue;
                 }
 
                 if (action == Action.SELECT) {
@@ -315,45 +302,60 @@ public final class WeaponMenu {
                 }
 
                 int oldCursor = state.cursor;
-                RedrawMode redraw = applyAction(action, state, filtered.size());
+                int oldViewportStart = state.viewportStart;
+                int oldWidth = state.lastTerminalWidth;
+                int oldHeight = state.lastTerminalHeight;
 
+                RedrawMode redraw = applyAction(action, state, filtered.size());
                 if (redraw == RedrawMode.NONE) {
                     continue;
                 }
 
-                if (redraw == RedrawMode.FULL) {
-                    List<FilteredItem> newFiltered = buildFilteredItems(
-                            weapons,
-                            stats,
-                            state.onlyEquippable,
-                            state.typeFilter);
+                List<FilteredItem> currentFiltered = buildFilteredItems(
+                        weapons, stats, state.onlyEquippable, state.typeFilter);
 
-                    normalizeCursor(state, newFiltered.size());
+                normalizeCursor(state, currentFiltered.size());
+
+                int currentVisibleRows = computeVisibleRows(terminal);
+                adjustViewport(state, currentFiltered.size(), currentVisibleRows);
+
+                boolean changedAfterAction = refreshTerminalSize(terminal, state);
+                boolean geometryChanged = changedAfterAction
+                        || state.resizePending
+                        || state.lastTerminalWidth != oldWidth
+                        || state.lastTerminalHeight != oldHeight;
+
+                if (redraw == RedrawMode.FULL || geometryChanged || state.viewportStart != oldViewportStart) {
+                    state.resizePending = false;
                     clearScreen(terminal);
-                    renderMenu(terminal, weapons, newFiltered, title, stats, state);
+                    renderMenu(terminal, weapons, currentFiltered, title, stats, state, currentVisibleRows);
                     continue;
                 }
 
                 redrawSelectionChange(
                         terminal,
                         weapons,
-                        filtered,
+                        currentFiltered,
                         stats,
+                        state,
+                        currentVisibleRows,
                         oldCursor,
                         state.cursor);
             }
         } finally {
+            terminal.handle(Terminal.Signal.WINCH, previousWinchHandler);
             terminal.setAttributes(originalAttributes);
             terminal.puts(Capability.keypad_local);
             terminal.puts(Capability.cursor_visible);
+            terminal.puts(Capability.exit_ca_mode);
             terminal.flush();
         }
     }
 
-    /** Ajusta el cursor a l'interval vàlid. */
     private static void normalizeCursor(State state, int filteredSize) {
         if (filteredSize <= 0) {
             state.cursor = 0;
+            state.viewportStart = 0;
             return;
         }
 
@@ -364,7 +366,41 @@ public final class WeaponMenu {
         }
     }
 
-    /** Aplica una acció de teclat i retorna quin redibuix cal fer. */
+    private static boolean refreshTerminalSize(Terminal terminal, State state) {
+        int width = terminalWidth(terminal);
+        int height = terminalHeight(terminal);
+        boolean changed = width != state.lastTerminalWidth || height != state.lastTerminalHeight;
+        state.lastTerminalWidth = width;
+        state.lastTerminalHeight = height;
+        return changed;
+    }
+
+    private static void adjustViewport(State state, int filteredSize, int visibleRows) {
+        if (filteredSize <= 0) {
+            state.viewportStart = 0;
+            return;
+        }
+
+        int clampedVisibleRows = Math.max(MIN_VISIBLE_ROWS, visibleRows);
+        int maxViewportStart = Math.max(0, filteredSize - clampedVisibleRows);
+
+        if (state.viewportStart > maxViewportStart) {
+            state.viewportStart = maxViewportStart;
+        }
+
+        if (state.cursor < state.viewportStart) {
+            state.viewportStart = state.cursor;
+        } else if (state.cursor >= state.viewportStart + clampedVisibleRows) {
+            state.viewportStart = state.cursor - clampedVisibleRows + 1;
+        }
+
+        if (state.viewportStart < 0) {
+            state.viewportStart = 0;
+        } else if (state.viewportStart > maxViewportStart) {
+            state.viewportStart = maxViewportStart;
+        }
+    }
+
     private static RedrawMode applyAction(Action action, State state, int filteredSize) {
         switch (action) {
             case UP:
@@ -386,6 +422,7 @@ public final class WeaponMenu {
                 if (previous != state.typeFilter) {
                     state.typeFilter = previous;
                     state.cursor = 0;
+                    state.viewportStart = 0;
                     return RedrawMode.FULL;
                 }
                 return RedrawMode.NONE;
@@ -395,6 +432,7 @@ public final class WeaponMenu {
                 if (next != state.typeFilter) {
                     state.typeFilter = next;
                     state.cursor = 0;
+                    state.viewportStart = 0;
                     return RedrawMode.FULL;
                 }
                 return RedrawMode.NONE;
@@ -402,6 +440,7 @@ public final class WeaponMenu {
             case TOGGLE_EQUIPPABLE:
                 state.onlyEquippable = !state.onlyEquippable;
                 state.cursor = 0;
+                state.viewportStart = 0;
                 return RedrawMode.FULL;
 
             case NONE, SELECT, QUIT:
@@ -410,133 +449,89 @@ public final class WeaponMenu {
         }
     }
 
-    /** Renderitza el menú complet. */
     private static void renderMenu(
             Terminal terminal,
             List<WeaponDefinition> weapons,
             List<FilteredItem> filtered,
             String title,
             Statistics stats,
-            State state) {
+            State state,
+            int visibleRows) {
 
-        AttributedStringBuilder out = new AttributedStringBuilder(4096);
+        List<String> lines = new ArrayList<>();
 
-        JLineAnsi.appendLine(out, JLineAnsi.BOLD, safe(title));
-        JLineAnsi.newLine(out);
+        lines.add(toAnsiLine(terminal, JLineAnsi.BOLD, safe(title)));
+        lines.add("");
 
-        JLineAnsi.append(out, JLineAnsi.DARK_GRAY, "Filtres:");
-        JLineAnsi.append(out, " [E] Equipables: ");
+        AttributedStringBuilder filtersLine = new AttributedStringBuilder(256);
+        JLineAnsi.append(filtersLine, JLineAnsi.DARK_GRAY, "Filtres:");
+        JLineAnsi.append(filtersLine, " [E] Equipables: ");
         JLineAnsi.append(
-                out,
+                filtersLine,
                 state.onlyEquippable ? JLineAnsi.GREEN_BOLD : JLineAnsi.DARK_GRAY,
                 state.onlyEquippable ? "ON" : "OFF");
-        JLineAnsi.append(out, "   [←/→ o A/D] Tipus: ");
-        JLineAnsi.appendLine(out, JLineAnsi.BOLD, state.typeFilter.getLabel());
+        JLineAnsi.append(filtersLine, "   [←/→ o A/D] Tipus: ");
+        JLineAnsi.append(filtersLine, JLineAnsi.BOLD, state.typeFilter.getLabel());
+        lines.add(filtersLine.toAnsi(terminal));
+        lines.add("");
 
-        JLineAnsi.newLine(out);
+        List<String> listLines = buildVisibleListLines(terminal, weapons, filtered, stats, state, visibleRows);
+        lines.addAll(listLines);
 
-        renderCompactList(terminal, out, weapons, filtered, stats, state.cursor);
+        int detailStartRow = detailStartRow(listLines.size());
 
-        JLineAnsi.newLine(out);
-        JLineAnsi.appendLine(out, JLineAnsi.DARK_GRAY, SEPARATOR);
-
-        if (!filtered.isEmpty()) {
-            FilteredItem selectedItem = filtered.get(state.cursor);
-            WeaponDefinition selected = weapons.get(selectedItem.index());
-            renderSelectedWeaponDetail(out, selected, stats, selectedItem.equippable());
-        } else {
-            JLineAnsi.appendLine(out, JLineAnsi.DARK_GRAY, "Sense selecció.");
+        while (lines.size() < detailStartRow - 1) {
+            lines.add("");
         }
 
-        JLineAnsi.appendLine(out, JLineAnsi.DARK_GRAY, SEPARATOR);
-        JLineAnsi.appendLine(out, "[↑/↓ o W/S] moure   [←/→ o A/D] canviar tipus");
-        JLineAnsi.appendLine(out, "[E] toggle equipables   [Enter] seleccionar   [Q] cancel·lar");
+        int detailRows = computeDetailRows(terminal, detailStartRow);
+        List<String> detailLines = buildDetailBlockLines(
+                terminal,
+                weapons,
+                filtered,
+                stats,
+                state.cursor,
+                detailRows);
 
-        terminal.writer().print(out.toAnsi(terminal));
-        terminal.flush();
+        lines.addAll(detailLines);
+
+        int controlsStart = controlsStartRow(terminal);
+
+        while (lines.size() < controlsStart - 1) {
+            lines.add("");
+        }
+
+        lines.add(toPlainAnsiLine(terminal, "[↑/↓ o W/S] moure   [←/→ o A/D] canviar tipus"));
+        lines.add(toPlainAnsiLine(terminal, "[E] toggle equipables   [Enter] seleccionar   [Q] cancel·lar"));
+
+        paintScreenLines(terminal, lines);
     }
 
-    /** Renderitza la llista superior. */
-    private static void renderCompactList(
+    private static List<String> buildVisibleListLines(
             Terminal terminal,
-            AttributedStringBuilder out,
             List<WeaponDefinition> weapons,
             List<FilteredItem> filtered,
             Statistics stats,
-            int cursor) {
+            State state,
+            int visibleRows) {
+
+        List<String> lines = new ArrayList<>();
 
         if (filtered.isEmpty()) {
-            JLineAnsi.appendLine(out, JLineAnsi.DARK_GRAY, "No hi ha armes amb aquests filtres.");
-            return;
+            lines.add(toAnsiLine(terminal, JLineAnsi.DARK_GRAY, "No hi ha armes amb aquests filtres."));
+            return lines;
         }
 
-        for (int i = 0; i < filtered.size(); i++) {
-            out.appendAnsi(buildRowAnsi(terminal, weapons, filtered.get(i), stats, i == cursor));
-            JLineAnsi.newLine(out);
+        int start = state.viewportStart;
+        int end = Math.min(filtered.size(), start + Math.max(MIN_VISIBLE_ROWS, visibleRows));
+
+        for (int i = start; i < end; i++) {
+            lines.add(buildRowAnsi(terminal, weapons, filtered.get(i), stats, i == state.cursor));
         }
+
+        return lines;
     }
 
-    /** Renderitza el detall de l'arma seleccionada. */
-    private static void renderSelectedWeaponDetail(
-            AttributedStringBuilder out,
-            WeaponDefinition weapon,
-            Statistics stats,
-            boolean equippable) {
-
-        if (weapon == null) {
-            return;
-        }
-
-        JLineAnsi.append(out, JLineAnsi.WHITE.bold(), safe(weapon.getName()));
-        JLineAnsi.append(out, " ");
-        JLineAnsi.append(
-                out,
-                JLineAnsi.weaponTypeStyle(weapon.getType()),
-                "[" + typeName(weapon.getType()) + "]");
-
-        if (stats != null) {
-            JLineAnsi.append(out, " ");
-            JLineAnsi.append(
-                    out,
-                    equippable ? JLineAnsi.GREEN_BOLD : JLineAnsi.DARK_GRAY,
-                    equippable ? "(EQUIPABLE)" : "(NO EQUIPABLE)");
-        }
-
-        JLineAnsi.newLine(out);
-        JLineAnsi.newLine(out);
-
-        String desc = weapon.getDescription();
-        if (desc != null && !desc.isBlank()) {
-            for (String line : WRAP_CACHE.get(desc, DETAIL_WRAP_WIDTH)) {
-                JLineAnsi.appendLine(out, JLineAnsi.DARK_GRAY, line);
-            }
-            JLineAnsi.newLine(out);
-        }
-
-        JLineAnsi.append(out, JLineAnsi.GREEN, "Dany: ");
-        JLineAnsi.append(out, JLineAnsi.BOLD, String.valueOf(weapon.getBaseDamage()));
-        JLineAnsi.append(out, "   ");
-
-        JLineAnsi.append(out, JLineAnsi.YELLOW, "Crit: ");
-        JLineAnsi.append(out, JLineAnsi.BOLD, roundPer(weapon.getCriticalProb()) + "%");
-        JLineAnsi.append(out, "   ");
-
-        JLineAnsi.append(out, JLineAnsi.YELLOW, "Mult: ");
-        JLineAnsi.append(out, JLineAnsi.BOLD, "x" + round2(weapon.getCriticalDamage()));
-        JLineAnsi.append(out, "   ");
-
-        double manaPrice = weapon.getManaPrice();
-        if (manaPrice > 0) {
-            JLineAnsi.append(out, JLineAnsi.BRIGHT_BLUE, "Mana: ");
-            JLineAnsi.append(out, JLineAnsi.BOLD, String.valueOf(Math.round(manaPrice)));
-        } else {
-            JLineAnsi.append(out, JLineAnsi.DARK_GRAY, "Mana: -");
-        }
-
-        JLineAnsi.newLine(out);
-    }
-
-    /** Construeix la llista filtrada. */
     private static List<FilteredItem> buildFilteredItems(
             List<WeaponDefinition> weapons,
             Statistics stats,
@@ -566,7 +561,6 @@ public final class WeaponMenu {
         return out;
     }
 
-    /** Crea el mapa de tecles. */
     private static KeyMap<Action> buildKeyMap(Terminal terminal) {
         KeyMap<Action> map = new KeyMap<>();
 
@@ -599,33 +593,36 @@ public final class WeaponMenu {
         return map;
     }
 
-    /** Redibuixa només el necessari quan canvia la selecció. */
     private static void redrawSelectionChange(
             Terminal terminal,
             List<WeaponDefinition> weapons,
             List<FilteredItem> filtered,
             Statistics stats,
+            State state,
+            int visibleRows,
             int oldCursor,
             int newCursor) {
 
         if (filtered.isEmpty()) {
-            redrawDetailBlock(terminal, weapons, filtered, stats, newCursor);
+            redrawDetailBlock(terminal, weapons, filtered, stats, state, visibleRows, newCursor);
+            redrawControls(terminal);
             terminal.flush();
             return;
         }
 
-        redrawRow(terminal, weapons, filtered, stats, oldCursor, false);
-        redrawRow(terminal, weapons, filtered, stats, newCursor, true);
-        redrawDetailBlock(terminal, weapons, filtered, stats, newCursor);
+        redrawRow(terminal, weapons, filtered, stats, state, oldCursor, false);
+        redrawRow(terminal, weapons, filtered, stats, state, newCursor, true);
+        redrawDetailBlock(terminal, weapons, filtered, stats, state, visibleRows, newCursor);
+        redrawControls(terminal);
         terminal.flush();
     }
 
-    /** Redibuixa una sola fila de la llista. */
     private static void redrawRow(
             Terminal terminal,
             List<WeaponDefinition> weapons,
             List<FilteredItem> filtered,
             Statistics stats,
+            State state,
             int rowIndex,
             boolean selected) {
 
@@ -633,47 +630,89 @@ public final class WeaponMenu {
             return;
         }
 
-        int screenRow = LIST_START_ROW + rowIndex;
+        int visibleRows = computeVisibleRows(terminal);
+        int renderedRows = visibleRowCount(filtered.size(), state.viewportStart, visibleRows);
+        if (rowIndex < state.viewportStart || rowIndex >= state.viewportStart + renderedRows) {
+            return;
+        }
+
+        int screenRow = LIST_START_ROW + (rowIndex - state.viewportStart);
+        if (screenRow > maxPaintRow(terminal)) {
+            return;
+        }
+
         moveCursor(terminal, screenRow, 1);
         clearCurrentLine(terminal);
         terminal.writer().print(buildRowAnsi(terminal, weapons, filtered.get(rowIndex), stats, selected));
     }
 
-    /**
-     * Redibuixa el bloc de detall.
-     *
-     * <p>No escriu salts de línia lliurement. El bloc es construeix com
-     * una llista de línies i es repinta fila per fila.
-     */
     private static void redrawDetailBlock(
             Terminal terminal,
             List<WeaponDefinition> weapons,
             List<FilteredItem> filtered,
             Statistics stats,
+            State state,
+            int visibleRows,
             int cursor) {
 
-        int startRow = detailStartRow(filtered.size());
-        List<String> lines = buildDetailBlockLines(terminal, weapons, filtered, stats, cursor);
+        int renderedListRows = visibleRowCount(filtered.size(), state.viewportStart, visibleRows);
+        int startRow = detailStartRow(renderedListRows);
+        int detailRows = computeDetailRows(terminal, startRow);
+        List<String> lines = buildDetailBlockLines(terminal, weapons, filtered, stats, cursor, detailRows);
 
-        for (int i = 0; i < DETAIL_BLOCK_HEIGHT; i++) {
-            moveCursor(terminal, startRow + i, 1);
+        for (int i = 0; i < detailRows; i++) {
+            int row = startRow + i;
+            if (row > maxPaintRow(terminal)) {
+                return;
+            }
+
+            moveCursor(terminal, row, 1);
             clearCurrentLine(terminal);
 
             if (i < lines.size()) {
                 terminal.writer().print(lines.get(i));
             }
         }
+
+        int spacerRow = startRow + detailRows;
+        int controlsStart = controlsStartRow(terminal);
+        if (spacerRow < controlsStart && spacerRow <= maxPaintRow(terminal)) {
+            moveCursor(terminal, spacerRow, 1);
+            clearCurrentLine(terminal);
+        }
     }
 
-    /** Construeix el bloc de detall com una llista de línies ANSI. */
+    private static void redrawControls(Terminal terminal) {
+        int startRow = controlsStartRow(terminal);
+        if (startRow <= 0) {
+            return;
+        }
+
+        moveCursor(terminal, startRow, 1);
+        clearCurrentLine(terminal);
+        terminal.writer().print(toPlainAnsiLine(terminal, "[↑/↓ o W/S] moure   [←/→ o A/D] canviar tipus"));
+
+        if (startRow + 1 <= maxPaintRow(terminal)) {
+            moveCursor(terminal, startRow + 1, 1);
+            clearCurrentLine(terminal);
+            terminal.writer().print(toPlainAnsiLine(
+                    terminal,
+                    "[E] toggle equipables   [Enter] seleccionar   [Q] cancel·lar"));
+        }
+    }
+
     private static List<String> buildDetailBlockLines(
             Terminal terminal,
             List<WeaponDefinition> weapons,
             List<FilteredItem> filtered,
             Statistics stats,
-            int cursor) {
+            int cursor,
+            int maxRows) {
 
         List<String> lines = new ArrayList<>();
+        if (maxRows <= 0) {
+            return lines;
+        }
 
         lines.add(toAnsiLine(terminal, JLineAnsi.DARK_GRAY, SEPARATOR));
 
@@ -685,14 +724,17 @@ public final class WeaponMenu {
             lines.add(toAnsiLine(terminal, JLineAnsi.DARK_GRAY, "Sense selecció."));
         }
 
-        lines.add(toAnsiLine(terminal, JLineAnsi.DARK_GRAY, SEPARATOR));
-        lines.add(toPlainAnsiLine(terminal, "[↑/↓ o W/S] moure   [←/→ o A/D] canviar tipus"));
-        lines.add(toPlainAnsiLine(terminal, "[E] toggle equipables   [Enter] seleccionar   [Q] cancel·lar"));
+        if (lines.size() > maxRows) {
+            return new ArrayList<>(lines.subList(0, maxRows));
+        }
+
+        while (lines.size() < maxRows) {
+            lines.add("");
+        }
 
         return lines;
     }
 
-    /** Construeix les línies ANSI del detall de l'arma seleccionada. */
     private static List<String> buildSelectedWeaponDetailLines(
             Terminal terminal,
             WeaponDefinition weapon,
@@ -726,7 +768,8 @@ public final class WeaponMenu {
 
         String desc = weapon.getDescription();
         if (desc != null && !desc.isBlank()) {
-            for (String line : WRAP_CACHE.get(desc, DETAIL_WRAP_WIDTH)) {
+            int wrapWidth = computeDetailWrapWidth(terminal);
+            for (String line : WRAP_CACHE.get(desc, wrapWidth)) {
                 lines.add(toAnsiLine(terminal, JLineAnsi.DARK_GRAY, line));
             }
             lines.add("");
@@ -757,7 +800,6 @@ public final class WeaponMenu {
         return lines;
     }
 
-    /** Construeix una sola fila com a ANSI. */
     private static String buildRowAnsi(
             Terminal terminal,
             List<WeaponDefinition> weapons,
@@ -794,54 +836,146 @@ public final class WeaponMenu {
         return out.toAnsi(terminal);
     }
 
-    /** Calcula la fila on comença el bloc inferior. */
-    private static int detailStartRow(int listSize) {
-        return LIST_START_ROW + listSize + 1;
+    private static int detailStartRow(int renderedListRows) {
+        return LIST_START_ROW + renderedListRows + LIST_DETAIL_SPACER_ROWS;
     }
 
-    /** Mou el cursor a una posició concreta. */
+    private static int controlsStartRow(Terminal terminal) {
+        return maxPaintRow(terminal) - CONTROL_ROWS + 1;
+    }
+
+    private static int computeDetailRows(Terminal terminal, int detailStartRow) {
+        int controlsStart = controlsStartRow(terminal);
+        int lastDetailRow = controlsStart - DETAIL_CONTROLS_SPACER_ROWS - 1;
+        return Math.max(0, lastDetailRow - detailStartRow + 1);
+    }
+
+    private static int computeVisibleRows(Terminal terminal) {
+        int usableHeight = effectiveTerminalHeight(terminal);
+
+        int reserved = HEADER_ROWS
+                + LIST_DETAIL_SPACER_ROWS
+                + MIN_DETAIL_ROWS
+                + DETAIL_CONTROLS_SPACER_ROWS
+                + CONTROL_ROWS;
+
+        int available = usableHeight - reserved;
+        return Math.max(MIN_VISIBLE_ROWS, available);
+    }
+
+    private static int visibleRowCount(int filteredSize, int viewportStart, int visibleRows) {
+        if (filteredSize <= 0) {
+            return 1;
+        }
+
+        int clampedVisibleRows = Math.max(MIN_VISIBLE_ROWS, visibleRows);
+        int remaining = filteredSize - viewportStart;
+        return Math.clamp(remaining, 1, clampedVisibleRows);
+    }
+
+    private static void paintScreenLines(Terminal terminal, List<String> lines) {
+        int maxPaintRow = maxPaintRow(terminal);
+
+        for (int row = 1; row <= maxPaintRow; row++) {
+            moveCursor(terminal, row, 1);
+            clearCurrentLine(terminal);
+
+            int lineIndex = row - 1;
+            if (lineIndex < lines.size()) {
+                terminal.writer().print(lines.get(lineIndex));
+            }
+        }
+
+        moveCursor(terminal, 1, 1);
+        terminal.flush();
+    }
+
+    private static int maxPaintRow(Terminal terminal) {
+        return Math.max(0, effectiveTerminalHeight(terminal));
+    }
+
+    private static int effectiveTerminalHeight(Terminal terminal) {
+        int rawHeight = terminalHeight(terminal);
+        int compensatedHeight = rawHeight - BOTTOM_SAFE_MARGIN_ROWS - RESIZE_COMPENSATION_ROWS;
+        return Math.max(1, compensatedHeight);
+    }
+
+    private static int terminalHeight(Terminal terminal) {
+        if (terminal == null) {
+            return DEFAULT_TERMINAL_HEIGHT;
+        }
+
+        int height = terminal.getHeight();
+        if (height > 0) {
+            return height;
+        }
+
+        Size size = terminal.getSize();
+        if (size != null && size.getRows() > 0) {
+            return size.getRows();
+        }
+
+        return DEFAULT_TERMINAL_HEIGHT;
+    }
+
+    private static int terminalWidth(Terminal terminal) {
+        if (terminal == null) {
+            return DEFAULT_TERMINAL_WIDTH;
+        }
+
+        int width = terminal.getWidth();
+        if (width > 0) {
+            return width;
+        }
+
+        Size size = terminal.getSize();
+        if (size != null && size.getColumns() > 0) {
+            return size.getColumns();
+        }
+
+        return DEFAULT_TERMINAL_WIDTH;
+    }
+
+    private static int computeDetailWrapWidth(Terminal terminal) {
+        int width = terminalWidth(terminal);
+        return Math.clamp(width - 2L, 24, DETAIL_WRAP_WIDTH);
+    }
+
     private static void moveCursor(Terminal terminal, int row, int col) {
         terminal.writer().print("\033[" + row + ";" + col + "H");
     }
 
-    /** Neteja la línia actual del terminal. */
     private static void clearCurrentLine(Terminal terminal) {
         if (!terminal.puts(Capability.clr_eol)) {
             terminal.writer().print("\033[2K");
         }
     }
 
-    /** Construeix una línia ANSI amb estil. */
     private static String toAnsiLine(Terminal terminal, AttributedStyle style, String text) {
         AttributedStringBuilder out = new AttributedStringBuilder(text.length() + 16);
         JLineAnsi.append(out, style, safe(text));
         return out.toAnsi(terminal);
     }
 
-    /** Construeix una línia ANSI sense estil especial. */
     private static String toPlainAnsiLine(Terminal terminal, String text) {
         AttributedStringBuilder out = new AttributedStringBuilder(text.length() + 8);
         JLineAnsi.append(out, safe(text));
         return out.toAnsi(terminal);
     }
 
-    /** Neteja la pantalla. */
     private static void clearScreen(Terminal terminal) {
-        if (terminal.puts(Capability.clear_screen)) {
-            terminal.flush();
-            return;
+        if (!terminal.puts(Capability.clear_screen)) {
+            terminal.writer().print("\033[H\033[2J");
         }
 
-        terminal.writer().print("\033[H\033[2J");
+        moveCursor(terminal, 1, 1);
         terminal.flush();
     }
 
-    /** Retorna el nom complet del tipus. */
     private static String typeName(WeaponType type) {
         return type == null ? "?" : safe(type.getName());
     }
 
-    /** Retorna el nom curt del tipus. */
     private static String shortTypeName(WeaponType type) {
         if (type == null) {
             return "?";
@@ -859,12 +993,10 @@ public final class WeaponMenu {
         }
     }
 
-    /** Retalla o omple un text a amplada fixa. */
     private static String fixed(String text, int width) {
         return padRight(trimToWidth(text, width), width);
     }
 
-    /** Omple un text a la dreta. */
     private static String padRight(String text, int width) {
         if (text == null) {
             text = "";
@@ -877,7 +1009,6 @@ public final class WeaponMenu {
         return text + " ".repeat(width - text.length());
     }
 
-    /** Retalla un text si cal. */
     private static String trimToWidth(String text, int width) {
         if (text == null) {
             return "";
@@ -898,17 +1029,14 @@ public final class WeaponMenu {
         return text.substring(0, width - 1) + "…";
     }
 
-    /** Evita nulls en textos. */
     private static String safe(String text) {
         return text == null ? "" : text;
     }
 
-    /** Arrodoneix a 2 decimals. */
     private static double round2(double n) {
         return Math.round(n * 100.0) / 100.0;
     }
 
-    /** Converteix a percentatge enter. */
     private static int roundPer(double n) {
         return (int) Math.round(n * 100.0);
     }

@@ -19,13 +19,13 @@ Cada jugador personalitza el seu personatge repartint punts d'estadístiques, es
 
 Cada personatge té:
 
-- Nom  
-- Edat  
-- Vida  
-- Manà  
-- Raça  
-- Arma equipada  
-- 7 estadístiques principals  
+- Nom
+- Edat
+- Vida
+- Manà
+- Raça
+- Arma equipada
+- 7 estadístiques principals
 
 ### ▌Estadístiques (7)
 
@@ -45,15 +45,15 @@ Els jugadors disposen de **140 punts** per repartir entre:
 
 ## ▌Races (7)
 
-Hi ha 7 races disponibles.  
+Hi ha 7 races disponibles.
 Cada raça ofereix una **bonificació específica** a una estadística concreta, fomentant diferents estils de joc.
 
 Exemple orientatiu:
 
-- Humà → Bonificació a Carisma  
-- Elf → Bonificació a Destresa  
-- Orc → Bonificació a Força  
-- Nan → Bonificació a Constitució  
+- Humà → Bonificació a Carisma
+- Elf → Bonificació a Destresa
+- Orc → Bonificació a Força
+- Nan → Bonificació a Constitució
 - etc.
 
 ---
@@ -64,9 +64,9 @@ Hi ha **3 tipus d’armes** diferents.
 
 Característiques:
 
-- Rang de dany propi  
-- Poden ser físiques, màgiques o de rang  
-- Cada arma té una habilitat única  
+- Rang de dany propi
+- Poden ser físiques, màgiques o de rang
+- Cada arma té una habilitat única
 
 Les habilitats poden incloure:
 
@@ -81,10 +81,10 @@ Les habilitats poden incloure:
 
 El combat és per torns:
 
-1. Canviar arma (opcional)  
+1. Canviar arma (opcional)
 2. Escollir acció:
    - Atacar (i utilitzar l'habilitat)
-   - Defensar-se  
+   - Defensar-se
    - Esquivar
 3. Aplicació de regeneració automàtica
 
@@ -103,11 +103,48 @@ La partida finalitza quan un personatge arriba a 0 de vida.
 
 ## ▌Mecàniques Destacades
 
-- Sistema d’esquiva basat en Destresa  
-- Sistema de crítics influenciat per la Sort  
-- Regeneració de vida i manà per torn  
-- Diferenciació entre armes físiques, màgiques i de rang 
-- Escalat de dany segons estadístiques  
+- Sistema d’esquiva basat en Destresa
+- Sistema de crítics influenciat per la Sort
+- Regeneració de vida i manà per torn
+- Diferenciació entre armes físiques, màgiques i de rang
+- Escalat de dany segons estadístiques
+- Afinitat divina per carisma
+
+### ▌Crida espiritual
+
+Quan un personatge baixa al **20% de vida o menys**, pot activar una crida espiritual (amb cooldown).
+
+Aquesta mecànica permet:
+
+- Llançar un dau de 20 cares (1–20)
+- Curar-se en proporció directa al resultat
+- No consumir el torn
+
+Això introdueix un element de **remuntada inesperada**, on un combat aparentment perdut pot capgirar-se.
+
+Característiques clau:
+
+- Escala amb la vida màxima del personatge
+- Influenciada indirectament per la Sort (opcional segons implementació)
+- Limitada per cooldown per evitar abusos
+
+És una mecànica pensada per aportar **tensió, risc i moments clutch** dins del combat.
+
+### ▌Afinitat Divina
+
+Els déus tenen una preferència oculta respecte al **carisma**.
+
+A cada partida es genera un perfil que defineix:
+
+- Un rang de carisma "afavorit"
+- Zones neutrals
+- Zones desfavorables
+
+Distribució conceptual:
+
+cau malament - normal - cau bé - normal - cau malament
+
+Això provoca que dos personatges amb el mateix nivell puguin tenir resultats diferents en la tirada del dau de 20 cares segons com encaixin amb aquesta preferència divina.
 
 ---
 
@@ -115,17 +152,17 @@ La partida finalitza quan un personatge arriba a 0 de vida.
 
 Aquest projecte utilitza les següents llibreries:
 
-- **JUnit (junit-jupiter-engine, junit-platform-runner)**  
+- **JUnit (junit-jupiter-engine, junit-platform-runner)**
   Utilitzat per a la creació i execució de tests.
 
-- **Gson**  
+- **Gson**
   Llibreria de Google per gestionar JSON (lectura i escriptura de configuracions i dades).
 
-- **dynamic-menu**  
-  Llibreria pròpia utilitzada per gestionar menús dinàmics dins del joc.  
+- **dynamic-menu**
+  Llibreria pròpia utilitzada per gestionar menús dinàmics dins del joc.
   Disponible a: https://github.com/JJairo-16/dynamic-menu
 
-- **Jline**  
+- **Jline**
   Llibreria utilitzada per gestionar l’entrada interactiva per consola, especialment per al menú d’armes i accions durant combat.
 
 ---
@@ -194,5 +231,5 @@ Aquest projecte està sota la llicència [MIT](LICENSE).
 
 ## ▌Autor
 
-Jairo Linares  
+Jairo Linares
 GitHub: https://github.com/JJairo-16

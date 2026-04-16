@@ -48,6 +48,7 @@ public final class SpiritualCallingDie {
         try {
             D20Terminal.animateDie(face, rng);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             Prettier.error("Ha hagut un error amb l'animació. El resultat ha sigut " + face + ".");
         }
 
