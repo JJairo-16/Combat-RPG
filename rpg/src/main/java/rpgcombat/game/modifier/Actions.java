@@ -21,7 +21,7 @@ public final class Actions {
     }
 
     public static MenuResult<Action> spiritualCalling(Character player) {
-        if (!player.hasEffect(SpiritualCallingFlag.GLOBAL_EFFECT_KEY)) {
+        if (!player.hasEffect(SpiritualCallingFlag.INTERNAL_EFFECT_KEY)) {
             CALL_SPIRITS.CALL_IN_COOLDOWN.print();
 
             Menu.pause();

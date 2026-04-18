@@ -93,6 +93,9 @@ public class CombatSystem {
         double p1DamageTaken = p1HealthBefore - p1HealthAfterAttacks;
         double p2DamageTaken = p2HealthBefore - p2HealthAfterAttacks;
 
+        player1.applyInvulnerability();
+        player2.applyInvulnerability();
+
         Winner winner = resolveWinner(player1, player2);
         if (winner != Winner.NONE) {
             return new CombatRoundResult(

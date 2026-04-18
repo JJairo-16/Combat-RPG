@@ -149,5 +149,26 @@
 				}
 			}
 		]
+	},
+	{
+		"id": "WASP_HARPOON",
+		"name": "Arpó de vespa",
+		"description": "Un arpó impregnat de verí que castiga les cadenes d'impactes amb un dany creixent.",
+		"baseDamage": 46,
+		"criticalProb": 0.14,
+		"criticalDamage": 1.34,
+		"type": "RANGE",
+		"manaPrice": 0,
+		"attackSkill": "nothing",
+		"passives": [
+			{
+				"type": "poisonChain",
+				"params": {
+					"extraDamagePerStack": 9.0,
+					"softCapStart": 4,
+					"falloff": 0.45
+				}
+			}
+		]
 	}
 ]

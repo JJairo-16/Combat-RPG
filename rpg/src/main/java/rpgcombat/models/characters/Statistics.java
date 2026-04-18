@@ -28,10 +28,13 @@ public class Statistics {
     private static final double HEALTH_SOFTCAP_FACTOR = 0.08;
     private static final double REGEN_SOFTCAP_FACTOR = 0.10;
 
+    private boolean invulnerable = false;
+
     /**
      * Construeix les estadístiques a partir d'un array de 7 valors en ordre fix.
      *
-     * @param stats força, destresa, constitució, intel·ligència, saviesa, carisma, sort
+     * @param stats força, destresa, constitució, intel·ligència, saviesa, carisma,
+     *              sort
      */
     public Statistics(int[] stats) {
         this.strength = stats[0];
@@ -93,7 +96,10 @@ public class Statistics {
         return maxMana;
     }
 
-   /** Regenera vida i mana segons constitució i intel·ligència, sense superar els màxims. */
+    /**
+     * Regenera vida i mana segons constitució i intel·ligència, sense superar els
+     * màxims.
+     */
     public void reg() {
         double hp = calculateHealthRegen(constitution);
 
@@ -125,7 +131,8 @@ public class Statistics {
      * Consumeix mana si n'hi ha prou.
      *
      * @param price cost de mana
-     * @return {@code true} si s'ha pogut pagar; {@code false} si no hi ha mana suficient
+     * @return {@code true} si s'ha pogut pagar; {@code false} si no hi ha mana
+     *         suficient
      */
     public boolean consumeMana(double price) {
         if (price > mana) {
@@ -153,7 +160,8 @@ public class Statistics {
     }
 
     /**
-     * Cura vida sense límit màxim i retorna la curació real aplicada (pot sobrecarregar).
+     * Cura vida sense límit màxim i retorna la curació real aplicada (pot
+     * sobrecarregar).
      * 
      * @param amount quantitat de curació sol·licitada
      * @return quantitat real curada
@@ -185,7 +193,8 @@ public class Statistics {
     }
 
     /**
-     * Restaura mana sense límit màxim i retorna la quantitat real restaurada (pot sobrecarregar).
+     * Restaura mana sense límit màxim i retorna la quantitat real restaurada (pot
+     * sobrecarregar).
      * 
      * @param amount quantitat de restauració sol·licitada
      * @return quantitat real restaurada
@@ -200,13 +209,16 @@ public class Statistics {
         return mana - before;
     }
 
-   /** Calcula la vida màxima amb soft cap suau a partir de 20 de constitució. */
+    /** Calcula la vida màxima amb soft cap suau a partir de 20 de constitució. */
     private double calculateMaxHealth(int con) {
         double effectiveCon = softenStat(con, MAX_CONSTITUTION_FULL_EFFECT, HEALTH_SOFTCAP_FACTOR);
         return effectiveCon * CONSTITUTION_VALUE;
     }
 
-   /** Calcula la regeneració de vida amb un soft cap una mica més fort que la vida màxima. */
+    /**
+     * Calcula la regeneració de vida amb un soft cap una mica més fort que la vida
+     * màxima.
+     */
     private double calculateHealthRegen(double con) {
         double effectiveCon = softenStat(con, MAX_CONSTITUTION_FULL_EFFECT, REGEN_SOFTCAP_FACTOR);
         return effectiveCon * 2.35;
@@ -225,8 +237,18 @@ public class Statistics {
         return threshold + (extra / (1.0 + extra * factor));
     }
 
-   /** Aplica un increment i limita el resultat dins del rang indicat. */
+    /** Aplica un increment i limita el resultat dins del rang indicat. */
     private double affectClamp(double act, double amount, double max, double min) {
         return Math.clamp(act + amount, min, max);
+    }
+
+    public void setInvulnerable(boolean invulnerable) {
+        this.invulnerable = invulnerable;
+    }
+
+    public void applyInvulnerability() {
+        if (invulnerable) {
+            health = maxHealth;
+        }
     }
 }

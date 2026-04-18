@@ -100,6 +100,30 @@ public class Character {
         return false;
     }
 
+    /** Retorna un efecte actiu per clau, o {@code null} si no existeix. */
+    public Effect getEffect(String key) {
+        if (key == null || key.isBlank()) {
+            return null;
+        }
+
+        for (Effect effect : effects) {
+            if (effect != null && !effect.isExpired() && key.equals(effect.key())) {
+                return effect;
+            }
+        }
+
+        return null;
+    }
+
+    /** Elimina un efecte per clau. */
+    public boolean removeEffect(String key) {
+        if (key == null || key.isBlank() || effects.isEmpty()) {
+            return false;
+        }
+
+        return effects.removeIf(effect -> effect != null && key.equals(effect.key()));
+    }
+
     public boolean isAtOrBelowHealthRatio(double ratio) {
         double maxHealth = stats.getMaxHealth();
         if (maxHealth <= 0) {
@@ -110,7 +134,7 @@ public class Character {
     }
 
     public boolean canUseSpiritualCalling() {
-        return hasEffect(SpiritualCallingFlag.GLOBAL_EFFECT_KEY)
+        return hasEffect(SpiritualCallingFlag.INTERNAL_EFFECT_KEY)
                 && spiritualCallingCooldown <= 0
                 && isAtOrBelowHealthRatio(SPIRITUAL_CALLING_THRESHOLD);
     }
@@ -358,5 +382,13 @@ public class Character {
         }
 
         return effectiveStats;
+    }
+
+    public void setInvulnerable(boolean invulnerable) {
+        stats.setInvulnerable(invulnerable);
+    }
+
+    public void applyInvulnerability() {
+        stats.applyInvulnerability();
     }
 }

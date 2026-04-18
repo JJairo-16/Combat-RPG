@@ -27,7 +27,7 @@ public class App {
     private static final String WEAPONS_CONFIG_PATH = "rpg/data/weapons.json";
     private static final String STATUS_MENU_MODIFIER_PATH = "rpg/data/menuModifiers.json";
 
-    private static final boolean DEBUG_MODE = false;
+    private static final boolean DEBUG_MODE = true;
 
     private Map<String, List<StatusMod>> modifiers;
 
@@ -55,6 +55,7 @@ public class App {
 
         Character p1 = CharacterCreator.createDebugCharacter();
         Character p2 = CharacterCreator.createDebugCharacter();
+
         return new GameLoop(p1, p2, modifiers);
     }
 
