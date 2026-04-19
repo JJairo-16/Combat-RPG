@@ -22,6 +22,7 @@ import rpgcombat.utils.ui.Prettier;
 import rpgcombat.weapons.config.WeaponDefinition;
 import rpgcombat.weapons.config.WeaponType;
 
+/** Menú interactiu de selecció d'armes amb filtres i navegació per terminal. */
 public final class WeaponMenu {
     private static final TextWrapCache WRAP_CACHE = new TextWrapCache();
 
@@ -48,9 +49,18 @@ public final class WeaponMenu {
 
     private static final String SEPARATOR = "────────────────────────────────────────────────────────";
 
+    /** Classe d'utilitat: no es pot instanciar. */
     private WeaponMenu() {
     }
 
+    /**
+     * Mostra el menú interactiu i retorna l'índex de l'arma seleccionada.
+     *
+     * @param weapons llista d'armes disponibles
+     * @param title   títol del menú
+     * @param stats   estadístiques del personatge per comprovar equipament
+     * @return índex de l'arma seleccionada o {@code -1} si es cancel·la
+     */
     public static int chooseWeaponWithFilters(List<WeaponDefinition> weapons, String title, Statistics stats) {
         if (weapons == null || weapons.isEmpty()) {
             Prettier.warn("No hi ha armes disponibles.");
@@ -62,6 +72,14 @@ public final class WeaponMenu {
         return runInteractiveMenu(weapons, title, stats, state);
     }
 
+    /**
+     * Mostra el menú interactiu i retorna directament l'arma escollida.
+     *
+     * @param weapons llista d'armes disponibles
+     * @param title   títol del menú
+     * @param stats   estadístiques del personatge
+     * @return arma seleccionada o {@code null} si es cancel·la
+     */
     public static WeaponDefinition chooseWeaponEntryWithFilters(
             List<WeaponDefinition> weapons,
             String title,
@@ -72,6 +90,15 @@ public final class WeaponMenu {
         return idx < 0 ? null : weapons.get(idx);
     }
 
+    /**
+     * Mostra el menú interactiu reutilitzant l'estat dels filtres.
+     *
+     * @param weapons llista d'armes disponibles
+     * @param title   títol del menú
+     * @param stats   estadístiques del personatge
+     * @param state   estat extern dels filtres
+     * @return índex de l'arma seleccionada o {@code -1} si es cancel·la
+     */
     public static int chooseWeaponWithFilters(
             List<WeaponDefinition> weapons,
             String title,
@@ -102,6 +129,16 @@ public final class WeaponMenu {
         return result;
     }
 
+    /**
+     * Mostra el menú interactiu reutilitzant l'estat dels filtres i retorna l'arma
+     * escollida.
+     *
+     * @param weapons llista d'armes disponibles
+     * @param title   títol del menú
+     * @param stats   estadístiques del personatge
+     * @param state   estat extern dels filtres
+     * @return arma seleccionada o {@code null} si es cancel·la
+     */
     public static WeaponDefinition chooseWeaponEntryWithFilters(
             List<WeaponDefinition> weapons,
             String title,
@@ -113,51 +150,87 @@ public final class WeaponMenu {
         return idx < 0 ? null : weapons.get(idx);
     }
 
+    /** Estat persistent dels filtres del menú. */
     public static final class FilterState {
         private boolean onlyEquippable = false;
         private TypeFilter typeFilter = TypeFilter.ALL;
 
+        /** Crea un estat de filtres amb valors per defecte. */
         public FilterState() {
         }
 
+        /**
+         * Crea un estat de filtres personalitzat.
+         *
+         * @param onlyEquippable si només s'han de mostrar armes equipables
+         * @param typeFilter     filtre de tipus d'arma
+         */
         public FilterState(boolean onlyEquippable, TypeFilter typeFilter) {
             this.onlyEquippable = onlyEquippable;
             this.typeFilter = typeFilter == null ? TypeFilter.ALL : typeFilter;
         }
 
+        /** @return {@code true} si només es mostren armes equipables */
         public boolean isOnlyEquippable() {
             return onlyEquippable;
         }
 
+        /**
+         * Defineix si només s'han de mostrar armes equipables.
+         *
+         * @param onlyEquippable nou valor del filtre
+         */
         public void setOnlyEquippable(boolean onlyEquippable) {
             this.onlyEquippable = onlyEquippable;
         }
 
+        /** @return filtre actual per tipus d'arma */
         public TypeFilter getTypeFilter() {
             return typeFilter;
         }
 
+        /**
+         * Actualitza el filtre de tipus.
+         *
+         * @param typeFilter nou filtre; si és {@code null}, s'usa
+         *                   {@link TypeFilter#ALL}
+         */
         public void setTypeFilter(TypeFilter typeFilter) {
             this.typeFilter = typeFilter == null ? TypeFilter.ALL : typeFilter;
         }
     }
 
+    /** Tipus de filtre aplicable sobre les armes visibles. */
     public enum TypeFilter {
         ALL("Tots"),
         RANGE("Rang"),
         PHYSICAL("Físic"),
         MAGICAL("Màgic");
 
+        private static final TypeFilter[] VALUES = values();
+
         private final String label;
 
+        /**
+         * Crea un valor de filtre.
+         *
+         * @param label text visible al menú
+         */
         TypeFilter(String label) {
             this.label = label;
         }
 
+        /** @return etiqueta visible del filtre */
         public String getLabel() {
             return label;
         }
 
+        /**
+         * Indica si aquest filtre accepta el tipus d'arma donat.
+         *
+         * @param type tipus d'arma
+         * @return {@code true} si el tipus passa el filtre
+         */
         public boolean matches(WeaponType type) {
             if (this == ALL) {
                 return true;
@@ -179,38 +252,23 @@ public final class WeaponMenu {
             }
         }
 
+        /** @return següent filtre en ordre circular */
         public TypeFilter next() {
-            switch (this) {
-                case ALL:
-                    return RANGE;
-                case RANGE:
-                    return PHYSICAL;
-                case PHYSICAL:
-                    return MAGICAL;
-                case MAGICAL:
-                default:
-                    return ALL;
-            }
+            return VALUES[(ordinal() + 1) % VALUES.length];
         }
 
+        /** @return filtre anterior en ordre circular */
         public TypeFilter previous() {
-            switch (this) {
-                case ALL:
-                    return MAGICAL;
-                case RANGE:
-                    return ALL;
-                case PHYSICAL:
-                    return RANGE;
-                case MAGICAL:
-                default:
-                    return PHYSICAL;
-            }
+            return VALUES[(ordinal() - 1 + VALUES.length) % VALUES.length];
+
         }
     }
 
+    /** Element filtrat amb l'índex real i si és equipable. */
     private record FilteredItem(int index, boolean equippable) {
     }
 
+    /** Estat intern mutable del menú durant l'execució. */
     private static final class State {
         private int cursor = 0;
         private int viewportStart = 0;
@@ -221,14 +279,25 @@ public final class WeaponMenu {
         private boolean resizePending = false;
     }
 
+    /** Accions disponibles des del teclat. */
     private enum Action {
         UP, DOWN, LEFT, RIGHT, TOGGLE_EQUIPPABLE, SELECT, QUIT, NONE
     }
 
+    /** Grau de repintat necessari després d'una acció. */
     private enum RedrawMode {
         NONE, SELECTION_ONLY, FULL
     }
 
+    /**
+     * Inicialitza el terminal i executa el menú interactiu.
+     *
+     * @param weapons llista d'armes
+     * @param title   títol del menú
+     * @param stats   estadístiques del personatge
+     * @param state   estat intern del menú
+     * @return índex seleccionat o {@code -1} si es cancel·la
+     */
     private static int runInteractiveMenu(
             List<WeaponDefinition> weapons,
             String title,
@@ -245,6 +314,16 @@ public final class WeaponMenu {
         }
     }
 
+    /**
+     * Executa el bucle principal del menú en mode raw.
+     *
+     * @param terminal terminal compartit
+     * @param weapons  llista d'armes
+     * @param title    títol del menú
+     * @param stats    estadístiques del personatge
+     * @param state    estat intern del menú
+     * @return índex seleccionat o {@code -1} si es cancel·la
+     */
     private static int runMenuLoop(
             Terminal terminal,
             List<WeaponDefinition> weapons,
@@ -351,6 +430,12 @@ public final class WeaponMenu {
         }
     }
 
+    /**
+     * Ajusta el cursor perquè sempre apunti a una posició vàlida.
+     *
+     * @param state        estat del menú
+     * @param filteredSize nombre d'elements visibles
+     */
     private static void normalizeCursor(State state, int filteredSize) {
         if (filteredSize <= 0) {
             state.cursor = 0;
@@ -365,6 +450,13 @@ public final class WeaponMenu {
         }
     }
 
+    /**
+     * Desa la mida actual del terminal i indica si ha canviat.
+     *
+     * @param terminal terminal actual
+     * @param state    estat del menú
+     * @return {@code true} si l'amplada o l'alçada han canviat
+     */
     private static boolean refreshTerminalSize(Terminal terminal, State state) {
         int width = terminalWidth(terminal);
         int height = terminalHeight(terminal);
@@ -374,6 +466,13 @@ public final class WeaponMenu {
         return changed;
     }
 
+    /**
+     * Reubica el viewport perquè el cursor sigui visible.
+     *
+     * @param state        estat del menú
+     * @param filteredSize nombre d'elements visibles
+     * @param visibleRows  files disponibles per a la llista
+     */
     private static void adjustViewport(State state, int filteredSize, int visibleRows) {
         if (filteredSize <= 0) {
             state.viewportStart = 0;
@@ -400,6 +499,14 @@ public final class WeaponMenu {
         }
     }
 
+    /**
+     * Aplica una acció de teclat sobre l'estat del menú.
+     *
+     * @param action       acció rebuda
+     * @param state        estat del menú
+     * @param filteredSize nombre d'elements visibles
+     * @return tipus de repintat necessari
+     */
     private static RedrawMode applyAction(Action action, State state, int filteredSize) {
         switch (action) {
             case UP:
@@ -448,6 +555,17 @@ public final class WeaponMenu {
         }
     }
 
+    /**
+     * Construeix i pinta tot el contingut visible del menú.
+     *
+     * @param terminal    terminal actual
+     * @param weapons     llista original d'armes
+     * @param filtered    llista d'armes filtrades
+     * @param title       títol del menú
+     * @param stats       estadístiques del personatge
+     * @param state       estat del menú
+     * @param visibleRows files visibles de la llista
+     */
     private static void renderMenu(
             Terminal terminal,
             List<WeaponDefinition> weapons,
@@ -506,6 +624,17 @@ public final class WeaponMenu {
         paintScreenLines(terminal, lines);
     }
 
+    /**
+     * Construeix les files visibles de la llista d'armes.
+     *
+     * @param terminal    terminal actual
+     * @param weapons     llista original d'armes
+     * @param filtered    llista filtrada
+     * @param stats       estadístiques del personatge
+     * @param state       estat del menú
+     * @param visibleRows files visibles disponibles
+     * @return línies ANSI de la llista
+     */
     private static List<String> buildVisibleListLines(
             Terminal terminal,
             List<WeaponDefinition> weapons,
@@ -531,6 +660,15 @@ public final class WeaponMenu {
         return lines;
     }
 
+    /**
+     * Aplica els filtres i genera la llista d'elements visibles.
+     *
+     * @param weapons        llista original d'armes
+     * @param stats          estadístiques del personatge
+     * @param onlyEquippable si només s'han de mostrar armes equipables
+     * @param typeFilter     filtre per tipus
+     * @return llista filtrada amb índex real i estat d'equipament
+     */
     private static List<FilteredItem> buildFilteredItems(
             List<WeaponDefinition> weapons,
             Statistics stats,
@@ -560,6 +698,12 @@ public final class WeaponMenu {
         return out;
     }
 
+    /**
+     * Crea el mapa de tecles del menú.
+     *
+     * @param terminal terminal actual
+     * @return mapa de tecles a accions
+     */
     private static KeyMap<Action> buildKeyMap(Terminal terminal) {
         KeyMap<Action> map = new KeyMap<>();
 
@@ -592,6 +736,18 @@ public final class WeaponMenu {
         return map;
     }
 
+    /**
+     * Repinta només la selecció, el detall i els controls.
+     *
+     * @param terminal    terminal actual
+     * @param weapons     llista original d'armes
+     * @param filtered    llista filtrada
+     * @param stats       estadístiques del personatge
+     * @param state       estat del menú
+     * @param visibleRows files visibles de la llista
+     * @param oldCursor   posició anterior del cursor
+     * @param newCursor   nova posició del cursor
+     */
     private static void redrawSelectionChange(
             Terminal terminal,
             List<WeaponDefinition> weapons,
@@ -604,7 +760,6 @@ public final class WeaponMenu {
 
         if (filtered.isEmpty()) {
             redrawDetailBlock(terminal, weapons, filtered, stats, state, visibleRows, newCursor);
-            redrawControls(terminal);
             terminal.flush();
             return;
         }
@@ -612,10 +767,20 @@ public final class WeaponMenu {
         redrawRow(terminal, weapons, filtered, stats, state, oldCursor, false);
         redrawRow(terminal, weapons, filtered, stats, state, newCursor, true);
         redrawDetailBlock(terminal, weapons, filtered, stats, state, visibleRows, newCursor);
-        redrawControls(terminal);
         terminal.flush();
     }
 
+    /**
+     * Repinta una única fila de la llista si és visible.
+     *
+     * @param terminal terminal actual
+     * @param weapons  llista original d'armes
+     * @param filtered llista filtrada
+     * @param stats    estadístiques del personatge
+     * @param state    estat del menú
+     * @param rowIndex índex lògic de la fila
+     * @param selected si la fila està seleccionada
+     */
     private static void redrawRow(
             Terminal terminal,
             List<WeaponDefinition> weapons,
@@ -645,6 +810,17 @@ public final class WeaponMenu {
         terminal.writer().print(buildRowAnsi(terminal, weapons, filtered.get(rowIndex), stats, selected));
     }
 
+    /**
+     * Repinta el bloc de detall de l'arma seleccionada.
+     *
+     * @param terminal    terminal actual
+     * @param weapons     llista original d'armes
+     * @param filtered    llista filtrada
+     * @param stats       estadístiques del personatge
+     * @param state       estat del menú
+     * @param visibleRows files visibles de la llista
+     * @param cursor      posició actual del cursor
+     */
     private static void redrawDetailBlock(
             Terminal terminal,
             List<WeaponDefinition> weapons,
@@ -681,25 +857,17 @@ public final class WeaponMenu {
         }
     }
 
-    private static void redrawControls(Terminal terminal) {
-        int startRow = controlsStartRow(terminal);
-        if (startRow <= 0) {
-            return;
-        }
-
-        moveCursor(terminal, startRow, 1);
-        clearCurrentLine(terminal);
-        terminal.writer().print(toPlainAnsiLine(terminal, "[↑/↓ o W/S] moure   [←/→ o A/D] canviar tipus"));
-
-        if (startRow + 1 <= maxPaintRow(terminal)) {
-            moveCursor(terminal, startRow + 1, 1);
-            clearCurrentLine(terminal);
-            terminal.writer().print(toPlainAnsiLine(
-                    terminal,
-                    "[E] toggle equipables   [Enter] seleccionar   [Q] cancel·lar"));
-        }
-    }
-
+    /**
+     * Construeix el bloc de detall de l'arma actual.
+     *
+     * @param terminal terminal actual
+     * @param weapons  llista original d'armes
+     * @param filtered llista filtrada
+     * @param stats    estadístiques del personatge
+     * @param cursor   posició actual del cursor
+     * @param maxRows  màxim de files disponibles
+     * @return línies ANSI del bloc de detall
+     */
     private static List<String> buildDetailBlockLines(
             Terminal terminal,
             List<WeaponDefinition> weapons,
@@ -727,13 +895,18 @@ public final class WeaponMenu {
             return new ArrayList<>(lines.subList(0, maxRows));
         }
 
-        while (lines.size() < maxRows) {
-            lines.add("");
-        }
-
         return lines;
     }
 
+    /**
+     * Construeix les línies de detall d'una arma concreta.
+     *
+     * @param terminal   terminal actual
+     * @param weapon     arma seleccionada
+     * @param stats      estadístiques del personatge
+     * @param equippable si l'arma és equipable
+     * @return línies ANSI de detall
+     */
     private static List<String> buildSelectedWeaponDetailLines(
             Terminal terminal,
             WeaponDefinition weapon,
@@ -799,6 +972,16 @@ public final class WeaponMenu {
         return lines;
     }
 
+    /**
+     * Construeix la línia ANSI d'una arma dins la llista.
+     *
+     * @param terminal terminal actual
+     * @param weapons  llista original d'armes
+     * @param item     element filtrat
+     * @param stats    estadístiques del personatge
+     * @param selected si la fila està seleccionada
+     * @return línia ANSI ja formatejada
+     */
     private static String buildRowAnsi(
             Terminal terminal,
             List<WeaponDefinition> weapons,
@@ -835,20 +1018,35 @@ public final class WeaponMenu {
         return out.toAnsi(terminal);
     }
 
+    /** @return fila on comença el bloc de detall. */
     private static int detailStartRow(int renderedListRows) {
         return LIST_START_ROW + renderedListRows + LIST_DETAIL_SPACER_ROWS;
     }
 
+    /** @return fila on comencen els controls inferiors. */
     private static int controlsStartRow(Terminal terminal) {
         return maxPaintRow(terminal) - CONTROL_ROWS + 1;
     }
 
+    /**
+     * Calcula quantes files té disponibles el bloc de detall.
+     *
+     * @param terminal       terminal actual
+     * @param detailStartRow fila inicial del detall
+     * @return nombre de files disponibles
+     */
     private static int computeDetailRows(Terminal terminal, int detailStartRow) {
         int controlsStart = controlsStartRow(terminal);
         int lastDetailRow = controlsStart - DETAIL_CONTROLS_SPACER_ROWS - 1;
         return Math.max(0, lastDetailRow - detailStartRow + 1);
     }
 
+    /**
+     * Calcula quantes files de la llista es poden mostrar.
+     *
+     * @param terminal terminal actual
+     * @return nombre de files visibles per a la llista
+     */
     private static int computeVisibleRows(Terminal terminal) {
         int usableHeight = effectiveTerminalHeight(terminal);
 
@@ -862,6 +1060,14 @@ public final class WeaponMenu {
         return Math.max(MIN_VISIBLE_ROWS, available);
     }
 
+    /**
+     * Calcula quantes files de la llista s'estan renderitzant realment.
+     *
+     * @param filteredSize  nombre total d'elements filtrats
+     * @param viewportStart inici del viewport
+     * @param visibleRows   files visibles màximes
+     * @return nombre de files renderitzades
+     */
     private static int visibleRowCount(int filteredSize, int viewportStart, int visibleRows) {
         if (filteredSize <= 0) {
             return 1;
@@ -872,6 +1078,12 @@ public final class WeaponMenu {
         return Math.clamp(remaining, 1, clampedVisibleRows);
     }
 
+    /**
+     * Pinta totes les línies de pantalla fins al límit visible.
+     *
+     * @param terminal terminal actual
+     * @param lines    línies ja formatejades
+     */
     private static void paintScreenLines(Terminal terminal, List<String> lines) {
         int maxPaintRow = maxPaintRow(terminal);
 
@@ -889,16 +1101,29 @@ public final class WeaponMenu {
         terminal.flush();
     }
 
+    /** @return última fila segura per pintar. */
     private static int maxPaintRow(Terminal terminal) {
         return Math.max(0, effectiveTerminalHeight(terminal));
     }
 
+    /**
+     * Retorna l'alçada efectiva compensant marges i reajustos.
+     *
+     * @param terminal terminal actual
+     * @return alçada útil del terminal
+     */
     private static int effectiveTerminalHeight(Terminal terminal) {
         int rawHeight = terminalHeight(terminal);
         int compensatedHeight = rawHeight - BOTTOM_SAFE_MARGIN_ROWS - RESIZE_COMPENSATION_ROWS;
         return Math.max(1, compensatedHeight);
     }
 
+    /**
+     * Obté l'alçada del terminal amb valors de fallback.
+     *
+     * @param terminal terminal actual
+     * @return nombre de files del terminal
+     */
     private static int terminalHeight(Terminal terminal) {
         if (terminal == null) {
             return DEFAULT_TERMINAL_HEIGHT;
@@ -917,6 +1142,12 @@ public final class WeaponMenu {
         return DEFAULT_TERMINAL_HEIGHT;
     }
 
+    /**
+     * Obté l'amplada del terminal amb valors de fallback.
+     *
+     * @param terminal terminal actual
+     * @return nombre de columnes del terminal
+     */
     private static int terminalWidth(Terminal terminal) {
         if (terminal == null) {
             return DEFAULT_TERMINAL_WIDTH;
@@ -935,33 +1166,63 @@ public final class WeaponMenu {
         return DEFAULT_TERMINAL_WIDTH;
     }
 
+    /**
+     * Calcula l'amplada de tall per al text descriptiu.
+     *
+     * @param terminal terminal actual
+     * @return amplada màxima de wrapping
+     */
     private static int computeDetailWrapWidth(Terminal terminal) {
         int width = terminalWidth(terminal);
         return Math.clamp(width - 2L, 24, DETAIL_WRAP_WIDTH);
     }
 
+    /**
+     * Mou el cursor del terminal a una posició concreta.
+     *
+     * @param terminal terminal actual
+     * @param row      fila destí
+     * @param col      columna destí
+     */
     private static void moveCursor(Terminal terminal, int row, int col) {
         terminal.writer().print("\033[" + row + ";" + col + "H");
     }
 
+    /** Esborra el contingut de la línia actual del terminal. */
     private static void clearCurrentLine(Terminal terminal) {
         if (!terminal.puts(Capability.clr_eol)) {
             terminal.writer().print("\033[2K");
         }
     }
 
+    /**
+     * Construeix una línia ANSI amb estil.
+     *
+     * @param terminal terminal actual
+     * @param style    estil ANSI
+     * @param text     text a mostrar
+     * @return línia ANSI
+     */
     private static String toAnsiLine(Terminal terminal, AttributedStyle style, String text) {
         AttributedStringBuilder out = new AttributedStringBuilder(text.length() + 16);
         JLineAnsi.append(out, style, safe(text));
         return out.toAnsi(terminal);
     }
 
+    /**
+     * Construeix una línia ANSI sense estil extra.
+     *
+     * @param terminal terminal actual
+     * @param text     text a mostrar
+     * @return línia ANSI
+     */
     private static String toPlainAnsiLine(Terminal terminal, String text) {
         AttributedStringBuilder out = new AttributedStringBuilder(text.length() + 8);
         JLineAnsi.append(out, safe(text));
         return out.toAnsi(terminal);
     }
 
+    /** Neteja la pantalla i situa el cursor a l'inici. */
     private static void clearScreen(Terminal terminal) {
         if (!terminal.puts(Capability.clear_screen)) {
             terminal.writer().print("\033[H\033[2J");
@@ -971,10 +1232,22 @@ public final class WeaponMenu {
         terminal.flush();
     }
 
+    /**
+     * Retorna el nom complet del tipus d'arma.
+     *
+     * @param type tipus d'arma
+     * @return nom visible o {@code "?"} si és nul
+     */
     private static String typeName(WeaponType type) {
         return type == null ? "?" : safe(type.getName());
     }
 
+    /**
+     * Retorna el nom curt del tipus d'arma per a la llista.
+     *
+     * @param type tipus d'arma
+     * @return nom curt visible
+     */
     private static String shortTypeName(WeaponType type) {
         if (type == null) {
             return "?";
@@ -992,60 +1265,79 @@ public final class WeaponMenu {
         }
     }
 
+    /**
+     * Ajusta un text a una amplada fixa, afegint espais o truncant-lo.
+     *
+     * @param text  text original
+     * @param width amplada objectiu
+     * @return text ajustat
+     */
     private static String fixed(String text, int width) {
-        return padRight(trimToWidth(text, width), width);
-    }
-
-    private static String padRight(String text, int width) {
-        if (text == null) {
-            text = "";
-        }
-
-        if (text.length() >= width) {
-            return text;
-        }
-
-        return text + " ".repeat(width - text.length());
-    }
-
-    private static String trimToWidth(String text, int width) {
-        if (text == null) {
+        if (text == null || width <= 0)
             return "";
+
+        int len = text.length();
+
+        if (len <= width) {
+            int pad = width - len;
+            return pad == 0 ? text : text + " ".repeat(pad);
         }
 
-        if (width <= 0) {
-            return "";
-        }
-
-        if (text.length() <= width) {
-            return text;
-        }
-
-        if (width == 1) {
+        if (width == 1)
             return "…";
-        }
 
-        return text.substring(0, width - 1) + "…";
+        int end = width - 1;
+        return text.substring(0, end) + "…";
     }
 
+    /**
+     * Evita valors nuls en textos.
+     *
+     * @param text text original
+     * @return cadena buida si el text és nul
+     */
     private static String safe(String text) {
         return text == null ? "" : text;
     }
 
+    /**
+     * Arrodoneix a dues xifres decimals.
+     *
+     * @param n valor original
+     * @return valor arrodonit
+     */
     private static double round2(double n) {
         return Math.round(n * 100.0) / 100.0;
     }
 
+    /**
+     * Converteix una probabilitat a percentatge enter arrodonit.
+     *
+     * @param n probabilitat entre 0 i 1
+     * @return percentatge enter
+     */
     private static int roundPer(double n) {
         return (int) Math.round(n * 100.0);
     }
 
+    /**
+     * Comprova que la llista d'armes no sigui nul·la.
+     *
+     * @param weapons llista d'armes
+     */
     private static void ensureWeapons(List<WeaponDefinition> weapons) {
         Objects.requireNonNull(weapons, "La llista d'armes no pot ser nul·la.");
     }
 
+    /** Terminal compartit reutilitzat pel menú. */
     private static Terminal sharedTerminal;
 
+    /**
+     * Construeix un terminal JLine connectat al sistema.
+     *
+     * @return terminal inicialitzat
+     * @throws IOException si no es pot crear
+     */
     private static Terminal buildTerminal() throws IOException {
         return TerminalBuilder.builder()
                 .system(true)
@@ -1053,6 +1345,12 @@ public final class WeaponMenu {
                 .build();
     }
 
+    /**
+     * Retorna el terminal compartit, creant-lo si cal.
+     *
+     * @return terminal compartit
+     * @throws IOException si no es pot crear
+     */
     private static Terminal getTerminal() throws IOException {
         if (sharedTerminal == null) {
             sharedTerminal = buildTerminal();
@@ -1060,6 +1358,11 @@ public final class WeaponMenu {
         return sharedTerminal;
     }
 
+    /**
+     * Precarrega el terminal compartit per evitar la inicialització tardana.
+     *
+     * @throws IOException si no es pot crear
+     */
     public static void preloadTerminal() throws IOException {
         if (sharedTerminal == null) {
             sharedTerminal = buildTerminal();
