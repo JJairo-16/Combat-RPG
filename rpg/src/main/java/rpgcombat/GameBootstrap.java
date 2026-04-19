@@ -9,7 +9,6 @@ import java.util.Objects;
 import rpgcombat.config.app.AppConfig;
 import rpgcombat.config.app.AppConfigLoader;
 import rpgcombat.config.character.CharacterCreationMode;
-import rpgcombat.config.character.CharacterCreationOptions;
 import rpgcombat.config.debug.DebugRuntime;
 import rpgcombat.creator.CharacterCreator;
 import rpgcombat.game.GameLoop;
@@ -23,18 +22,14 @@ import rpgcombat.utils.ui.LoadingIntro;
 import rpgcombat.utils.ui.Prettier;
 import rpgcombat.weapons.Arsenal;
 
-/**
- * Prepara l'entorn i construeix una partida llesta per iniciar-se.
- */
+/** Prepara l'entorn i construeix una partida llesta per iniciar-se. */
 public class GameBootstrap {
     private static final String APP_CONFIG_PATH = "rpg/data/appConfig.json";
 
     private AppConfig config;
     private Map<String, List<StatusMod>> modifiers;
 
-    /**
-     * Crea una partida completament inicialitzada.
-     */
+    /** Crea una partida completament inicialitzada. */
     public GameLoop createGame() {
         loadAppConfig();
         preloadResources();
@@ -88,9 +83,7 @@ public class GameBootstrap {
         return config.ui().showLoadingIntro();
     }
 
-    private Character createCharacter(CharacterCreationOptions options) {
-        CharacterCreationMode mode = options.mode();
-
+    private Character createCharacter(CharacterCreationMode mode) {
         return switch (mode) {
             case DEBUG -> CharacterCreator.createDebugCharacter();
             case NORMAL -> CharacterCreator.createNewCharacter();

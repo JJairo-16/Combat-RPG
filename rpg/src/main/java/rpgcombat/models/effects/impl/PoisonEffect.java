@@ -16,9 +16,7 @@ public class PoisonEffect implements Effect {
     private final int softCapStart;
     private final double falloff;
 
-    /**
-     * Crea un efecte de verí amb un nombre inicial de càrregues.
-     */
+    /** Crea un efecte de verí amb un nombre inicial de càrregues. */
     public PoisonEffect(double extraDamagePerStack, int softCapStart, double falloff, int initialStacks) {
         if (extraDamagePerStack < 0) {
             throw new IllegalArgumentException("El dany extra del verí no pot ser negatiu.");
@@ -88,9 +86,7 @@ public class PoisonEffect implements Effect {
         state.setStacks(0);
     }
 
-    /**
-     * Calcula el dany addicional segons els stacks actuals.
-     */
+    /** Calcula el dany addicional segons els stacks actuals. */
     public double bonusDamage() {
         int stacks = state.stacks();
         if (stacks <= 0 || extraDamagePerStack <= 0) {
@@ -102,7 +98,8 @@ public class PoisonEffect implements Effect {
     }
 
     /**
-     * Calcula els stacks efectius amb un creixement inicial controlat i un sostre suau.
+     * Calcula els stacks efectius amb un creixement inicial controlat i un sostre
+     * suau.
      *
      * <p>
      * Fins al llindar, el creixement és lineal. A partir d'allà, la corba

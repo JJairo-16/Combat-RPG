@@ -69,9 +69,7 @@ public final class DivineCharismaAffinity {
      */
     private static final int DEFAULT_NEUTRAL_RADIUS = 3;
 
-    /**
-     * Classificació resumida del carisma davant dels déus.
-     */
+    /** Classificació resumida del carisma davant dels déus. */
     public enum Standing {
         DISLIKED("Els déus et miren amb recel; no esperis que els seus designis et siguin favorables."),
         NEUTRAL("Els déus no et rebutgen ni et beneeixen; avui, el seu judici serà distant."),
@@ -89,9 +87,7 @@ public final class DivineCharismaAffinity {
         }
     }
 
-    /**
-     * Tram detallat dins del perfil de preferència.
-     */
+    /** Tram detallat dins del perfil de preferència. */
     public enum Band {
         DISLIKED_LOW("Els déus aparten la mirada del teu esperit; avui no sembla que vulguin escoltar-te."),
         NEUTRAL_LOW("Els déus et toleren amb fredor; no esperis massa de la seva mà."),
@@ -205,9 +201,7 @@ public final class DivineCharismaAffinity {
         return profile;
     }
 
-    /**
-     * Indica si ja existeix una preferència divina carregada.
-     */
+    /** Indica si ja existeix una preferència divina carregada. */
     public static boolean isInitialized() {
         return currentProfile != null;
     }
@@ -291,24 +285,18 @@ public final class DivineCharismaAffinity {
         return distanceFromFavorite(charisma, currentProfile());
     }
 
-    /**
-     * Retorna una "distància social divina" respecte al centre favorit.
-     */
+    /** Retorna una "distància social divina" respecte al centre favorit. */
     public static int distanceFromFavorite(int charisma, Profile profile) {
         Objects.requireNonNull(profile, "El perfil no pot ser nul.");
         return Math.abs(clampCharisma(charisma) - profile.favoredCenter());
     }
 
-    /**
-     * Retorna el mínim de carisma esperat pel sistema.
-     */
+    /** Retorna el mínim de carisma esperat pel sistema. */
     public static int minCharisma() {
         return MIN_CHARISMA;
     }
 
-    /**
-     * Retorna el màxim de carisma esperat pel sistema.
-     */
+    /** Retorna el màxim de carisma esperat pel sistema. */
     public static int maxCharisma() {
         return MAX_CHARISMA;
     }

@@ -1,18 +1,24 @@
 package rpgcombat.config.character;
 
-/**
- * Configuració de creació de personatges.
- */
+/** Configuració de creació de personatges. */
 public record CharactersConfig(
-        CharacterCreationOptions player1,
-        CharacterCreationOptions player2) {
+        CharacterCreationMode player1,
+        CharacterCreationMode player2) {
 
     public CharactersConfig {
         if (player1 == null) {
-            player1 = new CharacterCreationOptions(CharacterCreationMode.NORMAL);
+            player1 = CharacterCreationMode.NORMAL;
         }
         if (player2 == null) {
-            player2 = new CharacterCreationOptions(CharacterCreationMode.NORMAL);
+            player2 = CharacterCreationMode.NORMAL;
         }
+    }
+
+    public static CharactersConfig defaultConfig() {
+        return new CharactersConfig(CharacterCreationMode.NORMAL, CharacterCreationMode.NORMAL);
+    }
+
+    public static CharactersConfig debugConfig() {
+        return new CharactersConfig(CharacterCreationMode.DEBUG, CharacterCreationMode.DEBUG);
     }
 }
