@@ -71,6 +71,7 @@ Desktop.ini
 # =========================
 logs/
 *.log
+crash-reports/*
 
 # =========================
 # Fitxers sensibles

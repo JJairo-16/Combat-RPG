@@ -6,6 +6,7 @@ import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.utils.ui.Ansi;
+import rpgcombat.utils.ui.ColorGradient;
 
 /**
  * Mostra per consola la informació visual del combat.
@@ -56,7 +57,7 @@ public class CombatRenderer {
 
         System.out.printf("%s%s%s ha rebut %s%.2f%s de dany.%n",
                 Ansi.BOLD, character.getName(), Ansi.RESET,
-                Ansi.BRIGHT_RED, damageTaken, Ansi.RESET);
+                Ansi.BRIGHT_RED, Math.max(damageTaken, 0), Ansi.RESET);
 
         printStatusBars(character);
         System.out.println();
@@ -245,20 +246,13 @@ public class CombatRenderer {
     }
 
     /** Retorna el color segons el percentatge de vida. */
-    private String healthColor(double current, double max) {
-        if (max <= 0) {
-            return Ansi.BRIGHT_RED;
-        }
-
-        double ratio = Math.clamp(current / max, 0.0, 1.0);
-
-        if (ratio > 0.60) {
-            return Ansi.GREEN;
-        }
-        if (ratio > 0.30) {
-            return Ansi.YELLOW;
-        }
-        return Ansi.BRIGHT_RED;
+    public static String healthColor(double current, double max) {
+        return ColorGradient.getColor(
+                current / max,
+                255, 0, 0, // rojo
+                255, 220, 0, // amarillo cálido
+                70, 190, 110 // verde suave
+        );
     }
 
     /** Construeix una barra visual proporcional al valor actual. */

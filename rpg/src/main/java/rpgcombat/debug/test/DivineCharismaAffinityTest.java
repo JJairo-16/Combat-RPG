@@ -1,4 +1,4 @@
-package rpgcombat.utils.rng.test;
+package rpgcombat.debug.test;
 
 import java.util.EnumMap;
 import java.util.HashMap;

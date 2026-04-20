@@ -15,7 +15,7 @@ import rpgcombat.models.characters.Statistics;
 
 import rpgcombat.utils.cache.TextWrapCache;
 import rpgcombat.utils.input.Menu;
-import rpgcombat.utils.input.WeaponMenu;
+import rpgcombat.utils.interactive.WeaponMenu;
 import rpgcombat.utils.rng.DivineCharismaAffinity;
 import rpgcombat.utils.ui.Ansi;
 import rpgcombat.utils.ui.Cleaner;
@@ -110,6 +110,7 @@ public class GameLoop {
         sb.append('\n');
         sb.append("====================================\n");
 
+        cls.clear();
         System.out.print(sb.toString());
     }
 

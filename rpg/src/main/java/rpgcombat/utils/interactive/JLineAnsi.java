@@ -1,7 +1,9 @@
-package rpgcombat.utils.ui;
+package rpgcombat.utils.interactive;
 
 import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
+
+import rpgcombat.weapons.config.WeaponType;
 
 /**
  * Utilitats de color i estil per a JLine.
@@ -73,7 +75,7 @@ public final class JLineAnsi {
     }
 
    /** Retorna l'estil segons el tipus d'arma. */
-    public static AttributedStyle weaponTypeStyle(rpgcombat.weapons.config.WeaponType type) {
+    public static AttributedStyle weaponTypeStyle(WeaponType type) {
         if (type == null) {
             return WHITE;
         }

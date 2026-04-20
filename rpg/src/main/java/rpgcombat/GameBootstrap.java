@@ -15,7 +15,7 @@ import rpgcombat.game.GameLoop;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.game.modifier.config.StatusModLoader;
 import rpgcombat.models.characters.Character;
-import rpgcombat.utils.input.WeaponMenu;
+import rpgcombat.utils.interactive.WeaponMenu;
 import rpgcombat.utils.rng.D20Terminal;
 import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.LoadingIntro;
