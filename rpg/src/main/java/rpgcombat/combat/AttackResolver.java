@@ -1,5 +1,6 @@
 package rpgcombat.combat;
 
+import rpgcombat.combat.models.Action;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Result;
 import rpgcombat.weapons.attack.AttackResult;

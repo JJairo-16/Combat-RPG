@@ -4,10 +4,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import rpgcombat.combat.Action;
 import rpgcombat.combat.CombatSystem;
-import rpgcombat.combat.Winner;
-
+import rpgcombat.combat.models.Action;
+import rpgcombat.combat.models.Winner;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;

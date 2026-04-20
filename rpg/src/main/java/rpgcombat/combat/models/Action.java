@@ -1,4 +1,6 @@
-package rpgcombat.combat;
+package rpgcombat.combat.models;
+
+import rpgcombat.combat.CombatSystem;
 
 /**
  * Representa les accions bàsiques que un personatge pot realitzar durant un torn de combat.

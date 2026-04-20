@@ -27,7 +27,7 @@ import com.google.gson.reflect.TypeToken;
 import menu.DynamicMenu;
 import menu.action.MenuAction;
 import menu.model.MenuResult;
-import rpgcombat.combat.Action;
+import rpgcombat.combat.models.Action;
 import rpgcombat.creator.CharacterCreator;
 import rpgcombat.game.MenuBuilder;
 import rpgcombat.game.modifier.MenuStatusModifier;

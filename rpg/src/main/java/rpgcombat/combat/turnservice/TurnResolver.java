@@ -1,16 +1,16 @@
 package rpgcombat.combat.turnservice;
 
-import static rpgcombat.combat.Action.ATTACK;
+import static rpgcombat.combat.models.Action.ATTACK;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import rpgcombat.combat.Action;
 import rpgcombat.combat.AttackResolver;
-import rpgcombat.combat.EffectPipeline;
-import rpgcombat.combat.EndRoundRegenBonus;
-import rpgcombat.combat.RoundRecoveryService;
+import rpgcombat.combat.models.Action;
+import rpgcombat.combat.models.EffectPipeline;
+import rpgcombat.combat.services.EndRoundRegenBonus;
+import rpgcombat.combat.services.RoundRecoveryService;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Result;
 import rpgcombat.models.characters.Statistics;
@@ -29,6 +29,7 @@ public class TurnResolver {
     private final AttackResolver attackResolver;
     private final EffectPipeline effectPipeline;
     private final RoundRecoveryService recoveryService;
+    private final rpgcombat.combat.services.CombatRhythmService rhythmService = new rpgcombat.combat.services.CombatRhythmService();
 
     /** Constructor amb dependències necessàries. */
     public TurnResolver(
@@ -52,11 +53,13 @@ public class TurnResolver {
             Action defenderAction,
             EndRoundRegenBonus defenderBonus) {
 
+        List<String> startMessages = new ArrayList<>();
+        rhythmService.onActionStart(attacker, attackerAction, startMessages);
+
         if (attackerAction != ATTACK) {
-            return resolveNonAttackTurn(attacker, defender, attackerAction, defenderAction);
+            return resolveNonAttackTurn(attacker, defender, attackerAction, defenderAction, startMessages);
         }
 
-        List<String> startMessages = new ArrayList<>();
         List<String> preDefenseMessages = new ArrayList<>();
         List<String> postDefenseMessages = new ArrayList<>();
         List<String> endTurnMessages = new ArrayList<>();
@@ -109,6 +112,8 @@ public class TurnResolver {
             preDefenseMessages.add("cop crític!");
         }
 
+        rhythmService.applyOffensivePressure(attacker, ctx::multiplyDamage);
+        rhythmService.applyDefensivePressure(defender, ctx::multiplyDamage);
         effectPipeline.runPhase(ctx, Phase.MODIFY_DAMAGE, attacker, defender, weapon, attackerRng, defenderRng, preDefenseMessages);
         effectPipeline.runPhase(ctx, Phase.BEFORE_DEFENSE, attacker, defender, weapon, attackerRng, defenderRng, preDefenseMessages);
 
@@ -159,7 +164,8 @@ public class TurnResolver {
             Character attacker,
             Character defender,
             Action attackerAction,
-            Action defenderAction) {
+            Action defenderAction,
+            List<String> startMessages) {
 
         List<String> endTurnMessages = new ArrayList<>();
 
@@ -173,7 +179,7 @@ public class TurnResolver {
         return new TurnResult(
                 attacker.getName(),
                 null,
-                List.of(),
+                startMessages,
                 List.of(),
                 defenseMessage,
                 List.of(),

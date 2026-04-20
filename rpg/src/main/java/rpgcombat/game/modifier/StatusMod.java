@@ -3,7 +3,7 @@ package rpgcombat.game.modifier;
 import java.util.function.Predicate;
 
 import menu.action.MenuAction;
-import rpgcombat.combat.Action;
+import rpgcombat.combat.models.Action;
 import rpgcombat.models.characters.Character;
 
 public record StatusMod(

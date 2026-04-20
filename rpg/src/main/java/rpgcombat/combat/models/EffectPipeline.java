@@ -1,4 +1,4 @@
-package rpgcombat.combat;
+package rpgcombat.combat.models;
 
 import java.util.List;
 import java.util.Random;

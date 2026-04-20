@@ -1,5 +1,6 @@
-package rpgcombat.combat;
+package rpgcombat.combat.services;
 
+import rpgcombat.combat.models.Action;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Result;
 import rpgcombat.models.characters.Statistics;

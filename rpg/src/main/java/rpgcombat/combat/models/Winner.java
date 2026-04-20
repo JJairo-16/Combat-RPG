@@ -1,4 +1,4 @@
-package rpgcombat.combat;
+package rpgcombat.combat.models;
 
 /**
  * Enum que defineix els possibles estats finals d'un combat.

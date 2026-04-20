@@ -1,4 +1,4 @@
-package rpgcombat.combat;
+package rpgcombat.combat.models;
 
 import rpgcombat.combat.turnservice.TurnResult;
 

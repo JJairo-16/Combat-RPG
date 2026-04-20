@@ -1,5 +1,7 @@
 package rpgcombat.models.characters;
 
+import rpgcombat.combat.models.Action;
+
 /**
  * Emmagatzema les estadístiques base i els valors dinàmics (vida i mana).
  */
@@ -17,16 +19,23 @@ public class Statistics {
     // Límits màxims
     private final double maxHealth;
     private final double maxMana;
+    private final double maxStamina;
+    private final double maxResistance;
 
     // Valors actuals
     private double health;
     private double mana;
+    private double stamina;
+    private double resistance;
 
     private static final int MAX_CONSTITUTION_FULL_EFFECT = 20;
     private static final double CONSTITUTION_VALUE = 50.0;
 
     private static final double HEALTH_SOFTCAP_FACTOR = 0.08;
     private static final double REGEN_SOFTCAP_FACTOR = 0.10;
+
+    private static final double STAMINA_PRESSURE_START = 0.58;
+    private static final double RESISTANCE_PRESSURE_START = 0.55;
 
     private boolean invulnerable = false;
 
@@ -47,9 +56,13 @@ public class Statistics {
 
         this.maxHealth = calculateMaxHealth(constitution);
         this.maxMana = intelligence * 30.0;
+        this.maxStamina = calculateMaxStamina();
+        this.maxResistance = calculateMaxResistance();
 
         this.health = maxHealth;
         this.mana = maxMana;
+        this.stamina = maxStamina;
+        this.resistance = maxResistance;
     }
 
     public int getStrength() {
@@ -94,6 +107,22 @@ public class Statistics {
 
     public double getMaxMana() {
         return maxMana;
+    }
+
+    public double getMaxStamina() {
+        return maxStamina;
+    }
+
+    public double getMaxResistance() {
+        return maxResistance;
+    }
+
+    public double getStamina() {
+        return stamina;
+    }
+
+    public double getResistance() {
+        return resistance;
     }
 
     /**
@@ -251,4 +280,116 @@ public class Statistics {
             health = maxHealth;
         }
     }
+
+
+    /**
+     * La stamina baixa només en atacar.
+     * El cost és prou suau perquè atacar repetidament continuï sent viable,
+     * però prou real perquè alternar amb altres accions sigui lleugerament millor.
+     */
+    public void consumeStaminaOnAttack() {
+        double cost = Math.max(10.0, 18.0 - dexterity * 0.10 - wisdom * 0.05);
+        stamina = affectClamp(stamina, -cost, maxStamina, 0);
+    }
+
+    /** Regeneració de stamina en qualsevol acció que no sigui atacar. */
+    public void recoverStaminaOnNonAttack(double multiplier) {
+        double regen = (12.0 + constitution * 0.12 + wisdom * 0.08) * Math.max(0.5, multiplier);
+        stamina = affectClamp(stamina, regen, maxStamina, 0);
+    }
+
+    /** La resistencia puja quan el personatge adopta una acció ofensiva. */
+    public void recoverResistanceOnAttack() {
+        double regen = 10.0 + constitution * 0.10 + dexterity * 0.06;
+        resistance = affectClamp(resistance, regen, maxResistance, 0);
+    }
+
+    /** La resistencia baixa només en defensar de debò. */
+    public void consumeResistanceOnDefend() {
+        double cost = Math.max(8.5, 12.0 - constitution * 0.07 - wisdom * 0.06);
+        resistance = affectClamp(resistance, -cost, maxResistance, 0);
+    }
+
+    /** La esquiva és més exigent que bloquejar. */
+    public void consumeResistanceOnDodge() {
+        double cost = Math.max(12.0, 18.0 - dexterity * 0.10 - wisdom * 0.05);
+        resistance = affectClamp(resistance, -cost, maxResistance, 0);
+    }
+
+    public void onActionStart(Action action) {
+        if (action == null) {
+            return;
+        }
+
+        switch (action) {
+            case ATTACK -> {
+                consumeStaminaOnAttack();
+                recoverResistanceOnAttack();
+            }
+            case DEFEND -> recoverStaminaOnNonAttack(1.15);
+            case DODGE -> recoverStaminaOnNonAttack(1.05);
+        }
+    }
+
+    public double staminaDamageMultiplier() {
+        return 1.0 - 0.16 * Math.pow(staminaPressure(), 1.35);
+    }
+
+    public double resistanceIncomingDamageMultiplier() {
+        return 1.0 + 0.18 * Math.pow(resistancePressure(), 1.40);
+    }
+
+    public double resistanceDodgeMultiplier() {
+        return 1.0 - 0.16 * Math.pow(resistancePressure(), 1.25);
+    }
+
+    public double fatigueChance() {
+        double luckMitigation = Math.max(0.70, 1.0 - luck * 0.004);
+        return Math.clamp(0.30 * Math.pow(staminaPressure(), 1.80) * luckMitigation, 0.0, 0.30);
+    }
+
+    public double exhaustionChance() {
+        double luckMitigation = Math.max(0.68, 1.0 - luck * 0.004);
+        return Math.clamp(0.34 * Math.pow(resistancePressure(), 1.85) * luckMitigation, 0.0, 0.34);
+    }
+
+    public double staminaRatio() {
+        if (maxStamina <= 0) {
+            return 1.0;
+        }
+        return Math.clamp(stamina / maxStamina, 0.0, 1.0);
+    }
+
+    public double resistanceRatio() {
+        if (maxResistance <= 0) {
+            return 1.0;
+        }
+        return Math.clamp(resistance / maxResistance, 0.0, 1.0);
+    }
+
+    private double staminaPressure() {
+        return normalizedPressure(staminaRatio(), STAMINA_PRESSURE_START);
+    }
+
+    private double resistancePressure() {
+        return normalizedPressure(resistanceRatio(), RESISTANCE_PRESSURE_START);
+    }
+
+    private double normalizedPressure(double ratio, double threshold) {
+        if (ratio >= threshold) {
+            return 0.0;
+        }
+
+        double span = Math.max(0.05, threshold);
+        return Math.clamp((threshold - ratio) / span, 0.0, 1.0);
+    }
+
+    private double calculateMaxStamina() {
+        return 75.0 + constitution * 3.0 + dexterity * 1.0 + luck * 0.5;
+    }
+
+    private double calculateMaxResistance() {
+        return 80.0 + constitution * 3.2 + wisdom * 0.75 + luck * 0.4;
+    }
+
 }

@@ -1,7 +1,7 @@
 package rpgcombat.game.modifier;
 
 import menu.model.MenuResult;
-import rpgcombat.combat.Action;
+import rpgcombat.combat.models.Action;
 import rpgcombat.game.modifier.ui.Messages.CALL_SPIRITS;
 
 import rpgcombat.models.characters.Character;

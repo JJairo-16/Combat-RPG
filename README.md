@@ -26,6 +26,7 @@ Cada personatge té:
 - Raça
 - Arma equipada
 - 7 estadístiques principals
+- Estadístiques ocultes
 
 ### ▌Estadístiques (7)
 
@@ -109,6 +110,7 @@ La partida finalitza quan un personatge arriba a 0 de vida.
 - Diferenciació entre armes físiques, màgiques i de rang
 - Escalat de dany segons estadístiques
 - Afinitat divina per carisma
+- Menú interactiu d'elecció d'arma
 
 ### ▌Crida espiritual
 

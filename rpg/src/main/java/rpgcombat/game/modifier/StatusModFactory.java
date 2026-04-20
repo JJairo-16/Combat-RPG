@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import menu.action.MenuAction;
-import rpgcombat.combat.Action;
+import rpgcombat.combat.models.Action;
 import rpgcombat.game.modifier.config.StatusModConfig;
 import rpgcombat.models.characters.Character;
 

@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import rpgcombat.combat.Action;
+import rpgcombat.combat.models.Action;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Result;
 import rpgcombat.weapons.Weapon;

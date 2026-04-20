@@ -9,6 +9,7 @@ import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.StackingRule;
+import rpgcombat.models.effects.impl.Exhaustion;
 import rpgcombat.models.effects.impl.SpiritualCallingFlag;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;
@@ -175,9 +176,13 @@ public class Character {
             return new Result(0, name + " ha bloquejat... sense raó aparent.");
         }
 
-        double recived = attack * 0.6;
-        stats.damage(recived);
-        return new Result(recived, name + " ha bloquejat l'atac.");
+        double defenseVariance = 0.92 + Math.random() * 0.16;
+        double mitigated = attack * 0.6 * defenseVariance;
+        double received = attack - mitigated;
+
+        received = Math.max(0, received);
+        stats.damage(received);
+        return new Result(received, name + " ha bloquejat l'atac.");
     }
 
     /** Intenta esquivar; si falla, rep tot el dany. */
@@ -219,6 +224,11 @@ public class Character {
         double luckComponent = stats.getLuck() * 0.0015;
 
         double dodgeProb = dexComponent + luckComponent;
+        dodgeProb *= stats.resistanceDodgeMultiplier();
+
+        if (hasEffect(Exhaustion.INTERNAL_EFFECT_KEY)) {
+            dodgeProb *= Exhaustion.DODGE_MULTIPLIER;
+        }
 
         return Math.clamp(dodgeProb, 0.05, 0.75);
     }

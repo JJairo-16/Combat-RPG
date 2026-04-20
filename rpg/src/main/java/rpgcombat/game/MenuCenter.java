@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import menu.DynamicMenu;
-import rpgcombat.combat.Action;
+import rpgcombat.combat.models.Action;
 import rpgcombat.game.modifier.MenuStatusModifier;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.models.characters.Character;
