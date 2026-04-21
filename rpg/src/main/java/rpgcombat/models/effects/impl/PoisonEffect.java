@@ -113,7 +113,7 @@ public class PoisonEffect implements Effect {
 
         int overflow = stacks - softCapStart;
 
-        double maxOverflowContribution = Math.max(1.0, softCapStart * 0.75);
+        double maxOverflowContribution = Math.max(0.75, softCapStart * 0.50);
         double overflowContribution = maxOverflowContribution * (1.0 - Math.exp(-falloff * overflow));
 
         return softCapStart + overflowContribution;

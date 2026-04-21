@@ -50,6 +50,7 @@ public class TurnResolver {
 
         List<String> startMessages = new ArrayList<>();
         rhythmService.onActionStart(attacker, attackerAction, startMessages);
+        attacker.onTurnStart(attackerAction, startMessages);
 
         if (!attacker.isAlive()) {
             return new TurnResult(attacker.getName(), null, startMessages, List.of(), null, List.of(), List.of(), 0, false);
@@ -95,6 +96,14 @@ public class TurnResolver {
         boolean critical = ctx.resolveCritical();
         if (critical) preDefenseMessages.add("cop crític!");
 
+        if (attacker.isDesperate()) {
+            preDefenseMessages.add("[GREEN|!] " + attacker.getName() + " lluita al límit i troba força extra.");
+        }
+
+        if (attacker.getMomentumStacks() > 0) {
+            preDefenseMessages.add("[CYAN|+] " + attacker.getName() + " aprofita l'impuls del combat.");
+        }
+
         boolean chargedStrike = attacker.consumeChargedAttack();
         if (chargedStrike) {
             ctx.multiplyDamage(attacker.chargedAttackMultiplier());
@@ -102,12 +111,20 @@ public class TurnResolver {
             preDefenseMessages.add("[CYAN|+] L'atac carregat esclata amb més força.");
         }
 
+        ctx.multiplyDamage(attacker.getAttackModifierThisTurn());
+        ctx.multiplyDamage(attacker.comebackAttackMultiplierAgainst(defender));
+        ctx.multiplyDamage(attacker.momentumAttackMultiplierAgainst(defender));
         rhythmService.applyOffensivePressure(attacker, ctx::multiplyDamage);
         rhythmService.applyDefensivePressure(defender, ctx::multiplyDamage);
+        ctx.multiplyDamage(defender.consumeIncomingDamageMultiplier());
+        ctx.multiplyDamage(defender.comebackIncomingDamageMultiplierAgainst(attacker));
         effectPipeline.runPhase(ctx, Phase.MODIFY_DAMAGE, attacker, defender, weapon, attackerRng, defenderRng, preDefenseMessages);
         effectPipeline.runPhase(ctx, Phase.BEFORE_DEFENSE, attacker, defender, weapon, attackerRng, defenderRng, preDefenseMessages);
 
         double damageToResolve = ctx.damageToResolve();
+        if (defender.isDesperate()) {
+            preDefenseMessages.add("[GREEN|!] " + defender.getName() + " aguanta com pot i redueix part de la pressió rebuda.");
+        }
         rhythmService.onDefenseReaction(defender, defenderAction, damageToResolve, preDefenseMessages);
 
         Result defenderResult = attackResolver.resolveAttack(damageToResolve, defender, defenderAction);
@@ -118,6 +135,12 @@ public class TurnResolver {
         if (hasWeapon) weapon.registerResolvedAttack(ctx.wasCritical(), damageToResolve);
         registerCombatEvents(ctx, defender, defenderAction);
         applyPhaseThreeStates(attacker, defender, attackerAction, defenderAction, ctx, defenderResult, critical, postDefenseMessages);
+        updateMomentum(attacker, defender, defenderAction, damageToResolve, defenderResult, postDefenseMessages);
+
+        defender.tryTriggerAdrenalineSurge(attacker, defenderBonus, postDefenseMessages);
+
+        rhythmService.onDefenseResolved(defender, defenderAction, damageToResolve, endTurnMessages);
+        rhythmService.onAttackResolved(attacker, attackerAction, damageToResolve, endTurnMessages);
 
         String defenseMessage = null;
         if (defenderResult.recived() != -1) {
@@ -151,6 +174,8 @@ public class TurnResolver {
                 endTurnMessages.add("[CYAN|+] " + attacker.getName() + " concentra forces per al següent atac.");
             }
         }
+
+        decayMomentumOnPassiveTurn(attacker, attackerAction, endTurnMessages);
 
         if (breakAttackChains(attacker, defender)) {
             endTurnMessages.add("La cadena del verí es trenca i el verí s'esvaeix.");
@@ -231,6 +256,76 @@ public class TurnResolver {
         if (ctx.getMeta("CHARGED_HIT") instanceof Boolean charged && charged) {
             defender.applyStagger(1);
             out.add("[YELLOW|+] L'impacte carregat desequilibra el rival.");
+        }
+    }
+
+
+    private void updateMomentum(
+            Character attacker,
+            Character defender,
+            Action defenderAction,
+            double damageToResolve,
+            Result defenderResult,
+            List<String> out) {
+
+        boolean successfulHit = defenderResult.recived() > 0;
+        boolean successfulDodge = defenderAction == Action.DODGE && damageToResolve > 0 && defenderResult.recived() <= 0;
+        boolean defenderUnderHeavyPressure = defender.isDesperate() || defender.healthRatio() + 0.18 < attacker.healthRatio();
+
+        if (successfulHit) {
+            if (!defenderUnderHeavyPressure) {
+                int before = attacker.getMomentumStacks();
+                attacker.gainMomentum();
+                if (attacker.getMomentumStacks() > before && out != null) {
+                    out.add("[CYAN|+] " + attacker.getName() + " guanya impuls.");
+                }
+            } else if (out != null && attacker.getMomentumStacks() > 0) {
+                out.add("[CYAN|=] L'avantatge de " + attacker.getName() + " no accelera més davant un rival acorralat.");
+            }
+
+            if (defender.getMomentumStacks() > 0) {
+                defender.loseMomentum();
+                if (out != null) out.add("[CYAN|-] " + defender.getName() + " perd impuls sota la pressió rival.");
+            }
+            return;
+        }
+
+        if (successfulDodge) {
+            int before = defender.getMomentumStacks();
+            defender.gainMomentum();
+            if (defender.isDesperate() || defender.healthRatio() + 0.18 < attacker.healthRatio()) {
+                defender.gainMomentum();
+            }
+
+            if (defender.getMomentumStacks() > before && out != null) {
+                out.add("[CYAN|+] " + defender.getName() + " llegeix el ritme i guanya impuls.");
+            }
+            if (attacker.getMomentumStacks() > 0) {
+                attacker.loseMomentum();
+                if (out != null) out.add("[CYAN|-] " + attacker.getName() + " perd impuls després de fallar.");
+            }
+            return;
+        }
+
+        if (attacker.getMomentumStacks() > 0) {
+            attacker.loseMomentum();
+            if (out != null) out.add("[CYAN|-] " + attacker.getName() + " perd part de l'impuls.");
+        }
+    }
+
+    private void decayMomentumOnPassiveTurn(Character actor, Action action, List<String> out) {
+        if (actor == null || action == null || actor.getMomentumStacks() <= 0) {
+            return;
+        }
+
+        if (action == Action.DEFEND || action == Action.CHARGE) {
+            if (action == Action.CHARGE && actor.isDesperate()) {
+                return;
+            }
+            actor.loseMomentum();
+            if (out != null) {
+                out.add("[CYAN|-] L'impuls de " + actor.getName() + " es refreda una mica.");
+            }
         }
     }
 

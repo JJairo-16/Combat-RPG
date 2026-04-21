@@ -32,7 +32,10 @@ import rpgcombat.weapons.attack.Target;
  */
 public final class HitContext {
 
-   /** Fases on poden actuar les passives i efectes. */
+    public static final String META_ATTACK_FAIL_KIND = "ATTACK_FAIL_KIND";
+    public static final String META_ATTACK_FAIL_EFFECT = "ATTACK_FAIL_EFFECT";
+
+    /** Fases on poden actuar les passives i efectes. */
     public enum Phase {
         START_TURN,
         BEFORE_ATTACK,
@@ -101,10 +104,10 @@ public final class HitContext {
     /**
      * Crea un nou context per a la resolució d'un atac.
      *
-     * @param attacker atacant
-     * @param defender defensor
-     * @param weapon arma emprada
-     * @param rng font d'aleatorietat
+     * @param attacker       atacant
+     * @param defender       defensor
+     * @param weapon         arma emprada
+     * @param rng            font d'aleatorietat
      * @param attackerAction acció triada per l'atacant
      * @param defenderAction acció triada pel defensor
      */
@@ -125,39 +128,39 @@ public final class HitContext {
 
     // ── Participants / info bàsica ───────────────────────────────
 
-   /** @return personatge atacant */
+    /** @return personatge atacant */
     public Character attacker() {
         return attacker;
     }
 
-   /** @return personatge defensor */
+    /** @return personatge defensor */
     public Character defender() {
         return defender;
     }
 
-   /** @return arma emprada en el cop, o {@code null} si no n'hi ha */
+    /** @return arma emprada en el cop, o {@code null} si no n'hi ha */
     public Weapon weapon() {
         return weapon;
     }
 
-   /** @return generador aleatori associat al cop */
+    /** @return generador aleatori associat al cop */
     public Random rng() {
         return rng;
     }
 
-   /** @return acció triada per l'atacant */
+    /** @return acció triada per l'atacant */
     public Action attackerAction() {
         return attackerAction;
     }
 
-   /** @return acció triada pel defensor */
+    /** @return acció triada pel defensor */
     public Action defenderAction() {
         return defenderAction;
     }
 
     // ── AttackResult base ────────────────────────────────────────
 
-   /** @return resultat base de l'atac generat per l'arma/habilitat */
+    /** @return resultat base de l'atac generat per l'arma/habilitat */
     public AttackResult attackResult() {
         return attackResult;
     }
@@ -188,7 +191,7 @@ public final class HitContext {
         this.baseDamage = Math.max(0, baseDamage);
     }
 
-   /** @return dany base abans de crític i modificadors */
+    /** @return dany base abans de crític i modificadors */
     public double baseDamage() {
         return baseDamage;
     }
@@ -223,7 +226,7 @@ public final class HitContext {
         }
     }
 
-   /** @return suma de tots els modificadors plans */
+    /** @return suma de tots els modificadors plans */
     public double flatDamageBonus() {
         double total = 0;
         for (double v : flatDamageModifiers) {
@@ -232,7 +235,7 @@ public final class HitContext {
         return total;
     }
 
-   /** @return producte de tots els multiplicadors de dany */
+    /** @return producte de tots els multiplicadors de dany */
     public double damageMultiplier() {
         double total = 1.0;
         for (double v : damageMultipliers) {
@@ -262,7 +265,7 @@ public final class HitContext {
         this.criticalChance = Math.clamp(chance, 0.0, 1.0);
     }
 
-   /** @return probabilitat actual de crític */
+    /** @return probabilitat actual de crític */
     public double criticalChance() {
         return criticalChance;
     }
@@ -276,7 +279,7 @@ public final class HitContext {
         this.criticalMultiplier = Math.max(1.0, multiplier);
     }
 
-   /** @return multiplicador actual de crític */
+    /** @return multiplicador actual de crític */
     public double criticalMultiplier() {
         return criticalMultiplier;
     }
@@ -305,12 +308,12 @@ public final class HitContext {
         this.criticalForced = false;
     }
 
-   /** @return {@code true} si el crític s'ha forçat explícitament */
+    /** @return {@code true} si el crític s'ha forçat explícitament */
     public boolean isCriticalForced() {
         return criticalForced;
     }
 
-   /** @return {@code true} si el crític s'ha prohibit explícitament */
+    /** @return {@code true} si el crític s'ha prohibit explícitament */
     public boolean isCriticalForbidden() {
         return criticalForbidden;
     }
@@ -324,7 +327,7 @@ public final class HitContext {
         return criticalResolved;
     }
 
-   /** @return {@code true} si el cop resolt ha estat crític */
+    /** @return {@code true} si el cop resolt ha estat crític */
     public boolean wasCritical() {
         return critical;
     }
@@ -364,7 +367,7 @@ public final class HitContext {
 
     // ── Resultat real després de defensar ────────────────────────
 
-   /** @return resultat de la defensa aplicada */
+    /** @return resultat de la defensa aplicada */
     public Result defenderResult() {
         return defenderResult;
     }
@@ -378,7 +381,7 @@ public final class HitContext {
         this.defenderResult = defenderResult;
     }
 
-   /** @return dany real infligit després de la defensa */
+    /** @return dany real infligit després de la defensa */
     public double damageDealt() {
         return damageDealt;
     }
@@ -421,7 +424,7 @@ public final class HitContext {
      * <li>{@code "SKILL" -> "chronoWeave"}</li>
      * </ul>
      *
-     * @param key clau
+     * @param key   clau
      * @param value valor
      */
     public void putMeta(String key, Object value) {
@@ -443,10 +446,10 @@ public final class HitContext {
     /**
      * Obté una metadada tipada o un valor per defecte.
      *
-     * @param <T> tipus esperat
-     * @param key clau
+     * @param <T>  tipus esperat
+     * @param key  clau
      * @param type classe del tipus esperat
-     * @param def valor per defecte
+     * @param def  valor per defecte
      * @return valor convertit si és compatible; altrament {@code def}
      */
     public <T> T getMeta(String key, Class<T> type, T def) {
@@ -502,4 +505,43 @@ public final class HitContext {
     private static double round2(double n) {
         return Math.round(n * 100.0) / 100.0;
     }
+
+    /** Marca que l'atac ha fallat per la pròpia habilitat/arma. */
+    public void markSkillFail() {
+        putMeta(META_ATTACK_FAIL_KIND, "SKILL");
+    }
+
+    /** Marca que l'atac ha fallat per manca de recursos. */
+    public void markResourceFail() {
+        putMeta(META_ATTACK_FAIL_KIND, "RESOURCE");
+    }
+
+    /** Marca que un efecte ha anul·lat l'atac abans de resoldre'l. */
+    public void markEffectFail(String effectKey) {
+        putMeta(META_ATTACK_FAIL_KIND, "EFFECT");
+        if (effectKey != null && !effectKey.isBlank()) {
+            putMeta(META_ATTACK_FAIL_EFFECT, effectKey);
+        }
+    }
+
+    public boolean failedBySkill() {
+        return "SKILL".equals(getMeta(META_ATTACK_FAIL_KIND, String.class, null));
+    }
+
+    public boolean failedByResource() {
+        return "RESOURCE".equals(getMeta(META_ATTACK_FAIL_KIND, String.class, null));
+    }
+
+    public boolean failedByEffect() {
+        return "EFFECT".equals(getMeta(META_ATTACK_FAIL_KIND, String.class, null));
+    }
+
+    public boolean hasRegisteredAttackFail() {
+        return getMeta(META_ATTACK_FAIL_KIND, String.class, null) != null;
+    }
+
+    public String failedEffectKey() {
+        return getMeta(META_ATTACK_FAIL_EFFECT, String.class, null);
+    }
+
 }

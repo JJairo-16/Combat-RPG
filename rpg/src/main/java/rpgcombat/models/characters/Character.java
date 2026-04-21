@@ -36,6 +36,20 @@ public class Character {
     private static final double STAGGER_ATTACK_MULTIPLIER = 0.78;
     private static final double STAGGER_DEFEND_MULTIPLIER = 0.78;
     private static final double STAGGER_DODGE_MULTIPLIER = 0.72;
+    private static final int MAX_MOMENTUM_STACKS = 3;
+    private static final double MOMENTUM_ATTACK_BONUS_PER_STACK = 0.06;
+    private static final double MOMENTUM_DODGE_BONUS_PER_STACK = 0.025;
+
+    private static final double DESPERATE_HEALTH_RATIO = 0.30;
+    private static final double ADRENALINE_TRIGGER_HEALTH_RATIO = 0.18;
+    private static final double ADRENALINE_BASE = 38.0;
+    private static final double ADRENALINE_GAP_BONUS = 24.0;
+    private static final double ADRENALINE_DESPERATE_BONUS = 8.0;
+    private static final double ADRENALINE_MAX = 72.0;
+    private static final double UNDERDOG_DAMAGE_MAX_BONUS = 0.12;
+    private static final double UNDERDOG_DAMAGE_TAKEN_MAX_REDUCTION = 0.10;
+    private static final double UNDERDOG_GAP_REFERENCE = 0.45;
+    private static final double MOMENTUM_SUPPRESSION_WHEN_TARGET_LOW = 0.55;
 
     protected final String name;
     protected final int age;
@@ -54,6 +68,9 @@ public class Character {
     private int vulnerableTurns = 0;
     private int bleedTurns = 0;
     private int staggerTurns = 0;
+    private int momentumStacks = 0;
+    private boolean adrenalineSurgeUsed = false;
+    private double adrenaline = 0.0;
 
     private double attackModifierThisTurn = 1.0;
     private double defenseModifierThisTurn = 1.0;
@@ -83,6 +100,9 @@ public class Character {
     public boolean isVulnerable() { return vulnerableTurns > 0; }
     public boolean isBleeding() { return bleedTurns > 0; }
     public boolean isStaggered() { return staggerTurns > 0; }
+    public int getMomentumStacks() { return momentumStacks; }
+    public boolean hasUsedAdrenalineSurge() { return adrenalineSurgeUsed; }
+    public double getAdrenaline() { return adrenaline; }
 
     public void setSpiritualCallingCooldown(int turns) { this.spiritualCallingCooldown = Math.max(0, turns); }
     public void tickSpiritualCallingCooldown() { if (spiritualCallingCooldown > 0) spiritualCallingCooldown--; }
@@ -106,6 +126,17 @@ public class Character {
     public boolean removeEffect(String key) {
         if (key == null || key.isBlank() || effects.isEmpty()) return false;
         return effects.removeIf(effect -> effect != null && key.equals(effect.key()));
+    }
+
+
+    public double healthRatio() {
+        double maxHealth = stats.getMaxHealth();
+        if (maxHealth <= 0) return 0;
+        return Math.clamp(stats.getHealth() / maxHealth, 0.0, 1.0);
+    }
+
+    public boolean isDesperate() {
+        return isAlive() && healthRatio() <= DESPERATE_HEALTH_RATIO;
     }
 
     public boolean isAtOrBelowHealthRatio(double ratio) {
@@ -133,7 +164,17 @@ public class Character {
     }
 
     protected AttackResult attackUnarmed() {
-        return new AttackResult(WeaponType.PHYSICAL.getBasicDamage(5, stats), "ataca amb les mans desnudes.");
+        double damage = WeaponType.PHYSICAL.getBasicDamage(7, stats) * damageVariance(rng);
+        return new AttackResult(damage, "ataca amb les mans desnudes.");
+    }
+
+    private static final double DAMAGE_VARIANCE = 0.07;
+    private static final double DOWN_VARIANCE = 1.0 - DAMAGE_VARIANCE;
+    private static final double UP_VARIANCE = DAMAGE_VARIANCE * 2.0;
+
+    private double damageVariance(Random rng) {
+        double roll = (rng.nextDouble() + rng.nextDouble()) / 2.0;
+        return DOWN_VARIANCE + roll * UP_VARIANCE;
     }
 
     public void onTurnStart(Action action, List<String> out) {
@@ -226,7 +267,7 @@ public class Character {
 
     protected DodgeResult internalDodge(double attack) {
         if (attack <= 0) return new DodgeResult(0, true);
-        double dodgeProb = Math.clamp(tryToDodge() * dodgeModifierThisTurn, 0.03, 0.85);
+        double dodgeProb = Math.clamp(tryToDodge() * dodgeModifierThisTurn * momentumDodgeMultiplier(), 0.03, 0.85);
         double multiplier = (rng.nextDouble() < dodgeProb ? 0 : DODGE_FAIL_MULTIPLIER);
         return new DodgeResult(attack * multiplier, false);
     }
@@ -257,6 +298,98 @@ public class Character {
     public void applyBleed(int turns) { bleedTurns = Math.max(bleedTurns, turns); }
     public void applyStagger(int turns) { staggerTurns = Math.max(staggerTurns, turns); }
     public double getAttackModifierThisTurn() { return attackModifierThisTurn; }
+
+    public void gainMomentum() {
+        momentumStacks = Math.min(MAX_MOMENTUM_STACKS, momentumStacks + 1);
+    }
+
+    public void loseMomentum() {
+        momentumStacks = Math.max(0, momentumStacks - 1);
+    }
+
+    public void resetMomentum() {
+        momentumStacks = 0;
+    }
+
+    public double momentumAttackMultiplierAgainst(Character defender) {
+        double scale = 1.0;
+        if (defender != null && (defender.isDesperate() || defender.healthRatio() + 0.18 < healthRatio())) {
+            scale = MOMENTUM_SUPPRESSION_WHEN_TARGET_LOW;
+        }
+        return 1.0 + momentumStacks * MOMENTUM_ATTACK_BONUS_PER_STACK * scale;
+    }
+
+    public double momentumDodgeMultiplier() {
+        return 1.0 + momentumStacks * MOMENTUM_DODGE_BONUS_PER_STACK;
+    }
+
+    public double comebackAttackMultiplierAgainst(Character opponent) {
+        double bonus = 1.0;
+        if (isDesperate()) {
+            bonus += 0.10;
+        }
+
+        double gap = healthGapRatioAgainst(opponent);
+        if (gap > 0) {
+            bonus += Math.min(UNDERDOG_DAMAGE_MAX_BONUS, (gap / UNDERDOG_GAP_REFERENCE) * UNDERDOG_DAMAGE_MAX_BONUS);
+        }
+
+        return round2(bonus);
+    }
+
+    public double comebackIncomingDamageMultiplierAgainst(Character opponent) {
+        double reduction = 0.0;
+        if (isDesperate()) {
+            reduction += 0.08;
+        }
+
+        double gap = healthGapRatioAgainst(opponent);
+        if (gap > 0) {
+            reduction += Math.min(UNDERDOG_DAMAGE_TAKEN_MAX_REDUCTION, (gap / UNDERDOG_GAP_REFERENCE) * UNDERDOG_DAMAGE_TAKEN_MAX_REDUCTION);
+        }
+
+        reduction = Math.min(0.18, reduction);
+        return round2(1.0 - reduction);
+    }
+
+    public boolean tryTriggerAdrenalineSurge(Character opponent, rpgcombat.combat.services.EndRoundRegenBonus bonus, List<String> out) {
+        if (bonus == null || adrenalineSurgeUsed || !isAlive() || healthRatio() > ADRENALINE_TRIGGER_HEALTH_RATIO) {
+            return false;
+        }
+
+        adrenalineSurgeUsed = true;
+        adrenaline = buildAdrenalineFromCrisis(opponent);
+
+        double hpPct = round2(0.028 + (adrenaline / 1000.0));
+        double manaPct = round2(0.012 + (adrenaline / 1800.0));
+        bonus.add(hpPct, manaPct);
+
+        if (out != null) {
+            out.add("[GREEN|!] " + name + " entra en adrenalina: accelera la seva regeneració per al final de la ronda.");
+        }
+
+        return true;
+    }
+
+    private double buildAdrenalineFromCrisis(Character opponent) {
+        double gap = healthGapRatioAgainst(opponent);
+        double built = ADRENALINE_BASE + Math.min(ADRENALINE_GAP_BONUS, (gap / UNDERDOG_GAP_REFERENCE) * ADRENALINE_GAP_BONUS);
+        if (isDesperate()) {
+            built += ADRENALINE_DESPERATE_BONUS;
+        }
+        adrenaline = round2(Math.clamp(built, ADRENALINE_BASE, ADRENALINE_MAX));
+        return adrenaline;
+    }
+
+    private double healthGapRatioAgainst(Character opponent) {
+        if (opponent == null) {
+            return 0.0;
+        }
+
+        double myMax = Math.max(1.0, stats.getMaxHealth());
+        double gap = opponent.getStatistics().getHealth() - stats.getHealth();
+        return Math.max(0.0, gap / myMax);
+    }
 
     public Result getDamage(double attack) {
         stats.damage(attack);

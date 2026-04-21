@@ -185,6 +185,6 @@ public final class Passives {
     }
 
     private static double roundPercent(double n) {
-        return n * 100.0;
+        return Math.round(n * 100.0);
     }
 }
