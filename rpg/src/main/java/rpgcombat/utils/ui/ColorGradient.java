@@ -4,66 +4,66 @@ public class ColorGradient {
     private ColorGradient() {
     }
 
-    public static String getColor(double percentage) {
-        percentage = Math.clamp(percentage, 0.0, 1.0);
-        int r = 0;
-        int g = 0;
-        int b = 0;
-
-        if (percentage < 0.5) {
-            // Vermell → Taronja
-            double t = percentage / 0.5; // normalitzar 0-1
-            r = 255;
-            g = (int) (165 * t);
-        } else {
-            // Taronja → Verd
-            double t = (percentage - 0.5) / 0.5;
-            r = (int) (255 * (1 - t));
-            g = (int) (165 + (255 - 165) * t);
-        }
-
-        return String.format("\u001B[38;2;%d;%d;%dm", r, g, b);
-    }
-
     public static final String RESET = "\u001B[0m";
 
-    // public static void main(String[] args) throws InterruptedException {
+    public static String getColor(double percentage) {
+        return getColor(
+                percentage,
+                255, 0, 0,
+                255, 165, 0,
+                60, 200, 120);
+    }
 
-    //     int width = 30;
+    public static String getColor(
+            double percentage,
+            int startR, int startG, int startB,
+            int middleR, int middleG, int middleB,
+            int endR, int endG, int endB) {
 
-    //     while (true) {
-    //         for (int i = 0; i <= width; i++) {
-    //             double percentage = i / (double) width;
+        percentage = Math.clamp(percentage, 0.0, 1.0);
 
-    //             String color = ColorGradient.getColor(percentage);
+        int r;
+        int g;
+        int b;
 
-    //             String bar = "[" +
-    //                     "#".repeat(i) +
-    //                     " ".repeat(width - i) +
-    //                     "]";
+        if (percentage < 0.5) {
+            double t = percentage / 0.5;
+            r = interpolate(startR, middleR, t);
+            g = interpolate(startG, middleG, t);
+            b = interpolate(startB, middleB, t);
+        } else {
+            double t = (percentage - 0.5) / 0.5;
+            r = interpolate(middleR, endR, t);
+            g = interpolate(middleG, endG, t);
+            b = interpolate(middleB, endB, t);
+        }
 
-    //             System.out.print("\r" + color + bar + ColorGradient.RESET +
-    //                     String.format(" %.2f%%", percentage * 100));
+        return ansiRgb(r, g, b);
+    }
 
-    //             Thread.sleep(50);
-    //         }
+    public static String getColor(
+            double percentage,
+            int startR, int startG, int startB,
+            int endR, int endG, int endB) {
 
-    //         for (int i = width; i >= 0; i--) {
-    //             double percentage = i / (double) width;
+        percentage = Math.clamp(percentage, 0.0, 1.0);
 
-    //             String color = ColorGradient.getColor(percentage);
+        int r = interpolate(startR, endR, percentage);
+        int g = interpolate(startG, endG, percentage);
+        int b = interpolate(startB, endB, percentage);
 
-    //             String bar = "[" +
-    //                     "#".repeat(i) +
-    //                     " ".repeat(width - i) +
-    //                     "]";
+        return ansiRgb(r, g, b);
+    }
 
-    //             System.out.print("\r" + color + bar + ColorGradient.RESET +
-    //                     String.format(" %.2f%%", percentage * 100));
+    private static int interpolate(int from, int to, double t) {
+        return (int) Math.round(from + (to - from) * t);
+    }
 
-    //             Thread.sleep(50);
-    //         }
-    //     }
-    // }
+    private static String ansiRgb(int r, int g, int b) {
+        r = Math.clamp(r, 0, 255);
+        g = Math.clamp(g, 0, 255);
+        b = Math.clamp(b, 0, 255);
+        return String.format("\u001B[38;2;%d;%d;%dm", r, g, b);
+    }
 
 }

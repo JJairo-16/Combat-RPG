@@ -30,6 +30,12 @@ public final class PassiveFactory {
                 int duration = getInteger(params, "duration");
                 yield Passives.blindOnHit(applyProb, missProb, duration);
             }
+            case "poisonChain" -> {
+                double extraDamagePerStack = getDouble(params, "extraDamagePerStack");
+                int softCapStart = getInteger(params, "softCapStart");
+                double falloff = getDouble(params, "falloff");
+                yield Passives.poisonChain(extraDamagePerStack, softCapStart, falloff);
+            }
             default -> throw new IllegalArgumentException("Passiva desconeguda: " + cfg.type());
         };
     }
@@ -44,7 +50,7 @@ public final class PassiveFactory {
             return n.intValue();
         }
 
-        throw new IllegalArgumentException("El paràmetre '" + key + "' no es numèric: " + value);
+        throw new IllegalArgumentException("El paràmetre '" + key + "' no és numèric: " + value);
     }
 
     private static double getDouble(Map<String, Object> params, String key) {
@@ -57,6 +63,6 @@ public final class PassiveFactory {
             return n.doubleValue();
         }
 
-        throw new IllegalArgumentException("El paràmetre '" + key + "' no es numèric: " + value);
+        throw new IllegalArgumentException("El paràmetre '" + key + "' no és numèric: " + value);
     }
 }

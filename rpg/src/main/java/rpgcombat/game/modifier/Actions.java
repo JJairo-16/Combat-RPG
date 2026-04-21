@@ -1,7 +1,7 @@
 package rpgcombat.game.modifier;
 
 import menu.model.MenuResult;
-import rpgcombat.combat.Action;
+import rpgcombat.combat.models.Action;
 import rpgcombat.game.modifier.ui.Messages.CALL_SPIRITS;
 
 import rpgcombat.models.characters.Character;
@@ -21,20 +21,27 @@ public final class Actions {
     }
 
     public static MenuResult<Action> spiritualCalling(Character player) {
-        if (!player.hasEffect(SpiritualCallingFlag.GLOBAL_EFFECT_KEY)) {
-            CALL_SPIRITS.CALL_IN_COOLDOWN.print();
-
-            Menu.pause();
+        cleaner.clear();
+        
+        if (!player.hasEffect(SpiritualCallingFlag.INTERNAL_EFFECT_KEY)) {
+            cannotUseSpiritualCalling();
             return MenuResult.repeatLoop();
         }
-
-        cleaner.clear();
+        
+        SpiritualCallingFlag effect = (SpiritualCallingFlag) player.getEffect(SpiritualCallingFlag.INTERNAL_EFFECT_KEY);
+        if (!effect.canActivate()) {
+            cannotUseSpiritualCalling();
+            return MenuResult.repeatLoop();
+        }
+        
+        effect.use();
 
         CALL_SPIRITS.CALL_INIT.print();
 
         int charisma = player.getStatistics().getCharisma();
         System.out.println(DivineCharismaAffinity.classifyStanding(charisma).toString());
 
+        System.out.println();
         Menu.pause();
         System.out.println();
 
@@ -57,5 +64,10 @@ public final class Actions {
         Menu.pause();
 
         return MenuResult.repeatLoop();
+    }
+
+    private static void cannotUseSpiritualCalling() {
+        CALL_SPIRITS.CALL_IN_COOLDOWN.print();
+        Menu.pause();
     }
 }

@@ -1,21 +1,20 @@
 package rpgcombat.combat.turnservice;
 
-import static rpgcombat.combat.Action.ATTACK;
+import static rpgcombat.combat.models.Action.ATTACK;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import rpgcombat.combat.Action;
 import rpgcombat.combat.AttackResolver;
-import rpgcombat.combat.EffectPipeline;
-import rpgcombat.combat.EndRoundRegenBonus;
-import rpgcombat.combat.RoundRecoveryService;
-
+import rpgcombat.combat.models.Action;
+import rpgcombat.combat.models.EffectPipeline;
+import rpgcombat.combat.services.EndRoundRegenBonus;
+import rpgcombat.combat.services.RoundRecoveryService;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Result;
 import rpgcombat.models.characters.Statistics;
-
+import rpgcombat.models.effects.impl.PoisonEffect;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;
 import rpgcombat.weapons.passives.HitContext;
@@ -30,8 +29,9 @@ public class TurnResolver {
     private final AttackResolver attackResolver;
     private final EffectPipeline effectPipeline;
     private final RoundRecoveryService recoveryService;
+    private final rpgcombat.combat.services.CombatRhythmService rhythmService = new rpgcombat.combat.services.CombatRhythmService();
 
-   /** Constructor amb dependències necessàries. */
+    /** Constructor amb dependències necessàries. */
     public TurnResolver(
             AttackResolver attackResolver,
             EffectPipeline effectPipeline,
@@ -53,11 +53,13 @@ public class TurnResolver {
             Action defenderAction,
             EndRoundRegenBonus defenderBonus) {
 
+        List<String> startMessages = new ArrayList<>();
+        rhythmService.onActionStart(attacker, attackerAction, startMessages);
+
         if (attackerAction != ATTACK) {
-            return resolveNonAttackTurn(defender, defenderAction);
+            return resolveNonAttackTurn(attacker, defender, attackerAction, defenderAction, startMessages);
         }
 
-        List<String> startMessages = new ArrayList<>();
         List<String> preDefenseMessages = new ArrayList<>();
         List<String> postDefenseMessages = new ArrayList<>();
         List<String> endTurnMessages = new ArrayList<>();
@@ -110,6 +112,8 @@ public class TurnResolver {
             preDefenseMessages.add("cop crític!");
         }
 
+        rhythmService.applyOffensivePressure(attacker, ctx::multiplyDamage);
+        rhythmService.applyDefensivePressure(defender, ctx::multiplyDamage);
         effectPipeline.runPhase(ctx, Phase.MODIFY_DAMAGE, attacker, defender, weapon, attackerRng, defenderRng, preDefenseMessages);
         effectPipeline.runPhase(ctx, Phase.BEFORE_DEFENSE, attacker, defender, weapon, attackerRng, defenderRng, preDefenseMessages);
 
@@ -155,24 +159,36 @@ public class TurnResolver {
                 critical);
     }
 
-   /** Resol un torn sense atac (defensa, esquiva, etc.). */
-    private TurnResult resolveNonAttackTurn(Character defender, Action defenderAction) {
+    /** Resol un torn sense atac i trenca les cadenes que depenen d'encadenar cops. */
+    private TurnResult resolveNonAttackTurn(
+            Character attacker,
+            Character defender,
+            Action attackerAction,
+            Action defenderAction,
+            List<String> startMessages) {
+
+        List<String> endTurnMessages = new ArrayList<>();
+
+        if (breakAttackChains(attacker, defender)) {
+            endTurnMessages.add("La cadena del verí es trenca i el verí s'esvaeix.");
+        }
+
         Result defenderResult = attackResolver.resolveAttack(0, defender, defenderAction);
         String defenseMessage = defenderResult.message();
 
         return new TurnResult(
-                defender.getName(),
+                attacker.getName(),
                 null,
-                List.of(),
+                startMessages,
                 List.of(),
                 defenseMessage,
                 List.of(),
-                List.of(),
+                endTurnMessages,
                 0,
                 false);
     }
 
-   /** Inicialitza el context de cop amb dades de dany i crítics. */
+    /** Inicialitza el context de cop amb dades de dany i crítics. */
     private void configureHitContext(
             HitContext ctx,
             Character attacker,
@@ -212,7 +228,7 @@ public class TurnResolver {
         ctx.putMeta("CRIT", false);
     }
 
-   /** Registra esdeveniments de combat segons el resultat. */
+    /** Registra esdeveniments de combat segons el resultat. */
     private void registerCombatEvents(HitContext ctx, Character defender, Action defenderAction) {
         if (defenderAction == Action.DODGE) {
             ctx.registerEvent(Event.ON_DODGE);
@@ -231,7 +247,21 @@ public class TurnResolver {
         }
     }
 
-   /** Comprova si l'arma és el Grimori. */
+    /** Trenca les cadenes d'atac persistents del torn actual. */
+    private boolean breakAttackChains(Character attacker, Character defender) {
+        Weapon weapon = attacker.getWeapon();
+        if (weapon == null) {
+            return false;
+        }
+
+        if (!"WASP_HARPOON".equals(weapon.getId())) {
+            return false;
+        }
+
+        return defender.removeEffect(PoisonEffect.INTERNAL_EFFECT_KEY);
+    }
+
+    /** Comprova si l'arma és el Grimori. */
     private static boolean isGrimori(Weapon w) {
         try {
             return w != null && w.getId().equals("GRIMORIE");
@@ -240,7 +270,7 @@ public class TurnResolver {
         }
     }
 
-   /** Arrodoneix a 2 decimals. */
+    /** Arrodoneix a 2 decimals. */
     private static double round2(double n) {
         return Math.round(n * 100.0) / 100.0;
     }

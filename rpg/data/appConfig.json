@@ -1,0 +1,32 @@
+{
+  "useProfile": true,
+  "_profiles": [
+    "NORMAL",
+    "FAST_TEST",
+    "DEBUG_INVULNERABLE",
+    "FULL_DEBUG"
+  ],
+  "profile": "NORMAL",
+  "paths": {
+    "weaponsConfig": "rpg/data/weapons.json",
+    "statusMenuModifier": "rpg/data/menuModifiers.json"
+  },
+  "ui": {
+    "showLoadingIntro": true,
+    "loadingAuthor": "Jairo Linares",
+    "clearBetweenCharacterCreation": true
+  },
+  "debug": {
+    "enabled": false,
+    "forceInvulnerability": false,
+    "preloadWithoutIntro": false
+  },
+  "characters": {
+    "player1": {
+      "mode": "NORMAL"
+    },
+    "player2": {
+      "mode": "NORMAL"
+    }
+  }
+}

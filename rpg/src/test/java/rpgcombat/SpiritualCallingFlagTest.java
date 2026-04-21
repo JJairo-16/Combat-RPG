@@ -19,7 +19,7 @@ import rpgcombat.models.effects.impl.SpiritualCallingFlag;
 
 class SpiritualCallingFlagTest {
 
-        private static final String EFFECT_KEY = SpiritualCallingFlag.GLOBAL_EFFECT_KEY;
+        private static final String EFFECT_KEY = SpiritualCallingFlag.INTERNAL_EFFECT_KEY;
         private static final String OPTION_LABEL = "Invocar espíritus";
 
         private Character dummy;

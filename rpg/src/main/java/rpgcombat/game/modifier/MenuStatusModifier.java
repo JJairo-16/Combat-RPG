@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import menu.DynamicMenu;
-import rpgcombat.combat.Action;
+import rpgcombat.combat.models.Action;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectState;

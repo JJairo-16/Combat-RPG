@@ -4,19 +4,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import rpgcombat.combat.Action;
 import rpgcombat.combat.CombatSystem;
-import rpgcombat.combat.Winner;
-
+import rpgcombat.combat.models.Action;
+import rpgcombat.combat.models.Winner;
 import rpgcombat.game.modifier.StatusMod;
-
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
 
 import rpgcombat.utils.cache.TextWrapCache;
 import rpgcombat.utils.input.Menu;
-import rpgcombat.utils.input.WeaponMenu;
+import rpgcombat.utils.interactive.WeaponMenu;
 import rpgcombat.utils.rng.DivineCharismaAffinity;
 import rpgcombat.utils.ui.Ansi;
 import rpgcombat.utils.ui.Cleaner;
@@ -111,6 +109,7 @@ public class GameLoop {
         sb.append('\n');
         sb.append("====================================\n");
 
+        cls.clear();
         System.out.print(sb.toString());
     }
 
@@ -310,37 +309,32 @@ public class GameLoop {
         DivineCharismaAffinity.Band band = DivineCharismaAffinity.classifyBand(charisma);
 
         String label;
-        String description;
+        String description = band.toString();
         String color;
 
         switch (band) {
             case DISLIKED_LOW:
                 label = "Molt desfavorable";
-                description = "Els déus aparten la mirada del teu esperit; avui no et contemplen amb cap favor.";
                 color = Ansi.RED;
                 break;
 
             case NEUTRAL_LOW:
                 label = "Freda";
-                description = "Els déus et toleren amb una certa distància; no et rebutgen, però tampoc et beneeixen.";
                 color = Ansi.YELLOW;
                 break;
 
             case FAVORED:
                 label = "Propícia";
-                description = "Els déus et contemplen amb una simpatia poc habitual; el teu carisma els resulta agradable.";
                 color = Ansi.GREEN;
                 break;
 
             case NEUTRAL_HIGH:
                 label = "Acceptable";
-                description = "Els déus no et són hostils; hi ha una lleu disposició favorable en la seva mirada.";
                 color = Ansi.CYAN;
                 break;
 
             case DISLIKED_HIGH:
                 label = "Incòmoda";
-                description = "Els déus et jutgen amb recel; hi ha alguna cosa en la teva presència que no els complau.";
                 color = Ansi.ORANGE;
                 break;
 

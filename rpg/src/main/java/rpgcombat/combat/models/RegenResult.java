@@ -1,4 +1,4 @@
-package rpgcombat.combat;
+package rpgcombat.combat.models;
 
 /**
  * Representa la regeneració aplicada al final d'una ronda.

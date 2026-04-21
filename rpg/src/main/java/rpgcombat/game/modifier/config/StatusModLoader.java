@@ -19,7 +19,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import menu.action.MenuAction;
-import rpgcombat.combat.Action;
+import rpgcombat.combat.models.Action;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.game.modifier.StatusModFactory;
 

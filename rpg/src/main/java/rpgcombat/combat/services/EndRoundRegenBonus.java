@@ -1,4 +1,4 @@
-package rpgcombat.combat;
+package rpgcombat.combat.services;
 
 /**
  * Representa els bonus addicionals de regeneració al final del torn.

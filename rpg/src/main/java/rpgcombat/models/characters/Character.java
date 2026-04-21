@@ -9,6 +9,7 @@ import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.StackingRule;
+import rpgcombat.models.effects.impl.Exhaustion;
 import rpgcombat.models.effects.impl.SpiritualCallingFlag;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;
@@ -100,6 +101,30 @@ public class Character {
         return false;
     }
 
+    /** Retorna un efecte actiu per clau, o {@code null} si no existeix. */
+    public Effect getEffect(String key) {
+        if (key == null || key.isBlank()) {
+            return null;
+        }
+
+        for (Effect effect : effects) {
+            if (effect != null && !effect.isExpired() && key.equals(effect.key())) {
+                return effect;
+            }
+        }
+
+        return null;
+    }
+
+    /** Elimina un efecte per clau. */
+    public boolean removeEffect(String key) {
+        if (key == null || key.isBlank() || effects.isEmpty()) {
+            return false;
+        }
+
+        return effects.removeIf(effect -> effect != null && key.equals(effect.key()));
+    }
+
     public boolean isAtOrBelowHealthRatio(double ratio) {
         double maxHealth = stats.getMaxHealth();
         if (maxHealth <= 0) {
@@ -110,7 +135,7 @@ public class Character {
     }
 
     public boolean canUseSpiritualCalling() {
-        return hasEffect(SpiritualCallingFlag.GLOBAL_EFFECT_KEY)
+        return hasEffect(SpiritualCallingFlag.INTERNAL_EFFECT_KEY)
                 && spiritualCallingCooldown <= 0
                 && isAtOrBelowHealthRatio(SPIRITUAL_CALLING_THRESHOLD);
     }
@@ -151,9 +176,13 @@ public class Character {
             return new Result(0, name + " ha bloquejat... sense raó aparent.");
         }
 
-        double recived = attack * 0.6;
-        stats.damage(recived);
-        return new Result(recived, name + " ha bloquejat l'atac.");
+        double defenseVariance = 0.92 + Math.random() * 0.16;
+        double mitigated = attack * 0.6 * defenseVariance;
+        double received = attack - mitigated;
+
+        received = Math.max(0, received);
+        stats.damage(received);
+        return new Result(received, name + " ha bloquejat l'atac.");
     }
 
     /** Intenta esquivar; si falla, rep tot el dany. */
@@ -195,6 +224,11 @@ public class Character {
         double luckComponent = stats.getLuck() * 0.0015;
 
         double dodgeProb = dexComponent + luckComponent;
+        dodgeProb *= stats.resistanceDodgeMultiplier();
+
+        if (hasEffect(Exhaustion.INTERNAL_EFFECT_KEY)) {
+            dodgeProb *= Exhaustion.DODGE_MULTIPLIER;
+        }
 
         return Math.clamp(dodgeProb, 0.05, 0.75);
     }
@@ -358,5 +392,13 @@ public class Character {
         }
 
         return effectiveStats;
+    }
+
+    public void setInvulnerable(boolean invulnerable) {
+        stats.setInvulnerable(invulnerable);
+    }
+
+    public void applyInvulnerability() {
+        stats.applyInvulnerability();
     }
 }

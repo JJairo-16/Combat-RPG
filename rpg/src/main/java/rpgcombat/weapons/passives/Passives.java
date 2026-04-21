@@ -5,6 +5,7 @@ import java.util.Random;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.models.effects.impl.BlindEffect;
+import rpgcombat.models.effects.impl.PoisonEffect;
 import rpgcombat.utils.ui.Ansi;
 import rpgcombat.weapons.Weapon;
 
@@ -22,7 +23,7 @@ public final class Passives {
     /**
      * Crea un passiu que cura l'atacant un percentatge del dany real infligit.
      *
-     * @param pct percentatge de robatori de vida (p. ex. 0.15 = 15%)
+     * @param pct percentatge de robatori de vida
      * @return passiu que s'aplica després d'encertar
      */
     public static WeaponPassive lifeSteal(double pct) {
@@ -32,8 +33,9 @@ public final class Passives {
                 double healAmount = ctx.damageDealt() * pct;
                 double realHealed = ctx.attacker().getStatistics().heal(healAmount);
 
-                if (realHealed <= 0)
+                if (realHealed <= 0) {
                     return null;
+                }
 
                 return String.format("%s roba %.1f %s",
                         ctx.attacker().getName(),
@@ -44,12 +46,9 @@ public final class Passives {
     }
 
     /**
-     * Crea un passiu que aplica dany verdader (percentatge de la vida màxima del
-     * rival)
-     * després d'un impacte real.
+     * Crea un passiu que aplica dany verdader després d'un impacte real.
      *
-     * @param pct percentatge de vida màxima a convertir en dany (p.ex. 0.003 =
-     *            0.3%)
+     * @param pct percentatge de vida màxima convertit en dany
      */
     public static WeaponPassive trueHarm(double pct) {
         return new WeaponPassive() {
@@ -58,8 +57,9 @@ public final class Passives {
                 double opponentMaxHealth = ctx.defender().getStatistics().getMaxHealth();
                 double extra = opponentMaxHealth * pct;
 
-                if (extra <= 0)
+                if (extra <= 0) {
                     return null;
+                }
 
                 ctx.defender().getStatistics().damage(extra);
 
@@ -74,8 +74,8 @@ public final class Passives {
      * Passiu d'execució: quan l'enemic està per sota d'un llindar de vida,
      * augmenta el dany abans de defensar.
      *
-     * @param thresholdLife ratio de vida (0..1). Ex: 0.30 = 30%
-     * @param damageBonus   bonus multiplicatiu extra (0..1). Ex: 0.25 = +25%
+     * @param thresholdLife ratio de vida
+     * @param damageBonus bonus multiplicatiu extra
      */
     public static WeaponPassive executor(double thresholdLife, double damageBonus) {
         return new WeaponPassive() {
@@ -85,8 +85,9 @@ public final class Passives {
                 Statistics defenderStats = defender.getStatistics();
 
                 double ratio = defenderStats.getHealth() / defenderStats.getMaxHealth();
-                if (ratio > thresholdLife)
+                if (ratio > thresholdLife) {
                     return null;
+                }
 
                 ctx.multiplyDamage(1.0 + damageBonus);
 
@@ -111,6 +112,74 @@ public final class Passives {
 
                 ctx.defender().addEffect(new BlindEffect(duration, missProb));
                 return ctx.defender().getName() + " queda encegat temporalment.";
+            }
+        };
+    }
+
+    /**
+     * Passiu de verí acumulatiu.
+     *
+     * <p>
+     * El cop actual llegeix els stacks de verí existents sobre el defensor
+     * i hi suma dany extra. Si l'impacte connecta, afegeix 1 stack nou.
+     * Si la cadena es trenca, el verí desapareix.
+     * </p>
+     */
+    public static WeaponPassive poisonChain(double extraDamagePerStack, int softCapStart, double falloff) {
+        return new WeaponPassive() {
+            @Override
+            public String modifyDamage(Weapon weapon, HitContext ctx, Random rng) {
+                PoisonEffect poison = PoisonEffect.from(ctx.defender());
+                if (poison == null) {
+                    return null;
+                }
+
+                double bonus = poison.bonusDamage();
+                if (bonus <= 0) {
+                    return null;
+                }
+
+                ctx.addFlatDamage(bonus);
+
+                return String.format(
+                        "El verí amplifica el cop (+%.2f de dany amb %d càrregues).",
+                        bonus,
+                        poison.stacks());
+            }
+
+            @Override
+            public String afterDefense(Weapon weapon, HitContext ctx, Random rng) {
+                if (ctx.damageDealt() > 0) {
+                    return null;
+                }
+
+                boolean removed = ctx.defender().removeEffect(PoisonEffect.INTERNAL_EFFECT_KEY);
+                if (!removed) {
+                    return null;
+                }
+
+                return "La cadena del verí es trenca i el verí s'esvaeix.";
+            }
+
+            @Override
+            public String afterHit(Weapon weapon, HitContext ctx, Random rng) {
+                if (ctx.damageDealt() <= 0) {
+                    return null;
+                }
+
+                ctx.defender().addEffect(new PoisonEffect(
+                        extraDamagePerStack,
+                        softCapStart,
+                        falloff,
+                        1));
+
+                PoisonEffect updated = PoisonEffect.from(ctx.defender());
+                int stacks = (updated == null) ? 1 : updated.stacks();
+
+                return String.format(
+                        "%s acumula verí (%d càrregues).",
+                        ctx.defender().getName(),
+                        stacks);
             }
         };
     }

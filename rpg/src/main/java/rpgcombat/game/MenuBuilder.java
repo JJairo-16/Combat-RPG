@@ -6,8 +6,7 @@ import java.util.function.Consumer;
 import menu.DynamicMenu;
 import menu.model.MenuResult;
 import menu.selector.MenuSelector;
-
-import rpgcombat.combat.Action;
+import rpgcombat.combat.models.Action;
 import rpgcombat.creator.CharacterCreator;
 import rpgcombat.models.characters.Character;
 import rpgcombat.utils.input.Menu;
