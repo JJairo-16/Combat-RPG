@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
+import rpgcombat.combat.models.Action;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
@@ -23,9 +24,18 @@ public class Character {
 
     private static final int TOTAL_POINTS = 140;
     private static final int MIN_STAT = 10;
-    /** Mínim de constitució. */
     private static final int MIN_CONSTITUTION = MIN_STAT + 2;
     private static final double SPIRITUAL_CALLING_THRESHOLD = 0.20;
+    private static final int MAX_GUARD_STACKS = 4;
+    private static final int GUARD_BREAK_THRESHOLD = 3;
+    private static final double DODGE_FAIL_MULTIPLIER = 1.25;
+    private static final double CHARGED_ATTACK_MULTIPLIER = 1.50;
+    private static final double VULNERABLE_DAMAGE_MULTIPLIER = 1.30;
+    private static final double BLEED_MAX_HEALTH_RATIO = 0.025;
+    private static final double BLEED_DEFEND_REDUCTION = 0.40;
+    private static final double STAGGER_ATTACK_MULTIPLIER = 0.78;
+    private static final double STAGGER_DEFEND_MULTIPLIER = 0.78;
+    private static final double STAGGER_DODGE_MULTIPLIER = 0.72;
 
     protected final String name;
     protected final int age;
@@ -38,8 +48,17 @@ public class Character {
     protected final List<Effect> effects = new ArrayList<>();
 
     private int spiritualCallingCooldown = 0;
+    private int guardStacks = 0;
+    private boolean chargedAttack = false;
 
-    /** Crea un personatge validant nom, edat i estadístiques. */
+    private int vulnerableTurns = 0;
+    private int bleedTurns = 0;
+    private int staggerTurns = 0;
+
+    private double attackModifierThisTurn = 1.0;
+    private double defenseModifierThisTurn = 1.0;
+    private double dodgeModifierThisTurn = 1.0;
+
     public Character(String name, int age, int[] stats, Breed breed) {
         validateName(name);
         validateAge(age);
@@ -53,84 +72,45 @@ public class Character {
         this.stats = new Statistics(effectiveStats);
     }
 
-    public String getName() {
-        return name;
-    }
+    public String getName() { return name; }
+    public int getAge() { return age; }
+    public Breed getBreed() { return breed; }
+    public Statistics getStatistics() { return stats; }
+    public Weapon getWeapon() { return weapon; }
+    public int getSpiritualCallingCooldown() { return spiritualCallingCooldown; }
+    public int getGuardStacks() { return guardStacks; }
+    public boolean hasChargedAttack() { return chargedAttack; }
+    public boolean isVulnerable() { return vulnerableTurns > 0; }
+    public boolean isBleeding() { return bleedTurns > 0; }
+    public boolean isStaggered() { return staggerTurns > 0; }
 
-    public int getAge() {
-        return age;
-    }
-
-    public Breed getBreed() {
-        return breed;
-    }
-
-    public Statistics getStatistics() {
-        return stats;
-    }
-
-    public Weapon getWeapon() {
-        return weapon;
-    }
-
-    public int getSpiritualCallingCooldown() {
-        return spiritualCallingCooldown;
-    }
-
-    public void setSpiritualCallingCooldown(int turns) {
-        this.spiritualCallingCooldown = Math.max(0, turns);
-    }
-
-    public void tickSpiritualCallingCooldown() {
-        if (spiritualCallingCooldown > 0) {
-            spiritualCallingCooldown--;
-        }
-    }
+    public void setSpiritualCallingCooldown(int turns) { this.spiritualCallingCooldown = Math.max(0, turns); }
+    public void tickSpiritualCallingCooldown() { if (spiritualCallingCooldown > 0) spiritualCallingCooldown--; }
 
     public boolean hasEffect(String key) {
-        if (key == null || key.isBlank()) {
-            return false;
-        }
-
+        if (key == null || key.isBlank()) return false;
         for (Effect effect : effects) {
-            if (effect != null && !effect.isExpired() && key.equals(effect.key())) {
-                return true;
-            }
+            if (effect != null && !effect.isExpired() && key.equals(effect.key())) return true;
         }
-
         return false;
     }
 
-    /** Retorna un efecte actiu per clau, o {@code null} si no existeix. */
     public Effect getEffect(String key) {
-        if (key == null || key.isBlank()) {
-            return null;
-        }
-
+        if (key == null || key.isBlank()) return null;
         for (Effect effect : effects) {
-            if (effect != null && !effect.isExpired() && key.equals(effect.key())) {
-                return effect;
-            }
+            if (effect != null && !effect.isExpired() && key.equals(effect.key())) return effect;
         }
-
         return null;
     }
 
-    /** Elimina un efecte per clau. */
     public boolean removeEffect(String key) {
-        if (key == null || key.isBlank() || effects.isEmpty()) {
-            return false;
-        }
-
+        if (key == null || key.isBlank() || effects.isEmpty()) return false;
         return effects.removeIf(effect -> effect != null && key.equals(effect.key()));
     }
 
     public boolean isAtOrBelowHealthRatio(double ratio) {
         double maxHealth = stats.getMaxHealth();
-        if (maxHealth <= 0) {
-            return false;
-        }
-
+        if (maxHealth <= 0) return false;
         return (stats.getHealth() / maxHealth) <= ratio;
     }
 
@@ -140,126 +120,155 @@ public class Character {
                 && isAtOrBelowHealthRatio(SPIRITUAL_CALLING_THRESHOLD);
     }
 
-    /** Equipa una arma si compleix els requisits. */
     public boolean setWeapon(Weapon w) {
-        if (w == null) {
-            return false;
-        }
-
-        if (!w.canEquip(stats)) {
-            return false;
-        }
-
+        if (w == null) return false;
+        if (!w.canEquip(stats)) return false;
         weapon = w;
         return true;
     }
 
-    /** Ataca amb l'arma equipada o sense arma. */
     public AttackResult attack() {
-        if (weapon == null) {
-            return attackUnarmed();
-        }
-
+        if (weapon == null) return attackUnarmed();
         return weapon.attack(stats, rng);
     }
 
-    /** Executa un atac sense arma. */
     protected AttackResult attackUnarmed() {
-        return new AttackResult(
-                WeaponType.PHYSICAL.getBasicDamage(5, stats),
-                "ataca amb les mans desnudes.");
+        return new AttackResult(WeaponType.PHYSICAL.getBasicDamage(5, stats), "ataca amb les mans desnudes.");
     }
 
-    /** Defensa reduint el dany rebut. */
-    public Result defend(double attack) {
-        if (attack <= 0) {
-            return new Result(0, name + " ha bloquejat... sense raó aparent.");
+    public void onTurnStart(Action action, List<String> out) {
+        attackModifierThisTurn = 1.0;
+        defenseModifierThisTurn = 1.0;
+        dodgeModifierThisTurn = 1.0;
+
+        applyBleedTick(action, out);
+        applyStaggerPenalty(action, out);
+    }
+
+    private void applyBleedTick(Action action, List<String> out) {
+        if (bleedTurns <= 0 || !isAlive()) return;
+
+        double bleedDamage = stats.getMaxHealth() * BLEED_MAX_HEALTH_RATIO;
+        if (action == Action.DEFEND) {
+            bleedDamage *= (1.0 - BLEED_DEFEND_REDUCTION);
         }
 
-        double defenseVariance = 0.92 + Math.random() * 0.16;
-        double mitigated = attack * 0.6 * defenseVariance;
-        double received = attack - mitigated;
+        bleedDamage = round2(Math.max(0.0, bleedDamage));
+        if (bleedDamage > 0) {
+            stats.damage(bleedDamage);
+            if (out != null) {
+                String suffix = action == Action.DEFEND ? " però la defensa en redueix part." : ".";
+                out.add("[RED|-] " + name + " pateix " + bleedDamage + " de sagnat" + suffix);
+            }
+        }
+        bleedTurns--;
+    }
 
-        received = Math.max(0, received);
+    private void applyStaggerPenalty(Action action, List<String> out) {
+        if (staggerTurns <= 0) return;
+
+        switch (action) {
+            case ATTACK -> {
+                attackModifierThisTurn = STAGGER_ATTACK_MULTIPLIER;
+                if (out != null) out.add("[YELLOW|!] " + name + " està desequilibrat: el seu atac perd força.");
+            }
+            case DEFEND -> {
+                defenseModifierThisTurn = STAGGER_DEFEND_MULTIPLIER;
+                if (out != null) out.add("[YELLOW|!] " + name + " defensa mal posicionat.");
+            }
+            case DODGE -> {
+                dodgeModifierThisTurn = STAGGER_DODGE_MULTIPLIER;
+                if (out != null) out.add("[YELLOW|!] " + name + " intenta esquivar desequilibrat.");
+            }
+            case CHARGE -> {
+                if (out != null) out.add("[YELLOW|!] " + name + " carrega lentament per l'aturdiment.");
+            }
+        }
+
+        staggerTurns--;
+    }
+
+    public Result defend(double attack) {
+        if (attack <= 0) return new Result(0, name + " ha bloquejat... sense raó aparent.");
+
+        boolean guardBroken = isGuardBroken();
+        double defenseVariance = 0.92 + rng.nextDouble() * 0.16;
+        double mitigationRatio = guardBroken ? 0.32 : 0.6;
+        mitigationRatio *= defenseModifierThisTurn;
+        mitigationRatio = Math.clamp(mitigationRatio, 0.10, 0.75);
+
+        double mitigated = attack * mitigationRatio * defenseVariance;
+        double received = Math.max(0, attack - mitigated);
         stats.damage(received);
+
+        if (guardBroken) {
+            resetGuardStacks();
+            applyVulnerable(1);
+            return new Result(received, name + " intenta bloquejar, però la guàrdia es trenca i queda vulnerable.");
+        }
+
+        increaseGuardStacks();
         return new Result(received, name + " ha bloquejat l'atac.");
     }
 
-    /** Intenta esquivar; si falla, rep tot el dany. */
     public Result dodge(double attack) {
         DodgeResult dodgeResult = internalDodge(attack);
-        if (dodgeResult.noAttack)
-            return new Result(0, name + " ha esquivat... l'aire.");
+        if (dodgeResult.noAttack) return new Result(0, name + " ha esquivat... l'aire.");
 
         double recived = dodgeResult.recived();
         stats.damage(recived);
 
-        if (recived <= 0) {
-            return new Result(0, name + " ha esquivat l'atac.");
-        }
-
+        if (recived <= 0) return new Result(0, name + " ha esquivat l'atac.");
         return new Result(recived, name + " ha rebut l'atac de ple.");
     }
 
-    /** Resultat intern d'una esquiva. */
-    protected record DodgeResult(double recived, boolean noAttack) {
-    }
+    protected record DodgeResult(double recived, boolean noAttack) {}
 
-    /** Resol internament el càlcul de l'esquiva. */
     protected DodgeResult internalDodge(double attack) {
-        if (attack <= 0) {
-            return new DodgeResult(0, true);
-        }
-
-        double dodgeProb = tryToDodge();
-        double multiplier = (rng.nextDouble() < dodgeProb ? 0 : 1);
-        double recived = attack * multiplier;
-
-        return new DodgeResult(recived, false);
+        if (attack <= 0) return new DodgeResult(0, true);
+        double dodgeProb = Math.clamp(tryToDodge() * dodgeModifierThisTurn, 0.03, 0.85);
+        double multiplier = (rng.nextDouble() < dodgeProb ? 0 : DODGE_FAIL_MULTIPLIER);
+        return new DodgeResult(attack * multiplier, false);
     }
 
-    /** Calcula la probabilitat d'esquiva. */
     protected double tryToDodge() {
         double dexComponent = (stats.getDexterity() - 10) * 0.02;
         double luckComponent = stats.getLuck() * 0.0015;
-
         double dodgeProb = dexComponent + luckComponent;
         dodgeProb *= stats.resistanceDodgeMultiplier();
-
-        if (hasEffect(Exhaustion.INTERNAL_EFFECT_KEY)) {
-            dodgeProb *= Exhaustion.DODGE_MULTIPLIER;
-        }
-
+        if (hasEffect(Exhaustion.INTERNAL_EFFECT_KEY)) dodgeProb *= Exhaustion.DODGE_MULTIPLIER;
         return Math.clamp(dodgeProb, 0.05, 0.75);
     }
 
-    /** Aplica dany directe. */
+    public void increaseGuardStacks() { guardStacks = Math.min(MAX_GUARD_STACKS, guardStacks + 1); }
+    public void resetGuardStacks() { guardStacks = 0; }
+    public boolean isGuardBroken() { return guardStacks >= GUARD_BREAK_THRESHOLD; }
+    public void prepareChargedAttack() { chargedAttack = true; }
+    public boolean consumeChargedAttack() { boolean wasCharged = chargedAttack; chargedAttack = false; return wasCharged; }
+    public double chargedAttackMultiplier() { return CHARGED_ATTACK_MULTIPLIER; }
+
+    public void applyVulnerable(int turns) { vulnerableTurns = Math.max(vulnerableTurns, turns); }
+    public double consumeIncomingDamageMultiplier() {
+        double multiplier = isVulnerable() ? VULNERABLE_DAMAGE_MULTIPLIER : 1.0;
+        if (vulnerableTurns > 0) vulnerableTurns--;
+        return multiplier;
+    }
+
+    public void applyBleed(int turns) { bleedTurns = Math.max(bleedTurns, turns); }
+    public void applyStagger(int turns) { staggerTurns = Math.max(staggerTurns, turns); }
+    public double getAttackModifierThisTurn() { return attackModifierThisTurn; }
+
     public Result getDamage(double attack) {
         stats.damage(attack);
         return new Result(attack, name + " ha rebut l'atac de ple.");
     }
 
-    /** Indica si el personatge continua viu. */
-    public boolean isAlive() {
-        return stats.getHealth() > 0;
-    }
+    public boolean isAlive() { return stats.getHealth() > 0; }
+    public void regen() { stats.reg(); }
+    public Random rng() { return rng; }
 
-    /** Aplica la regeneració base. */
-    public void regen() {
-        stats.reg();
-    }
-
-    /** Retorna el generador aleatori del personatge. */
-    public Random rng() {
-        return rng;
-    }
-
-    /** Afegeix un efecte segons la seva regla d'acumulació. */
     public void addEffect(Effect incoming) {
-        if (incoming == null) {
-            return;
-        }
-
+        if (incoming == null) return;
         if (effects.isEmpty()) {
             effects.add(incoming);
             return;
@@ -267,24 +276,12 @@ public class Character {
 
         for (int i = 0; i < effects.size(); i++) {
             Effect existing = effects.get(i);
-
-            if (!existing.key().equals(incoming.key())) {
-                continue;
-            }
-
+            if (!existing.key().equals(incoming.key())) continue;
             StackingRule rule = existing.stackingRule();
-
             switch (rule) {
-                case IGNORE:
-                    return;
-
-                case REPLACE:
-                    effects.set(i, incoming);
-                    return;
-
-                case REFRESH, STACK:
-                    existing.mergeFrom(incoming);
-                    return;
+                case IGNORE -> { return; }
+                case REPLACE -> { effects.set(i, incoming); return; }
+                case REFRESH, STACK -> { existing.mergeFrom(incoming); return; }
             }
         }
 
@@ -292,113 +289,69 @@ public class Character {
         effects.sort(Comparator.comparingInt(Effect::priority).reversed());
     }
 
-    public void clearEffects() {
-        effects.clear();
-    }
+    public void clearEffects() { effects.clear(); }
 
-    /** Executa els efectes d'una fase i retorna els missatges. */
     public List<String> triggerEffects(HitContext ctx, HitContext.Phase phase, Random rng) {
-        if (effects.isEmpty()) {
-            return List.of();
-        }
-
+        if (effects.isEmpty()) return List.of();
         List<String> messages = new ArrayList<>();
         triggerEffects(ctx, phase, rng, messages);
         return messages;
     }
 
-    /** Executa els efectes d'una fase i afegeix els missatges a la sortida. */
     public void triggerEffects(HitContext ctx, HitContext.Phase phase, Random rng, List<String> out) {
-        if (effects.isEmpty()) {
-            return;
-        }
-
+        if (effects.isEmpty()) return;
         for (Effect e : effects) {
-            if (!e.isActive()) {
-                continue;
-            }
-
+            if (!e.isActive()) continue;
             EffectResult r = e.onPhase(ctx, phase, rng, this);
-            if (r != null && r.message() != null && !r.message().isBlank()) {
-                out.add(r.message());
-            }
+            if (r != null && r.message() != null && !r.message().isBlank()) out.add(r.message());
         }
-
         cleanupExpiredEffects();
     }
 
-    /** Elimina efectes expirats. */
     protected void cleanupExpiredEffects() {
-        if (effects.isEmpty()) {
-            return;
-        }
-
+        if (effects.isEmpty()) return;
         effects.removeIf(Effect::isExpired);
     }
 
-    /** Retorna una còpia immutable dels efectes actius. */
-    public List<Effect> getEffects() {
-        return List.copyOf(effects);
-    }
+    public List<Effect> getEffects() { return List.copyOf(effects); }
 
     private static void validateName(String name) {
-        if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("El nom no pot ser nul ni buit");
-        }
+        if (name == null || name.isBlank()) throw new IllegalArgumentException("El nom no pot ser nul ni buit");
     }
 
     private static void validateAge(int age) {
-        if (age <= 0) {
-            throw new IllegalArgumentException("L'edat ha de ser major que 0");
-        }
+        if (age <= 0) throw new IllegalArgumentException("L'edat ha de ser major que 0");
     }
 
-    /** Valida longitud, mínims i suma de les estadístiques. */
     private static void validateStats(int[] stats) {
-        if (stats == null) {
-            throw new IllegalArgumentException("L'array d'estadístiques no pot ser nul");
-        }
-
-        if (stats.length != 7) {
-            throw new IllegalArgumentException("Les estadístiques han de contenir exactament 7 valors");
-        }
+        if (stats == null) throw new IllegalArgumentException("L'array d'estadístiques no pot ser nul");
+        if (stats.length != 7) throw new IllegalArgumentException("Les estadístiques han de contenir exactament 7 valors");
 
         int sum = 0;
-
         for (int stat : stats) {
-            if (stat < MIN_STAT) {
-                throw new IllegalArgumentException("Cada estadística ha de ser com a mínim " + MIN_STAT);
-            }
+            if (stat < MIN_STAT) throw new IllegalArgumentException("Cada estadística ha de ser com a mínim " + MIN_STAT);
             sum += stat;
         }
 
         if (stats[2] < MIN_CONSTITUTION) {
             throw new IllegalArgumentException("La constitució (vida) ha de ser com a mínim " + MIN_CONSTITUTION);
         }
-
         if (sum != TOTAL_POINTS) {
-            throw new IllegalArgumentException(
-                    "La suma total de punts ha de ser exactament " + TOTAL_POINTS + ". Suma actual: " + sum);
+            throw new IllegalArgumentException("La suma total de punts ha de ser exactament " + TOTAL_POINTS + ". Suma actual: " + sum);
         }
     }
 
-    /** Aplica els modificadors de raça a les estadístiques base. */
     protected static int[] applyBreed(int[] stats, Breed breed) {
         Stat[] statValues = Stat.values();
         int[] effectiveStats = stats.clone();
-
         for (int i = 0; i < stats.length; i++) {
             effectiveStats[i] = Breed.effectiveStat(stats[i], statValues[i], breed);
         }
-
         return effectiveStats;
     }
 
-    public void setInvulnerable(boolean invulnerable) {
-        stats.setInvulnerable(invulnerable);
-    }
+    public void setInvulnerable(boolean invulnerable) { stats.setInvulnerable(invulnerable); }
+    public void applyInvulnerability() { stats.applyInvulnerability(); }
 
-    public void applyInvulnerability() {
-        stats.applyInvulnerability();
-    }
+    private static double round2(double n) { return Math.round(n * 100.0) / 100.0; }
 }

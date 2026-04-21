@@ -1,6 +1,7 @@
 package rpgcombat.combat.turnservice;
 
 import static rpgcombat.combat.models.Action.ATTACK;
+import static rpgcombat.combat.models.Action.CHARGE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +32,6 @@ public class TurnResolver {
     private final RoundRecoveryService recoveryService;
     private final rpgcombat.combat.services.CombatRhythmService rhythmService = new rpgcombat.combat.services.CombatRhythmService();
 
-    /** Constructor amb dependències necessàries. */
     public TurnResolver(
             AttackResolver attackResolver,
             EffectPipeline effectPipeline,
@@ -41,11 +41,6 @@ public class TurnResolver {
         this.recoveryService = recoveryService;
     }
 
-    /**
-     * Resol completament un torn de combat.
-     *
-     * @return resultat final del torn
-     */
     public TurnResult resolveTurn(
             Character attacker,
             Character defender,
@@ -55,6 +50,10 @@ public class TurnResolver {
 
         List<String> startMessages = new ArrayList<>();
         rhythmService.onActionStart(attacker, attackerAction, startMessages);
+
+        if (!attacker.isAlive()) {
+            return new TurnResult(attacker.getName(), null, startMessages, List.of(), null, List.of(), List.of(), 0, false);
+        }
 
         if (attackerAction != ATTACK) {
             return resolveNonAttackTurn(attacker, defender, attackerAction, defenderAction, startMessages);
@@ -78,38 +77,29 @@ public class TurnResolver {
 
         if (realTarget == attacker) {
             double damage = attackResult.damage();
-            if (damage > 0) {
-                attacker.getDamage(damage);
-            }
-
-            return new TurnResult(
-                    attacker.getName(),
-                    attackerMessage,
-                    startMessages,
-                    List.of(),
-                    null,
-                    List.of(),
-                    List.of(),
-                    damage,
-                    false);
+            if (damage > 0) attacker.getDamage(damage);
+            return new TurnResult(attacker.getName(), attackerMessage, startMessages, List.of(), null, List.of(), List.of(), damage, false);
         }
 
         Random attackerRng = attacker.rng();
         Random defenderRng = defender.rng();
-
         HitContext ctx = new HitContext(attacker, defender, weapon, attackerRng, attackerAction, defenderAction);
         ctx.setAttackResult(attackResult);
 
         configureHitContext(ctx, attacker, attackResult, weapon);
 
         effectPipeline.runAttackerOnly(ctx, Phase.START_TURN, attacker, attackerRng, startMessages);
-
         effectPipeline.runPhase(ctx, Phase.BEFORE_ATTACK, attacker, defender, weapon, attackerRng, defenderRng, preDefenseMessages);
         effectPipeline.runPhase(ctx, Phase.ROLL_CRIT, attacker, defender, weapon, attackerRng, defenderRng, preDefenseMessages);
 
         boolean critical = ctx.resolveCritical();
-        if (critical) {
-            preDefenseMessages.add("cop crític!");
+        if (critical) preDefenseMessages.add("cop crític!");
+
+        boolean chargedStrike = attacker.consumeChargedAttack();
+        if (chargedStrike) {
+            ctx.multiplyDamage(attacker.chargedAttackMultiplier());
+            ctx.putMeta("CHARGED_HIT", true);
+            preDefenseMessages.add("[CYAN|+] L'atac carregat esclata amb més força.");
         }
 
         rhythmService.applyOffensivePressure(attacker, ctx::multiplyDamage);
@@ -118,48 +108,32 @@ public class TurnResolver {
         effectPipeline.runPhase(ctx, Phase.BEFORE_DEFENSE, attacker, defender, weapon, attackerRng, defenderRng, preDefenseMessages);
 
         double damageToResolve = ctx.damageToResolve();
+        rhythmService.onDefenseReaction(defender, defenderAction, damageToResolve, preDefenseMessages);
 
         Result defenderResult = attackResolver.resolveAttack(damageToResolve, defender, defenderAction);
         ctx.setDefenderResult(defenderResult);
         ctx.setDamageDealt(defenderResult.recived());
 
         recoveryService.registerDefenseBonus(defenderAction, defenderResult, damageToResolve, defenderBonus);
-
-        if (hasWeapon) {
-            weapon.registerResolvedAttack(ctx.wasCritical(), damageToResolve);
-        }
-
+        if (hasWeapon) weapon.registerResolvedAttack(ctx.wasCritical(), damageToResolve);
         registerCombatEvents(ctx, defender, defenderAction);
+        applyPhaseThreeStates(attacker, defender, attackerAction, defenderAction, ctx, defenderResult, critical, postDefenseMessages);
 
         String defenseMessage = null;
         if (defenderResult.recived() != -1) {
             String msg = defenderResult.message();
-            if (msg != null && !msg.isBlank()) {
-                defenseMessage = msg;
-            }
+            if (msg != null && !msg.isBlank()) defenseMessage = msg;
         }
 
         effectPipeline.runPhase(ctx, Phase.AFTER_DEFENSE, attacker, defender, weapon, attackerRng, defenderRng, postDefenseMessages);
-
         if (ctx.damageDealt() > 0) {
             effectPipeline.runPhase(ctx, Phase.AFTER_HIT, attacker, defender, weapon, attackerRng, defenderRng, postDefenseMessages);
         }
-
         effectPipeline.runAttackerOnly(ctx, Phase.END_TURN, attacker, attackerRng, endTurnMessages);
 
-        return new TurnResult(
-                attacker.getName(),
-                attackerMessage,
-                startMessages,
-                preDefenseMessages,
-                defenseMessage,
-                postDefenseMessages,
-                endTurnMessages,
-                ctx.damageDealt(),
-                critical);
+        return new TurnResult(attacker.getName(), attackerMessage, startMessages, preDefenseMessages, defenseMessage, postDefenseMessages, endTurnMessages, ctx.damageDealt(), critical);
     }
 
-    /** Resol un torn sense atac i trenca les cadenes que depenen d'encadenar cops. */
     private TurnResult resolveNonAttackTurn(
             Character attacker,
             Character defender,
@@ -169,6 +143,15 @@ public class TurnResolver {
 
         List<String> endTurnMessages = new ArrayList<>();
 
+        if (attackerAction == CHARGE) {
+            if (attacker.hasChargedAttack()) {
+                endTurnMessages.add("[CYAN|!] " + attacker.getName() + " manté la càrrega; no s'acumula més.");
+            } else {
+                attacker.prepareChargedAttack();
+                endTurnMessages.add("[CYAN|+] " + attacker.getName() + " concentra forces per al següent atac.");
+            }
+        }
+
         if (breakAttackChains(attacker, defender)) {
             endTurnMessages.add("La cadena del verí es trenca i el verí s'esvaeix.");
         }
@@ -176,44 +159,20 @@ public class TurnResolver {
         Result defenderResult = attackResolver.resolveAttack(0, defender, defenderAction);
         String defenseMessage = defenderResult.message();
 
-        return new TurnResult(
-                attacker.getName(),
-                null,
-                startMessages,
-                List.of(),
-                defenseMessage,
-                List.of(),
-                endTurnMessages,
-                0,
-                false);
+        return new TurnResult(attacker.getName(), null, startMessages, List.of(), defenseMessage, List.of(), endTurnMessages, 0, false);
     }
 
-    /** Inicialitza el context de cop amb dades de dany i crítics. */
-    private void configureHitContext(
-            HitContext ctx,
-            Character attacker,
-            AttackResult attackResult,
-            Weapon weapon) {
-
+    private void configureHitContext(HitContext ctx, Character attacker, AttackResult attackResult, Weapon weapon) {
         if (weapon != null) {
             Statistics attackerStats = attacker.getStatistics();
-
             double rolledDamage = Math.max(0.0001, weapon.lastAttackDamage());
             double nonCritDamage = Math.max(0.0, weapon.lastNonCriticalDamage());
-
-            double skillMultiplier = (rolledDamage > 0.0)
-                    ? attackResult.damage() / rolledDamage
-                    : 1.0;
-
+            double skillMultiplier = (rolledDamage > 0.0) ? attackResult.damage() / rolledDamage : 1.0;
             double rebuiltBaseDamage = round2(nonCritDamage * skillMultiplier);
-            if (rebuiltBaseDamage <= 0 && attackResult.damage() > 0) {
-                rebuiltBaseDamage = attackResult.damage();
-            }
-
+            if (rebuiltBaseDamage <= 0 && attackResult.damage() > 0) rebuiltBaseDamage = attackResult.damage();
             ctx.setBaseDamage(rebuiltBaseDamage);
             ctx.setCriticalChance(weapon.resolveCriticalChance(attackerStats));
             ctx.setCriticalMultiplier(weapon.resolveCriticalMultiplier(attackerStats));
-
             ctx.putMeta("WEAPON_NAME", weapon.getName());
             ctx.putMeta("RAW_DAMAGE", rebuiltBaseDamage);
             ctx.putMeta("ORIGINAL_WEAPON_CRIT", weapon.lastWasCritic());
@@ -224,11 +183,9 @@ public class TurnResolver {
             ctx.putMeta("WEAPON_NAME", "Fists");
             ctx.putMeta("RAW_DAMAGE", attackResult.damage());
         }
-
         ctx.putMeta("CRIT", false);
     }
 
-    /** Registra esdeveniments de combat segons el resultat. */
     private void registerCombatEvents(HitContext ctx, Character defender, Action defenderAction) {
         if (defenderAction == Action.DODGE) {
             ctx.registerEvent(Event.ON_DODGE);
@@ -240,37 +197,60 @@ public class TurnResolver {
             ctx.registerEvent(Event.ON_HIT);
             ctx.registerEvent(Event.ON_DAMAGE_DEALT);
             ctx.registerEvent(Event.ON_DAMAGE_TAKEN);
-
-            if (!defender.isAlive()) {
-                ctx.registerEvent(Event.ON_KILL);
-            }
+            if (!defender.isAlive()) ctx.registerEvent(Event.ON_KILL);
         }
     }
 
-    /** Trenca les cadenes d'atac persistents del torn actual. */
+    private void applyPhaseThreeStates(
+            Character attacker,
+            Character defender,
+            Action attackerAction,
+            Action defenderAction,
+            HitContext ctx,
+            Result defenderResult,
+            boolean critical,
+            List<String> out) {
+
+        if (defenderResult.recived() <= 0) return;
+
+        if (defenderAction == Action.DEFEND && defender.isVulnerable()) {
+            out.add("[RED|!] La defensa trencada deixa " + defender.getName() + " exposat.");
+        }
+
+        if (critical) {
+            defender.applyBleed(2);
+            out.add("[RED|+] El cop crític obre una ferida: s'aplica sagnat.");
+        }
+
+        Object rawDamage = ctx.getMeta("RAW_DAMAGE");
+        if (rawDamage instanceof Number && ctx.damageDealt() >= ((Number) rawDamage).doubleValue() * 0.90 && defenderAction == Action.DODGE) {
+            defender.applyBleed(1);
+            out.add("[RED|+] L'esquiva fallida deixa un tall superficial.");
+        }
+
+        if (ctx.getMeta("CHARGED_HIT") instanceof Boolean charged && charged) {
+            defender.applyStagger(1);
+            out.add("[YELLOW|+] L'impacte carregat desequilibra el rival.");
+        }
+    }
+
     private boolean breakAttackChains(Character attacker, Character defender) {
         Weapon weapon = attacker.getWeapon();
-        if (weapon == null) {
-            return false;
-        }
+        if (weapon == null) return false;
+        if (!"WASP_HARPOON".equals(weapon.getId())) return false;
 
-        if (!"WASP_HARPOON".equals(weapon.getId())) {
-            return false;
-        }
+        PoisonEffect poison = PoisonEffect.from(defender);
+        if (poison == null) return false;
+        if (poison.stacks() <= 0) return false;
 
-        return defender.removeEffect(PoisonEffect.INTERNAL_EFFECT_KEY);
+        defender.removeEffect(PoisonEffect.INTERNAL_EFFECT_KEY);
+        return true;
     }
 
-    /** Comprova si l'arma és el Grimori. */
-    private static boolean isGrimori(Weapon w) {
-        try {
-            return w != null && w.getId().equals("GRIMORIE");
-        } catch (Exception e) {
-            return false;
-        }
+    private boolean isGrimori(Weapon weapon) {
+        return weapon != null && "GRIMORI".equals(weapon.getId());
     }
 
-    /** Arrodoneix a 2 decimals. */
     private static double round2(double n) {
         return Math.round(n * 100.0) / 100.0;
     }

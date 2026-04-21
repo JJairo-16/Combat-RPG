@@ -11,11 +11,6 @@ import rpgcombat.weapons.attack.Target;
  */
 public class AttackResolver {
 
-    /**
-     * Resol l’efecte d’un atac segons l’acció defensiva.
-     *
-     * @return resultat aplicat al defensor
-     */
     public Result resolveAttack(double damage, Character target, Action targetAction) {
         return switch (targetAction) {
             case DODGE -> target.dodge(damage);
@@ -24,17 +19,15 @@ public class AttackResolver {
                 if (damage <= 0) {
                     yield new Result(-1, "");
                 }
+                target.resetGuardStacks();
                 yield target.getDamage(damage);
             }
         };
     }
 
-   /** Determina qui rep l’atac (enemic o propi atacant). */
     public Character chooseTarget(Character attacker, Character defender, AttackResult attackResult) {
         Target target = attackResult.target();
-        if (target == null || target == Target.ENEMY) {
-            return defender;
-        }
+        if (target == null || target == Target.ENEMY) return defender;
         return attacker;
     }
 }
