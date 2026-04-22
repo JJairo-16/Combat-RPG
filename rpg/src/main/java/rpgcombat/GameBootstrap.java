@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import rpgcombat.balance.CombatBalanceLoader;
+import rpgcombat.balance.CombatBalanceRegistry;
+import rpgcombat.balance.config.CombatBalanceConfig;
 import rpgcombat.config.app.AppConfig;
 import rpgcombat.config.app.AppConfigLoader;
 import rpgcombat.config.character.CharacterCreationMode;
@@ -68,6 +71,9 @@ public class GameBootstrap {
             Arsenal.preload(Path.of(config.paths().weaponsConfig()));
             WeaponMenu.preloadTerminal();
             modifiers = StatusModLoader.load(Path.of(config.paths().statusMenuModifier()));
+
+            CombatBalanceConfig balance = CombatBalanceLoader.load(Path.of(config.paths().balanceConfig()));
+            CombatBalanceRegistry.initialize(balance);
         } catch (IOException e) {
             Prettier.error("Ha hagut un error durant la precarrega.");
         }

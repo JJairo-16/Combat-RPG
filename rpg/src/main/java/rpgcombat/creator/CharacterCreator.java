@@ -3,6 +3,7 @@ package rpgcombat.creator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import rpgcombat.models.breeds.*;
@@ -145,6 +146,27 @@ public class CharacterCreator {
      * @param breed raça seleccionada o generada
      */
     private record Generation(int[] stats, Breed breed) {
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o instanceof Generation(int[] otherStats, Breed otherBreed)) {
+                return Arrays.equals(stats, otherStats) && breed == otherBreed;
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(Arrays.hashCode(stats), breed);
+        }
+
+        @Override
+        public String toString() {
+            return "Generation{" +
+                    "stats=" + Arrays.toString(stats) +
+                    ", breed=" + breed +
+                    '}';
+        }
     }
 
     /**

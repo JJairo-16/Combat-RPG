@@ -4,6 +4,10 @@ import java.util.Random;
 
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
+import rpgcombat.balance.CombatBalanceRegistry;
+import rpgcombat.balance.config.AntiStallConfig;
+import rpgcombat.balance.config.BloodPactConfig;
+import rpgcombat.balance.config.CombatBalanceConfig;
 import rpgcombat.combat.models.Action;
 import rpgcombat.combat.models.CombatRoundResult;
 import rpgcombat.combat.models.EffectPipeline;
@@ -16,7 +20,7 @@ import rpgcombat.combat.turnservice.TurnPriorityPolicy;
 import rpgcombat.combat.turnservice.TurnResolver;
 import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.combat.ui.CombatRenderer;
-
+import rpgcombat.models.effects.impl.MagicalTiredness;
 import rpgcombat.models.effects.impl.SuddenDeathPoisonEffect;
 
 /**
@@ -35,21 +39,42 @@ public class CombatSystem {
     private final RoundRecoveryService recoveryService = new RoundRecoveryService();
     private final TurnResolver turnResolver = new TurnResolver(attackResolver, effectPipeline, recoveryService);
 
+    private CombatBalanceConfig balance = CombatBalanceRegistry.get();
+    private AntiStallConfig antiStall = balance.antiStall();
+    private BloodPactConfig bloodPactConfig = balance.bloodPact();
+
     private int roundNumber = 0;
 
-    /** Crea el sistema amb la política de prioritat per defecte. */
+    /**
+     * Crea el sistema amb la política de prioritat per defecte.
+     *
+     * @param p1 primer personatge
+     * @param p2 segon personatge
+     */
     public CombatSystem(Character p1, Character p2) {
         this(p1, p2, new DefaultTurnPriorityPolicy());
     }
 
-    /** Crea el sistema amb una política de prioritat concreta. */
+    /**
+     * Crea el sistema amb una política de prioritat concreta.
+     *
+     * @param p1     primer personatge
+     * @param p2     segon personatge
+     * @param policy política de prioritat
+     */
     public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy) {
         this.player1 = p1;
         this.player2 = p2;
         this.priorityPolicy = policy;
     }
 
-    /** Executa una ronda, la mostra per pantalla i retorna el guanyador. */
+    /**
+     * Executa una ronda, la mostra i retorna el guanyador.
+     *
+     * @param a1 acció del primer personatge
+     * @param a2 acció del segon personatge
+     * @return guanyador de la ronda o cap
+     */
     public Winner play(Action a1, Action a2) {
         CombatRoundResult round = playRound(a1, a2);
 
@@ -74,7 +99,13 @@ public class CombatSystem {
         return Winner.NONE;
     }
 
-    /** Resol internament una ronda completa de combat. */
+    /**
+     * Resol una ronda completa de combat.
+     *
+     * @param a1 acció del primer personatge
+     * @param a2 acció del segon personatge
+     * @return resultat de la ronda
+     */
     public CombatRoundResult playRound(Action a1, Action a2) {
         roundNumber++;
         applySuddenDeathPoisonIfNeeded();
@@ -145,6 +176,9 @@ public class CombatSystem {
                 p2Stats.getHealth() - p2HealthPreRegen,
                 p2Stats.getMana() - p2ManaPreRegen);
 
+        applyOrRemoveMagicalTiredness(player1);
+        applyOrRemoveMagicalTiredness(player2);
+
         return new CombatRoundResult(
                 firstTurn,
                 secondTurn,
@@ -155,7 +189,42 @@ public class CombatSystem {
                 Winner.NONE);
     }
 
-    /** Determina el guanyador segons qui continua viu. */
+    /**
+     * Aplica o elimina l'efecte de {@link MagicalTiredness} en funció del percentatge de mana actual.
+     * <p>
+     * Si el mana del personatge és igual o inferior al 90% del màxim, s'aplica l'efecte de fatiga màgica. En cas contrari, l'efecte s'elimina.
+     *
+     * @param player el personatge sobre el qual s'avalua i s'aplica l'efecte
+     */
+    private void applyOrRemoveMagicalTiredness(Character player) {
+        Statistics stats = player.getStatistics();
+
+        boolean belowThreshold = (stats.getMana() / stats.getMaxMana()) <= bloodPactConfig.manaThreshold();
+
+        if (belowThreshold) {
+            if (!player.hasEffect(MagicalTiredness.INTERNAL_EFFECT_KEY)) {
+                player.addEffect(new MagicalTiredness());
+            }
+        } else {
+            player.removeEffect(MagicalTiredness.INTERNAL_EFFECT_KEY);
+        }
+    }
+
+    /**
+     * Aplica o elimina l'efecte de {@link MagicalTiredness} en funció del percentatge de mana actual.
+     * <p>
+     * Si el mana del personatge és igual o inferior al 90% del màxim, s'aplica l'efecte de fatiga màgica. En cas contrari, l'efecte s'elimina.
+     *
+     * @param player el personatge sobre el qual s'avalua i s'aplica l'efecte
+     */
+    public void syncEffectsOnly() {
+        applyOrRemoveMagicalTiredness(player1);
+        applyOrRemoveMagicalTiredness(player2);
+    }
+
+    /**
+     * Determina el guanyador segons qui continua viu.
+     */
     private Winner resolveWinner(Character p1, Character p2) {
         boolean player1Alive = p1.isAlive();
         boolean player2Alive = p2.isAlive();
@@ -172,18 +241,30 @@ public class CombatSystem {
         return Winner.TIE;
     }
 
-    /** Imprimeix les barres d'estat d'un personatge. */
+    /**
+     * Imprimeix les barres d'estat d'un personatge.
+     *
+     * @param character personatge a mostrar
+     */
     public static void printStatusBars(Character character) {
         new CombatRenderer().printStatusBars(character);
     }
 
-    /** Afegeix les barres d'estat a un text. */
+    /**
+     * Afegeix les barres d'estat a un text.
+     *
+     * @param sb        destí del text
+     * @param character personatge a mostrar
+     */
     public static void appendStatusBars(StringBuilder sb, Character character) {
         new CombatRenderer().appendStatusBars(sb, character);
     }
 
+    /**
+     * Aplica el verí de mort sobtada si correspon.
+     */
     private void applySuddenDeathPoisonIfNeeded() {
-        if (roundNumber <= 15) {
+        if (roundNumber < antiStall.startTurn()) {
             return;
         }
 
@@ -192,11 +273,17 @@ public class CombatSystem {
         replaceSuddenDeathPoison(player2, poisonDamage);
     }
 
+    /**
+     * Calcula el dany del verí de mort sobtada.
+     */
     private double resolveSuddenDeathDamage(int roundNumber) {
-        int increments = (roundNumber - 16) / 2;
-        return Math.round(increments + 1.0);
+        int increments = (roundNumber - antiStall.startTurn()) / antiStall.increaseEveryTurns();
+        return antiStall.initialDamage() + increments * antiStall.damageIncreasePerStep();
     }
 
+    /**
+     * Substitueix el verí de mort sobtada del personatge.
+     */
     private void replaceSuddenDeathPoison(Character character, double damagePerTurn) {
         character.removeEffect(SuddenDeathPoisonEffect.INTERNAL_EFFECT_KEY);
         character.addEffect(new SuddenDeathPoisonEffect(damagePerTurn));

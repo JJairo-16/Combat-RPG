@@ -7,6 +7,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import rpgcombat.balance.CombatBalanceRegistry;
+import rpgcombat.balance.config.CombatBalanceConfig;
+import rpgcombat.balance.config.MomentumConfig;
 import rpgcombat.combat.AttackResolver;
 import rpgcombat.combat.models.Action;
 import rpgcombat.combat.models.EffectPipeline;
@@ -22,16 +25,27 @@ import rpgcombat.weapons.passives.HitContext;
 import rpgcombat.weapons.passives.HitContext.Event;
 import rpgcombat.weapons.passives.HitContext.Phase;
 
+import rpgcombat.combat.services.CombatRhythmService;
+
 /**
- * Resol un torn de combat entre dos personatges,
- * gestionant atacs, efectes i resultats finals.
+ * Resol un torn de combat entre dos personatges.
  */
 public class TurnResolver {
     private final AttackResolver attackResolver;
     private final EffectPipeline effectPipeline;
     private final RoundRecoveryService recoveryService;
-    private final rpgcombat.combat.services.CombatRhythmService rhythmService = new rpgcombat.combat.services.CombatRhythmService();
+    private final CombatRhythmService rhythmService = new CombatRhythmService();
 
+    private final CombatBalanceConfig balance = CombatBalanceRegistry.get();
+    private final MomentumConfig momentumConfig = balance.momentum();
+
+    /**
+     * Crea el resolvedor de torns.
+     *
+     * @param attackResolver servei de resolució d'atacs
+     * @param effectPipeline pipeline d'efectes
+     * @param recoveryService servei de recuperació
+     */
     public TurnResolver(
             AttackResolver attackResolver,
             EffectPipeline effectPipeline,
@@ -41,6 +55,16 @@ public class TurnResolver {
         this.recoveryService = recoveryService;
     }
 
+    /**
+     * Resol l'acció d'un torn complet.
+     *
+     * @param attacker atacant
+     * @param defender defensor
+     * @param attackerAction acció de l'atacant
+     * @param defenderAction acció del defensor
+     * @param defenderBonus bonus final de regeneració
+     * @return resultat del torn
+     */
     public TurnResult resolveTurn(
             Character attacker,
             Character defender,
@@ -144,7 +168,7 @@ public class TurnResolver {
         if (hasWeapon)
             weapon.registerResolvedAttack(ctx.wasCritical(), damageToResolve);
         registerCombatEvents(ctx, defender, defenderAction);
-        applyPhaseThreeStates(attacker, defender, attackerAction, defenderAction, ctx, defenderResult, critical,
+        applyPhaseThreeStates(defender, defenderAction, ctx, defenderResult, critical,
                 postDefenseMessages);
         updateMomentum(attacker, defender, defenderAction, damageToResolve, defenderResult, postDefenseMessages);
 
@@ -172,6 +196,9 @@ public class TurnResolver {
                 postDefenseMessages, endTurnMessages, ctx.damageDealt(), critical);
     }
 
+    /**
+     * Resol un torn sense atac directe.
+     */
     private TurnResult resolveNonAttackTurn(
             Character attacker,
             Character defender,
@@ -222,6 +249,9 @@ public class TurnResolver {
                 false);
     }
 
+    /**
+     * Prepara el context d'impacte amb les dades de l'atac.
+     */
     private void configureHitContext(HitContext ctx, Character attacker, AttackResult attackResult, Weapon weapon) {
         if (weapon != null) {
             Statistics attackerStats = attacker.getStatistics();
@@ -247,6 +277,9 @@ public class TurnResolver {
         ctx.putMeta("CRIT", false);
     }
 
+    /**
+     * Registra els esdeveniments del combat per a l'impacte actual.
+     */
     private void registerCombatEvents(HitContext ctx, Character defender, Action defenderAction) {
         if (defenderAction == Action.DODGE) {
             ctx.registerEvent(Event.ON_DODGE);
@@ -263,10 +296,11 @@ public class TurnResolver {
         }
     }
 
+    /**
+     * Aplica estats addicionals després de resoldre la defensa.
+     */
     private void applyPhaseThreeStates(
-            Character attacker,
             Character defender,
-            Action attackerAction,
             Action defenderAction,
             HitContext ctx,
             Result defenderResult,
@@ -298,6 +332,9 @@ public class TurnResolver {
         }
     }
 
+    /**
+     * Actualitza l'impuls dels combatents segons el resultat.
+     */
     private void updateMomentum(
             Character attacker,
             Character defender,
@@ -310,7 +347,7 @@ public class TurnResolver {
         boolean successfulDodge = defenderAction == Action.DODGE && damageToResolve > 0
                 && defenderResult.recived() <= 0;
         boolean defenderUnderHeavyPressure = defender.isDesperate()
-                || defender.healthRatio() + 0.18 < attacker.healthRatio();
+                || defender.healthRatio() + momentumConfig.suppressionHealthOffset() < attacker.healthRatio();
 
         if (successfulHit) {
             if (!defenderUnderHeavyPressure) {
@@ -335,7 +372,7 @@ public class TurnResolver {
         if (successfulDodge) {
             int before = defender.getMomentumStacks();
             defender.gainMomentum();
-            if (defender.isDesperate() || defender.healthRatio() + 0.18 < attacker.healthRatio()) {
+            if (defender.isDesperate() || defender.healthRatio() + momentumConfig.suppressionHealthOffset() < attacker.healthRatio()) {
                 defender.gainMomentum();
             }
 
@@ -357,6 +394,9 @@ public class TurnResolver {
         }
     }
 
+    /**
+     * Redueix l'impuls en torns passius.
+     */
     private void decayMomentumOnPassiveTurn(Character actor, Action action, List<String> out) {
         if (actor == null || action == null || actor.getMomentumStacks() <= 0) {
             return;
@@ -373,6 +413,9 @@ public class TurnResolver {
         }
     }
 
+    /**
+     * Trenca cadenes d'atac especials si escau.
+     */
     private boolean breakAttackChains(Character attacker, Character defender) {
         Weapon weapon = attacker.getWeapon();
         if (weapon == null)
@@ -390,10 +433,16 @@ public class TurnResolver {
         return true;
     }
 
+    /**
+     * Indica si l'arma és un Grimori.
+     */
     private boolean isGrimori(Weapon weapon) {
         return weapon != null && "GRIMORI".equals(weapon.getId());
     }
 
+    /**
+     * Arrodoneix a dues xifres decimals.
+     */
     private static double round2(double n) {
         return Math.round(n * 100.0) / 100.0;
     }

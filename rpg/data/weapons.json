@@ -38,7 +38,7 @@
     "criticalProb": 0.09,
     "criticalDamage": 1.46,
     "type": "MAGICAL",
-    "manaPrice": 170,
+    "manaPrice": 150,
     "attackSkill": "arcaneDisruption",
     "passives": []
   },

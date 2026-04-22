@@ -7,7 +7,7 @@
 
 ## ▌Què és?
 
-**Combat RPG** és un joc de rol per torns (1vs1) on dos jugadors creen els seus personatges i s'enfronten en combat estratègic.
+**Combat RPG** és un joc de rol per torns (1vs1) on dos jugadors creen els seus personatges i s'enfronten en un combat d'estratègia i sort on domina el caos.
 
 Aquest projecte es pot considerar un **remake/rework** de la seva primera versió, amb millores en l’arquitectura, el sistema de combat i una major flexibilitat en la personalització dels personatges.
 

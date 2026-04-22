@@ -1,9 +1,19 @@
 package rpgcombat.models.characters;
 
+import java.util.Map;
+
+import rpgcombat.balance.CombatBalanceRegistry;
+import rpgcombat.balance.config.CombatBalanceConfig;
+import rpgcombat.balance.config.StaminaConfig;
+import rpgcombat.balance.config.StaminaConfig.AttackCostConfig;
+import rpgcombat.balance.config.StaminaConfig.DamageMultiplierConfig;
+import rpgcombat.balance.config.StaminaConfig.FatigueChanceConfig;
+import rpgcombat.balance.config.StaminaConfig.MaxConfig;
+import rpgcombat.balance.config.StaminaConfig.RecoveryConfig;
 import rpgcombat.combat.models.Action;
 
 /**
- * Emmagatzema les estadístiques base i els valors dinàmics (vida i mana).
+ * Emmagatzema les estadístiques base i els valors dinàmics del personatge.
  */
 public class Statistics {
 
@@ -31,11 +41,13 @@ public class Statistics {
     private static final double HEALTH_SOFTCAP_FACTOR = 0.08;
     private static final double REGEN_SOFTCAP_FACTOR = 0.10;
 
-    private static final double STAMINA_PRESSURE_START = 0.58;
     private static final double RESISTANCE_PRESSURE_START = 0.55;
 
     private boolean invulnerable = false;
 
+    /**
+     * Crea les estadístiques a partir del bloc base de stats.
+     */
     public Statistics(int[] stats) {
         this.strength = stats[0];
         this.dexterity = stats[1];
@@ -56,22 +68,114 @@ public class Statistics {
         this.resistance = maxResistance;
     }
 
-    public int getStrength() { return strength; }
-    public int getDexterity() { return dexterity; }
-    public int getConstitution() { return constitution; }
-    public int getIntelligence() { return intelligence; }
-    public int getWisdom() { return wisdom; }
-    public int getCharisma() { return charisma; }
-    public int getLuck() { return luck; }
-    public double getHealth() { return health; }
-    public double getMana() { return mana; }
-    public double getMaxHealth() { return maxHealth; }
-    public double getMaxMana() { return maxMana; }
-    public double getMaxStamina() { return maxStamina; }
-    public double getMaxResistance() { return maxResistance; }
-    public double getStamina() { return stamina; }
-    public double getResistance() { return resistance; }
+    /**
+     * Retorna la força.
+     */
+    public int getStrength() {
+        return strength;
+    }
 
+    /**
+     * Retorna la destresa.
+     */
+    public int getDexterity() {
+        return dexterity;
+    }
+
+    /**
+     * Retorna la constitució.
+     */
+    public int getConstitution() {
+        return constitution;
+    }
+
+    /**
+     * Retorna la intel·ligència.
+     */
+    public int getIntelligence() {
+        return intelligence;
+    }
+
+    /**
+     * Retorna la saviesa.
+     */
+    public int getWisdom() {
+        return wisdom;
+    }
+
+    /**
+     * Retorna el carisma.
+     */
+    public int getCharisma() {
+        return charisma;
+    }
+
+    /**
+     * Retorna la sort.
+     */
+    public int getLuck() {
+        return luck;
+    }
+
+    /**
+     * Retorna la vida actual.
+     */
+    public double getHealth() {
+        return health;
+    }
+
+    /**
+     * Retorna el mana actual.
+     */
+    public double getMana() {
+        return mana;
+    }
+
+    /**
+     * Retorna la vida màxima.
+     */
+    public double getMaxHealth() {
+        return maxHealth;
+    }
+
+    /**
+     * Retorna el mana màxim.
+     */
+    public double getMaxMana() {
+        return maxMana;
+    }
+
+    /**
+     * Retorna l'estamina màxima.
+     */
+    public double getMaxStamina() {
+        return maxStamina;
+    }
+
+    /**
+     * Retorna la resistència màxima.
+     */
+    public double getMaxResistance() {
+        return maxResistance;
+    }
+
+    /**
+     * Retorna l'estamina actual.
+     */
+    public double getStamina() {
+        return stamina;
+    }
+
+    /**
+     * Retorna la resistència actual.
+     */
+    public double getResistance() {
+        return resistance;
+    }
+
+    /**
+     * Regenera vida i mana base.
+     */
     public void reg() {
         double hp = calculateHealthRegen(constitution);
         double ma = intelligence * 0.9;
@@ -79,6 +183,9 @@ public class Statistics {
         mana = affectClamp(mana, ma, maxMana, 0);
     }
 
+    /**
+     * Regenera vida i mana amb bonus.
+     */
     public void reg(double hpBonus, double manaBonus) {
         double hp = calculateHealthRegen(constitution * hpBonus);
         double ma = (intelligence * manaBonus) * 0.9;
@@ -86,137 +193,322 @@ public class Statistics {
         mana = affectClamp(mana, ma, maxMana, 0);
     }
 
-    public void damage(double dmg) { health = Math.max(0, health - dmg); }
+    /**
+     * Aplica dany directe a la vida.
+     */
+    public void damage(double dmg) {
+        health = Math.max(0, health - dmg);
+    }
 
+    /**
+     * Consumeix mana si n'hi ha prou.
+     */
     public boolean consumeMana(double price) {
-        if (price > mana) return false;
+        if (price > mana) {
+            return false;
+        }
         mana -= price;
         return true;
     }
 
+    /**
+     * Cura sense superar el màxim.
+     */
     public double heal(double amount) {
-        if (amount <= 0) return 0;
+        if (amount <= 0) {
+            return 0;
+        }
         double before = health;
         health = Math.min(maxHealth, health + amount);
         return health - before;
     }
 
+    /**
+     * Cura sense límit superior.
+     */
     public double overloadHeal(double amount) {
-        if (amount <= 0) return 0;
+        if (amount <= 0) {
+            return 0;
+        }
         double before = health;
         health += amount;
         return health - before;
     }
 
+    /**
+     * Recupera mana sense superar el màxim.
+     */
     public double restoreMana(double amount) {
-        if (amount <= 0) return 0;
+        if (amount <= 0) {
+            return 0;
+        }
         double before = mana;
         mana = Math.min(maxMana, mana + amount);
         return mana - before;
     }
 
+    /**
+     * Recupera mana sense límit superior.
+     */
     public double overloadRestoreMana(double amount) {
-        if (amount <= 0) return 0;
+        if (amount <= 0) {
+            return 0;
+        }
         double before = mana;
         mana += amount;
         return mana - before;
     }
 
-    private double calculateMaxHealth(int con) {
-        double effectiveCon = softenStat(con, MAX_CONSTITUTION_FULL_EFFECT, HEALTH_SOFTCAP_FACTOR);
-        return effectiveCon * CONSTITUTION_VALUE;
+    /**
+     * Activa o desactiva la invulnerabilitat.
+     */
+    public void setInvulnerable(boolean invulnerable) {
+        this.invulnerable = invulnerable;
     }
 
-    private double calculateHealthRegen(double con) {
-        double effectiveCon = softenStat(con, MAX_CONSTITUTION_FULL_EFFECT, REGEN_SOFTCAP_FACTOR);
-        return effectiveCon * 2.35;
-    }
-
-    private double softenStat(double stat, int threshold, double factor) {
-        if (stat <= threshold) return stat;
-        double extra = stat - threshold;
-        return threshold + (extra / (1.0 + extra * factor));
-    }
-
-    private double affectClamp(double act, double amount, double max, double min) {
-        return Math.clamp(act + amount, min, max);
-    }
-
-    public void setInvulnerable(boolean invulnerable) { this.invulnerable = invulnerable; }
-
+    /**
+     * Restaura la vida al màxim si és invulnerable.
+     */
     public void applyInvulnerability() {
-        if (invulnerable) health = maxHealth;
+        if (invulnerable) {
+            health = maxHealth;
+        }
     }
 
+    /**
+     * Consumeix l'estamina d'un atac.
+     */
     public void consumeStaminaOnAttack() {
-        double cost = Math.max(10.0, 18.0 - dexterity * 0.10 - wisdom * 0.05);
+        AttackCostConfig cfg = staminaConfig().attackCost();
+
+        double cost = Math.max(
+                cfg.minimum(),
+                cfg.base()
+                        - dexterity * cfg.dexterityReductionPerPoint()
+                        - wisdom * cfg.wisdomReductionPerPoint());
+
         stamina = affectClamp(stamina, -cost, maxStamina, 0);
     }
 
+    /**
+     * Recupera estamina en una acció no ofensiva.
+     */
     public void recoverStaminaOnNonAttack(double multiplier) {
-        double regen = (12.0 + constitution * 0.12 + wisdom * 0.08) * Math.max(0.5, multiplier);
+        RecoveryConfig cfg = staminaConfig().recovery();
+
+        double regen = (cfg.base()
+                + constitution * cfg.constitutionMultiplier()
+                + wisdom * cfg.wisdomMultiplier())
+                * Math.max(cfg.minimumActionMultiplier(), multiplier);
+
         stamina = affectClamp(stamina, regen, maxStamina, 0);
     }
 
+    /**
+     * Recupera resistència en atacar.
+     */
     public void recoverResistanceOnAttack() {
         double regen = 10.0 + constitution * 0.10 + dexterity * 0.06;
         resistance = affectClamp(resistance, regen, maxResistance, 0);
     }
 
+    /**
+     * Consumeix resistència en defensar.
+     */
     public void consumeResistanceOnDefend() {
         double cost = Math.max(8.5, 12.0 - constitution * 0.07 - wisdom * 0.06);
         resistance = affectClamp(resistance, -cost, maxResistance, 0);
     }
 
+    /**
+     * Consumeix resistència en esquivar.
+     */
     public void consumeResistanceOnDodge() {
         double cost = Math.max(12.0, 18.0 - dexterity * 0.10 - wisdom * 0.05);
         resistance = affectClamp(resistance, -cost, maxResistance, 0);
     }
 
+    /**
+     * Aplica els canvis de recursos a l'inici de l'acció.
+     */
     public void onActionStart(Action action) {
-        if (action == null) return;
+        if (action == null) {
+            return;
+        }
+
+        RecoveryConfig cfg = staminaConfig().recovery();
+        Map<String, Double> multipliers = cfg.actionMultipliers();
+
         switch (action) {
             case ATTACK -> {
                 consumeStaminaOnAttack();
                 recoverResistanceOnAttack();
             }
-            case DEFEND -> recoverStaminaOnNonAttack(1.15);
-            case DODGE -> recoverStaminaOnNonAttack(1.05);
-            case CHARGE -> recoverStaminaOnNonAttack(0.90);
+            case DEFEND -> recoverStaminaOnNonAttack(multipliers.getOrDefault("DEFEND", 1.15));
+            case DODGE -> recoverStaminaOnNonAttack(multipliers.getOrDefault("DODGE", 1.05));
+            case CHARGE -> recoverStaminaOnNonAttack(multipliers.getOrDefault("CHARGE", 0.9));
+            default -> {
+            }
         }
     }
 
-    public double staminaDamageMultiplier() { return 1.0 - 0.16 * Math.pow(staminaPressure(), 1.35); }
-    public double resistanceIncomingDamageMultiplier() { return 1.0 + 0.18 * Math.pow(resistancePressure(), 1.40); }
-    public double resistanceDodgeMultiplier() { return 1.0 - 0.16 * Math.pow(resistancePressure(), 1.25); }
-    public double fatigueChance() {
-        double luckMitigation = Math.max(0.70, 1.0 - luck * 0.004);
-        return Math.clamp(0.30 * Math.pow(staminaPressure(), 1.80) * luckMitigation, 0.0, 0.30);
+    /**
+     * Retorna el multiplicador de dany segons la pressió d'estamina.
+     */
+    public double staminaDamageMultiplier() {
+        DamageMultiplierConfig cfg = staminaConfig().damageMultiplier();
+
+        return cfg.base()
+                - cfg.penaltyMultiplier() * Math.pow(staminaPressure(), cfg.pressureExponent());
     }
+
+    /**
+     * Retorna el multiplicador de dany rebut per pressió de resistència.
+     */
+    public double resistanceIncomingDamageMultiplier() {
+        return 1.0 + 0.18 * Math.pow(resistancePressure(), 1.40);
+    }
+
+    /**
+     * Retorna el multiplicador d'esquiva per pressió de resistència.
+     */
+    public double resistanceDodgeMultiplier() {
+        return 1.0 - 0.16 * Math.pow(resistancePressure(), 1.25);
+    }
+
+    /**
+     * Calcula la probabilitat de fatiga per estamina.
+     */
+    public double fatigueChance() {
+        FatigueChanceConfig cfg = staminaConfig().fatigueChance();
+
+        double luckMitigation = Math.max(
+                cfg.luckMitigationFloor(),
+                1.0 - luck * cfg.luckMitigationPerPoint());
+
+        return Math.clamp(
+                cfg.base() * Math.pow(staminaPressure(), cfg.pressureExponent()) * luckMitigation,
+                0.0,
+                cfg.max());
+    }
+
+    /**
+     * Calcula la probabilitat d'esgotament per resistència.
+     */
     public double exhaustionChance() {
         double luckMitigation = Math.max(0.68, 1.0 - luck * 0.004);
         return Math.clamp(0.34 * Math.pow(resistancePressure(), 1.85) * luckMitigation, 0.0, 0.34);
     }
 
+    /**
+     * Retorna el percentatge actual d'estamina.
+     */
     public double staminaRatio() {
-        if (maxStamina <= 0) return 1.0;
+        if (maxStamina <= 0) {
+            return 1.0;
+        }
         return Math.clamp(stamina / maxStamina, 0.0, 1.0);
     }
 
+    /**
+     * Retorna el percentatge actual de resistència.
+     */
     public double resistanceRatio() {
-        if (maxResistance <= 0) return 1.0;
+        if (maxResistance <= 0) {
+            return 1.0;
+        }
         return Math.clamp(resistance / maxResistance, 0.0, 1.0);
     }
 
-    private double staminaPressure() { return normalizedPressure(staminaRatio(), STAMINA_PRESSURE_START); }
-    private double resistancePressure() { return normalizedPressure(resistanceRatio(), RESISTANCE_PRESSURE_START); }
+    /**
+     * Calcula la pressió actual d'estamina.
+     */
+    private double staminaPressure() {
+        return normalizedPressure(staminaRatio(), staminaConfig().pressureThreshold());
+    }
 
+    /**
+     * Calcula la pressió actual de resistència.
+     */
+    private double resistancePressure() {
+        return normalizedPressure(resistanceRatio(), RESISTANCE_PRESSURE_START);
+    }
+
+    /**
+     * Normalitza la pressió d'un recurs.
+     */
     private double normalizedPressure(double ratio, double threshold) {
-        if (ratio >= threshold) return 0.0;
+        if (ratio >= threshold) {
+            return 0.0;
+        }
         double span = Math.max(0.05, threshold);
         return Math.clamp((threshold - ratio) / span, 0.0, 1.0);
     }
 
-    private double calculateMaxStamina() { return 75.0 + constitution * 3.0 + dexterity * 1.0 + luck * 0.5; }
-    private double calculateMaxResistance() { return 80.0 + constitution * 3.2 + wisdom * 0.75 + luck * 0.4; }
+    /**
+     * Calcula la vida màxima.
+     */
+    private double calculateMaxHealth(int con) {
+        double effectiveCon = softenStat(con, MAX_CONSTITUTION_FULL_EFFECT, HEALTH_SOFTCAP_FACTOR);
+        return effectiveCon * CONSTITUTION_VALUE;
+    }
+
+    /**
+     * Calcula la regeneració de vida base.
+     */
+    private double calculateHealthRegen(double con) {
+        double effectiveCon = softenStat(con, MAX_CONSTITUTION_FULL_EFFECT, REGEN_SOFTCAP_FACTOR);
+        return effectiveCon * 2.35;
+    }
+
+    /**
+     * Aplica un softcap a una stat.
+     */
+    private double softenStat(double stat, int threshold, double factor) {
+        if (stat <= threshold) {
+            return stat;
+        }
+        double extra = stat - threshold;
+        return threshold + (extra / (1.0 + extra * factor));
+    }
+
+    /**
+     * Suma una quantitat i limita el resultat.
+     */
+    private double affectClamp(double act, double amount, double max, double min) {
+        return Math.clamp(act + amount, min, max);
+    }
+
+    /**
+     * Calcula l'estamina màxima.
+     */
+    private double calculateMaxStamina() {
+        MaxConfig cfg = staminaConfig().max();
+
+        return cfg.base()
+                + constitution * cfg.constitutionMultiplier()
+                + dexterity * cfg.dexterityMultiplier()
+                + luck * cfg.luckMultiplier();
+    }
+
+    /**
+     * Calcula la resistència màxima.
+     */
+    private double calculateMaxResistance() {
+        return 80.0 + constitution * 3.2 + wisdom * 0.75 + luck * 0.4;
+    }
+
+    /**
+     * Retorna la configuració global de combat.
+     */
+    private static CombatBalanceConfig balance() {
+        return CombatBalanceRegistry.get();
+    }
+
+    /**
+     * Retorna la configuració d'estamina.
+     */
+    private static StaminaConfig staminaConfig() {
+        return balance().stamina();
+    }
 }

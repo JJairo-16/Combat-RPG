@@ -22,7 +22,6 @@ import rpgcombat.utils.ui.Ansi;
  * perquè no alterin injustament la mateixa acció que les ha provocat.</p>
  */
 public class CombatRhythmService {
-
     /** Aplica el moviment del recurs ocult al començar el torn propi. */
     public void onActionStart(Character actor, Action action) {
         if (actor == null || action == null) {
@@ -34,15 +33,7 @@ public class CombatRhythmService {
             actor.resetGuardStacks();
         }
 
-        switch (action) {
-            case ATTACK -> {
-                stats.consumeStaminaOnAttack();
-                stats.recoverResistanceOnAttack();
-            }
-            case DEFEND -> stats.recoverStaminaOnNonAttack(1.15);
-            case DODGE -> stats.recoverStaminaOnNonAttack(1.05);
-            case CHARGE -> stats.recoverStaminaOnNonAttack(0.90);
-        }
+        stats.onActionStart(action);
     }
 
     /**

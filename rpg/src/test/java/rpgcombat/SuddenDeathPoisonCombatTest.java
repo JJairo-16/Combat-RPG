@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -30,7 +31,14 @@ class SuddenDeathPoisonCombatTest {
     private TestCharacter player2;
     private CombatSystem combat;
 
-    /** Prepara dos personatges de prova sense regeneració per facilitar els asserts. */
+    @BeforeAll
+    static void initBalance() {
+        TestCombatBalance.init();
+    }
+
+    /**
+     * Prepara dos personatges de prova sense regeneració per facilitar els asserts.
+     */
     @BeforeEach
     void setUp() {
         player1 = new TestCharacter("Player 1");

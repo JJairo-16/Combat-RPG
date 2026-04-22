@@ -9,7 +9,8 @@
   "profile": "NORMAL",
   "paths": {
     "weaponsConfig": "rpg/data/weapons.json",
-    "statusMenuModifier": "rpg/data/menuModifiers.json"
+    "statusMenuModifier": "rpg/data/menuModifiers.json",
+    "balanceConfig": "rpg/data/combatBalance.json"
   },
   "ui": {
     "showLoadingIntro": true,

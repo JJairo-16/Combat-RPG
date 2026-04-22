@@ -55,4 +55,23 @@ public class Messages {
             return EXCEDED;
         }
     }
+
+    public enum BLOOD_PACT {
+        ALREDY_USED(
+                "La teva sang ja ha estat ofrenada; no intentis trencar l'equilibri que tu mateix has invocat."),
+        USE_BLOOD_PACT(
+                "Ofereixes part de la teva vida en un pacte prohibit, i la teva essència es transforma en mana."),
+        MANA_ALREADY_FULL(
+                "El pacte no reclama més tribut, perquè el teu mana ja es troba en la seva plenitud.");
+
+        private final String msg;
+
+        private BLOOD_PACT(String msg) {
+            this.msg = getWrapped(msg);
+        }
+
+        public void print() {
+            System.out.println(msg);
+        }
+    }
 }

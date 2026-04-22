@@ -1,15 +1,28 @@
 {
-  "CAN_CALL_SPIRITS": [
-    {
-      "priority": 100,
-      "minCharges": 0,
-      "maxCharges": -1,
-      "minStacks": 1,
-      "maxStacks": -1,
-      "minRemainingTurns": 0,
-      "maxRemainingTurns": -1,
-      "label": "Invocar espíritus",
-      "actionKey": "spiritualCalling"
-    }
-  ]
+	"CAN_CALL_SPIRITS": [
+		{
+			"priority": 100,
+			"minCharges": 0,
+			"maxCharges": -1,
+			"minStacks": 1,
+			"maxStacks": -1,
+			"minRemainingTurns": 0,
+			"maxRemainingTurns": -1,
+			"label": "Invocar espíritus",
+			"actionKey": "spiritualCalling"
+		}
+	],
+	"MAGIAL_TIREDNESS": [
+		{
+			"priority": 10,
+			"minCharges": 0,
+			"maxCharges": -1,
+			"minStacks": 0,
+			"maxStacks": -1,
+			"minRemainingTurns": 0,
+			"maxRemainingTurns": -1,
+			"label": "Utilitzar pacte de sang",
+			"actionKey": "bloodPact"
+		}
+	]
 }
