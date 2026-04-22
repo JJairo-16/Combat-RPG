@@ -180,7 +180,7 @@ Aquest projecte inclou un script de PowerShell i un script de Bash que automatit
 Executa el següent script des de l’arrel del projecte:
 
 ```powershell
-.\install-jars.ps1
+.\install-dependencies.ps1
 ```
 
 El script:
@@ -192,7 +192,7 @@ El script:
 ### Instal·lació de dependències (Linux / Mac)
 
 ```bash
-./install-jars.sh
+./install-dependencies.sh
 ```
 
 El script:

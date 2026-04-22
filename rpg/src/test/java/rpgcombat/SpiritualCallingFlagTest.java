@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,11 +17,14 @@ import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.models.effects.impl.SpiritualCallingFlag;
+import rpgcombat.utils.rng.DivineCharismaAffinity;
 
 class SpiritualCallingFlagTest {
 
         private static final String EFFECT_KEY = SpiritualCallingFlag.INTERNAL_EFFECT_KEY;
         private static final String OPTION_LABEL = "Invocar espíritus";
+
+        private static final int BASE_OPTIONS = 6;
 
         private Character dummy;
         private MenuCenter menuCenter;
@@ -48,24 +52,26 @@ class SpiritualCallingFlagTest {
                                 c -> System.out.println("Canviar arma"),
                                 c -> System.out.println("Mostrar informació"),
                                 modifiers);
+
+                DivineCharismaAffinity.rollForRun(new Random());
         }
 
         @Test
         void shouldKeepBaseOptionsWhenHealthIsAboveThreshold() {
                 setHealthTo(0.21, dummy);
 
-                assertEquals(5, countOptions(),
+                assertEquals(BASE_OPTIONS, countOptions(),
                                 "No s'hauria d'afegir cap opció per sobre del llindar.");
         }
 
         @Test
         void shouldAddSummonSpiritsOptionWhenHealthDropsBelowThreshold() {
-                assertEquals(5, countOptions(),
+                assertEquals(BASE_OPTIONS, countOptions(),
                                 "El menú base hauria de tenir cinc opcions.");
 
                 setHealthTo(0.15, dummy);
 
-                assertEquals(6, countOptions(),
+                assertEquals(BASE_OPTIONS + 1, countOptions(),
                                 "S'hauria d'afegir l'opció d'invocar esperits.");
         }
 
@@ -73,21 +79,21 @@ class SpiritualCallingFlagTest {
         void shouldAddSummonSpiritsOptionAtThreshold() {
                 setHealthTo(0.20, dummy);
 
-                assertEquals(6, countOptions(),
+                assertEquals(BASE_OPTIONS + 1, countOptions(),
                                 "L'opció s'hauria d'afegir al 20% exacte de vida.");
         }
 
         @Test
         void shouldAddAndRemoveOptionInCycle() {
-                assertEquals(5, countOptions(),
+                assertEquals(BASE_OPTIONS, countOptions(),
                                 "El menú base hauria de tenir cinc opcions.");
 
                 setHealthTo(0.15, dummy);
-                assertEquals(6, countOptions(),
+                assertEquals(BASE_OPTIONS + 1, countOptions(),
                                 "No s'ha afegit l'opció per invocar esperits.");
 
                 setHealthTo(1.0, dummy);
-                assertEquals(5, countOptions(),
+                assertEquals(BASE_OPTIONS, countOptions(),
                                 "L'opció s'hauria d'eliminar en recuperar prou vida.");
         }
 
@@ -96,14 +102,14 @@ class SpiritualCallingFlagTest {
                 dummy.clearEffects();
                 setHealthTo(0.10, dummy);
 
-                assertEquals(5, countOptions(),
+                assertEquals(BASE_OPTIONS, countOptions(),
                                 "Sense l'efecte, no s'hauria d'afegir l'opció.");
         }
 
         @Test
         void shouldSetCooldownAndRemoveOptionAfterUsingSpiritualCalling() {
                 setHealthTo(0.10, dummy);
-                assertEquals(6, countOptions(),
+                assertEquals(BASE_OPTIONS + 1, countOptions(),
                                 "L'opció hauria d'estar disponible abans d'usar-la.");
 
                 double vidaAbans = dummy.getStatistics().getHealth();
@@ -112,7 +118,7 @@ class SpiritualCallingFlagTest {
 
                 assertEquals(3, dummy.getSpiritualCallingCooldown(),
                                 "El cooldown hauria de quedar a tres torns.");
-                assertEquals(5, countOptions(),
+                assertEquals(BASE_OPTIONS, countOptions(),
                                 "Després d'usar l'acció, l'opció s'hauria d'eliminar del menú.");
                 assertTrue(dummy.getStatistics().getHealth() >= vidaAbans,
                                 "La invocació hauria de curar o, com a mínim, no reduir la vida.");
@@ -125,7 +131,7 @@ class SpiritualCallingFlagTest {
 
                 setHealthTo(0.10, dummy);
 
-                assertEquals(5, countOptions(),
+                assertEquals(BASE_OPTIONS, countOptions(),
                                 "Amb el cooldown actiu, l'opció no s'hauria de mostrar.");
         }
 
@@ -141,7 +147,7 @@ class SpiritualCallingFlagTest {
 
                 assertEquals(0, dummy.getSpiritualCallingCooldown(),
                                 "El cooldown hauria d'haver acabat.");
-                assertEquals(6, countOptions(),
+                assertEquals(BASE_OPTIONS + 1, countOptions(),
                                 "En acabar el cooldown i mantenir-se la vida baixa, l'opció hauria de tornar.");
         }
 
@@ -149,12 +155,12 @@ class SpiritualCallingFlagTest {
         void shouldKeepOptionAfterTickIfConditionsStillMet() {
                 setHealthTo(0.10, dummy);
 
-                assertEquals(6, countOptions(),
+                assertEquals(BASE_OPTIONS + 1, countOptions(),
                                 "L'opció hauria d'estar disponible inicialment.");
 
                 dummy.tickSpiritualCallingCooldown();
 
-                assertEquals(6, countOptions(),
+                assertEquals(BASE_OPTIONS + 1, countOptions(),
                                 "Després d'un tick sense canvis rellevants, l'opció hauria de mantenir-se.");
         }
 

@@ -372,7 +372,10 @@ public class CharacterCreator {
         return lines;
     }
 
-    /** Converteix les dades de nom, edat i generació (estadístiques + raça) en una instància concreta de {@link Character} segons la raça seleccionada. */
+    /**
+     * Converteix les dades de nom, edat i generació (estadístiques + raça) en una
+     * instància concreta de {@link Character} segons la raça seleccionada.
+     */
     private static Character convert(String name, int age, Generation g) {
         Breed b = g.breed();
         int[] stats = g.stats();
@@ -391,8 +394,15 @@ public class CharacterCreator {
         return character;
     }
 
-    /** Crea un personatge de prova amb el nom "Dummy", edat mínima i una distribució equitativa de punts entre les estadístiques, associat a la raça Orc. */
+    /**
+     * Crea un personatge de prova amb el nom "Dummy", edat mínima i una distribució
+     * equitativa de punts entre les estadístiques, associat a la raça Orc.
+     */
     public static Character dummy() {
+        return convert("Dummy", MIN_AGE, new Generation(getDummyStats(), Breed.ORC));
+    }
+
+    public static int[] getDummyStats() {
         int base = TOTAL_POINTS / 7;
         int remainder = TOTAL_POINTS % 7;
 
@@ -403,6 +413,6 @@ public class CharacterCreator {
             stats[i]++;
         }
 
-        return convert("Dummy", MIN_AGE, new Generation(stats, Breed.ORC));
+        return stats;
     }
 }

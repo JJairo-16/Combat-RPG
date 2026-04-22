@@ -12,6 +12,7 @@ import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.StackingRule;
 import rpgcombat.models.effects.impl.Exhaustion;
 import rpgcombat.models.effects.impl.SpiritualCallingFlag;
+import rpgcombat.utils.ui.Ansi;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;
 import rpgcombat.weapons.config.WeaponType;
@@ -199,7 +200,7 @@ public class Character {
             stats.damage(bleedDamage);
             if (out != null) {
                 String suffix = action == Action.DEFEND ? " però la defensa en redueix part." : ".";
-                out.add("[RED|-] " + name + " pateix " + bleedDamage + " de sagnat" + suffix);
+                out.add(Ansi.RED + "  - " + name + " pateix " + bleedDamage + " de sagnat" + suffix);
             }
         }
         bleedTurns--;
@@ -211,18 +212,18 @@ public class Character {
         switch (action) {
             case ATTACK -> {
                 attackModifierThisTurn = STAGGER_ATTACK_MULTIPLIER;
-                if (out != null) out.add("[YELLOW|!] " + name + " està desequilibrat: el seu atac perd força.");
+                if (out != null) out.add(Ansi.YELLOW + "  ! " + name + " està desequilibrat: el seu atac perd força.");
             }
             case DEFEND -> {
                 defenseModifierThisTurn = STAGGER_DEFEND_MULTIPLIER;
-                if (out != null) out.add("[YELLOW|!] " + name + " defensa mal posicionat.");
+                if (out != null) out.add(Ansi.YELLOW + "  ! " + name + " defensa mal posicionat.");
             }
             case DODGE -> {
                 dodgeModifierThisTurn = STAGGER_DODGE_MULTIPLIER;
-                if (out != null) out.add("[YELLOW|!] " + name + " intenta esquivar desequilibrat.");
+                if (out != null) out.add(Ansi.YELLOW + "  ! " + name + " intenta esquivar desequilibrat.");
             }
             case CHARGE -> {
-                if (out != null) out.add("[YELLOW|!] " + name + " carrega lentament per l'aturdiment.");
+                if (out != null) out.add(Ansi.YELLOW + "  ! " + name + " carrega lentament per l'aturdiment.");
             }
         }
 

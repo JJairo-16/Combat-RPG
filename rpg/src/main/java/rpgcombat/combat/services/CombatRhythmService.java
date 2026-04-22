@@ -8,6 +8,7 @@ import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.models.effects.impl.Exhaustion;
 import rpgcombat.models.effects.impl.Fatigue;
+import rpgcombat.utils.ui.Ansi;
 
 /**
  * Gestiona els recursos ocults de ritme de combat.
@@ -23,7 +24,7 @@ import rpgcombat.models.effects.impl.Fatigue;
 public class CombatRhythmService {
 
     /** Aplica el moviment del recurs ocult al començar el torn propi. */
-    public void onActionStart(Character actor, Action action, List<String> out) {
+    public void onActionStart(Character actor, Action action) {
         if (actor == null || action == null) {
             return;
         }
@@ -48,7 +49,7 @@ public class CombatRhythmService {
      * Aplica el desgast defensiu només quan realment hi ha un atac entrant.
      * Resistencia baixa només en DEFEND/DODGE.
      */
-    public void onDefenseReaction(Character defender, Action defenseAction, double incomingDamage, List<String> out) {
+    public void onDefenseReaction(Character defender, Action defenseAction, double incomingDamage) {
         if (defender == null || defenseAction == null || incomingDamage <= 0) {
             return;
         }
@@ -121,7 +122,7 @@ public class CombatRhythmService {
 
         actor.addEffect(new Fatigue());
         if (out != null) {
-            out.add("[YELLOW|!] La cadena ofensiva pesa massa: apareix la fatiga.");
+            out.add("[YELLOW|!]La cadena ofensiva pesa massa: apareix la fatiga.");
         }
     }
 
@@ -138,7 +139,7 @@ public class CombatRhythmService {
 
         defender.addEffect(new Exhaustion());
         if (out != null) {
-            out.add("[YELLOW|!] La pressió defensiva et supera: apareix el cansament.");
+            out.add(Ansi.YELLOW + "  ! La pressió defensiva et supera: apareix el cansament.");
         }
     }
 

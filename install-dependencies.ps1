@@ -1,4 +1,5 @@
 param(
+    [string]$ProjectRoot = ".",
     [string]$LibsFolder = "libs",
     [string]$ConfigFile = "artifacts.json",
     [switch]$StopOnError
@@ -36,14 +37,17 @@ function Write-Err {
 
 function Test-CommandExists {
     param([string]$CommandName)
-
     return $null -ne (Get-Command $CommandName -ErrorAction SilentlyContinue)
 }
 
-function Resolve-LibsPath {
-    param([string]$RelativePath)
+function Resolve-ProjectPath {
+    param(
+        [string]$BasePath,
+        [string]$RelativePath
+    )
 
-    return Join-Path $PSScriptRoot $RelativePath
+    $fullBasePath = (Resolve-Path $BasePath).Path
+    return Join-Path $fullBasePath $RelativePath
 }
 
 function Load-ArtifactConfig {
@@ -148,9 +152,15 @@ try {
         throw "No s'ha trobat la comanda 'mvn'. Assegura't que Maven està instal·lat i al PATH."
     }
 
-    $libsPath = Resolve-LibsPath $LibsFolder
+    if (-not (Test-Path $ProjectRoot)) {
+        throw "No existeix la ruta arrel del projecte: $ProjectRoot"
+    }
+
+    $projectRootPath = (Resolve-Path $ProjectRoot).Path
+    $libsPath = Resolve-ProjectPath -BasePath $projectRootPath -RelativePath $LibsFolder
     $configPath = Join-Path $libsPath $ConfigFile
 
+    Write-Info "Arrel del projecte: $projectRootPath"
     Write-Info "Directori de llibreries: $libsPath"
     Write-Info "Fitxer de configuració: $configPath"
 
@@ -201,7 +211,8 @@ try {
     Write-Progress -Activity "Instal·lant JARs" -Completed
 
     Write-Section "Resum"
-    Write-Ok   "Instal·lats correctament: $successCount"
+    Write-Ok "Instal·lats correctament: $successCount"
+
     if ($errorCount -gt 0) {
         Write-Warn "Errors: $errorCount"
         exit 1

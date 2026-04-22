@@ -49,11 +49,12 @@ public class TurnResolver {
             EndRoundRegenBonus defenderBonus) {
 
         List<String> startMessages = new ArrayList<>();
-        rhythmService.onActionStart(attacker, attackerAction, startMessages);
+        rhythmService.onActionStart(attacker, attackerAction);
         attacker.onTurnStart(attackerAction, startMessages);
 
         if (!attacker.isAlive()) {
-            return new TurnResult(attacker.getName(), null, startMessages, List.of(), null, List.of(), List.of(), 0, false);
+            return new TurnResult(attacker.getName(), null, startMessages, List.of(), null, List.of(), List.of(), 0,
+                    false);
         }
 
         if (attackerAction != ATTACK) {
@@ -78,8 +79,10 @@ public class TurnResolver {
 
         if (realTarget == attacker) {
             double damage = attackResult.damage();
-            if (damage > 0) attacker.getDamage(damage);
-            return new TurnResult(attacker.getName(), attackerMessage, startMessages, List.of(), null, List.of(), List.of(), damage, false);
+            if (damage > 0)
+                attacker.getDamage(damage);
+            return new TurnResult(attacker.getName(), attackerMessage, startMessages, List.of(), null, List.of(),
+                    List.of(), damage, false);
         }
 
         Random attackerRng = attacker.rng();
@@ -90,11 +93,14 @@ public class TurnResolver {
         configureHitContext(ctx, attacker, attackResult, weapon);
 
         effectPipeline.runAttackerOnly(ctx, Phase.START_TURN, attacker, attackerRng, startMessages);
-        effectPipeline.runPhase(ctx, Phase.BEFORE_ATTACK, attacker, defender, weapon, attackerRng, defenderRng, preDefenseMessages);
-        effectPipeline.runPhase(ctx, Phase.ROLL_CRIT, attacker, defender, weapon, attackerRng, defenderRng, preDefenseMessages);
+        effectPipeline.runPhase(ctx, Phase.BEFORE_ATTACK, attacker, defender, weapon, attackerRng, defenderRng,
+                preDefenseMessages);
+        effectPipeline.runPhase(ctx, Phase.ROLL_CRIT, attacker, defender, weapon, attackerRng, defenderRng,
+                preDefenseMessages);
 
         boolean critical = ctx.resolveCritical();
-        if (critical) preDefenseMessages.add("cop crític!");
+        if (critical)
+            preDefenseMessages.add("cop crític!");
 
         if (attacker.isDesperate()) {
             preDefenseMessages.add("[GREEN|!] " + attacker.getName() + " lluita al límit i troba força extra.");
@@ -118,23 +124,28 @@ public class TurnResolver {
         rhythmService.applyDefensivePressure(defender, ctx::multiplyDamage);
         ctx.multiplyDamage(defender.consumeIncomingDamageMultiplier());
         ctx.multiplyDamage(defender.comebackIncomingDamageMultiplierAgainst(attacker));
-        effectPipeline.runPhase(ctx, Phase.MODIFY_DAMAGE, attacker, defender, weapon, attackerRng, defenderRng, preDefenseMessages);
-        effectPipeline.runPhase(ctx, Phase.BEFORE_DEFENSE, attacker, defender, weapon, attackerRng, defenderRng, preDefenseMessages);
+        effectPipeline.runPhase(ctx, Phase.MODIFY_DAMAGE, attacker, defender, weapon, attackerRng, defenderRng,
+                preDefenseMessages);
+        effectPipeline.runPhase(ctx, Phase.BEFORE_DEFENSE, attacker, defender, weapon, attackerRng, defenderRng,
+                preDefenseMessages);
 
         double damageToResolve = ctx.damageToResolve();
         if (defender.isDesperate()) {
-            preDefenseMessages.add("[GREEN|!] " + defender.getName() + " aguanta com pot i redueix part de la pressió rebuda.");
+            preDefenseMessages
+                    .add("[GREEN|!] " + defender.getName() + " aguanta com pot i redueix part de la pressió rebuda.");
         }
-        rhythmService.onDefenseReaction(defender, defenderAction, damageToResolve, preDefenseMessages);
+        rhythmService.onDefenseReaction(defender, defenderAction, damageToResolve);
 
         Result defenderResult = attackResolver.resolveAttack(damageToResolve, defender, defenderAction);
         ctx.setDefenderResult(defenderResult);
         ctx.setDamageDealt(defenderResult.recived());
 
         recoveryService.registerDefenseBonus(defenderAction, defenderResult, damageToResolve, defenderBonus);
-        if (hasWeapon) weapon.registerResolvedAttack(ctx.wasCritical(), damageToResolve);
+        if (hasWeapon)
+            weapon.registerResolvedAttack(ctx.wasCritical(), damageToResolve);
         registerCombatEvents(ctx, defender, defenderAction);
-        applyPhaseThreeStates(attacker, defender, attackerAction, defenderAction, ctx, defenderResult, critical, postDefenseMessages);
+        applyPhaseThreeStates(attacker, defender, attackerAction, defenderAction, ctx, defenderResult, critical,
+                postDefenseMessages);
         updateMomentum(attacker, defender, defenderAction, damageToResolve, defenderResult, postDefenseMessages);
 
         defender.tryTriggerAdrenalineSurge(attacker, defenderBonus, postDefenseMessages);
@@ -145,16 +156,20 @@ public class TurnResolver {
         String defenseMessage = null;
         if (defenderResult.recived() != -1) {
             String msg = defenderResult.message();
-            if (msg != null && !msg.isBlank()) defenseMessage = msg;
+            if (msg != null && !msg.isBlank())
+                defenseMessage = msg;
         }
 
-        effectPipeline.runPhase(ctx, Phase.AFTER_DEFENSE, attacker, defender, weapon, attackerRng, defenderRng, postDefenseMessages);
+        effectPipeline.runPhase(ctx, Phase.AFTER_DEFENSE, attacker, defender, weapon, attackerRng, defenderRng,
+                postDefenseMessages);
         if (ctx.damageDealt() > 0) {
-            effectPipeline.runPhase(ctx, Phase.AFTER_HIT, attacker, defender, weapon, attackerRng, defenderRng, postDefenseMessages);
+            effectPipeline.runPhase(ctx, Phase.AFTER_HIT, attacker, defender, weapon, attackerRng, defenderRng,
+                    postDefenseMessages);
         }
         effectPipeline.runAttackerOnly(ctx, Phase.END_TURN, attacker, attackerRng, endTurnMessages);
 
-        return new TurnResult(attacker.getName(), attackerMessage, startMessages, preDefenseMessages, defenseMessage, postDefenseMessages, endTurnMessages, ctx.damageDealt(), critical);
+        return new TurnResult(attacker.getName(), attackerMessage, startMessages, preDefenseMessages, defenseMessage,
+                postDefenseMessages, endTurnMessages, ctx.damageDealt(), critical);
     }
 
     private TurnResult resolveNonAttackTurn(
@@ -184,7 +199,27 @@ public class TurnResolver {
         Result defenderResult = attackResolver.resolveAttack(0, defender, defenderAction);
         String defenseMessage = defenderResult.message();
 
-        return new TurnResult(attacker.getName(), null, startMessages, List.of(), defenseMessage, List.of(), endTurnMessages, 0, false);
+        Random attackerRng = attacker.rng();
+        HitContext ctx = new HitContext(
+                attacker,
+                defender,
+                attacker.getWeapon(),
+                attackerRng,
+                attackerAction,
+                defenderAction);
+
+        effectPipeline.runAttackerOnly(ctx, Phase.END_TURN, attacker, attackerRng, endTurnMessages);
+
+        return new TurnResult(
+                attacker.getName(),
+                null,
+                startMessages,
+                List.of(),
+                defenseMessage,
+                List.of(),
+                endTurnMessages,
+                0,
+                false);
     }
 
     private void configureHitContext(HitContext ctx, Character attacker, AttackResult attackResult, Weapon weapon) {
@@ -194,7 +229,8 @@ public class TurnResolver {
             double nonCritDamage = Math.max(0.0, weapon.lastNonCriticalDamage());
             double skillMultiplier = (rolledDamage > 0.0) ? attackResult.damage() / rolledDamage : 1.0;
             double rebuiltBaseDamage = round2(nonCritDamage * skillMultiplier);
-            if (rebuiltBaseDamage <= 0 && attackResult.damage() > 0) rebuiltBaseDamage = attackResult.damage();
+            if (rebuiltBaseDamage <= 0 && attackResult.damage() > 0)
+                rebuiltBaseDamage = attackResult.damage();
             ctx.setBaseDamage(rebuiltBaseDamage);
             ctx.setCriticalChance(weapon.resolveCriticalChance(attackerStats));
             ctx.setCriticalMultiplier(weapon.resolveCriticalMultiplier(attackerStats));
@@ -222,7 +258,8 @@ public class TurnResolver {
             ctx.registerEvent(Event.ON_HIT);
             ctx.registerEvent(Event.ON_DAMAGE_DEALT);
             ctx.registerEvent(Event.ON_DAMAGE_TAKEN);
-            if (!defender.isAlive()) ctx.registerEvent(Event.ON_KILL);
+            if (!defender.isAlive())
+                ctx.registerEvent(Event.ON_KILL);
         }
     }
 
@@ -236,7 +273,8 @@ public class TurnResolver {
             boolean critical,
             List<String> out) {
 
-        if (defenderResult.recived() <= 0) return;
+        if (defenderResult.recived() <= 0)
+            return;
 
         if (defenderAction == Action.DEFEND && defender.isVulnerable()) {
             out.add("[RED|!] La defensa trencada deixa " + defender.getName() + " exposat.");
@@ -247,18 +285,18 @@ public class TurnResolver {
             out.add("[RED|+] El cop crític obre una ferida: s'aplica sagnat.");
         }
 
-        Object rawDamage = ctx.getMeta("RAW_DAMAGE");
-        if (rawDamage instanceof Number && ctx.damageDealt() >= ((Number) rawDamage).doubleValue() * 0.90 && defenderAction == Action.DODGE) {
+        Object rawDamageInput = ctx.getMeta("RAW_DAMAGE");
+        if (rawDamageInput instanceof Number rawDamage && ctx.damageDealt() >= rawDamage.doubleValue() * 0.90
+                && defenderAction == Action.DODGE) {
             defender.applyBleed(1);
             out.add("[RED|+] L'esquiva fallida deixa un tall superficial.");
         }
 
-        if (ctx.getMeta("CHARGED_HIT") instanceof Boolean charged && charged) {
+        if (ctx.getMeta("CHARGED_HIT") instanceof Boolean charged && Boolean.TRUE.equals(charged)) {
             defender.applyStagger(1);
             out.add("[YELLOW|+] L'impacte carregat desequilibra el rival.");
         }
     }
-
 
     private void updateMomentum(
             Character attacker,
@@ -269,8 +307,10 @@ public class TurnResolver {
             List<String> out) {
 
         boolean successfulHit = defenderResult.recived() > 0;
-        boolean successfulDodge = defenderAction == Action.DODGE && damageToResolve > 0 && defenderResult.recived() <= 0;
-        boolean defenderUnderHeavyPressure = defender.isDesperate() || defender.healthRatio() + 0.18 < attacker.healthRatio();
+        boolean successfulDodge = defenderAction == Action.DODGE && damageToResolve > 0
+                && defenderResult.recived() <= 0;
+        boolean defenderUnderHeavyPressure = defender.isDesperate()
+                || defender.healthRatio() + 0.18 < attacker.healthRatio();
 
         if (successfulHit) {
             if (!defenderUnderHeavyPressure) {
@@ -280,12 +320,14 @@ public class TurnResolver {
                     out.add("[CYAN|+] " + attacker.getName() + " guanya impuls.");
                 }
             } else if (out != null && attacker.getMomentumStacks() > 0) {
-                out.add("[CYAN|=] L'avantatge de " + attacker.getName() + " no accelera més davant un rival acorralat.");
+                out.add("[CYAN|=] L'avantatge de " + attacker.getName()
+                        + " no accelera més davant un rival acorralat.");
             }
 
             if (defender.getMomentumStacks() > 0) {
                 defender.loseMomentum();
-                if (out != null) out.add("[CYAN|-] " + defender.getName() + " perd impuls sota la pressió rival.");
+                if (out != null)
+                    out.add("[CYAN|-] " + defender.getName() + " perd impuls sota la pressió rival.");
             }
             return;
         }
@@ -302,14 +344,16 @@ public class TurnResolver {
             }
             if (attacker.getMomentumStacks() > 0) {
                 attacker.loseMomentum();
-                if (out != null) out.add("[CYAN|-] " + attacker.getName() + " perd impuls després de fallar.");
+                if (out != null)
+                    out.add("[CYAN|-] " + attacker.getName() + " perd impuls després de fallar.");
             }
             return;
         }
 
         if (attacker.getMomentumStacks() > 0) {
             attacker.loseMomentum();
-            if (out != null) out.add("[CYAN|-] " + attacker.getName() + " perd part de l'impuls.");
+            if (out != null)
+                out.add("[CYAN|-] " + attacker.getName() + " perd part de l'impuls.");
         }
     }
 
@@ -331,12 +375,16 @@ public class TurnResolver {
 
     private boolean breakAttackChains(Character attacker, Character defender) {
         Weapon weapon = attacker.getWeapon();
-        if (weapon == null) return false;
-        if (!"WASP_HARPOON".equals(weapon.getId())) return false;
+        if (weapon == null)
+            return false;
+        if (!"WASP_HARPOON".equals(weapon.getId()))
+            return false;
 
         PoisonEffect poison = PoisonEffect.from(defender);
-        if (poison == null) return false;
-        if (poison.stacks() <= 0) return false;
+        if (poison == null)
+            return false;
+        if (poison.stacks() <= 0)
+            return false;
 
         defender.removeEffect(PoisonEffect.INTERNAL_EFFECT_KEY);
         return true;
