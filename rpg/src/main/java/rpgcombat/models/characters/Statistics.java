@@ -1,28 +1,35 @@
 package rpgcombat.models.characters;
 
+import java.util.Map;
+
+import rpgcombat.balance.CombatBalanceRegistry;
+import rpgcombat.balance.config.CombatBalanceConfig;
+import rpgcombat.balance.config.StaminaConfig;
+import rpgcombat.balance.config.StaminaConfig.AttackCostConfig;
+import rpgcombat.balance.config.StaminaConfig.DamageMultiplierConfig;
+import rpgcombat.balance.config.StaminaConfig.FatigueChanceConfig;
+import rpgcombat.balance.config.StaminaConfig.MaxConfig;
+import rpgcombat.balance.config.StaminaConfig.RecoveryConfig;
 import rpgcombat.combat.models.Action;
 
 /**
- * Emmagatzema les estadístiques base i els valors dinàmics (vida i mana).
+ * Emmagatzema les estadístiques base i els valors dinàmics del personatge.
  */
 public class Statistics {
 
-    // Estadístiques base
     private final int strength;
     private final int dexterity;
-    private final int constitution; // vida
+    private final int constitution;
     private final int intelligence;
     private final int wisdom;
     private final int charisma;
     private final int luck;
 
-    // Límits màxims
     private final double maxHealth;
     private final double maxMana;
     private final double maxStamina;
     private final double maxResistance;
 
-    // Valors actuals
     private double health;
     private double mana;
     private double stamina;
@@ -34,16 +41,12 @@ public class Statistics {
     private static final double HEALTH_SOFTCAP_FACTOR = 0.08;
     private static final double REGEN_SOFTCAP_FACTOR = 0.10;
 
-    private static final double STAMINA_PRESSURE_START = 0.58;
     private static final double RESISTANCE_PRESSURE_START = 0.55;
 
     private boolean invulnerable = false;
 
     /**
-     * Construeix les estadístiques a partir d'un array de 7 valors en ordre fix.
-     *
-     * @param stats força, destresa, constitució, intel·ligència, saviesa, carisma,
-     *              sort
+     * Crea les estadístiques a partir del bloc base de stats.
      */
     public Statistics(int[] stats) {
         this.strength = stats[0];
@@ -65,92 +68,133 @@ public class Statistics {
         this.resistance = maxResistance;
     }
 
+    /**
+     * Retorna la força.
+     */
     public int getStrength() {
         return strength;
     }
 
+    /**
+     * Retorna la destresa.
+     */
     public int getDexterity() {
         return dexterity;
     }
 
+    /**
+     * Retorna la constitució.
+     */
     public int getConstitution() {
         return constitution;
     }
 
+    /**
+     * Retorna la intel·ligència.
+     */
     public int getIntelligence() {
         return intelligence;
     }
 
+    /**
+     * Retorna la saviesa.
+     */
     public int getWisdom() {
         return wisdom;
     }
 
+    /**
+     * Retorna el carisma.
+     */
     public int getCharisma() {
         return charisma;
     }
 
+    /**
+     * Retorna la sort.
+     */
     public int getLuck() {
         return luck;
     }
 
+    /**
+     * Retorna la vida actual.
+     */
     public double getHealth() {
         return health;
     }
 
+    /**
+     * Retorna el mana actual.
+     */
     public double getMana() {
         return mana;
     }
 
+    /**
+     * Retorna la vida màxima.
+     */
     public double getMaxHealth() {
         return maxHealth;
     }
 
+    /**
+     * Retorna el mana màxim.
+     */
     public double getMaxMana() {
         return maxMana;
     }
 
+    /**
+     * Retorna l'estamina màxima.
+     */
     public double getMaxStamina() {
         return maxStamina;
     }
 
+    /**
+     * Retorna la resistència màxima.
+     */
     public double getMaxResistance() {
         return maxResistance;
     }
 
+    /**
+     * Retorna l'estamina actual.
+     */
     public double getStamina() {
         return stamina;
     }
 
+    /**
+     * Retorna la resistència actual.
+     */
     public double getResistance() {
         return resistance;
     }
 
     /**
-     * Regenera vida i mana segons constitució i intel·ligència, sense superar els
-     * màxims.
+     * Regenera vida i mana base.
      */
     public void reg() {
         double hp = calculateHealthRegen(constitution);
-
         double ma = intelligence * 0.9;
-
-        health = affectClamp(health, hp, maxHealth, 0);
-        mana = affectClamp(mana, ma, maxMana, 0);
-    }
-
-    public void reg(double hpBonus, double manaBonus) {
-        double hp = calculateHealthRegen(constitution * hpBonus);
-
-        double ma = (intelligence * manaBonus) * 0.9;
-
         health = affectClamp(health, hp, maxHealth, 0);
         mana = affectClamp(mana, ma, maxMana, 0);
     }
 
     /**
-     * Aplica dany a la vida (mai baixa de 0).
-     *
-     * @param dmg dany rebut
+     * Regenera vida i mana amb bonus.
+     */
+    public void reg(double hpBonus, double manaBonus) {
+        double hp = calculateHealthRegen(constitution * hpBonus);
+        double ma = (intelligence * manaBonus) * 0.9;
+        health = affectClamp(health, hp, maxHealth, 0);
+        mana = affectClamp(mana, ma, maxMana, 0);
+    }
+
+    /**
+     * Aplica dany directe a la vida.
      */
     public void damage(double dmg) {
         health = Math.max(0, health - dmg);
@@ -158,201 +202,207 @@ public class Statistics {
 
     /**
      * Consumeix mana si n'hi ha prou.
-     *
-     * @param price cost de mana
-     * @return {@code true} si s'ha pogut pagar; {@code false} si no hi ha mana
-     *         suficient
      */
     public boolean consumeMana(double price) {
         if (price > mana) {
             return false;
         }
-
         mana -= price;
         return true;
     }
 
     /**
-     * Cura vida fins al màxim i retorna la curació real aplicada.
-     *
-     * @param amount quantitat de curació sol·licitada
-     * @return quantitat real curada
+     * Cura sense superar el màxim.
      */
     public double heal(double amount) {
         if (amount <= 0) {
             return 0;
         }
-
         double before = health;
         health = Math.min(maxHealth, health + amount);
         return health - before;
     }
 
     /**
-     * Cura vida sense límit màxim i retorna la curació real aplicada (pot
-     * sobrecarregar).
-     * 
-     * @param amount quantitat de curació sol·licitada
-     * @return quantitat real curada
+     * Cura sense límit superior.
      */
     public double overloadHeal(double amount) {
         if (amount <= 0) {
             return 0;
         }
-
         double before = health;
         health += amount;
         return health - before;
     }
 
     /**
-     * Restaura mana fins al màxim i retorna la quantitat real restaurada.
-     *
-     * @param amount quantitat de restauració sol·licitada
-     * @return quantitat real restaurada
+     * Recupera mana sense superar el màxim.
      */
     public double restoreMana(double amount) {
         if (amount <= 0) {
             return 0;
         }
-
         double before = mana;
         mana = Math.min(maxMana, mana + amount);
         return mana - before;
     }
 
     /**
-     * Restaura mana sense límit màxim i retorna la quantitat real restaurada (pot
-     * sobrecarregar).
-     * 
-     * @param amount quantitat de restauració sol·licitada
-     * @return quantitat real restaurada
+     * Recupera mana sense límit superior.
      */
     public double overloadRestoreMana(double amount) {
         if (amount <= 0) {
             return 0;
         }
-
         double before = mana;
         mana += amount;
         return mana - before;
     }
 
-    /** Calcula la vida màxima amb soft cap suau a partir de 20 de constitució. */
-    private double calculateMaxHealth(int con) {
-        double effectiveCon = softenStat(con, MAX_CONSTITUTION_FULL_EFFECT, HEALTH_SOFTCAP_FACTOR);
-        return effectiveCon * CONSTITUTION_VALUE;
-    }
-
     /**
-     * Calcula la regeneració de vida amb un soft cap una mica més fort que la vida
-     * màxima.
+     * Activa o desactiva la invulnerabilitat.
      */
-    private double calculateHealthRegen(double con) {
-        double effectiveCon = softenStat(con, MAX_CONSTITUTION_FULL_EFFECT, REGEN_SOFTCAP_FACTOR);
-        return effectiveCon * 2.35;
-    }
-
-    /**
-     * Fins al llindar, l'estadística té efecte complet.
-     * A partir d'aquí, cada punt extra aporta una mica menys que l'anterior.
-     */
-    private double softenStat(double stat, int threshold, double factor) {
-        if (stat <= threshold) {
-            return stat;
-        }
-
-        double extra = stat - threshold;
-        return threshold + (extra / (1.0 + extra * factor));
-    }
-
-    /** Aplica un increment i limita el resultat dins del rang indicat. */
-    private double affectClamp(double act, double amount, double max, double min) {
-        return Math.clamp(act + amount, min, max);
-    }
-
     public void setInvulnerable(boolean invulnerable) {
         this.invulnerable = invulnerable;
     }
 
+    /**
+     * Restaura la vida al màxim si és invulnerable.
+     */
     public void applyInvulnerability() {
         if (invulnerable) {
             health = maxHealth;
         }
     }
 
-
     /**
-     * La stamina baixa només en atacar.
-     * El cost és prou suau perquè atacar repetidament continuï sent viable,
-     * però prou real perquè alternar amb altres accions sigui lleugerament millor.
+     * Consumeix l'estamina d'un atac.
      */
     public void consumeStaminaOnAttack() {
-        double cost = Math.max(10.0, 18.0 - dexterity * 0.10 - wisdom * 0.05);
+        AttackCostConfig cfg = staminaConfig().attackCost();
+
+        double cost = Math.max(
+                cfg.minimum(),
+                cfg.base()
+                        - dexterity * cfg.dexterityReductionPerPoint()
+                        - wisdom * cfg.wisdomReductionPerPoint());
+
         stamina = affectClamp(stamina, -cost, maxStamina, 0);
     }
 
-    /** Regeneració de stamina en qualsevol acció que no sigui atacar. */
+    /**
+     * Recupera estamina en una acció no ofensiva.
+     */
     public void recoverStaminaOnNonAttack(double multiplier) {
-        double regen = (12.0 + constitution * 0.12 + wisdom * 0.08) * Math.max(0.5, multiplier);
+        RecoveryConfig cfg = staminaConfig().recovery();
+
+        double regen = (cfg.base()
+                + constitution * cfg.constitutionMultiplier()
+                + wisdom * cfg.wisdomMultiplier())
+                * Math.max(cfg.minimumActionMultiplier(), multiplier);
+
         stamina = affectClamp(stamina, regen, maxStamina, 0);
     }
 
-    /** La resistencia puja quan el personatge adopta una acció ofensiva. */
+    /**
+     * Recupera resistència en atacar.
+     */
     public void recoverResistanceOnAttack() {
         double regen = 10.0 + constitution * 0.10 + dexterity * 0.06;
         resistance = affectClamp(resistance, regen, maxResistance, 0);
     }
 
-    /** La resistencia baixa només en defensar de debò. */
+    /**
+     * Consumeix resistència en defensar.
+     */
     public void consumeResistanceOnDefend() {
         double cost = Math.max(8.5, 12.0 - constitution * 0.07 - wisdom * 0.06);
         resistance = affectClamp(resistance, -cost, maxResistance, 0);
     }
 
-    /** La esquiva és més exigent que bloquejar. */
+    /**
+     * Consumeix resistència en esquivar.
+     */
     public void consumeResistanceOnDodge() {
         double cost = Math.max(12.0, 18.0 - dexterity * 0.10 - wisdom * 0.05);
         resistance = affectClamp(resistance, -cost, maxResistance, 0);
     }
 
+    /**
+     * Aplica els canvis de recursos a l'inici de l'acció.
+     */
     public void onActionStart(Action action) {
         if (action == null) {
             return;
         }
+
+        RecoveryConfig cfg = staminaConfig().recovery();
+        Map<String, Double> multipliers = cfg.actionMultipliers();
 
         switch (action) {
             case ATTACK -> {
                 consumeStaminaOnAttack();
                 recoverResistanceOnAttack();
             }
-            case DEFEND -> recoverStaminaOnNonAttack(1.15);
-            case DODGE -> recoverStaminaOnNonAttack(1.05);
+            case DEFEND -> recoverStaminaOnNonAttack(multipliers.getOrDefault("DEFEND", 1.15));
+            case DODGE -> recoverStaminaOnNonAttack(multipliers.getOrDefault("DODGE", 1.05));
+            case CHARGE -> recoverStaminaOnNonAttack(multipliers.getOrDefault("CHARGE", 0.9));
+            default -> {
+            }
         }
     }
 
+    /**
+     * Retorna el multiplicador de dany segons la pressió d'estamina.
+     */
     public double staminaDamageMultiplier() {
-        return 1.0 - 0.16 * Math.pow(staminaPressure(), 1.35);
+        DamageMultiplierConfig cfg = staminaConfig().damageMultiplier();
+
+        return cfg.base()
+                - cfg.penaltyMultiplier() * Math.pow(staminaPressure(), cfg.pressureExponent());
     }
 
+    /**
+     * Retorna el multiplicador de dany rebut per pressió de resistència.
+     */
     public double resistanceIncomingDamageMultiplier() {
         return 1.0 + 0.18 * Math.pow(resistancePressure(), 1.40);
     }
 
+    /**
+     * Retorna el multiplicador d'esquiva per pressió de resistència.
+     */
     public double resistanceDodgeMultiplier() {
         return 1.0 - 0.16 * Math.pow(resistancePressure(), 1.25);
     }
 
+    /**
+     * Calcula la probabilitat de fatiga per estamina.
+     */
     public double fatigueChance() {
-        double luckMitigation = Math.max(0.70, 1.0 - luck * 0.004);
-        return Math.clamp(0.30 * Math.pow(staminaPressure(), 1.80) * luckMitigation, 0.0, 0.30);
+        FatigueChanceConfig cfg = staminaConfig().fatigueChance();
+
+        double luckMitigation = Math.max(
+                cfg.luckMitigationFloor(),
+                1.0 - luck * cfg.luckMitigationPerPoint());
+
+        return Math.clamp(
+                cfg.base() * Math.pow(staminaPressure(), cfg.pressureExponent()) * luckMitigation,
+                0.0,
+                cfg.max());
     }
 
+    /**
+     * Calcula la probabilitat d'esgotament per resistència.
+     */
     public double exhaustionChance() {
         double luckMitigation = Math.max(0.68, 1.0 - luck * 0.004);
         return Math.clamp(0.34 * Math.pow(resistancePressure(), 1.85) * luckMitigation, 0.0, 0.34);
     }
 
+    /**
+     * Retorna el percentatge actual d'estamina.
+     */
     public double staminaRatio() {
         if (maxStamina <= 0) {
             return 1.0;
@@ -360,6 +410,9 @@ public class Statistics {
         return Math.clamp(stamina / maxStamina, 0.0, 1.0);
     }
 
+    /**
+     * Retorna el percentatge actual de resistència.
+     */
     public double resistanceRatio() {
         if (maxResistance <= 0) {
             return 1.0;
@@ -367,29 +420,95 @@ public class Statistics {
         return Math.clamp(resistance / maxResistance, 0.0, 1.0);
     }
 
+    /**
+     * Calcula la pressió actual d'estamina.
+     */
     private double staminaPressure() {
-        return normalizedPressure(staminaRatio(), STAMINA_PRESSURE_START);
+        return normalizedPressure(staminaRatio(), staminaConfig().pressureThreshold());
     }
 
+    /**
+     * Calcula la pressió actual de resistència.
+     */
     private double resistancePressure() {
         return normalizedPressure(resistanceRatio(), RESISTANCE_PRESSURE_START);
     }
 
+    /**
+     * Normalitza la pressió d'un recurs.
+     */
     private double normalizedPressure(double ratio, double threshold) {
         if (ratio >= threshold) {
             return 0.0;
         }
-
         double span = Math.max(0.05, threshold);
         return Math.clamp((threshold - ratio) / span, 0.0, 1.0);
     }
 
-    private double calculateMaxStamina() {
-        return 75.0 + constitution * 3.0 + dexterity * 1.0 + luck * 0.5;
+    /**
+     * Calcula la vida màxima.
+     */
+    private double calculateMaxHealth(int con) {
+        double effectiveCon = softenStat(con, MAX_CONSTITUTION_FULL_EFFECT, HEALTH_SOFTCAP_FACTOR);
+        return effectiveCon * CONSTITUTION_VALUE;
     }
 
+    /**
+     * Calcula la regeneració de vida base.
+     */
+    private double calculateHealthRegen(double con) {
+        double effectiveCon = softenStat(con, MAX_CONSTITUTION_FULL_EFFECT, REGEN_SOFTCAP_FACTOR);
+        return effectiveCon * 2.35;
+    }
+
+    /**
+     * Aplica un softcap a una stat.
+     */
+    private double softenStat(double stat, int threshold, double factor) {
+        if (stat <= threshold) {
+            return stat;
+        }
+        double extra = stat - threshold;
+        return threshold + (extra / (1.0 + extra * factor));
+    }
+
+    /**
+     * Suma una quantitat i limita el resultat.
+     */
+    private double affectClamp(double act, double amount, double max, double min) {
+        return Math.clamp(act + amount, min, max);
+    }
+
+    /**
+     * Calcula l'estamina màxima.
+     */
+    private double calculateMaxStamina() {
+        MaxConfig cfg = staminaConfig().max();
+
+        return cfg.base()
+                + constitution * cfg.constitutionMultiplier()
+                + dexterity * cfg.dexterityMultiplier()
+                + luck * cfg.luckMultiplier();
+    }
+
+    /**
+     * Calcula la resistència màxima.
+     */
     private double calculateMaxResistance() {
         return 80.0 + constitution * 3.2 + wisdom * 0.75 + luck * 0.4;
     }
 
+    /**
+     * Retorna la configuració global de combat.
+     */
+    private static CombatBalanceConfig balance() {
+        return CombatBalanceRegistry.get();
+    }
+
+    /**
+     * Retorna la configuració d'estamina.
+     */
+    private static StaminaConfig staminaConfig() {
+        return balance().stamina();
+    }
 }

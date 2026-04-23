@@ -36,6 +36,7 @@ public abstract class MissChanceEffect extends TimedEffect {
         }
 
         ctx.setBaseDamage(0);
+        ctx.markEffectFail(key());
         return EffectResult.msg(buildMessage(owner));
     }
 

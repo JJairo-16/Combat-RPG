@@ -7,7 +7,7 @@
 
 ## ▌Què és?
 
-**Combat RPG** és un joc de rol per torns (1vs1) on dos jugadors creen els seus personatges i s'enfronten en combat estratègic.
+**Combat RPG** és un joc de rol per torns (1vs1) on dos jugadors creen els seus personatges i s'enfronten en un combat d'estratègia i sort on domina el caos.
 
 Aquest projecte es pot considerar un **remake/rework** de la seva primera versió, amb millores en l’arquitectura, el sistema de combat i una major flexibilitat en la personalització dels personatges.
 
@@ -180,7 +180,7 @@ Aquest projecte inclou un script de PowerShell i un script de Bash que automatit
 Executa el següent script des de l’arrel del projecte:
 
 ```powershell
-.\install-jars.ps1
+. .\install-dependencies.ps1 -ProjectRoot rpg -LibsFolder "..\libs" 
 ```
 
 El script:
@@ -192,7 +192,7 @@ El script:
 ### Instal·lació de dependències (Linux / Mac)
 
 ```bash
-./install-jars.sh
+./install-dependencies.sh --libs-folder "..\libs
 ```
 
 El script:
@@ -206,11 +206,11 @@ El script:
 Si vols que el procés s’aturi en cas d’error:
 
 ```powershell
-.\install-jars.ps1 -StopOnError
+. .\install-dependencies.ps1 -ProjectRoot rpg -LibsFolder "..\libs" -StopOnError
 ```
 
 ```bash
-./install-jars.sh --stop-on-error
+./install-jars.sh --libs-folder "..\libs" --stop-on-error
 ```
 
 ---
@@ -222,6 +222,12 @@ Compilar i executar la classe principal:
 ```java
 App.java
 ```
+
+---
+
+## ▌Documentació interna
+
+La documentació interna del projecte es troba a [docs](./docs), principalment a [combat-rpg-docs](docs/combat-rpg-docs).
 
 ---
 

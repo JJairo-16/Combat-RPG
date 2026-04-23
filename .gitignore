@@ -80,3 +80,6 @@ crash-reports/*
 *.env
 application-local.properties
 application-dev.properties
+
+imatge-generator
+out

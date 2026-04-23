@@ -38,6 +38,8 @@ public class SpiritualCallingFlag implements Effect, MenuTurnEffect {
     @Override
     public void onMenuTurnEnd(Character owner) {
         state.tickCooldown();
+        if (state.cooldownTurns() <= 0)
+            canBeUsed = true;
     }
 
     public boolean canActivate() {

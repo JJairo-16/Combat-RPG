@@ -137,18 +137,15 @@ public final class Skills {
         double baseManaCost = weapon.getManaPrice();
 
         if (baseManaCost > 0 && !stats.consumeMana(baseManaCost)) {
-            return new AttackResult(0, "no té prou mana per llençar la disrupció arcana.");
+            return AttackResult.resourceFail("no té prou mana per llençar la disrupció arcana.");
         }
 
-        stats.consumeMana(baseManaCost);
-
         double luck = stats.getLuck();
-        double failChance = 0.30 - (luck * (0.08 / 30.0));
+        double failChance = 0.22 - (luck * (0.08 / 30.0));
         failChance = Math.clamp(failChance, 0.22, 0.30);
 
         if (rng.nextDouble() < failChance) {
-            return new AttackResult(
-                    0,
+            return AttackResult.skillFail(
                     "llença la disrupció arcana falla i la màgia es dissipa en el no-res. (molt útil ._.)");
         }
 
@@ -246,7 +243,7 @@ public final class Skills {
      * @param rng    generador aleatori
      * @return resultat amb multiplicador aplicat i missatge
      */
-    public static AttackResult grimoriCipher(Weapon weapon, Statistics stats, Random rng) {
+    public static AttackResult grimoriCipher(Weapon weapon, Statistics stats, Random rng) {     
         double manaCost = weapon.getManaPrice();
         if (manaCost > 0 && !stats.consumeMana(manaCost)) {
             return new AttackResult(0, "intenta llegir el grimori, però no té prou mana.");

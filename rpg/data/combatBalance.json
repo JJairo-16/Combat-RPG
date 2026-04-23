@@ -1,0 +1,142 @@
+{
+	"stamina": {
+		"max": {
+			"base": 75.0,
+			"constitutionMultiplier": 3.0,
+			"dexterityMultiplier": 1.0,
+			"luckMultiplier": 0.5
+		},
+		"attackCost": {
+			"base": 18.0,
+			"dexterityReductionPerPoint": 0.1,
+			"wisdomReductionPerPoint": 0.05,
+			"minimum": 10.0
+		},
+		"recovery": {
+			"base": 12.0,
+			"constitutionMultiplier": 0.12,
+			"wisdomMultiplier": 0.08,
+			"minimumActionMultiplier": 0.5,
+			"actionMultipliers": {
+				"DEFEND": 1.15,
+				"DODGE": 1.05,
+				"CHARGE": 0.9
+			}
+		},
+		"pressureThreshold": 0.58,
+		"damageMultiplier": {
+			"base": 1.0,
+			"penaltyMultiplier": 0.16,
+			"pressureExponent": 1.35
+		},
+		"fatigueChance": {
+			"base": 0.3,
+			"pressureExponent": 1.8,
+			"luckMitigationFloor": 0.7,
+			"luckMitigationPerPoint": 0.004,
+			"max": 0.3
+		}
+	},
+	"momentum": {
+		"maxStacks": 3,
+		"attackBonusPerStack": 0.06,
+		"dodgeBonusPerStack": 0.025,
+		"suppressionWhenTargetLowHealth": 0.55,
+		"suppressionHealthOffset": 0.18,
+		"gain": {
+			"onSuccessfulHit": 1,
+			"onSuccessfulDodge": 1,
+			"underdogExtraOnSuccessfulDodge": 1
+		},
+		"loss": {
+			"onBeingHit": 1,
+			"onFailedAttack": 1,
+			"onAttackDodged": 1,
+			"onPassiveTurnDefend": 1,
+			"onPassiveTurnCharge": 1
+		},
+		"noDecayWhileDesperateCharging": true
+	},
+	"attackDefenseVariance": {
+		"attack": {
+			"spread": 0.07,
+			"minMultiplier": 0.93,
+			"maxMultiplier": 1.14
+		},
+		"defense": {
+			"minMultiplier": 0.92,
+			"maxMultiplier": 1.08
+		},
+		"dodge": {
+			"dexterityOffsetFrom10Multiplier": 0.02,
+			"luckMultiplier": 0.0015,
+			"baseMinClamp": 0.05,
+			"baseMaxClamp": 0.75,
+			"finalMinClamp": 0.03,
+			"finalMaxClamp": 0.85,
+			"failedDodgeDamageMultiplier": 1.25
+		}
+	},
+	"guardBreak": {
+		"maxGuardStacks": 4,
+		"breakThreshold": 3,
+		"normalMitigationRatio": 0.6,
+		"brokenGuardMitigationRatio": 0.32,
+		"finalMitigationClampMin": 0.1,
+		"finalMitigationClampMax": 0.75,
+		"gainOnSuccessfulDefend": 1,
+		"resetWhenActionIsNotDefendAtTurnStart": true,
+		"resetWhenReceivingDirectHit": true,
+		"applyVulnerableTurnsOnBreak": 1,
+		"vulnerableDamageMultiplier": 1.3
+	},
+	"adrenaline": {
+		"desperateHealthRatio": 0.3,
+		"triggerHealthRatio": 0.18,
+		"base": 38.0,
+		"gapBonusMax": 24.0,
+		"desperateBonus": 8.0,
+		"max": 72.0,
+		"gapReference": 0.45,
+		"singleUsePerCombat": true,
+		"regenBonus": {
+			"healthBasePct": 0.028,
+			"healthFromAdrenalineDivisor": 1000.0,
+			"manaBasePct": 0.012,
+			"manaFromAdrenalineDivisor": 1800.0
+		},
+		"underdogBonuses": {
+			"damageMaxBonus": 0.12,
+			"damageTakenMaxReduction": 0.1,
+			"incomingDamageReductionCap": 0.18,
+			"desperateFlatAttackBonus": 0.1,
+			"desperateFlatDamageReduction": 0.08
+		}
+	},
+	"chargedAttack": {
+		"damageMultiplier": 1.5,
+		"canStoreOnlyOneCharge": true,
+		"consumedOnNextAttack": true,
+		"staggerTurnsOnHit": 1
+	},
+	"antiStall": {
+		"startTurn": 16,
+		"increaseEveryTurns": 2,
+		"initialDamage": 1.0,
+		"damageIncreasePerStep": 1.0
+	},
+	"bloodPact": {
+		"manaThreshold": 0.8,
+		"baseHpCostPercent": 0.45,
+		"wisdomReduction": 0.005,
+		"minHpCostPercent": 0.1
+	},
+	"fracture": {
+		"minRate": 0.03,
+		"maxRate": 0.2,
+		"C": 24,
+		"n": 2,
+		"damageMultiplier": 0.08,
+		"duration": 1
+	}
+}
