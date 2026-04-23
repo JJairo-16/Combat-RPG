@@ -37,7 +37,7 @@ public class Weapon {
     private double lastAttackDamage = 0;
     private double lastNonCriticalDamage = 0;
 
-   /** Crea una nova arma. */
+    /** Crea una nova arma. */
     public Weapon(
             String id,
             String name,
@@ -94,7 +94,8 @@ public class Weapon {
     }
 
     public AttackResult attack(Statistics stats, Random rng) {
-        if (stats.getMana() < manaPrice) {
+        if (manaPrice > 0 && !stats.consumeMana(manaPrice)) {
+            stats.consumeMana(manaPrice);
             return new AttackResult(
                     WeaponType.PHYSICAL.getBasicDamage(5, stats),
                     "no li quedava mana, aixi que li dona un cop.");

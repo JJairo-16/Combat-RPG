@@ -18,7 +18,9 @@ public class CombatRenderer {
     private static final String DIV = Ansi.DARK_GRAY + "─".repeat(DIV_WIDTH) + Ansi.RESET;
     private static final String BIG_DIV = Ansi.DARK_GRAY + "═".repeat(DIV_WIDTH) + Ansi.RESET;
 
-    /** Imprimeix la capçalera d'una ronda. */
+    /**
+     * Imprimeix la capçalera d'una ronda.
+     */
     public void printRoundHeader() {
         System.out.println(BIG_DIV);
         System.out.println(Ansi.BOLD + "          COMBAT ROUND" + Ansi.RESET);
@@ -26,14 +28,20 @@ public class CombatRenderer {
         System.out.println();
     }
 
-    /** Imprimeix la capçalera de regeneració. */
+    /**
+     * Imprimeix la capçalera de regeneració.
+     */
     public void printRegenHeader() {
         System.out.println(BIG_DIV);
         System.out.println(Ansi.CYAN + Ansi.BOLD + "           REGENERACIÓ" + Ansi.RESET);
         System.out.println(BIG_DIV);
     }
 
-    /** Imprimeix el resultat visual d'un torn. */
+    /**
+     * Imprimeix el resultat visual d'un torn.
+     *
+     * @param result resultat del torn
+     */
     public void printTurnResult(TurnResult result) {
         if (result == null) {
             return;
@@ -51,7 +59,12 @@ public class CombatRenderer {
         printPassiveMessages(result.endTurnMessages());
     }
 
-    /** Imprimeix el resum del dany rebut al final de la ronda. */
+    /**
+     * Imprimeix el resum del dany rebut al final de la ronda.
+     *
+     * @param character personatge afectat
+     * @param damageTaken dany rebut
+     */
     public void printRoundSummary(Character character, double damageTaken) {
         System.out.println(DIV);
 
@@ -63,7 +76,13 @@ public class CombatRenderer {
         System.out.println();
     }
 
-    /** Imprimeix el resum de la regeneració aplicada. */
+    /**
+     * Imprimeix el resum de la regeneració aplicada.
+     *
+     * @param character personatge afectat
+     * @param hpRegen vida recuperada
+     * @param manaRegen mana recuperat
+     */
     public void printRegenSummary(Character character, double hpRegen, double manaRegen) {
         System.out.printf("%s%s%s recupera %s+%.2f%s vida i %s+%.2f%s mana.%n",
                 Ansi.BOLD, character.getName(), Ansi.RESET,
@@ -74,7 +93,11 @@ public class CombatRenderer {
         System.out.println();
     }
 
-    /** Imprimeix les barres de vida i mana del personatge. */
+    /**
+     * Imprimeix les barres de vida i mana del personatge.
+     *
+     * @param character personatge a mostrar
+     */
     public void printStatusBars(Character character) {
         Statistics stats = character.getStatistics();
 
@@ -99,7 +122,12 @@ public class CombatRenderer {
                 maxMana);
     }
 
-    /** Afegeix les barres d'estat a un text existent. */
+    /**
+     * Afegeix les barres d'estat a un text existent.
+     *
+     * @param sb text de destí
+     * @param character personatge a mostrar
+     */
     public void appendStatusBars(StringBuilder sb, Character character) {
         Statistics stats = character.getStatistics();
 
@@ -122,7 +150,11 @@ public class CombatRenderer {
         sb.append("\n");
     }
 
-    /** Imprimeix una línia simple si conté text. */
+    /**
+     * Imprimeix una línia si conté text.
+     *
+     * @param line línia a mostrar
+     */
     private void printRawLine(String line) {
         if (line == null || line.isBlank()) {
             return;
@@ -130,7 +162,11 @@ public class CombatRenderer {
         System.out.println(Ansi.BOLD + line + Ansi.RESET);
     }
 
-    /** Imprimeix línies especials amb estil secundari. */
+    /**
+     * Imprimeix línies secundàries.
+     *
+     * @param lines línies a mostrar
+     */
     private void printSpecialLines(List<String> lines) {
         if (lines == null || lines.isEmpty()) {
             return;
@@ -144,7 +180,11 @@ public class CombatRenderer {
         }
     }
 
-    /** Imprimeix missatges passius amb signe positiu o negatiu. */
+    /**
+     * Imprimeix missatges passius amb estil.
+     *
+     * @param msgs missatges a mostrar
+     */
     private void printPassiveMessages(List<String> msgs) {
         if (msgs == null || msgs.isEmpty()) {
             return;
@@ -198,6 +238,12 @@ public class CombatRenderer {
         }
     }
 
+    /**
+     * Extreu color i símbol d'una etiqueta d'estil.
+     *
+     * @param tag etiqueta a interpretar
+     * @return estil parsejat
+     */
     private ParsedStyle parseStyleTag(String tag) {
         if (tag == null || tag.isBlank()) {
             return new ParsedStyle(null, null);
@@ -225,9 +271,19 @@ public class CombatRenderer {
         return new ParsedStyle(color, symbol);
     }
 
+    /**
+     * Guarda l'estil interpretat d'un missatge.
+     */
     private record ParsedStyle(String color, String symbol) {
     }
 
+    /**
+     * Retorna el color d'un missatge.
+     *
+     * @param symbol símbol del missatge
+     * @param explicitColor color forçat
+     * @return codi ANSI del color
+     */
     private String getMessageColor(String symbol, String explicitColor) {
         if (explicitColor != null) {
             return switch (explicitColor) {
@@ -245,17 +301,31 @@ public class CombatRenderer {
         return "-".equals(symbol) ? Ansi.RED : Ansi.GREEN;
     }
 
-    /** Retorna el color segons el percentatge de vida. */
+    /**
+     * Retorna el color segons el percentatge de vida.
+     *
+     * @param current vida actual
+     * @param max vida màxima
+     * @return codi ANSI del color
+     */
     public static String healthColor(double current, double max) {
         return ColorGradient.getColor(
                 current / max,
-                255, 0, 0, // rojo
-                255, 220, 0, // amarillo cálido
-                70, 190, 110 // verde suave
+                255, 0, 0,
+                255, 220, 0,
+                70, 190, 110
         );
     }
 
-    /** Construeix una barra visual proporcional al valor actual. */
+    /**
+     * Construeix una barra visual proporcional.
+     *
+     * @param current valor actual
+     * @param max valor màxim
+     * @param size mida de la barra
+     * @param color color de la part plena
+     * @return barra formatejada
+     */
     private String buildBar(double current, double max, int size, String color) {
         if (max <= 0) {
             return "[ERROR]";
@@ -288,7 +358,12 @@ public class CombatRenderer {
         return bar.toString();
     }
 
-    /** Arrodoneix un valor a 2 decimals. */
+    /**
+     * Arrodoneix a dos decimals.
+     *
+     * @param n valor a arrodonir
+     * @return valor arrodonit
+     */
     private double round2(double n) {
         return Math.round(n * 100.0) / 100.0;
     }
