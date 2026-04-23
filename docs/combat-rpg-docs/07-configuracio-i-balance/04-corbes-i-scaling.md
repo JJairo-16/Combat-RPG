@@ -36,9 +36,9 @@ Amb corbes:
 
 Creixement constant per cada punt invertit.
 
-```text
-valor = base + a · stat
-````
+$$
+valor = base + a \cdot stat
+$$
 
 <p align="center">
   <img src="img/linear.png" width="60%"/>
@@ -56,9 +56,9 @@ valor = base + a · stat
 
 Cada punt addicional té menys impacte que l’anterior.
 
-```text
-valor = base + a · log(stat)
-```
+$$
+valor = base + a \cdot \log(stat)
+$$
 
 <p align="center">
   <img src="img/log.png" width="60%"/>
@@ -75,9 +75,9 @@ valor = base + a · log(stat)
 
 El valor creix ràpid al principi però s’estabilitza.
 
-```text
-valor = base + (max · stat / (stat + k))
-```
+$$
+valor = base + \frac{max \cdot stat}{stat + k}
+$$
 
 <p align="center">
   <img src="img/softcap.png" width="60%"/>
@@ -94,9 +94,9 @@ valor = base + (max · stat / (stat + k))
 
 Creixement molt agressiu.
 
-```text
-valor = base + a · stat^b
-```
+$$
+valor = base + a \cdot stat^b
+$$
 
 <p align="center">
   <img src="img/exponential.png" width="60%"/>
@@ -113,9 +113,9 @@ valor = base + a · stat^b
 
 Utilitzat per mecàniques com esquiva o crítics.
 
-```text
-prob = max · (stat / (stat + k))
-```
+$$
+prob = max \cdot \frac{stat}{stat + k}
+$$
 
 <p align="center">
   <img src="img/prob_cap.png" width="60%"/>
@@ -132,9 +132,9 @@ prob = max · (stat / (stat + k))
 
 Combinació de creixement lineal i soft cap.
 
-```text
-valor = base + (a · stat) + (max · stat / (stat + k))
-```
+$$
+valor = base + (a \cdot stat) + \frac{max \cdot stat}{stat + k}
+$$
 
 <p align="center">
   <img src="img/hybrid.png" width="60%"/>
@@ -144,6 +144,37 @@ valor = base + (a · stat) + (max · stat / (stat + k))
 
 ✔ Flexible
 ✔ Permet afinat fi del balance
+
+---
+
+### ▌Escalat personalitzat: Fractura
+
+Probabilitat de patir un efecte negatiu en rebre un cop crític, escalada amb la Constitució (CON) amb **diminishing returns**.
+
+$$
+P(\text{Efecte en crític}) = P_{\min} + (P_{\max} - P_{\min}) \cdot \frac{1}{1 + \left(\frac{\mathrm{CON}}{C}\right)^n}
+$$
+
+<p align="center">
+  <img src="img/fracture.png" width="60%">
+  <br>
+  <em>Escalat de fractura</em>
+</p>
+
+✔ Evita immunitat total  
+✔ Recompensa la CON sense trencar el balance  
+✔ Manté impacte en tot el rang (12–40)
+
+**Configuració:**
+
+```json
+"fracture": {
+  "minRate": 0.03,
+  "maxRate": 0.2,
+  "C": 24,
+  "n": 2
+}
+```
 
 ---
 

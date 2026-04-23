@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 import rpgcombat.models.breeds.*;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.impl.SpiritualCallingFlag;
+import rpgcombat.models.effects.triggers.FractureTrigger;
 import rpgcombat.utils.input.Getters;
 import rpgcombat.utils.input.Menu;
 import rpgcombat.utils.rng.StatsBudget;
@@ -67,8 +68,13 @@ public class CharacterCreator {
      */
     private static final int TOTAL_POINTS = 140;
 
+    /** Límits escalats de les estadístiques segons el pressupost total. */
     private static final ScaledLimits limits = StatsBudget.scaleLimits(TOTAL_POINTS);
+
+    /** Valor mínim general per estadística. */
     private static final int MIN_STAT = limits.minValue();
+
+    /** Valor màxim general per estadística. */
     private static final int MAX_STAT = limits.maxValue();
 
     /**
@@ -87,6 +93,7 @@ public class CharacterCreator {
      */
     private static final List<String> breeds = Breed.getNamesList();
 
+    /** Comptador intern per generar identificadors de personatges de depuració. */
     private static int id = 1;
 
     /** Constructor privat per evitar instàncies. */
@@ -125,6 +132,11 @@ public class CharacterCreator {
         return convert(name, age, gen);
     }
 
+    /**
+     * Crea un personatge de depuració amb nom incremental i generació automàtica.
+     *
+     * @return personatge generat per a proves
+     */
     public static Character createDebugCharacter() {
         String name = "test" + id++;
         int age = 12;
@@ -148,7 +160,8 @@ public class CharacterCreator {
     private record Generation(int[] stats, Breed breed) {
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
+            if (this == o)
+                return true;
             if (o instanceof Generation(int[] otherStats, Breed otherBreed)) {
                 return Arrays.equals(stats, otherStats) && breed == otherBreed;
             }
@@ -350,6 +363,7 @@ public class CharacterCreator {
         return Ansi.DARK_GRAY + label + ":" + Ansi.RESET + " " + Ansi.BOLD + value + Ansi.RESET;
     }
 
+    /** Patró utilitzat per separar paraules durant el truncament de text. */
     private static final Pattern WRAP_PATTERN = Pattern.compile("\\s+");
 
     /**
@@ -397,6 +411,11 @@ public class CharacterCreator {
     /**
      * Converteix les dades de nom, edat i generació (estadístiques + raça) en una
      * instància concreta de {@link Character} segons la raça seleccionada.
+     *
+     * @param name nom del personatge
+     * @param age edat del personatge
+     * @param g dades generades de raça i estadístiques
+     * @return instància concreta del personatge
      */
     private static Character convert(String name, int age, Generation g) {
         Breed b = g.breed();
@@ -412,18 +431,26 @@ public class CharacterCreator {
             default -> new Character(name, age, stats, b);
         };
 
-        character.addEffect(new SpiritualCallingFlag());
+        addTriggers(character);
+
         return character;
     }
 
     /**
      * Crea un personatge de prova amb el nom "Dummy", edat mínima i una distribució
      * equitativa de punts entre les estadístiques, associat a la raça Orc.
+     *
+     * @return personatge de prova
      */
     public static Character dummy() {
         return convert("Dummy", MIN_AGE, new Generation(getDummyStats(), Breed.ORC));
     }
 
+    /**
+     * Genera una distribució equilibrada de punts per al personatge de prova.
+     *
+     * @return array amb les 7 estadístiques repartides de manera uniforme
+     */
     public static int[] getDummyStats() {
         int base = TOTAL_POINTS / 7;
         int remainder = TOTAL_POINTS % 7;
@@ -436,5 +463,15 @@ public class CharacterCreator {
         }
 
         return stats;
+    }
+
+    /**
+     * Afegeix al personatge els triggers i flags passius per defecte.
+     *
+     * @param character personatge al qual s'afegeixen els efectes
+     */
+    private static void addTriggers(Character character) {
+        character.addEffect(new SpiritualCallingFlag());
+        character.addEffect(new FractureTrigger());
     }
 }

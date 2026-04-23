@@ -39,6 +39,7 @@
 - [Sistema d'efectes](06-efectes/01-sistema-efectes.md)
 - [Pipeline d'efectes](06-efectes/02-pipeline-efectes.md)
 - [Efectes base i plantilles](06-efectes/03-plantilles.md)
+- [Triggers](06-efectes/04-triggers.md)
 
 ### ▌Configuració i balance
 - [Configuració d'aplicació](07-configuracio-i-balance/01-app-config.md)

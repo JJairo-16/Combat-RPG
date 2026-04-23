@@ -8,6 +8,7 @@ import rpgcombat.balance.config.AttackDefenseVarianceConfig;
 import rpgcombat.balance.config.BloodPactConfig;
 import rpgcombat.balance.config.ChargedAttackConfig;
 import rpgcombat.balance.config.CombatBalanceConfig;
+import rpgcombat.balance.config.FractureConfig;
 import rpgcombat.balance.config.GuardBreakConfig;
 import rpgcombat.balance.config.MomentumConfig;
 import rpgcombat.balance.config.StaminaConfig;
@@ -34,6 +35,8 @@ public final class CombatBalanceValidator {
         require(config.adrenaline(), "adrenaline");
         require(config.chargedAttack(), "chargedAttack");
         require(config.antiStall(), "antiStall");
+        require(config.bloodPact(), "bloodPact");
+        require(config.fracture(), "fracture");
 
         validateStamina(config.stamina());
         validateMomentum(config.momentum());
@@ -43,6 +46,7 @@ public final class CombatBalanceValidator {
         validateChargedAttack(config.chargedAttack());
         validateAntiStall(config.antiStall());
         validateBloodPact(config.bloodPact());
+        validateFractureConfig(config.fracture());
     }
 
     /**
@@ -118,11 +122,32 @@ public final class CombatBalanceValidator {
         nonNegative(config.damageIncreasePerStep(), "antiStall.damageIncreasePerStep");
     }
 
+    /**
+     * Valida la configuració de pacte de sang.
+     *
+     * @param config configuració a validar
+     */
     private static void validateBloodPact(BloodPactConfig config) {
-        nonNegative(config.manaThreshold(), "bloodPact.lifeThreshold");
-        positive(config.baseHpCostPercent(), "bloodPact.baseHpCost");
+        clamp01(config.manaThreshold(), "bloodPact.lifeThreshold");
+        clamp01(config.baseHpCostPercent(), "bloodPact.baseHpCost");
         nonNegative(config.wisdomReduction(), "bloodPact.wisdomReduction");
         nonNegative(config.minHpCostPercent(), "bloodPact.minHpCost");
+    }
+
+    /**
+     * Valida la configuració de fractura.
+     *
+     * @param config configuració a validar
+     */
+    private static void validateFractureConfig(FractureConfig config) {
+        clamp01(config.minRate(), "fracture.minRate");
+        clamp01(config.maxRate(), "fracture.maxRate");
+        clamp(config.C(), 10, 50, "fracture.C");
+        clamp(config.n(), 0, 2, "fracture.n");
+        clamp01(config.damageMultiplier(), "fracture.damageMultiplier");
+        nonNegative(config.duration(), "fracture.duration");
+
+        assertMinMax(config.minRate(), "fracture.minRate", config.maxRate(), "fracture.maxRate");
     }
 
     /**
@@ -172,8 +197,36 @@ public final class CombatBalanceValidator {
      * Comprova que el valor estigui entre 0 i 1.
      */
     private static void clamp01(double value, String fieldName) {
-        if (value < 0 || value > 1) {
-            throw new CombatBalanceException(fieldName + " must be between 0 and 1, but was " + value);
+        clamp(value, 0, 1, fieldName);
+    }
+
+    /**
+     * Comprova que el valor estigui dins d'un rang.
+     *
+     * @param value     valor a validar
+     * @param min       mínim permès
+     * @param max       màxim permès
+     * @param fieldName nom del camp
+     */
+    private static void clamp(double value, int min, int max, String fieldName) {
+        if (value < min || value > max) {
+            throw new CombatBalanceException(
+                    fieldName + " must be between " + min + " and " + max + ", but was" + value);
+        }
+    }
+
+    /**
+     * Comprova que el mínim no superi el màxim.
+     *
+     * @param min          valor mínim
+     * @param minFieldName nom del camp mínim
+     * @param max          valor màxim
+     * @param maxFieldName nom del camp màxim
+     */
+    private static void assertMinMax(double min, String minFieldName, double max, String maxFieldName) {
+        if (min > max) {
+            throw new CombatBalanceException(minFieldName + " cannot be superior than " + maxFieldName
+                    + ", but was {min: " + min + ", max: " + max + "}");
         }
     }
 }

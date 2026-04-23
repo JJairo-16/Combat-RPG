@@ -129,6 +129,14 @@
 		"manaThreshold": 0.8,
 		"baseHpCostPercent": 0.45,
 		"wisdomReduction": 0.005,
-		"minHpCostPercent": 0.10
+		"minHpCostPercent": 0.1
+	},
+	"fracture": {
+		"minRate": 0.03,
+		"maxRate": 0.2,
+		"C": 24,
+		"n": 2,
+		"damageMultiplier": 0.08,
+		"duration": 1
 	}
 }

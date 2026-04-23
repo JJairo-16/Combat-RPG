@@ -754,6 +754,7 @@ public class Character {
     public List<String> triggerEffects(HitContext ctx, HitContext.Phase phase, Random rng) {
         if (effects.isEmpty())
             return List.of();
+
         List<String> messages = new ArrayList<>();
         triggerEffects(ctx, phase, rng, messages);
         return messages;
@@ -765,13 +766,20 @@ public class Character {
     public void triggerEffects(HitContext ctx, HitContext.Phase phase, Random rng, List<String> out) {
         if (effects.isEmpty())
             return;
-        for (Effect e : effects) {
+
+        List<Effect> snapshot = List.copyOf(effects);
+
+        for (Effect e : snapshot) {
             if (!e.isActive())
                 continue;
+
             EffectResult r = e.onPhase(ctx, phase, rng, this);
-            if (r != null && r.message() != null && !r.message().isBlank())
+
+            if (r != null && r.message() != null && !r.message().isBlank()) {
                 out.add(r.message());
+            }
         }
+
         cleanupExpiredEffects();
     }
 
