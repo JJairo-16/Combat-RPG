@@ -37,16 +37,10 @@ public class Orc extends Character {
     @Override
     public AttackResult attack() {
         if (weapon == null)
-            return attackUnarmed(modStats);
+            return unarmedAttack.attackUnarmed(15, modStats);
 
         Statistics statsToUse = isPhisicalWeapon(weapon) ? modStats : stats;
         return weapon.attack(statsToUse, rng);
-    }
-
-    private AttackResult attackUnarmed(Statistics stats) {
-        return new AttackResult(
-                    WeaponType.PHYSICAL.getBasicDamage(15, stats),
-                    "ataca amb les mans desnudes.");
     }
 
     private boolean isPhisicalWeapon(Weapon w) {

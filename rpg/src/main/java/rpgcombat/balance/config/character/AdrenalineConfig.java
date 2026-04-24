@@ -1,4 +1,4 @@
-package rpgcombat.balance.config;
+package rpgcombat.balance.config.character;
 
 /**
  * Configuració d'adrenalina i bonificacions d'underdog.

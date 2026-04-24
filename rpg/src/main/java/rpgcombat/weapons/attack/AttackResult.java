@@ -17,6 +17,7 @@ public record AttackResult(double damage, String message, Target target, String 
 
     public static final String FAIL_KIND_RESOURCE = "RESOURCE";
     public static final String FAIL_KIND_SKILL = "SKILL";
+    public static final String FAIL_KIND_FALLBACK = "FALLBACK";
 
     /** Crea un resultat d'atac assumint que l'objectiu és l'enemic i sense cap fallada especial. */
     public AttackResult(double damage, String message) {
@@ -36,6 +37,10 @@ public record AttackResult(double damage, String message, Target target, String 
     /** Factoria per a fallades pròpies de l'habilitat/arma. */
     public static AttackResult skillFail(String message) {
         return new AttackResult(0, message, Target.ENEMY, FAIL_KIND_SKILL);
+    }
+
+    public static AttackResult fallback(double damage, String message) {
+        return new AttackResult(damage, message, Target.ENEMY, FAIL_KIND_FALLBACK);
     }
 
     public boolean failed() {

@@ -1,5 +1,13 @@
 package rpgcombat.balance.config;
 
+import rpgcombat.balance.config.character.AdrenalineConfig;
+import rpgcombat.balance.config.character.BloodPactConfig;
+import rpgcombat.balance.config.character.ChargedAttackConfig;
+import rpgcombat.balance.config.character.GuardBreakConfig;
+import rpgcombat.balance.config.character.MomentumConfig;
+import rpgcombat.balance.config.character.StaminaConfig;
+import rpgcombat.balance.config.character.UnarmedFallbackConfig;
+
 /**
  * Configuració arrel del balanceig de combat.
  *
@@ -22,5 +30,6 @@ public record CombatBalanceConfig(
     ChargedAttackConfig chargedAttack,
     AntiStallConfig antiStall,
     BloodPactConfig bloodPact,
-    FractureConfig fracture
+    FractureConfig fracture,
+    UnarmedFallbackConfig unarmedFallback
 ) {}

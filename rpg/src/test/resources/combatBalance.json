@@ -129,6 +129,42 @@
 		"manaThreshold": 0.8,
 		"baseHpCostPercent": 0.45,
 		"wisdomReduction": 0.005,
-		"minHpCostPercent": 0.10
+		"minHpCostPercent": 0.1
+	},
+	"fracture": {
+		"minRate": 0.03,
+		"maxRate": 0.2,
+		"C": 24,
+		"n": 2.0,
+		"damageMultiplier": 0.08,
+		"duration": 1
+	},
+	"unarmedFallback": {
+		"improviseChance": {
+			"minRate": 0.12,
+			"maxRate": 0.78,
+			"curve": 1.45,
+			"wisdomCenter": 18.0,
+			"intPenalty": 0.16,
+			"intK": 45.0
+		},
+		"weaponType": {
+			"strIntRepulsion": 0.42,
+			"dexIntSynergy": 0.12,
+			"typeK": 50.0,
+			"wisdomWeight": 0.35
+		},
+		"damage": {
+			"baseMin": 4.0,
+			"physicalBaseScale": 0.22,
+			"rangeBaseScale": 0.21,
+			"intDamageRepulsion": 0.22,
+			"intDamageSynergy": 0.06,
+			"damageK": 55.0,
+			"qualityMin": 0.4,
+			"qualityMax": 0.62,
+			"qualityCenter": 18.0,
+			"fallbackPower": 0.5
+		}
 	}
 }

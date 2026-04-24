@@ -1,4 +1,4 @@
-package rpgcombat.balance.config;
+package rpgcombat.balance.config.character;
 
 import java.util.Map;
 

@@ -141,7 +141,7 @@ public final class Skills {
         }
 
         double luck = stats.getLuck();
-        double failChance = 0.22 - (luck * (0.08 / 30.0));
+        double failChance = 0.3 - (luck * (0.08 / 30.0));
         failChance = Math.clamp(failChance, 0.22, 0.30);
 
         if (rng.nextDouble() < failChance) {

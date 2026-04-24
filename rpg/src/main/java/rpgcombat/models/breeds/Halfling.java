@@ -4,7 +4,6 @@ import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Stat;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.weapons.attack.AttackResult;
-import rpgcombat.weapons.config.WeaponType;
 
 public class Halfling extends Character {
     private final Statistics modStats;
@@ -21,14 +20,8 @@ public class Halfling extends Character {
     @Override
     public AttackResult attack() {
         if (weapon == null)
-            return attackUnarmed(modStats);
+            return unarmedAttack.attackUnarmed(5, modStats);
 
         return weapon.attack(modStats, rng);
-    }
-
-    private AttackResult attackUnarmed(Statistics stats) {
-        return new AttackResult(
-                    WeaponType.PHYSICAL.getBasicDamage(5, stats),
-                    "ataca amb les mans desnudes.");
     }
 }

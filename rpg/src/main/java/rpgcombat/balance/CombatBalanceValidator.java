@@ -2,16 +2,17 @@ package rpgcombat.balance;
 
 import java.util.Objects;
 
-import rpgcombat.balance.config.AdrenalineConfig;
 import rpgcombat.balance.config.AntiStallConfig;
 import rpgcombat.balance.config.AttackDefenseVarianceConfig;
-import rpgcombat.balance.config.BloodPactConfig;
-import rpgcombat.balance.config.ChargedAttackConfig;
 import rpgcombat.balance.config.CombatBalanceConfig;
 import rpgcombat.balance.config.FractureConfig;
-import rpgcombat.balance.config.GuardBreakConfig;
-import rpgcombat.balance.config.MomentumConfig;
-import rpgcombat.balance.config.StaminaConfig;
+import rpgcombat.balance.config.character.AdrenalineConfig;
+import rpgcombat.balance.config.character.BloodPactConfig;
+import rpgcombat.balance.config.character.ChargedAttackConfig;
+import rpgcombat.balance.config.character.GuardBreakConfig;
+import rpgcombat.balance.config.character.MomentumConfig;
+import rpgcombat.balance.config.character.StaminaConfig;
+import rpgcombat.balance.config.character.UnarmedFallbackConfig;
 
 /**
  * Valida la configuració d'equilibri de combat.
@@ -37,6 +38,7 @@ public final class CombatBalanceValidator {
         require(config.antiStall(), "antiStall");
         require(config.bloodPact(), "bloodPact");
         require(config.fracture(), "fracture");
+        require(config.unarmedFallback(), "unarmedFallback");
 
         validateStamina(config.stamina());
         validateMomentum(config.momentum());
@@ -47,6 +49,7 @@ public final class CombatBalanceValidator {
         validateAntiStall(config.antiStall());
         validateBloodPact(config.bloodPact());
         validateFractureConfig(config.fracture());
+        validateUnarmedFallback(config.unarmedFallback());
     }
 
     /**
@@ -148,6 +151,56 @@ public final class CombatBalanceValidator {
         nonNegative(config.duration(), "fracture.duration");
 
         assertMinMax(config.minRate(), "fracture.minRate", config.maxRate(), "fracture.maxRate");
+    }
+
+    /**
+     * Valida la configuració d'atac desarmat i improvisació.
+     *
+     * @param config configuració a validar
+     */
+    private static void validateUnarmedFallback(UnarmedFallbackConfig config) {
+        UnarmedFallbackConfig.ImproviseChanceConfig improviseChance = config.improviseChance();
+        UnarmedFallbackConfig.WeaponTypeConfig weaponType = config.weaponType();
+        UnarmedFallbackConfig.DamageConfig damage = config.damage();
+
+        require(improviseChance, "unarmedFallback.improviseChance");
+        require(weaponType, "unarmedFallback.weaponType");
+        require(damage, "unarmedFallback.damage");
+
+        clamp01(improviseChance.minRate(), "unarmedFallback.improviseChance.minRate");
+        clamp01(improviseChance.maxRate(), "unarmedFallback.improviseChance.maxRate");
+        assertMinMax(
+                improviseChance.minRate(),
+                "unarmedFallback.improviseChance.minRate",
+                improviseChance.maxRate(),
+                "unarmedFallback.improviseChance.maxRate");
+        positive(improviseChance.curve(), "unarmedFallback.improviseChance.curve");
+        positive(improviseChance.wisdomCenter(), "unarmedFallback.improviseChance.wisdomCenter");
+        clamp01(improviseChance.intPenalty(), "unarmedFallback.improviseChance.intPenalty");
+        positive(improviseChance.intK(), "unarmedFallback.improviseChance.intK");
+
+        clamp01(weaponType.strIntRepulsion(), "unarmedFallback.weaponType.strIntRepulsion");
+        nonNegative(weaponType.dexIntSynergy(), "unarmedFallback.weaponType.dexIntSynergy");
+        positive(weaponType.typeK(), "unarmedFallback.weaponType.typeK");
+        nonNegative(weaponType.wisdomWeight(), "unarmedFallback.weaponType.wisdomWeight");
+
+        nonNegative(damage.baseMin(), "unarmedFallback.damage.baseMin");
+        nonNegative(damage.physicalBaseScale(), "unarmedFallback.damage.physicalBaseScale");
+        nonNegative(damage.rangeBaseScale(), "unarmedFallback.damage.rangeBaseScale");
+        clamp01(damage.intDamageRepulsion(), "unarmedFallback.damage.intDamageRepulsion");
+        nonNegative(damage.intDamageSynergy(), "unarmedFallback.damage.intDamageSynergy");
+        positive(damage.damageK(), "unarmedFallback.damage.damageK");
+
+        clamp01(damage.qualityMin(), "unarmedFallback.damage.qualityMin");
+        clamp01(damage.qualityMax(), "unarmedFallback.damage.qualityMax");
+        assertMinMax(
+                damage.qualityMin(),
+                "unarmedFallback.damage.qualityMin",
+                damage.qualityMax(),
+                "unarmedFallback.damage.qualityMax");
+        positive(damage.qualityCenter(), "unarmedFallback.damage.qualityCenter");
+
+        nonNegative(damage.fallbackPower(), "unarmedFallback.damage.fallbackPower");
     }
 
     /**

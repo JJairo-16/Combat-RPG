@@ -6,12 +6,12 @@ import java.util.List;
 import java.util.Random;
 
 import rpgcombat.balance.CombatBalanceRegistry;
-import rpgcombat.balance.config.AdrenalineConfig;
 import rpgcombat.balance.config.AttackDefenseVarianceConfig;
-import rpgcombat.balance.config.ChargedAttackConfig;
 import rpgcombat.balance.config.CombatBalanceConfig;
-import rpgcombat.balance.config.GuardBreakConfig;
-import rpgcombat.balance.config.MomentumConfig;
+import rpgcombat.balance.config.character.AdrenalineConfig;
+import rpgcombat.balance.config.character.ChargedAttackConfig;
+import rpgcombat.balance.config.character.GuardBreakConfig;
+import rpgcombat.balance.config.character.MomentumConfig;
 import rpgcombat.combat.models.Action;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.effects.Effect;
@@ -22,7 +22,6 @@ import rpgcombat.models.effects.impl.SpiritualCallingFlag;
 import rpgcombat.utils.ui.Ansi;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;
-import rpgcombat.weapons.config.WeaponType;
 import rpgcombat.weapons.passives.HitContext;
 
 /**
@@ -49,6 +48,7 @@ public class Character {
 
     protected final Random rng = new Random();
     protected final List<Effect> effects = new ArrayList<>();
+    protected final UnarmedAttack unarmedAttack;
 
     private int spiritualCallingCooldown = 0;
     private int guardStacks = 0;
@@ -76,6 +76,7 @@ public class Character {
         this.age = age;
         this.breed = breed;
         this.stats = new Statistics(effectiveStats);
+        this.unarmedAttack = new UnarmedAttack(this.stats, rng);
     }
 
     /**
@@ -264,25 +265,14 @@ public class Character {
      */
     public AttackResult attack() {
         if (weapon == null)
-            return attackUnarmed();
+            return unarmedAttack.attackUnarmed();
+
+        double manaCost = weapon.getManaPrice();
+        double mana = stats.getMana();
+        if (manaCost > mana)
+            return unarmedAttack.fallbackAttack();
+
         return weapon.attack(stats, rng);
-    }
-
-    /**
-     * Executa un atac desarmat.
-     */
-    protected AttackResult attackUnarmed() {
-        double damage = WeaponType.PHYSICAL.getBasicDamage(7, stats) * damageVariance(rng);
-        return new AttackResult(damage, "ataca amb les mans desnudes.");
-    }
-
-    /**
-     * Aplica la variació de dany configurada al combat.
-     */
-    private double damageVariance(Random rng) {
-        AttackDefenseVarianceConfig.AttackConfig cfg = varianceCfg().attack();
-        double roll = (rng.nextDouble() + rng.nextDouble()) / 2.0;
-        return cfg.minMultiplier() + roll * (cfg.maxMultiplier() - cfg.minMultiplier());
     }
 
     /**

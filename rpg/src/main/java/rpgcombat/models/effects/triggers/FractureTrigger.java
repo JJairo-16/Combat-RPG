@@ -46,7 +46,7 @@ public class FractureTrigger extends Trigger {
         final double minRate = config.minRate();
         final double maxRate = config.maxRate();
         final int C = config.C();
-        final int n = config.n();
+        final double n = config.n();
 
         final int con = player.getStatistics().getConstitution();
         return minRate + (maxRate - minRate) / (1 + Math.pow(con / (double) C, n));

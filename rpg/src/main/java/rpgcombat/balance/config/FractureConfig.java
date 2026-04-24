@@ -14,7 +14,7 @@ public record FractureConfig(
     double minRate,
     double maxRate,
     int C,
-    int n,
+    double n,
     double damageMultiplier,
     int duration
 ) {

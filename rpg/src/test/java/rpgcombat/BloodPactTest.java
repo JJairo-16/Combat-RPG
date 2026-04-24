@@ -14,7 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import rpgcombat.balance.CombatBalanceRegistry;
-import rpgcombat.balance.config.BloodPactConfig;
+import rpgcombat.balance.config.character.BloodPactConfig;
 import rpgcombat.combat.CombatSystem;
 import rpgcombat.creator.CharacterCreator;
 import rpgcombat.game.MenuCenter;

@@ -9,7 +9,7 @@ import java.util.Random;
 
 import rpgcombat.balance.CombatBalanceRegistry;
 import rpgcombat.balance.config.CombatBalanceConfig;
-import rpgcombat.balance.config.MomentumConfig;
+import rpgcombat.balance.config.character.MomentumConfig;
 import rpgcombat.combat.AttackResolver;
 import rpgcombat.combat.models.Action;
 import rpgcombat.combat.models.EffectPipeline;
@@ -42,8 +42,8 @@ public class TurnResolver {
     /**
      * Crea el resolvedor de torns.
      *
-     * @param attackResolver servei de resolució d'atacs
-     * @param effectPipeline pipeline d'efectes
+     * @param attackResolver  servei de resolució d'atacs
+     * @param effectPipeline  pipeline d'efectes
      * @param recoveryService servei de recuperació
      */
     public TurnResolver(
@@ -58,11 +58,11 @@ public class TurnResolver {
     /**
      * Resol l'acció d'un torn complet.
      *
-     * @param attacker atacant
-     * @param defender defensor
+     * @param attacker       atacant
+     * @param defender       defensor
      * @param attackerAction acció de l'atacant
      * @param defenderAction acció del defensor
-     * @param defenderBonus bonus final de regeneració
+     * @param defenderBonus  bonus final de regeneració
      * @return resultat del torn
      */
     public TurnResult resolveTurn(
@@ -253,28 +253,60 @@ public class TurnResolver {
      * Prepara el context d'impacte amb les dades de l'atac.
      */
     private void configureHitContext(HitContext ctx, Character attacker, AttackResult attackResult, Weapon weapon) {
+        if (isFallbackAttack(attackResult)) {
+            double damage = Math.max(0.0, attackResult.damage());
+
+            ctx.setBaseDamage(damage);
+            ctx.setCriticalChance(0.0);
+            ctx.setCriticalMultiplier(1.0);
+
+            ctx.putMeta("WEAPON_NAME", "Improvisació");
+            ctx.putMeta("RAW_DAMAGE", damage);
+            ctx.putMeta("ORIGINAL_WEAPON_CRIT", false);
+            ctx.putMeta("CRIT", false);
+            return;
+        }
+
         if (weapon != null) {
             Statistics attackerStats = attacker.getStatistics();
+
             double rolledDamage = Math.max(0.0001, weapon.lastAttackDamage());
             double nonCritDamage = Math.max(0.0, weapon.lastNonCriticalDamage());
-            double skillMultiplier = (rolledDamage > 0.0) ? attackResult.damage() / rolledDamage : 1.0;
+
+            double skillMultiplier = attackResult.damage() / rolledDamage;
             double rebuiltBaseDamage = round2(nonCritDamage * skillMultiplier);
-            if (rebuiltBaseDamage <= 0 && attackResult.damage() > 0)
+
+            if (rebuiltBaseDamage <= 0.0 && attackResult.damage() > 0.0) {
                 rebuiltBaseDamage = attackResult.damage();
+            }
+
             ctx.setBaseDamage(rebuiltBaseDamage);
             ctx.setCriticalChance(weapon.resolveCriticalChance(attackerStats));
             ctx.setCriticalMultiplier(weapon.resolveCriticalMultiplier(attackerStats));
+
             ctx.putMeta("WEAPON_NAME", weapon.getName());
             ctx.putMeta("RAW_DAMAGE", rebuiltBaseDamage);
             ctx.putMeta("ORIGINAL_WEAPON_CRIT", weapon.lastWasCritic());
         } else {
-            ctx.setBaseDamage(attackResult.damage());
+            double damage = Math.max(0.0, attackResult.damage());
+
+            ctx.setBaseDamage(damage);
             ctx.setCriticalChance(0.0);
             ctx.setCriticalMultiplier(1.0);
+
             ctx.putMeta("WEAPON_NAME", "Fists");
-            ctx.putMeta("RAW_DAMAGE", attackResult.damage());
+            ctx.putMeta("RAW_DAMAGE", damage);
+            ctx.putMeta("ORIGINAL_WEAPON_CRIT", false);
         }
+
         ctx.putMeta("CRIT", false);
+    }
+
+    /**
+     * Detecta atacs improvisats sense reconstruir el dany amb l'arma original.
+     */
+    private boolean isFallbackAttack(AttackResult attackResult) {
+        return "FALLBACK".equals(attackResult.failKind());
     }
 
     /**
@@ -372,7 +404,8 @@ public class TurnResolver {
         if (successfulDodge) {
             int before = defender.getMomentumStacks();
             defender.gainMomentum();
-            if (defender.isDesperate() || defender.healthRatio() + momentumConfig.suppressionHealthOffset() < attacker.healthRatio()) {
+            if (defender.isDesperate()
+                    || defender.healthRatio() + momentumConfig.suppressionHealthOffset() < attacker.healthRatio()) {
                 defender.gainMomentum();
             }
 
