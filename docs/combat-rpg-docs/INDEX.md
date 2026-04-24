@@ -53,11 +53,17 @@
 - [Crida espiritual](08-rng-i-mecaniques/02-crida-espiritual.md)
 - [Stats budget](08-rng-i-mecaniques/03-stats-budget.md)
 
+### ▌Cinemàtiques
+- [Sistema de cinemàtiques](09-cinematiques/01-sistema-cinematic.md)
+- [Escenes i blocs](09-cinematiques/02-escenes-i-blocs.md)
+- [Tags i escriptura intel·ligent](09-cinematiques/03-tags-i-escriptura-intelligent.md)
+- [Terminal i càrrega externa](09-cinematiques/04-terminal-i-carrega-externa.md)
+
 ### ▌Modifiers, debug i extensió
-- [Status menu modifiers](09-modifiers-debug-extensio/01-status-modifiers.md)
-- [Debug i crash reports](09-modifiers-debug-extensio/02-debug.md)
-- [Tests i simulacions](09-modifiers-debug-extensio/03-tests.md)
-- [Com ampliar el projecte](09-modifiers-debug-extensio/04-extensio.md)
+- [Status menu modifiers](10-modifiers-debug-extensio/01-status-modifiers.md)
+- [Debug i crash reports](10-modifiers-debug-extensio/02-debug.md)
+- [Tests i simulacions](10-modifiers-debug-extensio/03-tests.md)
+- [Com ampliar el projecte](10-modifiers-debug-extensio/04-extensio.md)
 
 ---
 

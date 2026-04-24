@@ -18,8 +18,8 @@ import rpgcombat.game.GameLoop;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.game.modifier.config.StatusModLoader;
 import rpgcombat.models.characters.Character;
-import rpgcombat.utils.interactive.WeaponMenu;
 import rpgcombat.utils.rng.D20Terminal;
+import rpgcombat.utils.terminal.SharedTerminal;
 import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.LoadingIntro;
 import rpgcombat.utils.ui.Prettier;
@@ -69,7 +69,7 @@ public class GameBootstrap {
     private void preload() {
         try {
             Arsenal.preload(Path.of(config.paths().weaponsConfig()));
-            WeaponMenu.preloadTerminal();
+            SharedTerminal.preload();
             modifiers = StatusModLoader.load(Path.of(config.paths().statusMenuModifier()));
 
             CombatBalanceConfig balance = CombatBalanceLoader.load(Path.of(config.paths().balanceConfig()));

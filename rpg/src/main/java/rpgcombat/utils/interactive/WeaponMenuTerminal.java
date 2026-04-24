@@ -9,13 +9,13 @@ import org.jline.keymap.KeyMap;
 import org.jline.terminal.Attributes;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
 import org.jline.utils.InfoCmp.Capability;
 
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.utils.cache.TextWrapCache;
+import rpgcombat.utils.terminal.SharedTerminal;
 import rpgcombat.weapons.config.WeaponDefinition;
 import rpgcombat.weapons.config.WeaponType;
 
@@ -48,9 +48,6 @@ final class WeaponMenuTerminal implements AutoCloseable {
     private static final int DEFAULT_TERMINAL_WIDTH = 80;
 
     private static final String SEPARATOR = "────────────────────────────────────────────────────────";
-
-    /** Terminal compartit reutilitzat entre menús. */
-    private static Terminal sharedTerminal;
 
     private final Terminal terminal;
     private final BindingReader reader;
@@ -94,7 +91,7 @@ final class WeaponMenuTerminal implements AutoCloseable {
      * @throws IOException si no es pot crear el terminal
      */
     static WeaponMenuTerminal open(Terminal.SignalHandler winchHandler) throws IOException {
-        return new WeaponMenuTerminal(getSharedTerminal(), winchHandler);
+        return new WeaponMenuTerminal(SharedTerminal.get(), winchHandler);
     }
 
     /**
@@ -103,7 +100,7 @@ final class WeaponMenuTerminal implements AutoCloseable {
      * @throws IOException si no es pot crear el terminal
      */
     static void preloadSharedTerminal() throws IOException {
-        getSharedTerminal();
+        SharedTerminal.preload();
     }
 
     /**
@@ -723,22 +720,6 @@ final class WeaponMenuTerminal implements AutoCloseable {
         }
 
         return map;
-    }
-
-    /**
-     * Retorna el terminal compartit, creant-lo si cal.
-     *
-     * @return terminal compartit
-     * @throws IOException si no es pot crear
-     */
-    private static Terminal getSharedTerminal() throws IOException {
-        if (sharedTerminal == null) {
-            sharedTerminal = TerminalBuilder.builder()
-                    .system(true)
-                    .nativeSignals(true)
-                    .build();
-        }
-        return sharedTerminal;
     }
 
     /**
