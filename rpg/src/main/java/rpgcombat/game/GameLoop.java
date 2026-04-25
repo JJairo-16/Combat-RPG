@@ -2,13 +2,13 @@ package rpgcombat.game;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-
 import rpgcombat.combat.CombatSystem;
 import rpgcombat.combat.models.Action;
 import rpgcombat.combat.models.Winner;
 import rpgcombat.config.ui.CinematicsOptions;
+import rpgcombat.config.ui.HomeScreenConfig;
 import rpgcombat.game.cinematics.CinematicBuilder;
+import rpgcombat.game.menu.EndGameMenu;
 import rpgcombat.game.menu.MenuCenter;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.models.breeds.Breed;
@@ -44,26 +44,26 @@ public class GameLoop {
     private final Cleaner cls = new Cleaner();
     private final TextWrapCache wrapCache = new TextWrapCache();
     private final CinematicsOptions cinematicsOptions;
+    private final HomeScreenConfig homeScreenConfig;
 
     // Cache d'armes (assumim que no canvia durant la partida)
     private final List<WeaponDefinition> entries = Arsenal.values();
 
-    public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers, Map<String, String> information, CinematicsOptions cinematicsOptions) {
+    public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers, Map<String, String> information, CinematicsOptions cinematicsOptions, HomeScreenConfig homeScreenConfig) {
         this.player1 = player1;
         this.player2 = player2;
         this.combatSystem = new CombatSystem(player1, player2);
 
         this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers, information);
-
-        DivineCharismaAffinity.rollForRun(new Random());
         this.cinematicsOptions = cinematicsOptions;
+        this.homeScreenConfig = homeScreenConfig;
     }
 
     /**
      * Inicia el combat i el manté en execució fins que hi hagi un vencedor (o
      * empat).
      */
-    public void init() {
+    public EndGameAction init() {
         CinematicBuilder.playInit(cinematicsOptions, player1, player2);
 
         cls.clear();
@@ -80,11 +80,11 @@ public class GameLoop {
             }
         } while (winner == Winner.NONE);
 
-        finish(winner);
+        return finish(winner);
     }
 
-    /** Mostra el resultat final del combat. */
-    private void finish(Winner winner) {
+    /** Mostra el resultat final del combat i demana què fer després. */
+    private EndGameAction finish(Winner winner) {
         StringBuilder sb = new StringBuilder(2048);
 
         sb.append("====================================\n");
@@ -123,6 +123,8 @@ public class GameLoop {
         
         Menu.pause();
         CinematicBuilder.playEnd(winner);
+
+        return EndGameMenu.ask(homeScreenConfig.allowReturnFromEnd());
     }
 
     private void showPlayerInfoWrapper(Character player) {

@@ -8,22 +8,35 @@ import org.jline.utils.InfoCmp.Capability;
  * Representa una sessió temporal sobre el terminal compartit.
  */
 public final class TerminalSession implements AutoCloseable {
+    private static int openSessions;
+
     private final Terminal terminal;
+    private final boolean owner;
     private final Attributes originalAttributes;
+    private boolean closed;
 
     /**
-     * Crea una sessió activant mode raw i configuració interactiva.
+     * Crea una sessió interactiva apilable.
      *
      * @param terminal terminal compartit
      */
     TerminalSession(Terminal terminal) {
         this.terminal = terminal;
-        this.originalAttributes = terminal.enterRawMode();
 
-        terminal.puts(Capability.enter_ca_mode);
-        terminal.puts(Capability.keypad_xmit);
-        terminal.puts(Capability.cursor_invisible);
-        terminal.flush();
+        synchronized (TerminalSession.class) {
+            this.owner = openSessions == 0;
+            openSessions++;
+        }
+
+        if (owner) {
+            this.originalAttributes = terminal.enterRawMode();
+            terminal.puts(Capability.enter_ca_mode);
+            terminal.puts(Capability.keypad_xmit);
+            terminal.puts(Capability.cursor_invisible);
+            terminal.flush();
+        } else {
+            this.originalAttributes = null;
+        }
     }
 
     /**
@@ -36,14 +49,28 @@ public final class TerminalSession implements AutoCloseable {
     }
 
     /**
-     * Restaura l'estat original del terminal i tanca la sessió.
+     * Restaura el terminal quan es tanca l'última sessió.
      */
     @Override
     public void close() {
-        terminal.setAttributes(originalAttributes);
-        terminal.puts(Capability.keypad_local);
-        terminal.puts(Capability.cursor_visible);
-        terminal.puts(Capability.exit_ca_mode);
-        terminal.flush();
+        boolean shouldRestore;
+
+        synchronized (TerminalSession.class) {
+            if (closed) {
+                return;
+            }
+
+            closed = true;
+            openSessions = Math.max(0, openSessions - 1);
+            shouldRestore = owner && openSessions == 0;
+        }
+
+        if (shouldRestore) {
+            terminal.setAttributes(originalAttributes);
+            terminal.puts(Capability.keypad_local);
+            terminal.puts(Capability.cursor_visible);
+            terminal.puts(Capability.exit_ca_mode);
+            terminal.flush();
+        }
     }
 }

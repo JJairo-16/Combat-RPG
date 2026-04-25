@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import rpgcombat.balance.config.CombatBalanceConfig;
 
@@ -17,9 +16,7 @@ import rpgcombat.balance.config.CombatBalanceConfig;
  * Carrega la configuració d'equilibri de combat des de fitxer o classpath.
  */
 public final class CombatBalanceLoader {
-    private static final Gson GSON = new GsonBuilder()
-            .setPrettyPrinting()
-            .create();
+    private static final Gson GSON = new Gson();
 
     private CombatBalanceLoader() {
     }

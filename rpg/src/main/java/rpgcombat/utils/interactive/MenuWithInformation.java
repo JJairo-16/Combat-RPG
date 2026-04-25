@@ -104,7 +104,7 @@ public class MenuWithInformation extends SimpleMenu {
 
         lastControlsRow = row;
 
-        moveCursor(terminal, row, LEFT_PADDING);
+        moveCursor(terminal, row, leftPadding);
         clearCurrentLine(terminal);
 
         terminal.writer().print(DARK_GRAY);
@@ -174,7 +174,7 @@ public class MenuWithInformation extends SimpleMenu {
             return;
         }
 
-        moveCursor(terminal, lastControlsRow, LEFT_PADDING);
+        moveCursor(terminal, lastControlsRow, leftPadding);
         clearCurrentLine(terminal);
     }
 
@@ -196,7 +196,7 @@ public class MenuWithInformation extends SimpleMenu {
             longest = Math.max(longest, safe(option).length());
         }
 
-        return Math.max(MIN_INFO_COLUMN, LEFT_PADDING + longest + 12);
+        return Math.max(MIN_INFO_COLUMN, leftPadding + longest + 12);
     }
 
     /** Retorna l'alçada del bloc d'informació. */

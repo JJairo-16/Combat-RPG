@@ -10,13 +10,12 @@ import java.util.Collections;
 import java.util.Map;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 public class MenuDescriptionsLoader {
     private MenuDescriptionsLoader() {}
 
-    private static final Gson GSON = new GsonBuilder().create();
+    private static final Gson GSON = new Gson();
 
     public static Map<String, String> load(Path path) throws IOException {
         Type type = new TypeToken<Map<String, String>>() {}.getType();

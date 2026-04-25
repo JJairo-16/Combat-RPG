@@ -6,11 +6,12 @@
     "DEBUG_INVULNERABLE",
     "FULL_DEBUG"
   ],
-  "profile": "FAST_TEST",
+  "profile": "NORMAL",
   "paths": {
     "weaponsConfig": "rpg/data/weapons.json",
     "statusMenuModifier": "rpg/data/menuModifiers.json",
-    "balanceConfig": "rpg/data/combatBalance.json"
+    "balanceConfig": "rpg/data/combatBalance.json",
+    "menuDescriptions": "rpg/data/menuDescription.json"
   },
   "ui": {
     "showLoadingIntro": true,
@@ -35,5 +36,10 @@
     "player2": {
       "mode": "NORMAL"
     }
+  },
+  "homeScreen": {
+    "enabled": true,
+    "allowReturnFromEnd": true,
+    "title": "RPG Combat"
   }
 }

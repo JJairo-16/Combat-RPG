@@ -21,7 +21,19 @@ public class SimpleMenu {
     protected static final int TITLE_ROW = 1;
     protected static final int OPTIONS_START_ROW = 2;
     protected static final int CONTROLS_SPACER_ROWS = 1;
-    protected static final int LEFT_PADDING = 3;
+    private static final int DEFAULT_LEFT_PADDING = 3;
+
+    protected final int leftPadding;
+
+    public SimpleMenu(int leftPadding) {
+        if (leftPadding < 0) throw new IllegalArgumentException("El padding no pot ser menor a 0.");
+
+        this.leftPadding = leftPadding;
+    }
+
+    public SimpleMenu() {
+        this(DEFAULT_LEFT_PADDING);
+    }
 
     /** Accions disponibles al menú. */
     protected enum Action {
@@ -74,7 +86,10 @@ public class SimpleMenu {
                     case SELECT -> {
                         return cursor + 1;
                     }
-                    case EXTRA -> handleExtraAction(terminal, title, options, cursor);
+                    case EXTRA -> {
+                        handleExtraAction(terminal, title, options, cursor);
+                        renderFull(terminal, title, options, cursor);
+                    }
                 }
 
                 if (oldCursor != cursor) {
@@ -185,7 +200,7 @@ public class SimpleMenu {
     protected void drawOptionRow(Terminal terminal, List<String> options, int rowIndex, int cursor) {
         int row = OPTIONS_START_ROW + rowIndex;
 
-        moveCursor(terminal, row, LEFT_PADDING);
+        moveCursor(terminal, row, leftPadding);
         clearCurrentLine(terminal);
 
         String option = safe(options.get(rowIndex));
@@ -206,11 +221,11 @@ public class SimpleMenu {
     protected void drawControls(Terminal terminal, int optionCount) {
         int row = OPTIONS_START_ROW + optionCount + CONTROLS_SPACER_ROWS;
 
-        moveCursor(terminal, row, LEFT_PADDING);
+        moveCursor(terminal, row, leftPadding);
         clearCurrentLine(terminal);
         terminal.writer().print(DARK_GRAY + "[↑/↓ o W/S] moure" + RESET);
 
-        moveCursor(terminal, row + 1, LEFT_PADDING);
+        moveCursor(terminal, row + 1, leftPadding);
         clearCurrentLine(terminal);
         terminal.writer().print(DARK_GRAY + "[Enter] seleccionar" + RESET);
     }

@@ -22,7 +22,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import menu.DynamicMenu;
@@ -46,9 +45,7 @@ class MenuStatusModifierJsonTest {
 
     private static final String RESOURCE_JSON = "/status-modifiers-test.json";
 
-    private static final Gson GSON = new GsonBuilder()
-            .setPrettyPrinting()
-            .create();
+    private static final Gson GSON = new Gson();
 
     private static final Map<String, MenuAction<Action, Character>> TEST_ACTIONS = Map.of(
             "ignite", p -> MenuResult.repeatLoop(),
