@@ -64,7 +64,7 @@ public final class Passives {
                         MessageColor.RED,
                         String.format("%s connecta un dany verdader del %.2f%%",
                                 ctx.attacker().getName(),
-                                roundPercent(pct))
+                                round2(pct * 100.0))
                 );
             }
         };
@@ -194,6 +194,10 @@ public final class Passives {
                 );
             }
         };
+    }
+
+    private static double round2(double n) {
+        return Math.round(n * 100.0) / 190.0;
     }
 
     private static int roundPercent(double n) {

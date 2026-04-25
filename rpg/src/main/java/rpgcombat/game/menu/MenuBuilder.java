@@ -82,11 +82,6 @@ public final class MenuBuilder {
                 // Hooks visuals
                 menu.beforeEachAction(state -> System.out.println());
 
-                menu.afterEachAction(state -> {
-                        if (state.selectedOptionNumber() == 1)
-                                Menu.pause();
-                });
-
                 return menu;
         }
 

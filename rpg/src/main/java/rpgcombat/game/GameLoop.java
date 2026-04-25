@@ -142,7 +142,6 @@ public class GameLoop {
         boolean loop = true;
 
         Statistics stats = player.getStatistics();
-        boolean equipped = false;
 
         WeaponMenu.FilterState filters = new WeaponMenu.FilterState();
         filters.setOnlyEquippable(true);
@@ -165,20 +164,13 @@ public class GameLoop {
 
             if (weapon.canEquip(stats)) {
                 loop = false;
-                equipped = true;
             } else {
                 Prettier.warn("No compleixes els requisits per equipar aquesta arma.");
                 Menu.pause();
             }
         } while (loop);
 
-        if (!equipped) {
-            Prettier.info("No s'ha realitzat cap canvi d'arma.");
-            return;
-        }
-
         player.setWeapon(weapon);
-        Prettier.info("S'ha equipat l'arma %s.", weapon.getName());
     }
 
     private final StringBuilder playerInfo = new StringBuilder(24_000);
