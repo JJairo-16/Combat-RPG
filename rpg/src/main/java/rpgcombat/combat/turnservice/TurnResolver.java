@@ -19,6 +19,7 @@ import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Result;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.models.effects.impl.PoisonEffect;
+import rpgcombat.models.effects.triggers.Chaos;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;
 import rpgcombat.weapons.passives.HitContext;
@@ -73,6 +74,7 @@ public class TurnResolver {
             EndRoundRegenBonus defenderBonus) {
 
         List<String> startMessages = new ArrayList<>();
+        attackerAction = Chaos.applyStartTurn(attacker, defender, attackerAction, startMessages);
         rhythmService.onActionStart(attacker, attackerAction);
         attacker.onTurnStart(attackerAction, startMessages);
 
@@ -154,6 +156,28 @@ public class TurnResolver {
                 preDefenseMessages);
 
         double damageToResolve = ctx.damageToResolve();
+
+        if (Boolean.TRUE.equals(ctx.getMeta(Chaos.META_SELF_HIT, Boolean.class, false))) {
+            double selfMultiplier = ctx.getMeta(Chaos.META_SELF_HIT_MULTIPLIER, Double.class, 1.0);
+            boolean canKill = ctx.getMeta(Chaos.META_SELF_HIT_CAN_KILL, Boolean.class, false);
+            double selfDamage = round2(Math.max(0.0, damageToResolve * selfMultiplier));
+            if (!canKill)
+                selfDamage = Math.clamp(0.0, selfDamage, attacker.getStatistics().getHealth() - 1.0);
+
+            Result selfResult = selfDamage > 0
+                    ? attacker.getDamage(selfDamage)
+                    : new Result(0, attacker.getName() + " resisteix el pitjor del caos.");
+
+            ctx.setDefenderResult(selfResult);
+            ctx.setDamageDealt(selfDamage);
+            postDefenseMessages
+                    .add("[PURPLE|!] " + attacker.getName() + " es colpeja a si mateix per " + selfDamage + ".");
+            rhythmService.onAttackResolved(attacker, attackerAction, selfDamage, endTurnMessages);
+            effectPipeline.runAttackerOnly(ctx, Phase.END_TURN, attacker, attackerRng, endTurnMessages);
+
+            return new TurnResult(attacker.getName(), attackerMessage, startMessages, preDefenseMessages,
+                    selfResult.message(), postDefenseMessages, endTurnMessages, selfDamage, critical);
+        }
         if (defender.isDesperate()) {
             preDefenseMessages
                     .add("[GREEN|!] " + defender.getName() + " aguanta com pot i redueix part de la pressió rebuda.");

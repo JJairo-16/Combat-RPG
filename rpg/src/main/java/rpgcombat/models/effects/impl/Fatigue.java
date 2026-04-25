@@ -12,13 +12,15 @@ import rpgcombat.models.characters.Character;
 public class Fatigue extends DamageModifierEffect {
     public static final String INTERNAL_EFFECT_KEY = "FATIGUE";
 
-    private static final int TURNS = 2;
-
-    // Abans: 0.88 (-12%)
+    private static final int DEFAULT_TURNS = 2;
     private static final double OUTGOING = 0.92; // -8%
 
     public Fatigue() {
-        super(INTERNAL_EFFECT_KEY, TURNS, OUTGOING, 1.0);
+        this(DEFAULT_TURNS);
+    }
+
+    public Fatigue(int turns) {
+        super(INTERNAL_EFFECT_KEY, Math.max(0, turns), OUTGOING, 1.0);
     }
 
     @Override

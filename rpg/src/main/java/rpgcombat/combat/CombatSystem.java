@@ -68,6 +68,10 @@ public class CombatSystem {
         this.priorityPolicy = policy;
     }
 
+    public boolean preAntiStall() {
+        return roundNumber + 1 == antiStall.startTurn();
+    }
+
     /**
      * Executa una ronda, la mostra i retorna el guanyador.
      *
@@ -190,9 +194,11 @@ public class CombatSystem {
     }
 
     /**
-     * Aplica o elimina l'efecte de {@link MagicalTiredness} en funció del percentatge de mana actual.
+     * Aplica o elimina l'efecte de {@link MagicalTiredness} en funció del
+     * percentatge de mana actual.
      * <p>
-     * Si el mana del personatge és igual o inferior al 90% del màxim, s'aplica l'efecte de fatiga màgica. En cas contrari, l'efecte s'elimina.
+     * Si el mana del personatge és igual o inferior al 90% del màxim, s'aplica
+     * l'efecte de fatiga màgica. En cas contrari, l'efecte s'elimina.
      *
      * @param player el personatge sobre el qual s'avalua i s'aplica l'efecte
      */
@@ -211,9 +217,11 @@ public class CombatSystem {
     }
 
     /**
-     * Aplica o elimina l'efecte de {@link MagicalTiredness} en funció del percentatge de mana actual.
+     * Aplica o elimina l'efecte de {@link MagicalTiredness} en funció del
+     * percentatge de mana actual.
      * <p>
-     * Si el mana del personatge és igual o inferior al 90% del màxim, s'aplica l'efecte de fatiga màgica. En cas contrari, l'efecte s'elimina.
+     * Si el mana del personatge és igual o inferior al 90% del màxim, s'aplica
+     * l'efecte de fatiga màgica. En cas contrari, l'efecte s'elimina.
      *
      * @param player el personatge sobre el qual s'avalua i s'aplica l'efecte
      */

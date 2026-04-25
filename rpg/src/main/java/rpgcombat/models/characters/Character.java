@@ -64,6 +64,7 @@ public class Character {
     private double attackModifierThisTurn = 1.0;
     private double defenseModifierThisTurn = 1.0;
     private double dodgeModifierThisTurn = 1.0;
+    private double nextIncomingDamageMultiplier = 1.0;
 
     public Character(String name, int age, int[] stats, Breed breed) {
         validateName(name);
@@ -496,9 +497,20 @@ public class Character {
      */
     public double consumeIncomingDamageMultiplier() {
         double multiplier = isVulnerable() ? guardBreak().vulnerableDamageMultiplier() : 1.0;
+        multiplier *= nextIncomingDamageMultiplier;
+        nextIncomingDamageMultiplier = 1.0;
         if (vulnerableTurns > 0)
             vulnerableTurns--;
         return multiplier;
+    }
+
+    /**
+     * Multiplica el proper dany entrant directe.
+     */
+    public void multiplyNextIncomingDamage(double multiplier) {
+        if (multiplier > 0) {
+            nextIncomingDamageMultiplier *= multiplier;
+        }
     }
 
     /**
@@ -506,6 +518,27 @@ public class Character {
      */
     public void applyBleed(int turns) {
         bleedTurns = Math.max(bleedTurns, turns);
+    }
+
+    /**
+     * Elimina el sagnat actiu.
+     */
+    public void clearBleed() {
+        bleedTurns = 0;
+    }
+
+    /**
+     * Elimina la vulnerabilitat activa.
+     */
+    public void clearVulnerable() {
+        vulnerableTurns = 0;
+    }
+
+    /**
+     * Elimina l'aturdiment actiu.
+     */
+    public void clearStagger() {
+        staggerTurns = 0;
     }
 
     /**

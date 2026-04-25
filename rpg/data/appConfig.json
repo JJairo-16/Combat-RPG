@@ -17,6 +17,12 @@
     "loadingAuthor": "Jairo Linares",
     "clearBetweenCharacterCreation": true
   },
+  "cinematic": {
+    "preCreation": true,
+    "postCreation": true,
+    "antiStall": true,
+    "chaos": 0.15
+  },
   "debug": {
     "enabled": false,
     "forceInvulnerability": false,

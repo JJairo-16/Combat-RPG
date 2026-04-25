@@ -27,18 +27,18 @@ public class TextCinematic {
 
     private final Cleaner cleaner = new Cleaner();
 
-   /** Constructor intern. */
+    /** Constructor intern. */
     private TextCinematic(Builder builder) {
         this.scenes = List.copyOf(builder.scenes);
         this.config = builder.config;
     }
 
-   /** Retorna un builder per crear la cinemàtica. */
+    /** Retorna un builder per crear la cinemàtica. */
     public static Builder builder() {
         return new Builder();
     }
 
-   /** Inicia la reproducció de la cinemàtica. */
+    /** Inicia la reproducció de la cinemàtica. */
     public void play() {
         try (TerminalSession session = SharedTerminal.openSession()) {
             Terminal terminal = session.terminal();
@@ -59,6 +59,10 @@ public class TextCinematic {
                 }
             }
 
+            if (config.waitAtEnd) {
+                waitForSpaceOrEscape(terminal);
+            }
+
             if (config.clearScreenOnEnd) {
                 TerminalController.clearScreen(terminal);
             }
@@ -71,7 +75,7 @@ public class TextCinematic {
         }
     }
 
-   /** Reprodueix una escena. */
+    /** Reprodueix una escena. */
     private boolean playScene(Terminal terminal, TypingEngine engine, Scene scene)
             throws IOException, InterruptedException {
 
@@ -95,7 +99,7 @@ public class TextCinematic {
         return false;
     }
 
-   /** Mostra animació d'espera fins que l'usuari interactua. */
+    /** Mostra animació d'espera fins que l'usuari interactua. */
     private boolean waitForSpaceOrEscape(Terminal terminal)
             throws IOException, InterruptedException {
 
@@ -140,42 +144,47 @@ public class TextCinematic {
         }
     }
 
-   /** Builder per construir la cinemàtica. */
+    /** Builder per construir la cinemàtica. */
     public static class Builder {
         private final List<Scene> scenes = new ArrayList<>();
         private final CinematicConfig config = new CinematicConfig();
 
-       /** Configura la velocitat de l'animació d'espera. */
+        /** Configura la velocitat de l'animació d'espera. */
         public Builder arrowAnimationDelay(long millis) {
             config.arrowAnimationDelayMillis = millis;
             return this;
         }
 
-       /** Indica si es neteja la pantalla al final. */
+        /** Indica si es neteja la pantalla al final. */
         public Builder clearScreenOnEnd(boolean value) {
             config.clearScreenOnEnd = value;
             return this;
         }
 
-       /** Afegeix una escena. */
+        public Builder waitAtEnd(boolean value) {
+            config.waitAtEnd = value;
+            return this;
+        }
+
+        /** Afegeix una escena. */
         public Builder scene(Scene scene) {
             scenes.add(scene);
             return this;
         }
 
-       /** Afegeix múltiples escenes. */
+        /** Afegeix múltiples escenes. */
         public Builder scenes(Scene... scenes) {
             this.scenes.addAll(Arrays.asList(scenes));
             return this;
         }
 
-       /** Construeix la cinemàtica. */
+        /** Construeix la cinemàtica. */
         public TextCinematic build() {
             return new TextCinematic(this);
         }
     }
 
-   /** Excepció de la cinemàtica. */
+    /** Excepció de la cinemàtica. */
     public static class CinematicException extends RuntimeException {
         public CinematicException(String errorMessage, Throwable cause) {
             super(errorMessage, cause);

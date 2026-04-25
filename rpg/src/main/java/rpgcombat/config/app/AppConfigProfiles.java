@@ -4,6 +4,7 @@ import rpgcombat.config.character.CharactersConfig;
 import rpgcombat.config.debug.DebugOptions;
 import rpgcombat.config.debug.DebugProfile;
 import rpgcombat.config.paths.PathsConfig;
+import rpgcombat.config.ui.CinematicsOptions;
 import rpgcombat.config.ui.UiConfig;
 
 /** Perfils tancats de configuració. */
@@ -28,6 +29,7 @@ public final class AppConfigProfiles {
         return new AppConfig(
                 PathsConfig.defaultConfig(),
                 UiConfig.defaultConfig(),
+                CinematicsOptions.defaultConfig(),
                 DebugOptions.getFalse(),
                 CharactersConfig.defaultConfig());
     }
@@ -36,6 +38,7 @@ public final class AppConfigProfiles {
         return new AppConfig(
                 PathsConfig.defaultConfig(),
                 UiConfig.debugConfig(),
+                CinematicsOptions.debugConfig(),
                 new DebugOptions(true, false, true),
                 CharactersConfig.debugConfig());
     }
@@ -44,6 +47,7 @@ public final class AppConfigProfiles {
         return new AppConfig(
                 PathsConfig.defaultConfig(),
                 UiConfig.debugConfig(),
+                CinematicsOptions.debugConfig(),
                 new DebugOptions(true, true, true),
                 CharactersConfig.debugConfig());
     }
@@ -52,6 +56,7 @@ public final class AppConfigProfiles {
         return new AppConfig(
                 PathsConfig.defaultConfig(),
                 UiConfig.debugConfig(),
+                CinematicsOptions.debugConfig(),
                 new DebugOptions(true, true, true),
                 CharactersConfig.debugConfig());
     }

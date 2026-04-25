@@ -6,4 +6,5 @@ package rpgcombat.utils.cinematic.cinematic;
 class CinematicConfig {
     long arrowAnimationDelayMillis = 160;
     boolean clearScreenOnEnd = true;
+    boolean waitAtEnd = false;
 }

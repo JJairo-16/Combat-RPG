@@ -4,15 +4,10 @@ import java.util.Objects;
 
 import rpgcombat.balance.config.AntiStallConfig;
 import rpgcombat.balance.config.AttackDefenseVarianceConfig;
+import rpgcombat.balance.config.ChaosConfig;
 import rpgcombat.balance.config.CombatBalanceConfig;
 import rpgcombat.balance.config.FractureConfig;
-import rpgcombat.balance.config.character.AdrenalineConfig;
-import rpgcombat.balance.config.character.BloodPactConfig;
-import rpgcombat.balance.config.character.ChargedAttackConfig;
-import rpgcombat.balance.config.character.GuardBreakConfig;
-import rpgcombat.balance.config.character.MomentumConfig;
-import rpgcombat.balance.config.character.StaminaConfig;
-import rpgcombat.balance.config.character.UnarmedFallbackConfig;
+import rpgcombat.balance.config.character.*;
 
 /**
  * Valida la configuració d'equilibri de combat.
@@ -39,6 +34,7 @@ public final class CombatBalanceValidator {
         require(config.bloodPact(), "bloodPact");
         require(config.fracture(), "fracture");
         require(config.unarmedFallback(), "unarmedFallback");
+        require(config.chaos(), "chaos");
 
         validateStamina(config.stamina());
         validateMomentum(config.momentum());
@@ -49,6 +45,7 @@ public final class CombatBalanceValidator {
         validateAntiStall(config.antiStall());
         validateBloodPact(config.bloodPact());
         validateFractureConfig(config.fracture());
+        validateChaos(config.chaos());
         validateUnarmedFallback(config.unarmedFallback());
     }
 
@@ -201,6 +198,41 @@ public final class CombatBalanceValidator {
         positive(damage.qualityCenter(), "unarmedFallback.damage.qualityCenter");
 
         nonNegative(damage.fallbackPower(), "unarmedFallback.damage.fallbackPower");
+    }
+
+    /**
+     * Valida la configuració del trigger de caos.
+     */
+    private static void validateChaos(ChaosConfig config) {
+        require(config.seed(), "chaos.seed");
+        require(config.antiFrustration(), "chaos.antiFrustration");
+        require(config.damage(), "chaos.damage");
+        require(config.crit(), "chaos.crit");
+        require(config.mana(), "chaos.mana");
+        require(config.status(), "chaos.status");
+        require(config.outcomes(), "chaos.outcomes");
+
+        nonNegative(config.antiFrustration().maxRerolls(), "chaos.antiFrustration.maxRerolls");
+        positive(config.damage().upMultiplier(), "chaos.damage.upMultiplier");
+        positive(config.damage().downMultiplier(), "chaos.damage.downMultiplier");
+        positive(config.damage().overloadMultiplier(), "chaos.damage.overloadMultiplier");
+        positive(config.damage().overloadIncomingMultiplier(), "chaos.damage.overloadIncomingMultiplier");
+        positive(config.damage().selfHitMultiplier(), "chaos.damage.selfHitMultiplier");
+        clamp01(config.crit().flipForceChance(), "chaos.crit.flipForceChance");
+        clamp01(config.mana().spikeRestoreMaxManaRatio(), "chaos.mana.spikeRestoreMaxManaRatio");
+        nonNegative(config.status().blindTurns(), "chaos.status.blindTurns");
+        clamp01(config.status().blindMissChance(), "chaos.status.blindMissChance");
+        nonNegative(config.status().bleedTurns(), "chaos.status.bleedTurns");
+        nonNegative(config.status().staggerTurns(), "chaos.status.staggerTurns");
+        nonNegative(config.status().vulnerableTurns(), "chaos.status.vulnerableTurns");
+        nonNegative(config.status().fatigueTurns(), "chaos.status.fatigueTurns");
+
+        int totalWeight = 0;
+        for (Integer weight : config.outcomes().values()) {
+            if (weight != null && weight > 0)
+                totalWeight += weight;
+        }
+        positive(totalWeight, "chaos.outcomes total positive weight");
     }
 
     /**

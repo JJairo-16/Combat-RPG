@@ -7,6 +7,8 @@ import java.util.Random;
 import rpgcombat.combat.CombatSystem;
 import rpgcombat.combat.models.Action;
 import rpgcombat.combat.models.Winner;
+import rpgcombat.config.ui.CinematicsOptions;
+import rpgcombat.game.cinematics.CinematicBuilder;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;
@@ -40,11 +42,12 @@ public class GameLoop {
     private final CombatSystem combatSystem;
     private final Cleaner cls = new Cleaner();
     private final TextWrapCache wrapCache = new TextWrapCache();
+    private final CinematicsOptions cinematicsOptions;
 
     // Cache d'armes (assumim que no canvia durant la partida)
     private final List<WeaponDefinition> entries = Arsenal.values();
 
-    public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers) {
+    public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers, CinematicsOptions cinematicsOptions) {
         this.player1 = player1;
         this.player2 = player2;
         this.combatSystem = new CombatSystem(player1, player2);
@@ -52,6 +55,7 @@ public class GameLoop {
         this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers);
 
         DivineCharismaAffinity.rollForRun(new Random());
+        this.cinematicsOptions = cinematicsOptions;
     }
 
     /**
@@ -59,6 +63,8 @@ public class GameLoop {
      * empat).
      */
     public void init() {
+        CinematicBuilder.playInit(cinematicsOptions, player1, player2);
+
         cls.clear();
 
         Winner winner;
@@ -69,6 +75,10 @@ public class GameLoop {
             cls.clear();
             winner = combatSystem.play(action1, action2);
             Menu.pause();
+
+            if (cinematicsOptions.antiStall() && combatSystem.preAntiStall()) {
+                CinematicBuilder.playAntiStall();
+            }
         } while (winner == Winner.NONE);
 
         finish(winner);
@@ -107,10 +117,13 @@ public class GameLoop {
         }
 
         sb.append('\n');
-        sb.append("====================================\n");
+        sb.append("====================================\n\n");
 
         cls.clear();
         System.out.print(sb.toString());
+        
+        Menu.pause();
+        CinematicBuilder.playEnd(winner);
     }
 
     private void showPlayerInfoWrapper(Character player) {

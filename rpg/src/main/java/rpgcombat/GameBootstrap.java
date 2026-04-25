@@ -13,8 +13,10 @@ import rpgcombat.config.app.AppConfig;
 import rpgcombat.config.app.AppConfigLoader;
 import rpgcombat.config.character.CharacterCreationMode;
 import rpgcombat.config.debug.DebugRuntime;
+import rpgcombat.config.ui.CinematicsOptions;
 import rpgcombat.creator.CharacterCreator;
 import rpgcombat.game.GameLoop;
+import rpgcombat.game.cinematics.CinematicBuilder;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.game.modifier.config.StatusModLoader;
 import rpgcombat.models.characters.Character;
@@ -38,13 +40,18 @@ public class GameBootstrap {
         preloadResources();
         ensureModifiersLoaded();
 
+        CinematicsOptions cinematicsOptions = config.cinematic();
+        if (cinematicsOptions.preCreation()) {
+            CinematicBuilder.playPreCreation();
+        }
+
         Character p1 = createCharacter(config.characters().player1());
         clearBetweenCharactersIfNeeded();
         Character p2 = createCharacter(config.characters().player2());
 
         applyDebugOptionsIfNeeded(p1, p2);
 
-        return new GameLoop(p1, p2, modifiers);
+        return new GameLoop(p1, p2, modifiers, cinematicsOptions);
     }
 
     private void loadAppConfig() {
