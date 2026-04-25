@@ -1,24 +1,23 @@
 package rpgcombat.models.effects.impl;
 
+import rpgcombat.combat.ui.messages.CombatMessage;
+import rpgcombat.combat.ui.messages.MessageColor;
+import rpgcombat.combat.ui.messages.MessageSymbol;
+import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.StackingRule;
 import rpgcombat.models.effects.templates.DamageModifierEffect;
 import rpgcombat.weapons.passives.HitContext;
-import rpgcombat.models.characters.Character;
 
 /**
- * Debuff curt que augmenta lleugerament el dany rebut i empitjora una mica l'esquiva.
- * Ha de castigar l'spam defensiu, pero sense inutilitzar-lo.
+ * Debuff curt que augmenta lleugerament el dany rebut i redueix l'esquiva.
  */
 public class Exhaustion extends DamageModifierEffect {
     public static final String INTERNAL_EFFECT_KEY = "EXHAUSTION";
 
-    // Abans: 0.82 (-18%)
-    public static final double DODGE_MULTIPLIER = 0.90; // -10%
+    public static final double DODGE_MULTIPLIER = 0.90;
 
     private static final int TURNS = 2;
-
-    // Abans: 1.12 (+12%)
-    private static final double INCOMING = 1.08; // +8%
+    private static final double INCOMING = 1.08;
 
     public Exhaustion() {
         super(INTERNAL_EFFECT_KEY, TURNS, 1.0, INCOMING);
@@ -35,7 +34,11 @@ public class Exhaustion extends DamageModifierEffect {
     }
 
     @Override
-    protected String buildIncomingMessage(double multiplier, Character owner) {
-        return "[YELLOW|-] El cansament fa que " + owner.getName() + " rebi una mica més de dany.";
+    protected CombatMessage buildIncomingMessage(double multiplier, Character owner) {
+        return CombatMessage.of(
+                MessageSymbol.NEGATIVE,
+                MessageColor.YELLOW,
+                "El cansament fa que " + owner.getName() + " rebi una mica més de dany."
+        );
     }
 }

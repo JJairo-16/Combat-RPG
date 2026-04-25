@@ -2,6 +2,9 @@ package rpgcombat.models.effects.templates;
 
 import java.util.Random;
 
+import rpgcombat.combat.ui.messages.CombatMessage;
+import rpgcombat.combat.ui.messages.MessageColor;
+import rpgcombat.combat.ui.messages.MessageSymbol;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.weapons.passives.HitContext;
@@ -30,14 +33,17 @@ public abstract class ConstantDamageEffect extends TimedEffect {
         this.damagePerTurn = damagePerTurn;
     }
 
-   /** Permet modificar el dany del tick (per stats, RNG, etc.). */
+    /** Permet modificar el dany del tick (per stats, RNG, etc.). */
     protected double resolveTickDamage(HitContext ctx, Random rng, Character owner) {
         return damagePerTurn;
     }
 
-   /** Missatge per defecte. */
-    protected String buildMessage(double appliedDamage, Character owner) {
-        return owner.getName() + " rep " + appliedDamage + " de dany per efecte.";
+    /** Missatge per defecte. */
+    protected CombatMessage buildMessage(double appliedDamage, Character owner) {
+        return CombatMessage.of(
+                MessageSymbol.NEGATIVE,
+                MessageColor.RED,
+                owner.getName() + " rep " + appliedDamage + " de dany per efecte.");
     }
 
     @Override

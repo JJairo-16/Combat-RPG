@@ -2,6 +2,9 @@ package rpgcombat.models.effects.impl;
 
 import java.util.Random;
 
+import rpgcombat.combat.ui.messages.CombatMessage;
+import rpgcombat.combat.ui.messages.MessageColor;
+import rpgcombat.combat.ui.messages.MessageSymbol;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.StackingRule;
@@ -55,8 +58,12 @@ public final class BlindEffect extends MissChanceEffect {
     }
 
     @Override
-    protected String buildMessage(Character owner) {
-        return "[RED|-]" + owner.getName() + " està encegat i falla l'atac.";
+    protected CombatMessage buildMessage(Character owner) {
+        return CombatMessage.of(
+                MessageSymbol.NEGATIVE,
+                MessageColor.RED,
+                owner.getName() + " està encegat i falla l'atac."
+        );
     }
 
     @Override

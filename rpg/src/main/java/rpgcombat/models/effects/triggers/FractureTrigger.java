@@ -4,6 +4,8 @@ import java.util.Random;
 
 import rpgcombat.balance.CombatBalanceRegistry;
 import rpgcombat.balance.config.FractureConfig;
+import rpgcombat.combat.ui.messages.MessageColor;
+import rpgcombat.combat.ui.messages.MessageSymbol;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.impl.Fracture;
@@ -33,7 +35,10 @@ public class FractureTrigger extends Trigger {
         double percent = getRatePercent(owner);
         if (rng.nextDouble() < percent) {
             owner.addEffect(new Fracture(config.duration()));
-            return EffectResult.msg(owner.getName() + " ha rebut una fragtura.");
+            return EffectResult.styled(
+                    MessageColor.RED,
+                    MessageSymbol.WARNING,
+                    owner.getName() + " ha rebut una fractura.");
         }
 
         return EffectResult.none();

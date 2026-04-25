@@ -3,7 +3,6 @@ package rpgcombat.combat.turnservice;
 import static rpgcombat.combat.models.Action.ATTACK;
 import static rpgcombat.combat.models.Action.CHARGE;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -15,6 +14,10 @@ import rpgcombat.combat.models.Action;
 import rpgcombat.combat.models.EffectPipeline;
 import rpgcombat.combat.services.EndRoundRegenBonus;
 import rpgcombat.combat.services.RoundRecoveryService;
+import rpgcombat.combat.ui.messages.CombatMessage;
+import rpgcombat.combat.ui.messages.CombatMessageBuffer;
+import rpgcombat.combat.ui.messages.MessageColor;
+import rpgcombat.combat.ui.messages.MessageSymbol;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Result;
 import rpgcombat.models.characters.Statistics;
@@ -73,13 +76,14 @@ public class TurnResolver {
             Action defenderAction,
             EndRoundRegenBonus defenderBonus) {
 
-        List<String> startMessages = new ArrayList<>();
+        CombatMessageBuffer startMessages = new CombatMessageBuffer();
         attackerAction = Chaos.applyStartTurn(attacker, defender, attackerAction, startMessages);
         rhythmService.onActionStart(attacker, attackerAction);
         attacker.onTurnStart(attackerAction, startMessages);
 
         if (!attacker.isAlive()) {
-            return new TurnResult(attacker.getName(), null, startMessages, List.of(), null, List.of(), List.of(), 0,
+            return new TurnResult(attacker.getName(), null, startMessages.messages(), List.of(), null, List.of(),
+                    List.of(), 0,
                     false);
         }
 
@@ -87,13 +91,13 @@ public class TurnResolver {
             return resolveNonAttackTurn(attacker, defender, attackerAction, defenderAction, startMessages);
         }
 
-        List<String> preDefenseMessages = new ArrayList<>();
-        List<String> postDefenseMessages = new ArrayList<>();
-        List<String> endTurnMessages = new ArrayList<>();
+        CombatMessageBuffer preDefenseMessages = new CombatMessageBuffer();
+        CombatMessageBuffer postDefenseMessages = new CombatMessageBuffer();
+        CombatMessageBuffer endTurnMessages = new CombatMessageBuffer();
 
         Weapon preWeapon = attacker.getWeapon();
         if (isGrimori(preWeapon)) {
-            startMessages.add("… el Grimori s'activa …");
+            startMessages.add(CombatMessage.info("… el Grimori s'activa …"));
         }
 
         AttackResult attackResult = attacker.attack();
@@ -107,7 +111,8 @@ public class TurnResolver {
             double damage = attackResult.damage();
             if (damage > 0)
                 attacker.getDamage(damage);
-            return new TurnResult(attacker.getName(), attackerMessage, startMessages, List.of(), null, List.of(),
+            return new TurnResult(attacker.getName(), attackerMessage, startMessages.messages(), List.of(), null,
+                    List.of(),
                     List.of(), damage, false);
         }
 
@@ -126,21 +131,24 @@ public class TurnResolver {
 
         boolean critical = ctx.resolveCritical();
         if (critical)
-            preDefenseMessages.add("cop crític!");
+            preDefenseMessages.warning("cop crític!");
 
         if (attacker.isDesperate()) {
-            preDefenseMessages.add("[GREEN|!] " + attacker.getName() + " lluita al límit i troba força extra.");
+            preDefenseMessages.styled(MessageColor.GREEN, MessageSymbol.WARNING,
+                    attacker.getName() + " lluita al límit i troba força extra.");
         }
 
         if (attacker.getMomentumStacks() > 0) {
-            preDefenseMessages.add("[CYAN|+] " + attacker.getName() + " aprofita l'impuls del combat.");
+            preDefenseMessages.styled(MessageColor.CYAN, MessageSymbol.POSITIVE,
+                    attacker.getName() + " aprofita l'impuls del combat.");
         }
 
         boolean chargedStrike = attacker.consumeChargedAttack();
         if (chargedStrike) {
             ctx.multiplyDamage(attacker.chargedAttackMultiplier());
             ctx.putMeta("CHARGED_HIT", true);
-            preDefenseMessages.add("[CYAN|+] L'atac carregat esclata amb més força.");
+            preDefenseMessages.styled(MessageColor.CYAN, MessageSymbol.POSITIVE,
+                    "L'atac carregat esclata amb més força.");
         }
 
         ctx.multiplyDamage(attacker.getAttackModifierThisTurn());
@@ -170,17 +178,19 @@ public class TurnResolver {
 
             ctx.setDefenderResult(selfResult);
             ctx.setDamageDealt(selfDamage);
-            postDefenseMessages
-                    .add("[PURPLE|!] " + attacker.getName() + " es colpeja a si mateix per " + selfDamage + ".");
+            postDefenseMessages.styled(MessageColor.MAGENTA, MessageSymbol.WARNING,
+                    attacker.getName() + " es colpeja a si mateix per " + selfDamage + ".");
             rhythmService.onAttackResolved(attacker, attackerAction, selfDamage, endTurnMessages);
             effectPipeline.runAttackerOnly(ctx, Phase.END_TURN, attacker, attackerRng, endTurnMessages);
 
-            return new TurnResult(attacker.getName(), attackerMessage, startMessages, preDefenseMessages,
-                    selfResult.message(), postDefenseMessages, endTurnMessages, selfDamage, critical);
+            return new TurnResult(attacker.getName(), attackerMessage, startMessages.messages(),
+                    preDefenseMessages.messages(),
+                    selfResult.message(), postDefenseMessages.messages(), endTurnMessages.messages(), selfDamage,
+                    critical);
         }
         if (defender.isDesperate()) {
-            preDefenseMessages
-                    .add("[GREEN|!] " + defender.getName() + " aguanta com pot i redueix part de la pressió rebuda.");
+            preDefenseMessages.styled(MessageColor.GREEN, MessageSymbol.WARNING,
+                    defender.getName() + " aguanta com pot i redueix part de la pressió rebuda.");
         }
         rhythmService.onDefenseReaction(defender, defenderAction, damageToResolve);
 
@@ -216,8 +226,9 @@ public class TurnResolver {
         }
         effectPipeline.runAttackerOnly(ctx, Phase.END_TURN, attacker, attackerRng, endTurnMessages);
 
-        return new TurnResult(attacker.getName(), attackerMessage, startMessages, preDefenseMessages, defenseMessage,
-                postDefenseMessages, endTurnMessages, ctx.damageDealt(), critical);
+        return new TurnResult(attacker.getName(), attackerMessage, startMessages.messages(),
+                preDefenseMessages.messages(), defenseMessage,
+                postDefenseMessages.messages(), endTurnMessages.messages(), ctx.damageDealt(), critical);
     }
 
     /**
@@ -228,23 +239,25 @@ public class TurnResolver {
             Character defender,
             Action attackerAction,
             Action defenderAction,
-            List<String> startMessages) {
+            CombatMessageBuffer startMessages) {
 
-        List<String> endTurnMessages = new ArrayList<>();
+        CombatMessageBuffer endTurnMessages = new CombatMessageBuffer();
 
         if (attackerAction == CHARGE) {
             if (attacker.hasChargedAttack()) {
-                endTurnMessages.add("[CYAN|!] " + attacker.getName() + " manté la càrrega; no s'acumula més.");
+                endTurnMessages.styled(MessageColor.CYAN, MessageSymbol.WARNING,
+                        attacker.getName() + " manté la càrrega; no s'acumula més.");
             } else {
                 attacker.prepareChargedAttack();
-                endTurnMessages.add("[CYAN|+] " + attacker.getName() + " concentra forces per al següent atac.");
+                endTurnMessages.styled(MessageColor.CYAN, MessageSymbol.POSITIVE,
+                        attacker.getName() + " concentra forces per al següent atac.");
             }
         }
 
         decayMomentumOnPassiveTurn(attacker, attackerAction, endTurnMessages);
 
         if (breakAttackChains(attacker, defender)) {
-            endTurnMessages.add("La cadena del verí es trenca i el verí s'esvaeix.");
+            endTurnMessages.warning("La cadena del verí es trenca i el verí s'esvaeix.");
         }
 
         Result defenderResult = attackResolver.resolveAttack(0, defender, defenderAction);
@@ -264,11 +277,11 @@ public class TurnResolver {
         return new TurnResult(
                 attacker.getName(),
                 null,
-                startMessages,
+                startMessages.messages(),
                 List.of(),
                 defenseMessage,
                 List.of(),
-                endTurnMessages,
+                endTurnMessages.messages(),
                 0,
                 false);
     }
@@ -361,30 +374,31 @@ public class TurnResolver {
             HitContext ctx,
             Result defenderResult,
             boolean critical,
-            List<String> out) {
+            CombatMessageBuffer out) {
 
         if (defenderResult.recived() <= 0)
             return;
 
         if (defenderAction == Action.DEFEND && defender.isVulnerable()) {
-            out.add("[RED|!] La defensa trencada deixa " + defender.getName() + " exposat.");
+            out.styled(MessageColor.RED, MessageSymbol.WARNING,
+                    "La defensa trencada deixa " + defender.getName() + " exposat.");
         }
 
         if (critical) {
             defender.applyBleed(2);
-            out.add("[RED|+] El cop crític obre una ferida: s'aplica sagnat.");
+            out.styled(MessageColor.RED, MessageSymbol.POSITIVE, "El cop crític obre una ferida: s'aplica sagnat.");
         }
 
         Object rawDamageInput = ctx.getMeta("RAW_DAMAGE");
         if (rawDamageInput instanceof Number rawDamage && ctx.damageDealt() >= rawDamage.doubleValue() * 0.90
                 && defenderAction == Action.DODGE) {
             defender.applyBleed(1);
-            out.add("[RED|+] L'esquiva fallida deixa un tall superficial.");
+            out.styled(MessageColor.RED, MessageSymbol.POSITIVE, "L'esquiva fallida deixa un tall superficial.");
         }
 
         if (ctx.getMeta("CHARGED_HIT") instanceof Boolean charged && Boolean.TRUE.equals(charged)) {
             defender.applyStagger(1);
-            out.add("[YELLOW|+] L'impacte carregat desequilibra el rival.");
+            out.styled(MessageColor.YELLOW, MessageSymbol.POSITIVE, "L'impacte carregat desequilibra el rival.");
         }
     }
 
@@ -397,7 +411,7 @@ public class TurnResolver {
             Action defenderAction,
             double damageToResolve,
             Result defenderResult,
-            List<String> out) {
+            CombatMessageBuffer out) {
 
         boolean successfulHit = defenderResult.recived() > 0;
         boolean successfulDodge = defenderAction == Action.DODGE && damageToResolve > 0
@@ -410,17 +424,18 @@ public class TurnResolver {
                 int before = attacker.getMomentumStacks();
                 attacker.gainMomentum();
                 if (attacker.getMomentumStacks() > before && out != null) {
-                    out.add("[CYAN|+] " + attacker.getName() + " guanya impuls.");
+                    out.styled(MessageColor.CYAN, MessageSymbol.POSITIVE, attacker.getName() + " guanya impuls.");
                 }
             } else if (out != null && attacker.getMomentumStacks() > 0) {
-                out.add("[CYAN|=] L'avantatge de " + attacker.getName()
+                out.styled(MessageColor.CYAN, MessageSymbol.EQUAL, "L'avantatge de " + attacker.getName()
                         + " no accelera més davant un rival acorralat.");
             }
 
             if (defender.getMomentumStacks() > 0) {
                 defender.loseMomentum();
                 if (out != null)
-                    out.add("[CYAN|-] " + defender.getName() + " perd impuls sota la pressió rival.");
+                    out.styled(MessageColor.CYAN, MessageSymbol.NEGATIVE,
+                            defender.getName() + " perd impuls sota la pressió rival.");
             }
             return;
         }
@@ -434,12 +449,14 @@ public class TurnResolver {
             }
 
             if (defender.getMomentumStacks() > before && out != null) {
-                out.add("[CYAN|+] " + defender.getName() + " llegeix el ritme i guanya impuls.");
+                out.styled(MessageColor.CYAN, MessageSymbol.POSITIVE,
+                        defender.getName() + " llegeix el ritme i guanya impuls.");
             }
             if (attacker.getMomentumStacks() > 0) {
                 attacker.loseMomentum();
                 if (out != null)
-                    out.add("[CYAN|-] " + attacker.getName() + " perd impuls després de fallar.");
+                    out.styled(MessageColor.CYAN, MessageSymbol.NEGATIVE,
+                            attacker.getName() + " perd impuls després de fallar.");
             }
             return;
         }
@@ -447,14 +464,14 @@ public class TurnResolver {
         if (attacker.getMomentumStacks() > 0) {
             attacker.loseMomentum();
             if (out != null)
-                out.add("[CYAN|-] " + attacker.getName() + " perd part de l'impuls.");
+                out.styled(MessageColor.CYAN, MessageSymbol.NEGATIVE, attacker.getName() + " perd part de l'impuls.");
         }
     }
 
     /**
      * Redueix l'impuls en torns passius.
      */
-    private void decayMomentumOnPassiveTurn(Character actor, Action action, List<String> out) {
+    private void decayMomentumOnPassiveTurn(Character actor, Action action, CombatMessageBuffer out) {
         if (actor == null || action == null || actor.getMomentumStacks() <= 0) {
             return;
         }
@@ -465,7 +482,8 @@ public class TurnResolver {
             }
             actor.loseMomentum();
             if (out != null) {
-                out.add("[CYAN|-] L'impuls de " + actor.getName() + " es refreda una mica.");
+                out.styled(MessageColor.CYAN, MessageSymbol.NEGATIVE,
+                        "L'impuls de " + actor.getName() + " es refreda una mica.");
             }
         }
     }

@@ -8,12 +8,15 @@ import java.util.Random;
 import rpgcombat.balance.CombatBalanceRegistry;
 import rpgcombat.balance.config.ChaosConfig;
 import rpgcombat.combat.models.Action;
+import rpgcombat.combat.ui.messages.CombatMessage;
+import rpgcombat.combat.ui.messages.CombatMessageBuffer;
+import rpgcombat.combat.ui.messages.MessageColor;
+import rpgcombat.combat.ui.messages.MessageSymbol;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.impl.BlindEffect;
 import rpgcombat.models.effects.impl.Fatigue;
-import rpgcombat.utils.ui.Ansi;
 import rpgcombat.weapons.passives.HitContext;
 
 /**
@@ -46,7 +49,8 @@ public class Chaos extends Trigger {
      *
      * @return l'acció final després de possibles canvis
      */
-    public static Action applyStartTurn(Character owner, Character opponent, Action selectedAction, List<String> out) {
+    public static Action applyStartTurn(Character owner, Character opponent, Action selectedAction,
+            CombatMessageBuffer out) {
         if (owner == null || selectedAction == null) {
             return selectedAction;
         }
@@ -62,7 +66,7 @@ public class Chaos extends Trigger {
     /**
      * Resol l'activació inicial de Caos.
      */
-    private Action beginTurn(Character owner, Character opponent, Action selectedAction, List<String> out) {
+    private Action beginTurn(Character owner, Character opponent, Action selectedAction, CombatMessageBuffer out) {
         ChaosConfig cfg = cfg();
         if (cfg == null || !cfg.enabled()) {
             pendingOutcome = null;
@@ -80,9 +84,7 @@ public class Chaos extends Trigger {
         Action finalAction = mutateAction(selectedAction, outcome, localRng);
         applyImmediateOutcome(owner, outcome, localRng, cfg, out);
 
-        if (out != null) {
-            out.add(buildStartMessage(owner, selectedAction, finalAction, outcome));
-        }
+        addStartMessage(owner, selectedAction, finalAction, outcome, out);
 
         return finalAction;
     }
@@ -99,7 +101,8 @@ public class Chaos extends Trigger {
         if (pendingOutcome == Outcome.FAIL_ACTION) {
             ctx.setBaseDamage(0);
             ctx.markEffectFail(INTERNAL_EFFECT_KEY);
-            return EffectResult.msg(chaosMsg("!", "El caos devora l'acció de " + owner.getName() + "."));
+            return chaosResult(MessageSymbol.WARNING,
+                    "El caos devora l'acció de " + owner.getName() + ".");
         }
 
         return EffectResult.none();
@@ -117,19 +120,24 @@ public class Chaos extends Trigger {
         return switch (pendingOutcome) {
             case FORCE_CRIT -> {
                 ctx.forceCritical();
-                yield EffectResult.msg(chaosMsg("+", "El caos força un cop crític."));
+                yield chaosResult(MessageSymbol.POSITIVE,
+                        "El caos força un cop crític.");
             }
             case FORBID_CRIT -> {
                 ctx.forbidCritical();
-                yield EffectResult.msg(chaosMsg("-", "El caos apaga qualsevol opció de crític."));
+                yield chaosResult(MessageSymbol.NEGATIVE,
+                        "El caos apaga qualsevol opció de crític.");
             }
             case CRIT_FLIP -> {
                 if (rng.nextDouble() < cfg().crit().flipForceChance()) {
                     ctx.forceCritical();
-                    yield EffectResult.msg(chaosMsg("+", "La moneda caòtica cau de cara: crític forçat."));
+                    yield chaosResult(MessageSymbol.POSITIVE,
+                            "La moneda caòtica cau de cara: crític forçat.");
                 }
+
                 ctx.forbidCritical();
-                yield EffectResult.msg(chaosMsg("-", "La moneda caòtica cau de creu: crític prohibit."));
+                yield chaosResult(MessageSymbol.NEGATIVE,
+                        "La moneda caòtica cau de creu: crític prohibit.");
             }
             default -> EffectResult.none();
         };
@@ -145,34 +153,43 @@ public class Chaos extends Trigger {
         }
 
         ChaosConfig cfg = cfg();
+
         return switch (pendingOutcome) {
             case DAMAGE_UP -> {
                 ctx.multiplyDamage(cfg.damage().upMultiplier());
-                yield EffectResult.msg(chaosMsg("+", "El caos potencia el cop."));
+                yield chaosResult(MessageSymbol.POSITIVE,
+                        "El caos potencia el cop.");
             }
             case DAMAGE_DOWN -> {
                 ctx.multiplyDamage(cfg.damage().downMultiplier());
-                yield EffectResult.msg(chaosMsg("-", "El caos distorsiona el cop i en redueix la força."));
+                yield chaosResult(MessageSymbol.NEGATIVE,
+                        "El caos distorsiona el cop i en redueix la força.");
             }
             case OVERLOAD -> {
                 ctx.multiplyDamage(cfg.damage().overloadMultiplier());
                 owner.applyVulnerable(cfg.status().vulnerableTurns());
                 owner.multiplyNextIncomingDamage(cfg.damage().overloadIncomingMultiplier());
-                yield EffectResult.msg(chaosMsg("!", "Sobrecàrrega caòtica: més dany, però "
-                        + owner.getName() + " queda exposat."));
+
+                yield chaosResult(MessageSymbol.WARNING,
+                        "Sobrecàrrega caòtica: més dany, però "
+                                + owner.getName() + " queda exposat.");
             }
             case UNSTABLE_GUARD -> {
                 if (ctx.attackerAction() == Action.ATTACK) {
                     ctx.multiplyDamage(cfg.damage().downMultiplier());
-                    yield EffectResult.msg(chaosMsg("-", "La guàrdia inestable fa tremolar l'atac."));
+                    yield chaosResult(MessageSymbol.NEGATIVE,
+                            "La guàrdia inestable fa tremolar l'atac.");
                 }
+
                 yield EffectResult.none();
             }
             case SELF_HIT -> {
                 ctx.putMeta(META_SELF_HIT, true);
                 ctx.putMeta(META_SELF_HIT_MULTIPLIER, cfg.damage().selfHitMultiplier());
                 ctx.putMeta(META_SELF_HIT_CAN_KILL, cfg.damage().selfHitCanKill());
-                yield EffectResult.msg(chaosMsg("!", "El caos gira el cop contra el seu origen."));
+
+                yield chaosResult(MessageSymbol.WARNING,
+                        "El caos gira el cop contra el seu origen.");
             }
             default -> EffectResult.none();
         };
@@ -282,7 +299,7 @@ public class Chaos extends Trigger {
      * Aplica efectes immediats no lligats a l'atac.
      */
     private void applyImmediateOutcome(Character owner, Outcome outcome, Random rng, ChaosConfig cfg,
-            List<String> out) {
+            CombatMessageBuffer out) {
         switch (outcome) {
             case GAIN_MOMENTUM -> owner.gainMomentum();
             case FREE_CHARGE -> owner.prepareChargedAttack();
@@ -295,7 +312,8 @@ public class Chaos extends Trigger {
                         owner.getStatistics().getMaxMana() * cfg.mana().spikeRestoreMaxManaRatio());
                 owner.applyStagger(cfg.status().staggerTurns());
                 if (out != null && restored > 0) {
-                    out.add(chaosMsg("+", owner.getName() + " recupera " + round2(restored) + " de manà caòtic."));
+                    out.styled(MessageColor.MAGENTA, MessageSymbol.POSITIVE,
+                            owner.getName() + " recupera " + round2(restored) + " de manà caòtic.");
                 }
             }
             case RANDOM_DEBUFF -> applyRandomDebuff(owner, rng, cfg);
@@ -350,17 +368,25 @@ public class Chaos extends Trigger {
     /**
      * Construeix el missatge d'activació de Caos.
      */
-    private String buildStartMessage(Character owner, Action selectedAction, Action finalAction, Outcome outcome) {
-        String base = chaosMsg("?", "Caos s'activa sobre " + owner.getName() + ": " + outcome.label + ".");
+    private void addStartMessage(
+            Character owner,
+            Action selectedAction,
+            Action finalAction,
+            Outcome outcome,
+            CombatMessageBuffer out) {
 
-        if (selectedAction != finalAction) {
-            return base + " " + Ansi.MAGENTA
-                    + "L'acció canvia de " + selectedAction.label()
-                    + " a " + finalAction.label() + "."
-                    + Ansi.RESET;
+        if (out == null) {
+            return;
         }
 
-        return base;
+        out.styled(MessageColor.MAGENTA, MessageSymbol.CHAOS,
+                "Caos s'activa sobre " + owner.getName() + ": " + outcome.label + ".");
+
+        if (selectedAction != finalAction) {
+            out.styled(MessageColor.MAGENTA, MessageSymbol.INFO,
+                    "L'acció canvia de " + selectedAction.label()
+                            + " a " + finalAction.label() + ".");
+        }
     }
 
     /**
@@ -410,8 +436,8 @@ public class Chaos extends Trigger {
     /**
      * Dona format a un missatge de Caos.
      */
-    private static String chaosMsg(String symbol, String text) {
-        return Ansi.MAGENTA + symbol + " " + text + Ansi.RESET;
+    private static EffectResult chaosResult(MessageSymbol symbol, String text) {
+        return EffectResult.msg(CombatMessage.of(symbol, MessageColor.MAGENTA, text));
     }
 
     /**

@@ -1,19 +1,21 @@
 package rpgcombat.models.effects.impl;
 
+import rpgcombat.combat.ui.messages.CombatMessage;
+import rpgcombat.combat.ui.messages.MessageColor;
+import rpgcombat.combat.ui.messages.MessageSymbol;
+import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.StackingRule;
 import rpgcombat.models.effects.templates.DamageModifierEffect;
 import rpgcombat.weapons.passives.HitContext;
-import rpgcombat.models.characters.Character;
 
 /**
  * Debuff curt que redueix lleugerament el dany infligit.
- * Ha de castigar l'spam ofensiu, pero sense enfonsar el personatge.
  */
 public class Fatigue extends DamageModifierEffect {
     public static final String INTERNAL_EFFECT_KEY = "FATIGUE";
 
     private static final int DEFAULT_TURNS = 2;
-    private static final double OUTGOING = 0.92; // -8%
+    private static final double OUTGOING = 0.92;
 
     public Fatigue() {
         this(DEFAULT_TURNS);
@@ -34,7 +36,11 @@ public class Fatigue extends DamageModifierEffect {
     }
 
     @Override
-    protected String buildOutgoingMessage(double multiplier, Character owner) {
-        return "[YELLOW|-] La fatiga rebaixa una mica el dany de " + owner.getName() + ".";
+    protected CombatMessage buildOutgoingMessage(double multiplier, Character owner) {
+        return CombatMessage.of(
+                MessageSymbol.NEGATIVE,
+                MessageColor.YELLOW,
+                "La fatiga rebaixa una mica el dany de " + owner.getName() + "."
+        );
     }
 }

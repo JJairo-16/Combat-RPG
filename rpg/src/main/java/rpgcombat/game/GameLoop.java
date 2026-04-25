@@ -73,9 +73,7 @@ public class GameLoop {
             Action action1 = menu.playPlayer1();
             Action action2 = menu.playPlayer2();
 
-            cls.clear();
             winner = combatSystem.play(action1, action2);
-            Menu.pause();
 
             if (cinematicsOptions.antiStall() && combatSystem.preAntiStall()) {
                 CinematicBuilder.playAntiStall();

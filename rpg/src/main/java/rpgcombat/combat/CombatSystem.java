@@ -10,6 +10,7 @@ import rpgcombat.balance.config.CombatBalanceConfig;
 import rpgcombat.balance.config.character.BloodPactConfig;
 import rpgcombat.combat.models.Action;
 import rpgcombat.combat.models.CombatRoundResult;
+import rpgcombat.combat.models.CombatantStatus;
 import rpgcombat.combat.models.EffectPipeline;
 import rpgcombat.combat.models.RegenResult;
 import rpgcombat.combat.models.Winner;
@@ -20,6 +21,7 @@ import rpgcombat.combat.turnservice.TurnPriorityPolicy;
 import rpgcombat.combat.turnservice.TurnResolver;
 import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.combat.ui.CombatRenderer;
+import rpgcombat.combat.ui.RoundResultPager;
 import rpgcombat.models.effects.impl.MagicalTiredness;
 import rpgcombat.models.effects.impl.SuddenDeathPoisonEffect;
 
@@ -81,26 +83,8 @@ public class CombatSystem {
      */
     public Winner play(Action a1, Action a2) {
         CombatRoundResult round = playRound(a1, a2);
-
-        renderer.printRoundHeader();
-        renderer.printTurnResult(round.firstTurn());
-        System.out.println();
-        renderer.printTurnResult(round.secondTurn());
-
-        System.out.println();
-        renderer.printRoundSummary(player1, round.p1DamageTaken());
-        renderer.printRoundSummary(player2, round.p2DamageTaken());
-
-        if (round.winner() != Winner.NONE) {
-            return round.winner();
-        }
-
-        System.out.println();
-        renderer.printRegenHeader();
-        renderer.printRegenSummary(player1, round.p1Regen().healthRecovered(), round.p1Regen().manaRecovered());
-        renderer.printRegenSummary(player2, round.p2Regen().healthRecovered(), round.p2Regen().manaRecovered());
-
-        return Winner.NONE;
+        new RoundResultPager(renderer).show(roundNumber, player1, player2, round);
+        return round.winner();
     }
 
     /**
@@ -123,6 +107,9 @@ public class CombatSystem {
         double p1HealthBefore = p1Stats.getHealth();
         double p2HealthBefore = p2Stats.getHealth();
 
+        CombatantStatus p1Initial = CombatantStatus.from(player1);
+        CombatantStatus p2Initial = CombatantStatus.from(player2);
+
         boolean p1First = priorityPolicy.player1First(player1, a1, player2, a2, combatRng);
 
         TurnResult firstTurn;
@@ -142,6 +129,9 @@ public class CombatSystem {
         double p1DamageTaken = p1HealthBefore - p1HealthAfterAttacks;
         double p2DamageTaken = p2HealthBefore - p2HealthAfterAttacks;
 
+        CombatantStatus p1AfterDamage = CombatantStatus.from(player1);
+        CombatantStatus p2AfterDamage = CombatantStatus.from(player2);
+
         player1.applyInvulnerability();
         player2.applyInvulnerability();
 
@@ -154,7 +144,13 @@ public class CombatSystem {
                     p2DamageTaken,
                     RegenResult.ZERO,
                     RegenResult.ZERO,
-                    winner);
+                    winner,
+                    p1Initial,
+                    p2Initial,
+                    p1AfterDamage,
+                    p2AfterDamage,
+                    p1AfterDamage,
+                    p2AfterDamage);
         }
 
         player1.tickSpiritualCallingCooldown();
@@ -183,6 +179,9 @@ public class CombatSystem {
         applyOrRemoveMagicalTiredness(player1);
         applyOrRemoveMagicalTiredness(player2);
 
+        CombatantStatus p1Final = CombatantStatus.from(player1);
+        CombatantStatus p2Final = CombatantStatus.from(player2);
+
         return new CombatRoundResult(
                 firstTurn,
                 secondTurn,
@@ -190,17 +189,19 @@ public class CombatSystem {
                 p2DamageTaken,
                 p1Regen,
                 p2Regen,
-                Winner.NONE);
+                Winner.NONE,
+                p1Initial,
+                p2Initial,
+                p1AfterDamage,
+                p2AfterDamage,
+                p1Final,
+                p2Final);
     }
 
     /**
-     * Aplica o elimina l'efecte de {@link MagicalTiredness} en funció del
-     * percentatge de mana actual.
-     * <p>
-     * Si el mana del personatge és igual o inferior al 90% del màxim, s'aplica
-     * l'efecte de fatiga màgica. En cas contrari, l'efecte s'elimina.
+     * Aplica o elimina la fatiga màgica segons el mana actual.
      *
-     * @param player el personatge sobre el qual s'avalua i s'aplica l'efecte
+     * @param player personatge afectat
      */
     private void applyOrRemoveMagicalTiredness(Character player) {
         Statistics stats = player.getStatistics();
@@ -217,13 +218,7 @@ public class CombatSystem {
     }
 
     /**
-     * Aplica o elimina l'efecte de {@link MagicalTiredness} en funció del
-     * percentatge de mana actual.
-     * <p>
-     * Si el mana del personatge és igual o inferior al 90% del màxim, s'aplica
-     * l'efecte de fatiga màgica. En cas contrari, l'efecte s'elimina.
-     *
-     * @param player el personatge sobre el qual s'avalua i s'aplica l'efecte
+     * Sincronitza només els efectes derivats dels recursos.
      */
     public void syncEffectsOnly() {
         applyOrRemoveMagicalTiredness(player1);

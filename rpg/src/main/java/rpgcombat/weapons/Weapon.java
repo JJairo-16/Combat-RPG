@@ -1,9 +1,10 @@
 package rpgcombat.weapons;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import rpgcombat.combat.ui.messages.CombatMessage;
+import rpgcombat.combat.ui.messages.CombatMessageBuffer;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.weapons.attack.Attack;
 import rpgcombat.weapons.attack.AttackResult;
@@ -158,34 +159,34 @@ public class Weapon {
         return type.canEquip(stats);
     }
 
-    public List<String> triggerPhase(HitContext ctx, Random rng, Phase phase) {
+    public List<CombatMessage> triggerPhase(HitContext ctx, Random rng, Phase phase) {
         if (passives.isEmpty()) {
             return List.of();
         }
 
-        List<String> messages = new ArrayList<>();
+        CombatMessageBuffer messages = new CombatMessageBuffer();
         triggerPhase(ctx, rng, phase, messages);
-        return messages;
+        return messages.messages();
     }
 
-    public void triggerPhase(HitContext ctx, Random rng, Phase phase, List<String> out) {
-        if (passives.isEmpty()) {
+    public void triggerPhase(HitContext ctx, Random rng, Phase phase, CombatMessageBuffer out) {
+        if (passives.isEmpty() || out == null) {
             return;
         }
 
         for (WeaponPassive p : passives) {
-            String msg = p.onPhase(this, ctx, rng, phase);
-            if (msg != null && !msg.isBlank()) {
+            CombatMessage msg = p.onPhase(this, ctx, rng, phase);
+            if (msg != null && !msg.text().isBlank()) {
                 out.add(msg);
             }
         }
     }
 
-    public void triggerAfterHit(HitContext ctx, Random rng, List<String> out) {
+    public void triggerAfterHit(HitContext ctx, Random rng, CombatMessageBuffer out) {
         triggerPhase(ctx, rng, Phase.AFTER_HIT, out);
     }
 
-    public List<String> triggerAfterHit(HitContext ctx, Random rng) {
+    public List<CombatMessage> triggerAfterHit(HitContext ctx, Random rng) {
         return triggerPhase(ctx, rng, Phase.AFTER_HIT);
     }
 

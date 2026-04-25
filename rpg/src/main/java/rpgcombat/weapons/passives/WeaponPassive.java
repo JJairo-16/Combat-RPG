@@ -2,31 +2,16 @@ package rpgcombat.weapons.passives;
 
 import java.util.Random;
 
+import rpgcombat.combat.ui.messages.CombatMessage;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.passives.HitContext.Phase;
 
 /**
  * Passiu d'arma flexible per fases.
- *
- * <p>
- * Cada mètode és opcional (default), i només s'executa quan el pipeline
- * del combat entra a la fase corresponent.
- * </p>
- *
- * <p>
- * Retorna un missatge opcional per mostrar al log; {@code null} o buit = no mostrar.
- * </p>
  */
 public interface WeaponPassive {
 
-    /**
-     * Dispatcher central de fases.
-     *
-     * <p>
-     * Permet que {@link Weapon} executi passius amb una única crida.
-     * </p>
-     */
-    default String onPhase(Weapon weapon, HitContext ctx, Random rng, Phase phase) {
+    default CombatMessage onPhase(Weapon weapon, HitContext ctx, Random rng, Phase phase) {
         return switch (phase) {
             case START_TURN -> startTurn(weapon, ctx, rng);
             case BEFORE_ATTACK -> beforeAttack(weapon, ctx, rng);
@@ -39,27 +24,19 @@ public interface WeaponPassive {
         };
     }
 
-    /** Al inici del torn. */
-    default String startTurn(Weapon weapon, HitContext ctx, Random rng) { return null; }
+    default CombatMessage startTurn(Weapon weapon, HitContext ctx, Random rng) { return null; }
 
-    /** Abans de calcular/modificar el dany (ideal per setMeta, checks, etc.). */
-    default String beforeAttack(Weapon weapon, HitContext ctx, Random rng) { return null; }
+    default CombatMessage beforeAttack(Weapon weapon, HitContext ctx, Random rng) { return null; }
 
-    /** x */
-    default String rollCrit(Weapon weapon, HitContext ctx, Random rng) { return null; }
+    default CombatMessage rollCrit(Weapon weapon, HitContext ctx, Random rng) { return null; }
 
-    /** Per modificar el dany abans de defensar (ctx.addFlatDamage / ctx.multiplyDamage). */
-    default String modifyDamage(Weapon weapon, HitContext ctx, Random rng) { return null; }
+    default CombatMessage modifyDamage(Weapon weapon, HitContext ctx, Random rng) { return null; }
 
-    /** Abans d'aplicar DEFEND/DODGE (p.ex. "si l'objectiu defensa, ..."). */
-    default String beforeDefense(Weapon weapon, HitContext ctx, Random rng) { return null; }
+    default CombatMessage beforeDefense(Weapon weapon, HitContext ctx, Random rng) { return null; }
 
-    /** Després de DEFEND/DODGE, però abans del log final (ctx.defenderResult ja existeix). */
-    default String afterDefense(Weapon weapon, HitContext ctx, Random rng) { return null; }
+    default CombatMessage afterDefense(Weapon weapon, HitContext ctx, Random rng) { return null; }
 
-    /** Després d'un impacte real (ctx.damageDealt > 0). */
-    default String afterHit(Weapon weapon, HitContext ctx, Random rng) { return null; }
+    default CombatMessage afterHit(Weapon weapon, HitContext ctx, Random rng) { return null; }
 
-    /** Final del torn. */
-    default String endTurn(Weapon weapon, HitContext ctx, Random rng) { return null; }
+    default CombatMessage endTurn(Weapon weapon, HitContext ctx, Random rng) { return null; }
 }

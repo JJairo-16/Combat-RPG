@@ -3,6 +3,8 @@ package rpgcombat.models.effects.impl;
 import java.util.Random;
 
 import rpgcombat.balance.CombatBalanceRegistry;
+import rpgcombat.combat.ui.messages.MessageColor;
+import rpgcombat.combat.ui.messages.MessageSymbol;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.templates.TimedEffect;
@@ -19,7 +21,10 @@ public class Fracture extends TimedEffect {
     @Override
     public EffectResult afterHit(HitContext ctx, Random rng, Character owner) {
         ctx.multiplyDamage(damageMultiplier);
-        return EffectResult.msg("[RED|-]La defensa de " + owner.getName() + " s'ha vist reduida per la fractura.");
+        return EffectResult.styled(
+                MessageColor.RED,
+                MessageSymbol.NEGATIVE,
+                "La defensa de " + owner.getName() + " s'ha vist reduïda per la fractura.");
     }
 
     @Override
