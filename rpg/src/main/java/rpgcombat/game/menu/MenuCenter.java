@@ -1,4 +1,4 @@
-package rpgcombat.game;
+package rpgcombat.game.menu;
 
 import java.util.List;
 import java.util.Map;
@@ -9,9 +9,14 @@ import rpgcombat.combat.models.Action;
 import rpgcombat.game.modifier.MenuStatusModifier;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.models.characters.Character;
+import rpgcombat.utils.interactive.MenuWithInformation;
 
 public class MenuCenter {
     private static final String BASE_SNAP = "base";
+
+    private final MenuWithInformation selector;
+    private boolean infoVisible1 = false;
+    private boolean infoVisible2 = false;
 
     private final DynamicMenu<Action, Character> menu1;
     private final DynamicMenu<Action, Character> menu2;
@@ -20,8 +25,10 @@ public class MenuCenter {
     private final MenuStatusModifier mod2;
 
     public MenuCenter(Character player1, Character player2, Consumer<Character> changeWeaponHandler,
-            Consumer<Character> showPlayerInfoHandler, Map<String, List<StatusMod>> modifiers) {
-        DynamicMenu<Action, Character> baseMenuAction = MenuBuilder.build(changeWeaponHandler, showPlayerInfoHandler);
+            Consumer<Character> showPlayerInfoHandler, Map<String, List<StatusMod>> modifiers, Map<String, String> information) {
+        
+        this.selector = new MenuWithInformation(information);
+        DynamicMenu<Action, Character> baseMenuAction = MenuBuilder.build(selector::getOption, changeWeaponHandler, showPlayerInfoHandler);
 
         this.menu1 = baseMenuAction.createChildMenu("Accions de " + player1.getName(), player1);
         this.menu2 = baseMenuAction.createChildMenu("Accions de " + player2.getName(), player2);
@@ -31,13 +38,23 @@ public class MenuCenter {
     }
 
     public Action playPlayer1() {
+        selector.setInformationVisible(infoVisible1);
+
         mod1.mod(BASE_SNAP);
-        return menu1.run();
+        Action action = menu1.run();
+
+        this.infoVisible1 = selector.getInformationVisible();
+        return action;
     }
 
     public Action playPlayer2() {
+        selector.setInformationVisible(infoVisible2);
+
         mod2.mod(BASE_SNAP);
-        return menu2.run();
+        Action action = menu2.run();
+
+        this.infoVisible2 = selector.getInformationVisible();
+        return action;
     }
 
     public DynamicMenu<Action, Character> getMenu1() {

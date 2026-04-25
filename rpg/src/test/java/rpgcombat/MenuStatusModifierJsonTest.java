@@ -30,7 +30,7 @@ import menu.action.MenuAction;
 import menu.model.MenuResult;
 import rpgcombat.combat.models.Action;
 import rpgcombat.creator.CharacterCreator;
-import rpgcombat.game.MenuBuilder;
+import rpgcombat.game.menu.MenuBuilder;
 import rpgcombat.game.modifier.MenuStatusModifier;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.game.modifier.config.StatusModConfig;

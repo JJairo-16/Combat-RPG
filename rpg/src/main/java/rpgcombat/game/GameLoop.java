@@ -9,6 +9,7 @@ import rpgcombat.combat.models.Action;
 import rpgcombat.combat.models.Winner;
 import rpgcombat.config.ui.CinematicsOptions;
 import rpgcombat.game.cinematics.CinematicBuilder;
+import rpgcombat.game.menu.MenuCenter;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;
@@ -47,12 +48,12 @@ public class GameLoop {
     // Cache d'armes (assumim que no canvia durant la partida)
     private final List<WeaponDefinition> entries = Arsenal.values();
 
-    public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers, CinematicsOptions cinematicsOptions) {
+    public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers, Map<String, String> information, CinematicsOptions cinematicsOptions) {
         this.player1 = player1;
         this.player2 = player2;
         this.combatSystem = new CombatSystem(player1, player2);
 
-        this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers);
+        this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers, information);
 
         DivineCharismaAffinity.rollForRun(new Random());
         this.cinematicsOptions = cinematicsOptions;

@@ -19,7 +19,7 @@ import rpgcombat.weapons.config.WeaponType;
  * Lector de definicions d'armes des d'un JSON amb Gson.
  */
 public final class WeaponLoader {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new GsonBuilder().create();
 
     private WeaponLoader() {
     }

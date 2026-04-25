@@ -1,4 +1,4 @@
-package rpgcombat.game;
+package rpgcombat.game.menu;
 
 import java.util.Objects;
 import java.util.function.Consumer;

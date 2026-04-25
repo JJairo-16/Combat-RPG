@@ -3,6 +3,7 @@ package rpgcombat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import rpgcombat.creator.CharacterCreator;
-import rpgcombat.game.MenuCenter;
+import rpgcombat.game.menu.MenuCenter;
 import rpgcombat.game.modifier.Actions;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.models.characters.Character;
@@ -64,7 +65,8 @@ class SpiritualCallingFlagTest {
 				enemyDummy,
 				c -> System.out.println("Canviar arma"),
 				c -> System.out.println("Mostrar informació"),
-				modifiers);
+				modifiers,
+				Collections.emptyMap());
 
 		DivineCharismaAffinity.rollForRun(new Random());
 	}

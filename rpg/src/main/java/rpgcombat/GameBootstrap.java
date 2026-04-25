@@ -13,10 +13,12 @@ import rpgcombat.config.app.AppConfig;
 import rpgcombat.config.app.AppConfigLoader;
 import rpgcombat.config.character.CharacterCreationMode;
 import rpgcombat.config.debug.DebugRuntime;
+import rpgcombat.config.paths.PathsConfig;
 import rpgcombat.config.ui.CinematicsOptions;
 import rpgcombat.creator.CharacterCreator;
 import rpgcombat.game.GameLoop;
 import rpgcombat.game.cinematics.CinematicBuilder;
+import rpgcombat.game.menu.MenuDescriptionsLoader;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.game.modifier.config.StatusModLoader;
 import rpgcombat.models.characters.Character;
@@ -33,6 +35,7 @@ public class GameBootstrap {
 
     private AppConfig config;
     private Map<String, List<StatusMod>> modifiers;
+    private Map<String, String> menuInformation;
 
     /** Crea una partida completament inicialitzada. */
     public GameLoop createGame() {
@@ -51,7 +54,7 @@ public class GameBootstrap {
 
         applyDebugOptionsIfNeeded(p1, p2);
 
-        return new GameLoop(p1, p2, modifiers, cinematicsOptions);
+        return new GameLoop(p1, p2, modifiers, menuInformation, cinematicsOptions);
     }
 
     private void loadAppConfig() {
@@ -75,12 +78,16 @@ public class GameBootstrap {
 
     private void preload() {
         try {
-            Arsenal.preload(Path.of(config.paths().weaponsConfig()));
-            SharedTerminal.preload();
-            modifiers = StatusModLoader.load(Path.of(config.paths().statusMenuModifier()));
+            PathsConfig paths = config.paths();
 
-            CombatBalanceConfig balance = CombatBalanceLoader.load(Path.of(config.paths().balanceConfig()));
+            Arsenal.preload(Path.of(paths.weaponsConfig()));
+            SharedTerminal.preload();
+            modifiers = StatusModLoader.load(Path.of(paths.statusMenuModifier()));
+
+            CombatBalanceConfig balance = CombatBalanceLoader.load(Path.of(paths.balanceConfig()));
             CombatBalanceRegistry.initialize(balance);
+
+            menuInformation = MenuDescriptionsLoader.load(Path.of(paths.menuDescriptions()));
         } catch (IOException e) {
             Prettier.error("Ha hagut un error durant la precarrega.");
         }
