@@ -12,6 +12,9 @@ import java.util.List;
  * Executa les accions d'escriptura a la terminal.
  */
 public class TypingEngine {
+    private static final long MIN_PLAYBACK_BEFORE_INPUT_MILLIS = 20;
+    private static final long RELEASE_QUIET_MILLIS = 20;
+
     private final Terminal terminal;
     private final CinematicInput input;
 
@@ -27,8 +30,10 @@ public class TypingEngine {
      * Escriu les accions i retorna si s'ha saltat la cinemàtica.
      */
     public boolean play(List<TypingAction> actions) throws IOException, InterruptedException {
+        input.resetInputGate(MIN_PLAYBACK_BEFORE_INPUT_MILLIS, RELEASE_QUIET_MILLIS);
+
         for (int i = 0; i < actions.size(); i++) {
-            CinematicInput.Action inputAction = input.readActionIfAvailable();
+            CinematicInput.Action inputAction = input.readFreshActionIfAvailable();
 
             if (inputAction == CinematicInput.Action.ENTER) {
                 TerminalController.resetColor(terminal);

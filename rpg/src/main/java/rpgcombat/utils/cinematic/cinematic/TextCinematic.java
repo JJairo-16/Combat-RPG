@@ -45,6 +45,9 @@ public class TextCinematic {
 
             cleaner.clear();
 
+            CinematicInput input = new CinematicInput(terminal);
+            input.discardPendingInput();
+
             TypingEngine engine = new TypingEngine(terminal);
 
             for (Scene scene : scenes) {
@@ -104,6 +107,7 @@ public class TextCinematic {
             throws IOException, InterruptedException {
 
         CinematicInput input = new CinematicInput(terminal);
+        input.resetInputGate(20, 20);
 
         String[] frames = {
                 "   ",
@@ -125,7 +129,7 @@ public class TextCinematic {
             long start = System.currentTimeMillis();
 
             while (System.currentTimeMillis() - start < config.arrowAnimationDelayMillis) {
-                CinematicInput.Action action = input.readActionIfAvailable();
+                CinematicInput.Action action = input.readFreshActionIfAvailable();
 
                 if (action == CinematicInput.Action.ENTER) {
                     terminal.writer().print("\r");
