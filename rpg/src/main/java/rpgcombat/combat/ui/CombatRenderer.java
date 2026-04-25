@@ -110,20 +110,18 @@ public class CombatRenderer {
      * Retorna les línies d'estat d'una captura.
      */
     public List<String> statusLines(CombatantStatus status) {
-        List<String> lines = new ArrayList<>();
+        List<String> lines = new ArrayList<>(3);
         if (status == null) {
             return lines;
         }
 
         lines.add("  " + Ansi.DARK_GRAY + "─────────────" + Ansi.RESET);
-        lines.add(String.format("Vida: %s %s / %s",
-                buildBar(status.health(), status.maxHealth(), BAR_SIZE, healthColor(status.health(), status.maxHealth())),
-                format(status.health()),
-                format(status.maxHealth())));
-        lines.add(String.format("Mana: %s %s / %s",
-                buildBar(status.mana(), status.maxMana(), BAR_SIZE, Ansi.BRIGHT_BLUE),
-                format(status.mana()),
-                format(status.maxMana())));
+        lines.add("Vida: "
+                + buildBar(status.health(), status.maxHealth(), BAR_SIZE, healthColor(status.health(), status.maxHealth()))
+                + " " + format(status.health()) + " / " + format(status.maxHealth()));
+        lines.add("Mana: "
+                + buildBar(status.mana(), status.maxMana(), BAR_SIZE, Ansi.BRIGHT_BLUE)
+                + " " + format(status.mana()) + " / " + format(status.maxMana()));
         return lines;
     }
 
@@ -154,29 +152,29 @@ public class CombatRenderer {
         double ratio = Math.clamp(current / max, 0.0, 1.0);
         int filled = (int) Math.round(ratio * size);
 
-        StringBuilder bar = new StringBuilder("[");
-        for (int i = 0; i < size; i++) {
-            if (i < filled) {
-                bar.append(color).append("█").append(Ansi.RESET);
-            } else {
-                bar.append(Ansi.DARK_GRAY).append("░").append(Ansi.RESET);
-            }
-        }
-
+        int empty = size - filled;
         int overloadBars = (int) Math.round((overload / max) * size);
-        for (int i = 0; i < overloadBars; i++) {
-            bar.append(Ansi.MAGENTA).append("█").append(Ansi.RESET);
-        }
 
-        bar.append("]");
+        StringBuilder bar = new StringBuilder(2 + size + overloadBars + 64);
+        bar.append('[');
+        if (filled > 0) {
+            bar.append(color).append("█".repeat(filled)).append(Ansi.RESET);
+        }
+        if (empty > 0) {
+            bar.append(Ansi.DARK_GRAY).append("░".repeat(empty)).append(Ansi.RESET);
+        }
+        if (overloadBars > 0) {
+            bar.append(Ansi.MAGENTA).append("█".repeat(overloadBars)).append(Ansi.RESET);
+        }
+        bar.append(']');
         return bar.toString();
     }
 
     /**
      * Arrodoneix a dos decimals.
      */
-    public String format(double value) {
-        return String.format("%.2f", value);
+    public double format(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 
     private void appendLine(StringBuilder sb, String line) {

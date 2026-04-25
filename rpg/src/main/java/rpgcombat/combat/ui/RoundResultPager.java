@@ -2,7 +2,6 @@ package rpgcombat.combat.ui;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.jline.terminal.Terminal;
@@ -12,7 +11,6 @@ import rpgcombat.combat.models.CombatRoundResult;
 import rpgcombat.combat.models.CombatantStatus;
 import rpgcombat.combat.models.Winner;
 import rpgcombat.combat.turnservice.TurnResult;
-import rpgcombat.combat.ui.messages.CombatMessageFormatter;
 import rpgcombat.models.characters.Character;
 import rpgcombat.utils.terminal.SharedTerminal;
 import rpgcombat.utils.terminal.TerminalSession;
@@ -23,6 +21,8 @@ import rpgcombat.utils.ui.Ansi;
  */
 public final class RoundResultPager {
     private static final int KEY_ESC = 27;
+    private static final int KEY_ENTER = 10;
+    private static final int KEY_CARRIAGE_RETURN = 13;
     private static final int KEY_SPACE = 32;
     private static final int KEY_A_LOWER = 'a';
     private static final int KEY_A_UPPER = 'A';
@@ -32,9 +32,13 @@ public final class RoundResultPager {
     private static final int KEY_RIGHT = 1_002;
 
     private static final int ESC_TIMEOUT_MS = 35;
-    private static final int QUIET_MS = 90;
-    private static final int MAX_RELEASE_WAIT_MS = 800;
+    private static final int QUIET_MS = 35;
+    private static final int MAX_RELEASE_WAIT_MS = 250;
     private static final int WIDTH = CombatRenderer.DIV_WIDTH;
+    private static final int CONTENT_WIDTH = WIDTH - 4;
+    private static final String BIG_DIV = Ansi.DARK_GRAY + "═".repeat(WIDTH) + Ansi.RESET;
+    private static final String THIN_DIV = Ansi.DARK_GRAY + "─".repeat(WIDTH) + Ansi.RESET;
+    private static final String BLOCK_BOTTOM = Ansi.DARK_GRAY + "└" + "─".repeat(WIDTH - 2) + "┘" + Ansi.RESET;
 
     private final CombatRenderer renderer;
 
@@ -71,7 +75,9 @@ public final class RoundResultPager {
             int key = readNavigationKey(reader);
             int lastPage = pages.size() - 1;
 
-            if (isPrevious(key)) {
+            if (isEnter(key)) {
+                break;
+            } else if (isPrevious(key)) {
                 currentPage = Math.max(0, currentPage - 1);
             } else if (isNext(key)) {
                 if (currentPage < lastPage) {
@@ -90,16 +96,18 @@ public final class RoundResultPager {
 
     private void render(Terminal terminal, List<Page> pages, int index) {
         Page page = pages.get(index);
-        terminal.writer().print("\033[H\033[2J\033[3J");
-        terminal.writer().print(Ansi.DARK_GRAY + "═".repeat(WIDTH) + Ansi.RESET + "\n");
-        terminal.writer().printf("%s%s%s %sPàgina %d/%d%s%n",
-                Ansi.BOLD, page.title(), Ansi.RESET,
-                Ansi.DARK_GRAY, index + 1, pages.size(), Ansi.RESET);
-        terminal.writer().print(Ansi.DARK_GRAY + "═".repeat(WIDTH) + Ansi.RESET + "\n\n");
-        terminal.writer().print(page.body());
-        terminal.writer().print("\n");
-        terminal.writer().print(Ansi.DARK_GRAY + "─".repeat(WIDTH) + Ansi.RESET + "\n");
-        terminal.writer().print(controls(index == pages.size() - 1));
+        StringBuilder screen = new StringBuilder(page.body().length() + 320);
+        screen.append("\033[H\033[2J\033[3J");
+        screen.append(BIG_DIV).append('\n');
+        screen.append(Ansi.BOLD).append(page.title()).append(Ansi.RESET).append(' ')
+                .append(Ansi.DARK_GRAY).append("Pàgina ").append(index + 1).append('/')
+                .append(pages.size()).append(Ansi.RESET).append('\n');
+        screen.append(BIG_DIV).append("\n\n");
+        screen.append(page.body()).append('\n');
+        screen.append(THIN_DIV).append('\n');
+        screen.append(controls(index == pages.size() - 1));
+
+        terminal.writer().print(screen);
         terminal.writer().flush();
     }
 
@@ -113,7 +121,7 @@ public final class RoundResultPager {
                 }
                 continue;
             }
-            if (key == KEY_SPACE || isPrevious(key) || isNext(key)) {
+            if (isEnter(key) || key == KEY_SPACE || isPrevious(key) || isNext(key)) {
                 return key;
             }
         }
@@ -155,6 +163,10 @@ public final class RoundResultPager {
         while (System.currentTimeMillis() < end) {
             reader.read(1);
         }
+    }
+
+    private boolean isEnter(int key) {
+        return key == KEY_ENTER || key == KEY_CARRIAGE_RETURN;
     }
 
     private boolean isPrevious(int key) {
@@ -211,10 +223,28 @@ public final class RoundResultPager {
     }
 
     private void appendTurn(List<String> lines, TurnResult turn) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder(256);
         renderer.appendTurnResult(sb, turn);
-        List<String> parsed = Arrays.stream(sb.toString().split("\\R", -1)).toList();
-        lines.addAll(parsed.stream().filter(line -> !line.isBlank()).toList());
+        appendNonBlankLines(lines, sb);
+    }
+
+    private void appendNonBlankLines(List<String> lines, StringBuilder source) {
+        int start = 0;
+        int length = source.length();
+        for (int i = 0; i <= length; i++) {
+            if (i == length || source.charAt(i) == '\n' || source.charAt(i) == '\r') {
+                if (i > start) {
+                    String line = source.substring(start, i);
+                    if (!line.isBlank()) {
+                        lines.add(line);
+                    }
+                }
+                if (i + 1 < length && source.charAt(i) == '\r' && source.charAt(i + 1) == '\n') {
+                    i++;
+                }
+                start = i + 1;
+            }
+        }
     }
 
     private void appendStatusBlock(StringBuilder sb, String title, CombatantStatus p1, CombatantStatus p2) {
@@ -247,18 +277,131 @@ public final class RoundResultPager {
     }
 
     private String blockBottom() {
-        return Ansi.DARK_GRAY + "└" + "─".repeat(WIDTH - 2) + "┘" + Ansi.RESET;
+        return BLOCK_BOTTOM;
     }
 
     private void appendBoxLine(StringBuilder sb, String line) {
+        for (String wrappedLine : wrapBoxLine(line, CONTENT_WIDTH)) {
+            int padding = Math.max(0, CONTENT_WIDTH - visibleLength(wrappedLine));
+            sb.append(Ansi.DARK_GRAY).append("│ ").append(Ansi.RESET)
+                    .append(wrappedLine)
+                    .append(Ansi.RESET)
+                    .append(" ".repeat(padding))
+                    .append(Ansi.DARK_GRAY).append(" │").append(Ansi.RESET)
+                    .append("\n");
+        }
+    }
+
+    private List<String> wrapBoxLine(String line, int width) {
         String safe = line == null ? "" : line;
-        int contentWidth = WIDTH - 4;
-        int padding = Math.max(0, contentWidth - visibleLength(safe));
-        sb.append(Ansi.DARK_GRAY).append("│ ").append(Ansi.RESET)
-                .append(safe)
-                .append(" ".repeat(padding))
-                .append(Ansi.DARK_GRAY).append(" │").append(Ansi.RESET)
-                .append("\n");
+        if (visibleLength(safe) <= width) {
+            return List.of(safe);
+        }
+
+        List<String> wrapped = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        int visible = 0;
+        int lastSpaceRaw = -1;
+        int index = 0;
+
+        while (index < safe.length()) {
+            int ansiEnd = ansiSequenceEnd(safe, index);
+            if (ansiEnd > index) {
+                current.append(safe, index, ansiEnd);
+                index = ansiEnd;
+                continue;
+            }
+
+            char ch = safe.charAt(index++);
+            current.append(ch);
+            visible++;
+
+            if (java.lang.Character.isWhitespace(ch)) {
+                lastSpaceRaw = current.length();
+            }
+
+            if (visible >= width && hasVisibleText(safe, index)) {
+                if (lastSpaceRaw > 0) {
+                    wrapped.add(trimTrailingSpaces(current.substring(0, lastSpaceRaw)));
+                    current = new StringBuilder(trimLeadingSpaces(current.substring(lastSpaceRaw)));
+                    visible = visibleLength(current.toString());
+                    lastSpaceRaw = lastWhitespacePosition(current.toString());
+                } else {
+                    wrapped.add(current.toString());
+                    current.setLength(0);
+                    visible = 0;
+                    lastSpaceRaw = -1;
+                }
+            }
+        }
+
+        if (!current.isEmpty() || wrapped.isEmpty()) {
+            wrapped.add(trimTrailingSpaces(current.toString()));
+        }
+        return wrapped;
+    }
+
+    private int ansiSequenceEnd(String text, int start) {
+        if (start >= text.length() || text.charAt(start) != '\u001B') {
+            return start;
+        }
+        int index = start + 1;
+        if (index < text.length() && text.charAt(index) == '[') {
+            index++;
+            while (index < text.length()) {
+                char ch = text.charAt(index++);
+                if (ch >= '@' && ch <= '~') {
+                    return index;
+                }
+            }
+        }
+        return start + 1;
+    }
+
+    private boolean hasVisibleText(String text, int start) {
+        int index = start;
+        while (index < text.length()) {
+            int ansiEnd = ansiSequenceEnd(text, index);
+            if (ansiEnd > index) {
+                index = ansiEnd;
+            } else if (!java.lang.Character.isWhitespace(text.charAt(index++))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int lastWhitespacePosition(String text) {
+        int last = -1;
+        int index = 0;
+        while (index < text.length()) {
+            int ansiEnd = ansiSequenceEnd(text, index);
+            if (ansiEnd > index) {
+                index = ansiEnd;
+            } else {
+                if (java.lang.Character.isWhitespace(text.charAt(index))) {
+                    last = index + 1;
+                }
+                index++;
+            }
+        }
+        return last;
+    }
+
+    private String trimLeadingSpaces(String text) {
+        int index = 0;
+        while (index < text.length() && java.lang.Character.isWhitespace(text.charAt(index))) {
+            index++;
+        }
+        return text.substring(index);
+    }
+
+    private String trimTrailingSpaces(String text) {
+        int index = text.length();
+        while (index > 0 && java.lang.Character.isWhitespace(text.charAt(index - 1))) {
+            index--;
+        }
+        return text.substring(0, index);
     }
 
     private CombatantStatus statusOr(CombatantStatus status, Character fallback) {
@@ -285,17 +428,18 @@ public final class RoundResultPager {
     private String controls(boolean lastPage) {
         String action = lastPage ? "[ESPAI] Sortir" : "[ESPAI] Següent";
         return Ansi.BOLD + "[←/→ o A/D]" + Ansi.RESET + " Navegar     "
-                + Ansi.BOLD + action + Ansi.RESET + "\n";
+                + Ansi.BOLD + action + Ansi.RESET + "     "
+                + Ansi.BOLD + "[ENTER] Saltar pàgines" + Ansi.RESET + "\n";
     }
 
     private void printFallback(List<Page> pages) {
         for (int i = 0; i < pages.size(); i++) {
             Page page = pages.get(i);
-            System.out.println(Ansi.DARK_GRAY + "═".repeat(WIDTH) + Ansi.RESET);
+            System.out.println(BIG_DIV);
             System.out.printf("%s%s%s %sPàgina %d/%d%s%n",
                     Ansi.BOLD, page.title(), Ansi.RESET,
                     Ansi.DARK_GRAY, i + 1, pages.size(), Ansi.RESET);
-            System.out.println(Ansi.DARK_GRAY + "═".repeat(WIDTH) + Ansi.RESET);
+            System.out.println(BIG_DIV);
             System.out.println(page.body());
         }
     }
@@ -310,7 +454,22 @@ public final class RoundResultPager {
     }
 
     private int visibleLength(String text) {
-        return CombatMessageFormatter.stripAnsi(text).length();
+        if (text == null || text.isEmpty()) {
+            return 0;
+        }
+
+        int visible = 0;
+        int index = 0;
+        while (index < text.length()) {
+            int ansiEnd = ansiSequenceEnd(text, index);
+            if (ansiEnd > index) {
+                index = ansiEnd;
+            } else {
+                visible++;
+                index++;
+            }
+        }
+        return visible;
     }
 
     private record Page(String title, String body) {
