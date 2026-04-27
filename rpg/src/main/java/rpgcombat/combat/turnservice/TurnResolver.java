@@ -113,7 +113,7 @@ public class TurnResolver {
                 attacker.getDamage(damage);
             return new TurnResult(attacker.getName(), attackerMessage, startMessages.messages(), List.of(), null,
                     List.of(),
-                    List.of(), damage, false);
+                    List.of(), damage, false, true, false);
         }
 
         Random attackerRng = attacker.rng();
@@ -186,7 +186,7 @@ public class TurnResolver {
             return new TurnResult(attacker.getName(), attackerMessage, startMessages.messages(),
                     preDefenseMessages.messages(),
                     selfResult.message(), postDefenseMessages.messages(), endTurnMessages.messages(), selfDamage,
-                    critical);
+                    critical, true, Boolean.TRUE.equals(ctx.getMeta("CHARGED_HIT")));
         }
         if (defender.isDesperate()) {
             preDefenseMessages.styled(MessageColor.GREEN, MessageSymbol.WARNING,
@@ -228,7 +228,8 @@ public class TurnResolver {
 
         return new TurnResult(attacker.getName(), attackerMessage, startMessages.messages(),
                 preDefenseMessages.messages(), defenseMessage,
-                postDefenseMessages.messages(), endTurnMessages.messages(), ctx.damageDealt(), critical);
+                postDefenseMessages.messages(), endTurnMessages.messages(), ctx.damageDealt(), critical,
+                false, Boolean.TRUE.equals(ctx.getMeta("CHARGED_HIT")));
     }
 
     /**

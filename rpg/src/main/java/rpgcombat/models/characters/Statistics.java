@@ -305,6 +305,19 @@ public class Statistics {
     }
 
     /**
+     * Recupera estamina sense superar el màxim.
+     */
+    public double restoreStamina(double amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+        double before = stamina;
+        stamina = Math.min(maxStamina, stamina + amount);
+        return stamina - before;
+    }
+
+
+    /**
      * Recupera resistència en atacar.
      */
     public void recoverResistanceOnAttack() {

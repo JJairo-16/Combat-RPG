@@ -16,5 +16,21 @@ public record TurnResult(
         List<CombatMessage> postDefenseMessages,
         List<CombatMessage> endTurnMessages,
         double damageDealt,
-        boolean critical) {
+        boolean critical,
+        boolean selfHit,
+        boolean chargedHit) {
+
+    public TurnResult(
+            String actorName,
+            String attackerMessage,
+            List<CombatMessage> startMessages,
+            List<CombatMessage> preDefenseMessages,
+            String defenseMessage,
+            List<CombatMessage> postDefenseMessages,
+            List<CombatMessage> endTurnMessages,
+            double damageDealt,
+            boolean critical) {
+        this(actorName, attackerMessage, startMessages, preDefenseMessages, defenseMessage, postDefenseMessages,
+                endTurnMessages, damageDealt, critical, false, false);
+    }
 }

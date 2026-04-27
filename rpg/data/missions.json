@@ -1,0 +1,308 @@
+[
+  {
+    "id": "HIT_SIX_TIMES",
+    "name": "Pressió sostinguda",
+    "description": "Impacta el rival 6 vegades.",
+    "weight": 10,
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "HIT",
+      "target": 6
+    }
+  },
+  {
+    "id": "DEAL_DAMAGE_560",
+    "name": "Càstig persistent",
+    "description": "Infligeix 560 de dany total.",
+    "weight": 10,
+    "objective": {
+      "type": "SUM_VALUE",
+      "event": "DAMAGE_DEALT",
+      "target": 560
+    }
+  },
+  {
+    "id": "ATTACK_SIX_TIMES",
+    "name": "Ofensiva constant",
+    "description": "Ataca 6 vegades.",
+    "weight": 9,
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "ACTION_ATTACK",
+      "target": 6
+    }
+  },
+  {
+    "id": "SURVIVE_SIX_TURNS",
+    "name": "Resistència provada",
+    "description": "Sobreviu 6 torns.",
+    "weight": 8,
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "SURVIVE_TURN",
+      "target": 6
+    }
+  },
+  {
+    "id": "CRIT_TWO_TIMES",
+    "name": "Precisió letal",
+    "description": "Aconsegueix 2 cops crítics.",
+    "weight": 4,
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "CRIT",
+      "target": 2
+    }
+  },
+  {
+    "id": "CHARGED_HIT_TWO",
+    "name": "Execució preparada",
+    "description": "Impacta 2 vegades amb un atac carregat.",
+    "weight": 7,
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "CHARGED_HIT",
+      "target": 2
+    }
+  },
+  {
+    "id": "CHARGE_ATTACK_PATTERN",
+    "name": "Ritme calculat",
+    "description": "Executa la seqüència carregar, atacar, carregar i atacar.",
+    "weight": 7,
+    "objective": {
+      "type": "ACTION_SEQUENCE",
+      "sequence": [
+        "CHARGE",
+        "ATTACK",
+        "CHARGE",
+        "ATTACK"
+      ],
+      "target": 4
+    }
+  },
+  {
+    "id": "KEEP_PRESSURE_FIVE",
+    "name": "Sense donar aire",
+    "description": "Impacta 5 vegades seguides sense defensar.",
+    "weight": 7,
+    "objective": {
+      "type": "CONSECUTIVE_EVENT",
+      "successEvent": "HIT",
+      "resetEvent": "ACTION_DEFEND",
+      "target": 5
+    }
+  },
+  {
+    "id": "NO_DEFENSE_FIVE_TURNS",
+    "name": "Pas endavant",
+    "description": "Passa 5 torns sense defensar-te.",
+    "weight": 7,
+    "objective": {
+      "type": "AVOID_EVENT_FOR_TURNS",
+      "event": "ACTION_DEFEND",
+      "target": 5
+    }
+  },
+  {
+    "id": "NO_DODGE_FIVE_TURNS",
+    "name": "Peus ferms",
+    "description": "Passa 5 torns sense esquivar.",
+    "weight": 6,
+    "objective": {
+      "type": "AVOID_EVENT_FOR_TURNS",
+      "event": "ACTION_DODGE",
+      "target": 5
+    }
+  },
+  {
+    "id": "NO_CHARGE_FIVE_TURNS",
+    "name": "Pressa directa",
+    "description": "Passa 5 torns sense carregar l'atac.",
+    "weight": 6,
+    "objective": {
+      "type": "AVOID_EVENT_FOR_TURNS",
+      "event": "ACTION_CHARGE",
+      "target": 5
+    }
+  },
+  {
+    "id": "GAIN_HIGH_MOMENTUM",
+    "name": "Impuls dominant",
+    "description": "Arriba a tenir impuls alt.",
+    "weight": 6,
+    "objective": {
+      "type": "STATE_REACHED",
+      "event": "HIGH_MOMENTUM",
+      "target": 1
+    }
+  },
+  {
+    "id": "MAINTAIN_HIGH_MOMENTUM_THREE",
+    "name": "Inèrcia controlada",
+    "description": "Mantén impuls alt durant 3 torns.",
+    "weight": 6,
+    "objective": {
+      "type": "STATE_MAINTAINED",
+      "event": "HIGH_MOMENTUM",
+      "target": 3
+    }
+  },
+  {
+    "id": "LOW_STAMINA_HITS_THREE",
+    "name": "Força al límit",
+    "description": "Impacta 3 vegades mentre tens poca estamina.",
+    "weight": 5,
+    "objective": {
+      "type": "RISK_REWARD",
+      "event": "LOW_STAMINA",
+      "successEvent": "HIT",
+      "value": 1,
+      "target": 3
+    }
+  },
+  {
+    "id": "LOW_HEALTH_HITS_TWO",
+    "name": "Instint de supervivència",
+    "description": "Impacta 2 vegades mentre tens la vida baixa.",
+    "weight": 4,
+    "objective": {
+      "type": "RISK_REWARD",
+      "event": "LOW_HEALTH",
+      "successEvent": "HIT",
+      "value": 1,
+      "target": 2
+    }
+  },
+  {
+    "id": "SURVIVE_LOW_HEALTH_THREE",
+    "name": "Aguant extrem",
+    "description": "Sobreviu 3 torns amb la vida baixa.",
+    "weight": 4,
+    "objective": {
+      "type": "STATE_MAINTAINED",
+      "event": "LOW_HEALTH",
+      "target": 3
+    }
+  },
+  {
+    "id": "DEFEND_FOUR_TIMES",
+    "name": "Guàrdia disciplinada",
+    "description": "Defensa't 4 vegades.",
+    "weight": 7,
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "ACTION_DEFEND",
+      "target": 4
+    }
+  },
+  {
+    "id": "DODGE_FOUR_TIMES",
+    "name": "Joc evasori",
+    "description": "Intenta esquivar 4 vegades.",
+    "weight": 7,
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "ACTION_DODGE",
+      "target": 4
+    }
+  },
+  {
+    "id": "CHARGE_FOUR_TIMES",
+    "name": "Preparació metòdica",
+    "description": "Carrega l'atac 4 vegades.",
+    "weight": 7,
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "ACTION_CHARGE",
+      "target": 4
+    }
+  },
+  {
+    "id": "DEFEND_ATTACK_FLOW",
+    "name": "Contraofensiva",
+    "description": "Executa la seqüència defensar, atacar, defensar i atacar.",
+    "weight": 6,
+    "objective": {
+      "type": "ACTION_SEQUENCE",
+      "sequence": [
+        "DEFEND",
+        "ATTACK",
+        "DEFEND",
+        "ATTACK"
+      ],
+      "target": 4
+    }
+  },
+  {
+    "id": "DODGE_ATTACK_FLOW",
+    "name": "Resposta ràpida",
+    "description": "Executa la seqüència esquivar, atacar, esquivar i atacar.",
+    "weight": 6,
+    "objective": {
+      "type": "ACTION_SEQUENCE",
+      "sequence": [
+        "DODGE",
+        "ATTACK",
+        "DODGE",
+        "ATTACK"
+      ],
+      "target": 4
+    }
+  },
+  {
+    "id": "TACTICAL_MIX",
+    "name": "Adaptació tàctica",
+    "description": "Executa atacar, defensar, carregar i atacar.",
+    "weight": 5,
+    "objective": {
+      "type": "ACTION_SEQUENCE",
+      "sequence": [
+        "ATTACK",
+        "DEFEND",
+        "CHARGE",
+        "ATTACK"
+      ],
+      "target": 4
+    }
+  },
+  {
+    "id": "OPENING_GAMBIT",
+    "name": "Obertura mesurada",
+    "description": "Executa carregar, defensar, atacar i atacar.",
+    "weight": 5,
+    "objective": {
+      "type": "ACTION_SEQUENCE",
+      "sequence": [
+        "CHARGE",
+        "DEFEND",
+        "ATTACK",
+        "ATTACK"
+      ],
+      "target": 4
+    }
+  },
+  {
+    "id": "RELENTLESS_CHAIN",
+    "name": "Cadena ofensiva",
+    "description": "Impacta 4 vegades seguides.",
+    "weight": 6,
+    "objective": {
+      "type": "CONSECUTIVE_EVENT",
+      "successEvent": "HIT",
+      "resetEvent": "ACTION_DODGE",
+      "target": 4
+    }
+  },
+  {
+    "id": "CONTROLLED_ASSAULT",
+    "name": "Assalt controlat",
+    "description": "Infligeix dany en 5 torns diferents.",
+    "weight": 8,
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "DAMAGE_DEALT",
+      "target": 5
+    }
+  }
+]

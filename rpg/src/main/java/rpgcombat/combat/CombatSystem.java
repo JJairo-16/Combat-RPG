@@ -24,6 +24,7 @@ import rpgcombat.combat.ui.CombatRenderer;
 import rpgcombat.combat.ui.RoundResultPager;
 import rpgcombat.models.effects.impl.MagicalTiredness;
 import rpgcombat.models.effects.impl.SuddenDeathPoisonEffect;
+import rpgcombat.perks.CombatPerkSystem;
 
 /**
  * Coordina una ronda de combat entre dos personatges.
@@ -40,6 +41,7 @@ public class CombatSystem {
     private final EffectPipeline effectPipeline = new EffectPipeline();
     private final RoundRecoveryService recoveryService = new RoundRecoveryService();
     private final TurnResolver turnResolver = new TurnResolver(attackResolver, effectPipeline, recoveryService);
+    private final CombatPerkSystem perkSystem;
 
     private CombatBalanceConfig balance = CombatBalanceRegistry.get();
     private AntiStallConfig antiStall = balance.antiStall();
@@ -65,9 +67,22 @@ public class CombatSystem {
      * @param policy política de prioritat
      */
     public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy) {
+        this(p1, p2, policy, null);
+    }
+
+    /**
+     * Crea el sistema amb progressió de missions i perks.
+     *
+     * @param p1 primer personatge
+     * @param p2 segon personatge
+     * @param policy política de prioritat
+     * @param perkSystem sistema de perks
+     */
+    public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy, CombatPerkSystem perkSystem) {
         this.player1 = p1;
         this.player2 = p2;
         this.priorityPolicy = policy;
+        this.perkSystem = perkSystem;
     }
 
     public boolean preAntiStall() {
@@ -117,10 +132,14 @@ public class CombatSystem {
 
         if (p1First) {
             firstTurn = turnResolver.resolveTurn(player1, player2, a1, a2, p2Bonus);
+            updateMissionProgress(player1, player2, a1, a2, firstTurn);
             secondTurn = turnResolver.resolveTurn(player2, player1, a2, a1, p1Bonus);
+            updateMissionProgress(player2, player1, a2, a1, secondTurn);
         } else {
             firstTurn = turnResolver.resolveTurn(player2, player1, a2, a1, p1Bonus);
+            updateMissionProgress(player2, player1, a2, a1, firstTurn);
             secondTurn = turnResolver.resolveTurn(player1, player2, a1, a2, p2Bonus);
+            updateMissionProgress(player1, player2, a1, a2, secondTurn);
         }
 
         double p1HealthAfterAttacks = p1Stats.getHealth();
@@ -196,6 +215,17 @@ public class CombatSystem {
                 p2AfterDamage,
                 p1Final,
                 p2Final);
+    }
+
+
+    /**
+     * Actualitza la missió del personatge si el sistema està actiu.
+     */
+    private void updateMissionProgress(Character actor, Character opponent, Action actorAction, Action opponentAction,
+            TurnResult result) {
+        if (perkSystem != null) {
+            perkSystem.afterTurn(actor, opponent, actorAction, opponentAction, result, roundNumber);
+        }
     }
 
     /**

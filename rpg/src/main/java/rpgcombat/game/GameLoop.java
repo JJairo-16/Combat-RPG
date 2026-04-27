@@ -14,6 +14,7 @@ import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
+import rpgcombat.perks.CombatPerkSystem;
 
 import rpgcombat.utils.cache.TextWrapCache;
 import rpgcombat.utils.input.Menu;
@@ -41,6 +42,7 @@ public class GameLoop {
     private final Character player2;
 
     private final CombatSystem combatSystem;
+    private final CombatPerkSystem perkSystem;
     private final Cleaner cls = new Cleaner();
     private final TextWrapCache wrapCache = new TextWrapCache();
     private final CinematicsOptions cinematicsOptions;
@@ -52,7 +54,8 @@ public class GameLoop {
     public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers, Map<String, String> information, CinematicsOptions cinematicsOptions, HomeScreenConfig homeScreenConfig) {
         this.player1 = player1;
         this.player2 = player2;
-        this.combatSystem = new CombatSystem(player1, player2);
+        this.perkSystem = new CombatPerkSystem(player1, player2);
+        this.combatSystem = new CombatSystem(player1, player2, new rpgcombat.combat.turnservice.DefaultTurnPriorityPolicy(), perkSystem);
 
         this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers, information);
         this.cinematicsOptions = cinematicsOptions;
@@ -67,6 +70,7 @@ public class GameLoop {
         CinematicBuilder.playInit(cinematicsOptions, player1, player2);
 
         cls.clear();
+        perkSystem.showInitialMissions(player1, player2);
 
         Winner winner;
         do {
@@ -74,6 +78,9 @@ public class GameLoop {
             Action action2 = menu.playPlayer2();
 
             winner = combatSystem.play(action1, action2);
+
+            perkSystem.resolvePendingChoices(player1);
+            perkSystem.resolvePendingChoices(player2);
 
             if (cinematicsOptions.antiStall() && combatSystem.preAntiStall()) {
                 CinematicBuilder.playAntiStall();

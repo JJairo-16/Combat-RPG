@@ -14,6 +14,10 @@ import rpgcombat.config.paths.PathsConfig;
 import rpgcombat.game.menu.MenuDescriptionsLoader;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.game.modifier.config.StatusModLoader;
+import rpgcombat.perks.PerkLoader;
+import rpgcombat.perks.PerkRegistry;
+import rpgcombat.perks.mission.MissionLoader;
+import rpgcombat.perks.mission.MissionRegistry;
 import rpgcombat.utils.rng.D20Terminal;
 import rpgcombat.utils.rng.DivineCharismaAffinity;
 import rpgcombat.utils.terminal.SharedTerminal;
@@ -52,6 +56,10 @@ public final class ResourcePreloader {
         CombatBalanceRegistry.initialize(balance);
 
         menuInformation = MenuDescriptionsLoader.load(Path.of(paths.menuDescriptions()));
+
+        MissionRegistry.initialize(MissionLoader.load(Path.of(paths.missionsConfig())));
+        PerkRegistry.initialize(PerkLoader.load(Path.of(paths.perksConfig())));
+
         gameStaticLoaded = true;
     }
 
