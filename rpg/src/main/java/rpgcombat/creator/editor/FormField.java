@@ -1,4 +1,4 @@
-package rpgcombat.creator;
+package rpgcombat.creator.editor;
 
 /** Camps navegables del formulari. */
 enum FormField {

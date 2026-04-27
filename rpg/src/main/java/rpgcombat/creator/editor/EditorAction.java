@@ -1,4 +1,4 @@
-package rpgcombat.creator;
+package rpgcombat.creator.editor;
 
 /** Accions que pot executar el formulari. */
 enum EditorAction {

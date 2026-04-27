@@ -1,4 +1,4 @@
-package rpgcombat.creator;
+package rpgcombat.creator.editor;
 
 import org.jline.terminal.Terminal;
 import org.jline.utils.InfoCmp.Capability;

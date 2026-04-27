@@ -1,4 +1,6 @@
-package rpgcombat.creator;
+package rpgcombat.creator.editor;
+
+import rpgcombat.creator.CharacterCreator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,6 +9,7 @@ import org.jline.terminal.Terminal;
 
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Stat;
+import rpgcombat.creator.score.CharacterBuildScore;
 import rpgcombat.utils.ui.Ansi;
 
 /** Renderitza el formulari de creació. */
@@ -44,9 +47,11 @@ final class CharacterCreationRenderer {
             renderField(terminal, draft, action, selected, null, "", 0);
             renderStatsBox(terminal, draft, selected);
             renderBreedInfoBox(terminal, draft);
+            renderBuildScore(terminal, draft, EditorLayout.BUILD_SCORE_ROW);
         } else if (action.isStat()) {
             renderField(terminal, draft, action, selected, null, "", 0);
             renderField(terminal, draft, EditorAction.CONFIRM, selected, null, "", 0);
+            renderBuildScore(terminal, draft, EditorLayout.BUILD_SCORE_ROW);
         } else {
             renderField(terminal, draft, action, selected, null, "", 0);
         }
@@ -162,12 +167,25 @@ final class CharacterCreationRenderer {
     private void renderActionsBox(Terminal terminal, CharacterDraft draft, EditorAction selected) {
         int row = painter.boxTop(terminal, EditorLayout.ACTIONS_ROW, EditorLayout.LEFT_COL,
                 EditorLayout.LEFT_BOX_WIDTH, "Accions");
+        renderBuildScore(terminal, draft, row++);
         renderField(terminal, draft, EditorAction.RANDOMIZE, selected, null, "", 0);
         renderField(terminal, draft, EditorAction.CONFIRM, selected, null, "", 0);
-        painter.boxBottom(terminal, row + 2, EditorLayout.LEFT_COL, EditorLayout.LEFT_BOX_WIDTH);
+        painter.boxBottom(terminal, row + 3, EditorLayout.LEFT_COL, EditorLayout.LEFT_BOX_WIDTH);
     }
 
-    /** Dibuixa l'ajuda. */
+    /** Dibuixa la puntuació de la build. */
+    private void renderBuildScore(Terminal terminal, CharacterDraft draft, int row) {
+        CharacterBuildScore.Rating rating = CharacterBuildScore.rate(draft.statsCopy(), draft.breed());
+        String color = rating.validPoints() ? Ansi.YELLOW : Ansi.RED;
+        String text = Ansi.DARK_GRAY + "Qualitat:" + Ansi.RESET + " "
+                + color + rating.starsText() + Ansi.RESET;
+        if (rating.corrupt()) {
+            text += Ansi.RED + "  estrelles corruptes" + Ansi.RESET;
+        }
+        painter.replaceLine(terminal, row, EditorLayout.CONTENT_COL, text);
+    }
+
+    /** Dibuixa l.ajuda. */
     private void renderControls(Terminal terminal, EditorAction editing) {
         painter.replaceLine(terminal, EditorLayout.HELP_ROW, EditorLayout.CONTENT_COL, "");
         painter.replaceLine(terminal, EditorLayout.HELP_ROW + 1, EditorLayout.CONTENT_COL, "");
@@ -317,8 +335,7 @@ final class CharacterCreationRenderer {
             status = Ansi.RED + "sobren " + Math.abs(remaining) + " punts" + Ansi.RESET;
         }
         return Ansi.BOLD + Ansi.MAGENTA + "Creació de personatge" + Ansi.RESET + Ansi.DARK_GRAY + "  ·  "
-                + Ansi.RESET + draft.totalStats() + "/" + CharacterCreator.TOTAL_POINTS + Ansi.DARK_GRAY + "  ·  "
-                + Ansi.RESET + status;
+                + Ansi.RESET + status + Ansi.RESET;
     }
 
     /** Indica si es pot confirmar. */

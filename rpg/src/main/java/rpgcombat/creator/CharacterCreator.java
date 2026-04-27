@@ -15,22 +15,24 @@ import rpgcombat.utils.rng.StatsBudget;
 import rpgcombat.utils.rng.StatsBudget.Result;
 import rpgcombat.utils.rng.StatsBudget.ScaledLimits;
 import rpgcombat.utils.ui.Ansi;
+import rpgcombat.creator.editor.CharacterCreationEditor;
+import rpgcombat.creator.editor.CharacterDraft;
 
 /**
  * Gestor de creació de personatges.
  */
 public class CharacterCreator {
 
-    static final int MIN_NAME_LEN = 3;
-    static final int MAX_NAME_LEN = 20;
-    static final int MIN_AGE = 12;
-    static final int MAX_AGE = Integer.MAX_VALUE;
-    static final int TOTAL_POINTS = 140;
+    public static final int MIN_NAME_LEN = 3;
+    public static final int MAX_NAME_LEN = 20;
+    public static final int MIN_AGE = 12;
+    public static final int MAX_AGE = Integer.MAX_VALUE;
+    public static final int TOTAL_POINTS = 140;
 
     private static final ScaledLimits limits = StatsBudget.scaleLimits(TOTAL_POINTS);
-    static final int MIN_STAT = limits.minValue();
-    static final int MAX_STAT = limits.maxValue();
-    static final int MIN_CONSTITUTION = MIN_STAT + 2;
+    public static final int MIN_STAT = limits.minValue();
+    public static final int MAX_STAT = limits.maxValue();
+    public static final int MIN_CONSTITUTION = MIN_STAT + 2;
 
     private static int id = 1;
 
@@ -59,7 +61,7 @@ public class CharacterCreator {
     }
 
     /** Resultat de la generació d'estadístiques i raça. */
-    static record Generation(int[] stats, Breed breed) {
+    public static record Generation(int[] stats, Breed breed) {
         @Override
         public boolean equals(Object o) {
             if (this == o) {
@@ -88,13 +90,13 @@ public class CharacterCreator {
     }
 
     /** Genera estadístiques i raça automàticament. */
-    static Generation autoGenerate() {
+    public static Generation autoGenerate() {
         Result res = StatsBudget.generate(TOTAL_POINTS);
         return new Generation(res.baseStats(), res.breed());
     }
 
     /** Mostra un resum visual de raça, bonus i estadístiques. */
-    static void printSummary(Generation gen) {
+    public static void printSummary(Generation gen) {
         int[] stats = gen.stats();
         Breed breed = gen.breed();
         StringBuilder sb = new StringBuilder(512);

@@ -1,4 +1,6 @@
-package rpgcombat.creator;
+package rpgcombat.creator.editor;
+
+import rpgcombat.creator.CharacterCreator;
 
 import java.io.IOException;
 
@@ -12,7 +14,7 @@ import rpgcombat.utils.terminal.SharedTerminal;
 import rpgcombat.utils.terminal.TerminalSession;
 
 /** Formulari interactiu de terminal per crear personatges. */
-final class CharacterCreationEditor {
+public final class CharacterCreationEditor {
     private final CharacterCreationRenderer renderer = new CharacterCreationRenderer();
 
     private int cursor;
@@ -22,7 +24,7 @@ final class CharacterCreationEditor {
     private String message = "";
 
     /** Edita l'esborrany fins a confirmar-lo. */
-    void edit(CharacterDraft draft) {
+    public void edit(CharacterDraft draft) {
         try (TerminalSession session = SharedTerminal.openSession()) {
             Terminal terminal = session.terminal();
             BindingReader reader = new BindingReader(terminal.reader());

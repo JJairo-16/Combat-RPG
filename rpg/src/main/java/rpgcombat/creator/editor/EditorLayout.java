@@ -1,4 +1,6 @@
-package rpgcombat.creator;
+package rpgcombat.creator.editor;
+
+import rpgcombat.creator.CharacterCreator;
 
 /** Constants de disposició del formulari. */
 final class EditorLayout {
@@ -30,8 +32,10 @@ final class EditorLayout {
     private static final int AGE_ROW = IDENTITY_ROW + 2;
     private static final int BREED_ROW = IDENTITY_ROW + 3;
     private static final int STRENGTH_ROW = STATS_ROW + 1;
-    private static final int RANDOMIZE_ROW = ACTIONS_ROW + 1;
-    private static final int CONFIRM_ROW = ACTIONS_ROW + 2;
+    static final int BUILD_SCORE_ROW = ACTIONS_ROW + 1;
+
+    private static final int RANDOMIZE_ROW = ACTIONS_ROW + 2;
+    private static final int CONFIRM_ROW = ACTIONS_ROW + 3;
 
     private EditorLayout() {
     }
