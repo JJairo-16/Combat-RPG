@@ -8,6 +8,7 @@ import rpgcombat.config.app.AppConfig;
 import rpgcombat.config.app.AppConfigLoader;
 import rpgcombat.game.EndGameAction;
 import rpgcombat.game.GameLoop;
+import rpgcombat.game.cinematics.CinematicBuilder;
 import rpgcombat.game.menu.HomeMenu;
 import rpgcombat.utils.ui.LoadingIntro;
 import rpgcombat.utils.ui.Prettier;
@@ -35,6 +36,11 @@ public final class AppController {
 
                 if (action == HomeMenu.Action.EXIT) {
                     return;
+                }
+
+                if (action == HomeMenu.Action.CREDITS) {
+                    CinematicBuilder.playCredits();
+                    continue;
                 }
             }
 

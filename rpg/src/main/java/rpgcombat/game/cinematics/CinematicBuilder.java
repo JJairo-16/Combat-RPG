@@ -73,6 +73,14 @@ public final class CinematicBuilder {
         cinematic.play();
     }
 
+
+    /**
+     * Reprodueix la cinemàtica de crèdits.
+     */
+    public static void playCredits() {
+        buildCreditsCinematic().play();
+    }
+
     /**
      * Tria una cinemàtica inicial aleatòria.
      */
@@ -424,6 +432,82 @@ public final class CinematicBuilder {
                 .build();
 
         return cinema(scene(end));
+    }
+
+
+    /**
+     * Construeix els crèdits del joc.
+     */
+    private static TextCinematic buildCreditsCinematic() {
+        TextBlock mainCredits = BlockBuilder.text("""
+                <bright_white>CRÈDITS</bright_white>
+
+                <gray>Disseny de personatges:</gray> <white>Jairo Linares</white>
+                <gray>Sistema d'estadístiques:</gray> <white>Jairo Linares</white>
+                <gray>Sistema d'efectes d'estat:</gray> <white>Jairo Linares</white>
+                <gray>Disseny de races i atributs:</gray> <white>Jairo Linares</white>
+                <gray>Interfície d'usuari:</gray> <white>Jairo Linares</white>
+                <gray>Sistema de menús:</gray> <white>Jairo Linares</white>
+                <gray>Editor de personatges:</gray> <white>Jairo Linares</white>
+                <gray>Motor de joc:</gray> <white>Jairo Linares</white>
+                <gray>Sistema d'accions i modificadors:</gray> <white>Jairo Linares</white>
+                <gray>Sistema de missatges i text:</gray> <white>Jairo Linares</white>
+                <gray>Arquitectura general del projecte:</gray> <white>Jairo Linares</white>
+                <gray>Integració de sistemes:</gray> <white>Jairo Linares</white>
+                """)
+                .mood(TypingMood.FAST)
+                .build();
+
+        TextBlock impossibleCredits = BlockBuilder.text("""
+                <bright_white>CRÈDITS ADDICIONALS</bright_white>
+
+                <gray>Disseny de realitats alternatives:</gray> <white>Jairo Linares</white>
+                <gray>Gestió de línies temporals inestables:</gray> <white>Jairo Linares</white>
+                <gray>Equilibri de decisions moralment qüestionables:</gray> <white>Jairo Linares</white>
+                <gray>Invocació controlada del caos:</gray> <white>Jairo Linares</white>
+                <gray>Simulació d'existència dubtosa:</gray> <white>Jairo Linares</white>
+                <gray>Optimització de pensaments absurds:</gray> <white>Jairo Linares</white>
+                <gray>Interpretació de comportaments inexplicables:</gray> <white>Jairo Linares</white>
+                <gray>Enginyeria de situacions que semblaven bona idea:</gray> <white>Jairo Linares</white>
+                <gray>Implementació de lògica discutible:</gray> <white>Jairo Linares</white>
+                """)
+                .mood(TypingMood.NORMAL)
+                .build();
+
+        TextBlock blameCredits = BlockBuilder.text("""
+                <bright_white>INCIDÈNCIES TÈCNIQUES</bright_white>
+
+                <gray>Generació de bugs crítics:</gray> <white>ChatGPT</white>
+                <gray>Desincronització de sistemes:</gray> <white>GitHub Copilot</white>
+                <gray>Errors de càlcul completament evitables:</gray> <white>Gemini</white>
+                <gray>Comportaments imprevisibles del joc:</gray> <white>Claude</white>
+                <gray>Decisions de disseny qüestionables:</gray> <white>Microsoft Copilot</white>
+                <gray>Errors que només passen una vegada:</gray> <white>Perplexity</white>
+                <gray>Codi que funciona per motius desconeguts:</gray> <white>Character.AI</white>
+                <gray>Codi que deixa de funcionar sense motiu:</gray> <white>Replit Ghostwriter</white>
+                <gray>Problemes que apareixen just abans d'entregar:</gray> <white>Amazon CodeWhisperer</white>
+                <gray>Causant del 99.7% dels bugs:</gray> <white>ChatGPT</white>
+                """)
+                .mood(TypingMood.NORMAL)
+                .build();
+
+        TextBlock endCredits = BlockBuilder.text("""
+                <bright_white>CONTROL FINAL</bright_white>
+
+                <gray>Control de qualitat:</gray> <white>No aplicable</white>
+                <gray>Testing:</gray> <white>Ocasional</white>
+                <gray>Suport tècnic:</gray> <white>Reinicia i prova un altre cop</white>
+
+                <bright_white>Gràcies per jugar.</bright_white>
+                """)
+                .mood(TypingMood.SLOW)
+                .build();
+
+        return cinema(
+                scene(mainCredits),
+                scene(impossibleCredits),
+                scene(blameCredits),
+                scene(endCredits));
     }
 
     /**

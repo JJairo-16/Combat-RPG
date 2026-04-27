@@ -11,15 +11,20 @@ public final class HomeMenu {
 
     public enum Action {
         START,
+        CREDITS,
         EXIT
     }
 
     /** Mostra el menú d'inici i retorna l'acció seleccionada. */
     public static Action show(String title) {
         int option = new SimpleMenu(1).getOption(
-                List.of("Començar a jugar", "Sortir"),
+                List.of("Començar a jugar", "Crèdits", "Sortir"),
                 title);
 
-        return option == 1 ? Action.START : Action.EXIT;
+        return switch (option) {
+            case 1 -> Action.START;
+            case 2 -> Action.CREDITS;
+            default -> Action.EXIT;
+        };
     }
 }
