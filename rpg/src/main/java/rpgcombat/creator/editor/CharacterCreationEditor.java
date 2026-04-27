@@ -22,6 +22,9 @@ public final class CharacterCreationEditor {
     private StringBuilder editBuffer = new StringBuilder();
     private int editCursor;
     private String message = "";
+    private volatile boolean resizePending;
+    private int terminalWidth;
+    private int terminalHeight;
 
     /** Edita l'esborrany fins a confirmar-lo. */
     public void edit(CharacterDraft draft) {
@@ -29,26 +32,36 @@ public final class CharacterCreationEditor {
             Terminal terminal = session.terminal();
             BindingReader reader = new BindingReader(terminal.reader());
             KeyMap<InputAction> keyMap = buildKeyMap(terminal);
+            Terminal.SignalHandler previousWinch = terminal.handle(Terminal.Signal.WINCH, signal -> resizePending = true);
 
+            terminalWidth = terminal.getWidth();
+            terminalHeight = terminal.getHeight();
             renderAll(terminal, draft);
-            while (true) {
-                InputAction input = reader.readBinding(keyMap);
-                if (input == null) {
-                    continue;
-                }
-                switch (input) {
-                    case UP -> moveCursor(-1, draft, terminal);
-                    case DOWN -> moveCursor(1, draft, terminal);
-                    case LEFT -> adjustCurrentField(draft, -1, terminal);
-                    case RIGHT -> adjustCurrentField(draft, 1, terminal);
-                    case SELECT -> {
-                        if (handleSelect(draft, terminal)) {
-                            return;
+            try {
+                while (true) {
+                    if (consumeResize(terminal, draft)) {
+                        continue;
+                    }
+                    InputAction input = reader.readBinding(keyMap);
+                    if (consumeResize(terminal, draft) || input == null) {
+                        continue;
+                    }
+                    switch (input) {
+                        case UP -> moveCursor(-1, draft, terminal);
+                        case DOWN -> moveCursor(1, draft, terminal);
+                        case LEFT -> adjustCurrentField(draft, -1, terminal);
+                        case RIGHT -> adjustCurrentField(draft, 1, terminal);
+                        case SELECT -> {
+                            if (handleSelect(draft, terminal)) {
+                                return;
+                            }
+                        }
+                        case IGNORE -> {
                         }
                     }
-                    case IGNORE -> {
-                    }
                 }
+            } finally {
+                terminal.handle(Terminal.Signal.WINCH, previousWinch);
             }
         } catch (IOException e) {
             System.out.println("No s'ha pogut obrir el formulari interactiu: " + e.getMessage());
@@ -143,7 +156,13 @@ public final class CharacterCreationEditor {
     private void editTextField(Terminal terminal, CharacterDraft draft) throws IOException {
         startEditing(EditorAction.EDIT_NAME, draft.name(), terminal, draft, "Edita el nom com en un camp de text.");
         while (true) {
+            if (consumeResize(terminal, draft)) {
+                continue;
+            }
             TextKey input = readTextInput(terminal);
+            if (consumeResize(terminal, draft)) {
+                continue;
+            }
             switch (input.type()) {
                 case CANCEL -> {
                     cancelEditing(terminal, draft);
@@ -172,7 +191,13 @@ public final class CharacterCreationEditor {
         startEditing(EditorAction.EDIT_AGE, String.valueOf(draft.age()), terminal, draft,
                 "Edita l'edat com en un camp de text.");
         while (true) {
+            if (consumeResize(terminal, draft)) {
+                continue;
+            }
             TextKey input = readTextInput(terminal);
+            if (consumeResize(terminal, draft)) {
+                continue;
+            }
             switch (input.type()) {
                 case CANCEL -> {
                     cancelEditing(terminal, draft);
@@ -483,6 +508,21 @@ public final class CharacterCreationEditor {
             return max;
         }
         return (int) value;
+    }
+
+    /** Redibuixa si el terminal ha canviat de mida. */
+    private boolean consumeResize(Terminal terminal, CharacterDraft draft) {
+        int width = terminal.getWidth();
+        int height = terminal.getHeight();
+        boolean changed = resizePending || width != terminalWidth || height != terminalHeight;
+        if (!changed) {
+            return false;
+        }
+        resizePending = false;
+        terminalWidth = width;
+        terminalHeight = height;
+        renderAll(terminal, draft);
+        return true;
     }
 
     /** Redibuixa tot el formulari. */

@@ -459,7 +459,7 @@ public final class CinematicBuilder {
                 .build();
 
         TextBlock impossibleCredits = BlockBuilder.text("""
-                <bright_white>CRÈDITS ADDICIONALS</bright_white>
+                <bright_white>CRÈDITS ADICIONALS</bright_white>
 
                 <gray>Disseny de realitats alternatives:</gray> <white>Jairo Linares</white>
                 <gray>Gestió de línies temporals inestables:</gray> <white>Jairo Linares</white>

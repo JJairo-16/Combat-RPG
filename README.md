@@ -111,6 +111,7 @@ La partida finalitza quan un personatge arriba a 0 de vida.
 - Escalat de dany segons estadístiques
 - Afinitat divina per carisma
 - Menú interactiu d'elecció d'arma
+- Combat caotic
 
 ### ▌Crida espiritual
 
@@ -165,7 +166,7 @@ Aquest projecte utilitza les següents llibreries:
   Disponible a: https://github.com/JJairo-16/dynamic-menu
 
 - **Jline**
-  Llibreria utilitzada per gestionar l’entrada interactiva per consola, especialment per al menú d’armes i accions durant combat.
+  Llibreria utilitzada per gestionar l’entrada interactiva per consola, utilitzat en el motor de cinemàtiques i menús interactius.
 
 ---
 

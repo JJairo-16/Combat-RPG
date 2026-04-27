@@ -18,12 +18,14 @@ import rpgcombat.combat.ui.messages.CombatMessage;
 import rpgcombat.combat.ui.messages.CombatMessageBuffer;
 import rpgcombat.combat.ui.messages.MessageColor;
 import rpgcombat.combat.ui.messages.MessageSymbol;
+import rpgcombat.creator.score.CharacterBuildScore;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.StackingRule;
 import rpgcombat.models.effects.impl.Exhaustion;
 import rpgcombat.models.effects.impl.SpiritualCallingFlag;
+import rpgcombat.models.effects.triggers.InternalConflict;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;
 import rpgcombat.weapons.passives.HitContext;
@@ -82,6 +84,15 @@ public class Character {
         this.breed = breed;
         this.stats = new Statistics(effectiveStats);
         this.unarmedAttack = new UnarmedAttack(this.stats, rng);
+
+        applyInternalConflictIfNeeded(stats);
+    }
+
+    private void applyInternalConflictIfNeeded(int[] stats) {
+        if (!CharacterBuildScore.hasPowerConflict(stats))
+            return;
+
+        addEffect(new InternalConflict());
     }
 
     /**

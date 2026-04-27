@@ -176,12 +176,42 @@ final class CharacterCreationRenderer {
     /** Dibuixa la puntuació de la build. */
     private void renderBuildScore(Terminal terminal, CharacterDraft draft, int row) {
         CharacterBuildScore.Rating rating = CharacterBuildScore.rate(draft.statsCopy(), draft.breed());
+
+        // --- Qualitat ---
         String color = rating.validPoints() ? Ansi.YELLOW : Ansi.RED;
         String text = Ansi.DARK_GRAY + "Qualitat:" + Ansi.RESET + " "
                 + color + rating.starsText() + Ansi.RESET;
+
         if (rating.corrupt()) {
             text += Ansi.RED + "  estrelles corruptes" + Ansi.RESET;
         }
+
+        // --- Conflicte intern ---
+        double severity = CharacterBuildScore.detectPowerConflict(draft.statsCopy()).severity();
+
+        if (severity >= 0.25) {
+            String label;
+            String symbol;
+            String c;
+
+            if (severity < 0.5) {
+                label = "lleu";
+                symbol = "⚠";
+                c = Ansi.YELLOW;
+            } else if (severity < 0.75) {
+                label = "alt";
+                symbol = "⚠";
+                c = Ansi.RED;
+            } else {
+                label = "crític";
+                symbol = "✖";
+                c = Ansi.RED + Ansi.BOLD;
+            }
+
+            text += Ansi.DARK_GRAY + " · " + Ansi.RESET
+                    + c + symbol + " " + label + Ansi.RESET;
+        }
+
         painter.replaceLine(terminal, row, EditorLayout.CONTENT_COL, text);
     }
 

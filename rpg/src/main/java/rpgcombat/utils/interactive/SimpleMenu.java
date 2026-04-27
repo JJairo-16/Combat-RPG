@@ -8,6 +8,7 @@ import org.jline.keymap.KeyMap;
 import org.jline.terminal.Terminal;
 import org.jline.utils.InfoCmp.Capability;
 
+import rpgcombat.utils.interactive.helpers.MenuInputGate;
 import rpgcombat.utils.terminal.SharedTerminal;
 import rpgcombat.utils.terminal.TerminalSession;
 
@@ -26,7 +27,8 @@ public class SimpleMenu {
     protected final int leftPadding;
 
     public SimpleMenu(int leftPadding) {
-        if (leftPadding < 0) throw new IllegalArgumentException("El padding no pot ser menor a 0.");
+        if (leftPadding < 0)
+            throw new IllegalArgumentException("El padding no pot ser menor a 0.");
 
         this.leftPadding = leftPadding;
     }
@@ -57,11 +59,14 @@ public class SimpleMenu {
 
         try (TerminalSession session = SharedTerminal.openSession()) {
             Terminal terminal = session.terminal();
-            BindingReader reader = new BindingReader(terminal.reader());
-            KeyMap<Action> keyMap = buildKeyMap(terminal);
 
             int cursor = 0;
             renderFull(terminal, title, options, cursor);
+
+            new MenuInputGate(terminal, 80, 20).waitUntilReady();
+
+            BindingReader reader = new BindingReader(terminal.reader());
+            KeyMap<Action> keyMap = buildKeyMap(terminal);
 
             while (true) {
                 Action action = reader.readBinding(keyMap);

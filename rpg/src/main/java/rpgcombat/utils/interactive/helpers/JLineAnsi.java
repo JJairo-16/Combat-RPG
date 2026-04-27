@@ -1,4 +1,4 @@
-package rpgcombat.utils.interactive;
+package rpgcombat.utils.interactive.helpers;
 
 import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;

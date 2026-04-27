@@ -14,6 +14,7 @@ import org.jline.utils.InfoCmp.Capability;
 
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.utils.cache.TextWrapCache;
+import rpgcombat.utils.interactive.helpers.JLineAnsi;
 import rpgcombat.utils.terminal.SharedTerminal;
 import rpgcombat.utils.terminal.TerminalSession;
 import rpgcombat.weapons.config.WeaponDefinition;
