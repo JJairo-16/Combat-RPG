@@ -15,7 +15,7 @@ import rpgcombat.utils.ui.ColorGradient;
  */
 public class CombatRenderer {
     public static final int BAR_SIZE = 20;
-    public static final int DIV_WIDTH = 54;
+    public static final int DIV_WIDTH = 64;
 
     private static final String DIV = Ansi.DARK_GRAY + "─".repeat(DIV_WIDTH) + Ansi.RESET;
     private static final String BIG_DIV = Ansi.DARK_GRAY + "═".repeat(DIV_WIDTH) + Ansi.RESET;

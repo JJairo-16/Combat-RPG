@@ -68,14 +68,14 @@ public final class MissionProgress {
             case RISK_REWARD -> updateRiskReward(update);
         }
 
-        if (progress >= definition.target()) complete();
+        if (progress >= effectiveTarget()) complete();
     }
 
     /**
      * Text representatiu del progrés.
      */
     public String progressText() {
-        double target = definition.target();
+        double target = effectiveTarget();
         if (target <= 1.0) return completed ? "Completada" : "Pendent";
         return Math.min(target, Math.floor(progress)) + "/" + Math.floor(target);
     }
@@ -103,7 +103,11 @@ public final class MissionProgress {
     /** Gestiona seqüències d'accions. */
     private void updateSequence(Action action) {
         List<Action> sequence = definition.sequence();
-        if (sequence == null || sequence.isEmpty()) return;
+        if (action == null || sequence == null || sequence.isEmpty()) return;
+
+        if (sequenceIndex < 0 || sequenceIndex >= sequence.size()) {
+            sequenceIndex = 0;
+        }
 
         if (action == sequence.get(sequenceIndex)) {
             sequenceIndex++;
@@ -153,6 +157,16 @@ public final class MissionProgress {
     /** Marca la missió com a completada. */
     private void complete() {
         completed = true;
-        progress = Math.max(progress, definition.target());
+        progress = Math.max(progress, effectiveTarget());
+    }
+
+    /** Retorna l'objectiu real; les seqüències sempre requereixen tots els passos. */
+    private double effectiveTarget() {
+        if (definition == null) return 1.0;
+        if (definition.type() == ObjectiveType.ACTION_SEQUENCE) {
+            List<Action> sequence = definition.sequence();
+            if (sequence != null && !sequence.isEmpty()) return sequence.size();
+        }
+        return Math.max(1.0, definition.target());
     }
 }

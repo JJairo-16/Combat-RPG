@@ -135,8 +135,9 @@ public class MenuWithInformation extends SimpleMenu {
             return;
         }
 
+        MissionDisplay display = parseMissionDisplay(bottomRightMissionText);
         int width = Math.clamp(terminal.getWidth() - leftPadding - 2L, 24, MISSION_WIDTH);
-        List<MissionLine> lines = buildMissionLines(bottomRightMissionText, width - 4);
+        List<MissionLine> lines = buildMissionLines(display.body(), width - 4);
 
         if (lines.size() > MISSION_MAX_LINES) {
             lines = new ArrayList<>(lines.subList(0, MISSION_MAX_LINES));
@@ -154,8 +155,9 @@ public class MenuWithInformation extends SimpleMenu {
         lastMissionHeight = contentHeight;
 
         moveCursor(terminal, row++, col);
-        terminal.writer().print(CYAN + "┌─ " + BOLD + "Missió" + RESET + CYAN +
-                " " + "─".repeat(Math.max(0, width - 11)) + RESET);
+        String header = trimToWidth(display.title(), Math.max(1, width - 7));
+        terminal.writer().print(CYAN + "┌─ " + BOLD + header + RESET + CYAN +
+                " " + "─".repeat(Math.max(0, width - header.length() - 5)) + RESET);
 
         for (MissionLine line : lines) {
             moveCursor(terminal, row++, col);
@@ -163,6 +165,25 @@ public class MenuWithInformation extends SimpleMenu {
         }
 
         terminal.flush();
+    }
+
+    /** Separa el títol visible del bloc inferior i el contingut mostrat. */
+    private MissionDisplay parseMissionDisplay(String text) {
+        String safeText = safe(text).trim();
+        if (safeText.isBlank()) {
+            return new MissionDisplay("Missió", "");
+        }
+
+        String[] sections = safeText.split("\\R", 2);
+        if (sections.length > 1 && "Perk".equalsIgnoreCase(sections[0].trim())) {
+            return new MissionDisplay("Perk", sections[1]);
+        }
+
+        return new MissionDisplay("Missió", safeText);
+    }
+
+    /** Dades renderitzables del bloc inferior. */
+    private record MissionDisplay(String title, String body) {
     }
 
     /**

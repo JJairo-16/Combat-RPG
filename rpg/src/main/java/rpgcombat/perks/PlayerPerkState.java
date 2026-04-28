@@ -8,6 +8,7 @@ import rpgcombat.perks.mission.MissionProgress;
 public final class PlayerPerkState {
     private final MissionProgress mission;
     private boolean pendingChoice;
+    private PerkDefinition chosenPerk;
 
     /**
      * Crea l'estat del jugador amb una missió assignada.
@@ -21,6 +22,16 @@ public final class PlayerPerkState {
     /** @return progrés de la missió */
     public MissionProgress mission() {
         return mission;
+    }
+
+    /** @return perk triada com a recompensa, si ja s'ha reclamat */
+    public PerkDefinition chosenPerk() {
+        return chosenPerk;
+    }
+
+    /** Desa la perk triada com a recompensa. */
+    public void setChosenPerk(PerkDefinition chosenPerk) {
+        this.chosenPerk = chosenPerk;
     }
 
     /** @return si hi ha una elecció de perk pendent */

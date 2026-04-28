@@ -48,19 +48,31 @@ public final class MissionLoader {
     private static MissionDefinition toDefinition(MissionConfig cfg) {
         MissionConfig.ObjectiveConfig obj = cfg.objective();
         String id = value(cfg.id(), value(cfg.name(), "MISSION"));
+        ObjectiveType type = enumValue(ObjectiveType.class, value(obj.type(), "COUNT_EVENT"), id, "tipus d'objectiu");
+        List<Action> sequence = actions(obj.sequence(), id);
+        double target = obj.target() == null ? defaultTarget(type, sequence) : Math.max(1.0, obj.target());
+
         return new MissionDefinition(
                 id,
                 value(cfg.name(), cfg.id()),
                 value(cfg.description(), ""),
                 cfg.weight() == null ? 1 : Math.max(1, cfg.weight()),
-                enumValue(ObjectiveType.class, value(obj.type(), "COUNT_EVENT"), id, "tipus d'objectiu"),
+                type,
                 event(obj.event(), id),
                 event(obj.successEvent(), id),
                 event(obj.resetEvent(), id),
-                actions(obj.sequence(), id),
-                obj.target() == null ? 1.0 : obj.target(),
+                sequence,
+                target,
                 obj.value() == null ? 0.0 : obj.value(),
                 obj.turns() == null ? 1 : Math.max(1, obj.turns()));
+    }
+
+    /** Retorna l'objectiu per defecte d'una missió. */
+    private static double defaultTarget(ObjectiveType type, List<Action> sequence) {
+        if (type == ObjectiveType.ACTION_SEQUENCE && sequence != null && !sequence.isEmpty()) {
+            return sequence.size();
+        }
+        return 1.0;
     }
 
     /** Converteix un text a esdeveniment de missió. */

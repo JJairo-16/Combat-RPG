@@ -8,6 +8,7 @@ import java.util.Random;
 import rpgcombat.combat.models.Action;
 import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.models.characters.Character;
+import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.triggers.Chaos;
 import rpgcombat.perks.effect.PerkEffectFactory;
 import rpgcombat.perks.mission.MissionDefinition;
@@ -53,17 +54,20 @@ public final class CombatPerkSystem {
         }
 
         MissionProgress progress = state.mission();
-        MissionDefinition mission = progress.definition();
-        String status;
 
         if (progress.rewardClaimed()) {
-            status = "Recompensa reclamada";
-        } else if (progress.completed()) {
-            status = "Completada";
-        } else {
-            status = progress.progressText();
+            PerkDefinition chosen = state.chosenPerk();
+            if (chosen == null) {
+                return "Perk\nRecompensa reclamada\nNo hi ha cap perk registrada";
+            }
+
+            return "Perk\n" + chosen.name()
+                    + "\n" + chosen.description()
+                    + "\nActivació: " + triggerLabel(chosen.trigger());
         }
 
+        MissionDefinition mission = progress.definition();
+        String status = progress.completed() ? "Completada" : progress.progressText();
         return mission.name() + "\n" + mission.description() + "\nProgrés: " + status;
     }
 
@@ -76,7 +80,10 @@ public final class CombatPerkSystem {
             return;
 
         boolean corruptedOnly = player.hasEffect(Chaos.INTERNAL_EFFECT_KEY);
-        List<PerkDefinition> options = PerkRegistry.rollOptions(corruptedOnly, 3, rng);
+        List<PerkDefinition> options = PerkRegistry.rollOptions(corruptedOnly, 12, rng).stream()
+                .filter(perk -> !player.hasEffect(PerkEffectFactory.keyFor(perk)))
+                .limit(3)
+                .toList();
         if (options.isEmpty()) {
             state.clearPendingChoice();
             return;
@@ -84,8 +91,31 @@ public final class CombatPerkSystem {
 
         PerkDefinition chosen = PerkChoiceMenu.choose(player, options);
         if (chosen != null) {
-            player.addEffect(PerkEffectFactory.create(chosen));
+            Effect effect = PerkEffectFactory.create(chosen);
+            player.addEffect(effect);
+            state.setChosenPerk(chosen);
+
+            // Defensa explícita: després de triar una perk, el jugador ha de tenir-ne l'efecte actiu.
+            if (!player.hasEffect(effect.key())) {
+                player.removeEffect(effect.key());
+                player.addEffect(effect);
+            }
         }
         state.clearPendingChoice();
+    }
+
+    /** Etiqueta visible de la fase que activa una perk. */
+    private static String triggerLabel(rpgcombat.weapons.passives.HitContext.Phase trigger) {
+        if (trigger == null) return "Desconeguda";
+        return switch (trigger) {
+            case START_TURN -> "Inici de torn";
+            case BEFORE_ATTACK -> "Abans d'atacar";
+            case ROLL_CRIT -> "Tirada crítica";
+            case MODIFY_DAMAGE -> "Modificació de dany";
+            case BEFORE_DEFENSE -> "Abans de defensar";
+            case AFTER_DEFENSE -> "Després de defensar";
+            case AFTER_HIT -> "Després d'impactar";
+            case END_TURN -> "Final de torn";
+        };
     }
 }

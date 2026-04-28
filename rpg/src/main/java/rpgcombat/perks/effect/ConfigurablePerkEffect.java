@@ -1,6 +1,8 @@
 package rpgcombat.perks.effect;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 
 import rpgcombat.combat.ui.messages.CombatMessage;
@@ -30,8 +32,8 @@ public final class ConfigurablePerkEffect implements Effect {
      */
     public ConfigurablePerkEffect(PerkDefinition perk) {
         this.perk = perk;
-        this.conditions = perk.conditions().stream().map(PerkRuleFactory::condition).toList();
-        this.actions = perk.actions().stream().map(PerkRuleFactory::action).toList();
+        this.conditions = safeRules(perk.conditions()).stream().map(PerkRuleFactory::condition).toList();
+        this.actions = safeRules(perk.actions()).stream().map(PerkRuleFactory::action).toList();
     }
 
     /**
@@ -39,7 +41,17 @@ public final class ConfigurablePerkEffect implements Effect {
      */
     @Override
     public String key() {
-        return "PERK_" + perk.id();
+        return keyFor(perk);
+    }
+
+    /**
+     * Retorna la clau que tindrà l'efecte d'una perk sense haver-lo d'instanciar.
+     *
+     * @param perk definició de perk
+     * @return clau estable de l'efecte
+     */
+    public static String keyFor(PerkDefinition perk) {
+        return perk == null ? "PERK_NULL" : "PERK_" + perk.id();
     }
 
     /**
@@ -69,32 +81,60 @@ public final class ConfigurablePerkEffect implements Effect {
      */
     @Override
     public EffectResult onPhase(HitContext ctx, Phase phase, Random rng, Character owner) {
-        if (phase != perk.trigger()) return EffectResult.none();
+        if (phase != perk.trigger() || !defaultOwnerScopeMatches(ctx, phase, owner)) return EffectResult.none();
 
         PerkContext context = new PerkContext(ctx, phase, rng, owner);
         for (PerkCondition condition : conditions) {
             if (!condition.matches(context)) return EffectResult.none();
         }
 
-        EffectResult last = EffectResult.none();
+        List<String> messages = new ArrayList<>();
+        boolean consumedCharge = false;
+        boolean changedState = false;
+
         for (PerkAction action : actions) {
             EffectResult result = action.apply(context);
-            if (result != null && result.message() != null) {
-                last = withFamilyStyle(result);
+            if (result == null) continue;
+
+            consumedCharge |= result.consumedCharge();
+            changedState |= result.changedState();
+
+            if (result.message() != null && result.message().text() != null && !result.message().text().isBlank()) {
+                messages.add(result.message().text());
             }
         }
-        return last;
+
+        if (messages.isEmpty()) {
+            return new EffectResult(null, consumedCharge, changedState);
+        }
+
+        String text = perk.name() + ": " + String.join(" ", messages);
+        CombatMessage styled = CombatMessage.of(perk.family().symbol(), perk.family().color(), text);
+        return new EffectResult(styled, consumedCharge, true);
     }
 
     /**
-     * Aplica l'estil visual de la família de la perk al missatge.
-     *
-     * @param result resultat original
-     * @return resultat amb missatge estilitzat
+     * Evita que una perk s'activi pel combatent equivocat quan la seva configuració
+     * no declara explícitament el rol del propietari.
      */
-    private EffectResult withFamilyStyle(EffectResult result) {
-        CombatMessage original = result.message();
-        CombatMessage styled = CombatMessage.of(perk.family().symbol(), perk.family().color(), original.text());
-        return new EffectResult(styled, result.consumedCharge(), result.changedState());
+    private boolean defaultOwnerScopeMatches(HitContext ctx, Phase phase, Character owner) {
+        if (ctx == null || owner == null || hasExplicitOwnerScope()) return true;
+
+        return switch (phase) {
+            case BEFORE_ATTACK, ROLL_CRIT, MODIFY_DAMAGE, AFTER_HIT -> owner == ctx.attacker();
+            case BEFORE_DEFENSE, AFTER_DEFENSE -> owner == ctx.defender();
+            case START_TURN, END_TURN -> true;
+        };
+    }
+
+    /** @return si la configuració ja conté una condició de rol del propietari. */
+    private boolean hasExplicitOwnerScope() {
+        return safeRules(perk.conditions()).stream()
+                .anyMatch(rule -> "OWNER_IS_ATTACKER".equals(rule.type()) || "OWNER_IS_DEFENDER".equals(rule.type()));
+    }
+
+    /** Evita nuls a les llistes de regles configurables. */
+    private static List<PerkDefinition.Rule> safeRules(List<PerkDefinition.Rule> rules) {
+        return rules == null ? List.of() : rules.stream().filter(Objects::nonNull).toList();
     }
 }

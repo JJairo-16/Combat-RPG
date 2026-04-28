@@ -10,4 +10,8 @@ public final class PerkEffectFactory {
     public static Effect create(PerkDefinition perk) {
         return new ConfigurablePerkEffect(perk);
     }
+
+    public static String keyFor(PerkDefinition perk) {
+        return ConfigurablePerkEffect.keyFor(perk);
+    }
 }
