@@ -13,12 +13,21 @@ import com.google.gson.Gson;
 import rpgcombat.combat.models.Action;
 import rpgcombat.perks.config.MissionConfig;
 
-/** Carrega missions des del JSON. */
+/**
+ * Carrega i transforma missions definides en JSON a objectes de domini.
+ */
 public final class MissionLoader {
     private static final Gson GSON = new Gson();
 
     private MissionLoader() {}
 
+    /**
+     * Llegeix un fitxer JSON i construeix la llista de missions.
+     *
+     * @param path ruta del fitxer
+     * @return llista de missions
+     * @throws IOException si falla la lectura
+     */
     public static List<MissionDefinition> load(Path path) throws IOException {
         try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             MissionConfig[] raw = GSON.fromJson(reader, MissionConfig[].class);
@@ -33,6 +42,9 @@ public final class MissionLoader {
         }
     }
 
+    /**
+     * Converteix una configuració JSON en una definició de missió.
+     */
     private static MissionDefinition toDefinition(MissionConfig cfg) {
         MissionConfig.ObjectiveConfig obj = cfg.objective();
         String id = value(cfg.id(), value(cfg.name(), "MISSION"));
@@ -51,15 +63,22 @@ public final class MissionLoader {
                 obj.turns() == null ? 1 : Math.max(1, obj.turns()));
     }
 
+    /** Converteix un text a esdeveniment de missió. */
     private static MissionEvent event(String raw, String missionId) {
         return raw == null || raw.isBlank() ? null : enumValue(MissionEvent.class, raw, missionId, "esdeveniment");
     }
 
+    /** Converteix una llista de textos a accions. */
     private static List<Action> actions(List<String> raw, String missionId) {
         if (raw == null || raw.isEmpty()) return List.of();
         return raw.stream().map(action -> enumValue(Action.class, action, missionId, "acció")).toList();
     }
 
+    /**
+     * Converteix un valor a enum validant-lo.
+     *
+     * @throws IllegalArgumentException si el valor no és vàlid
+     */
     private static <T extends Enum<T>> T enumValue(Class<T> type, String raw, String ownerId, String fieldName) {
         try {
             return Enum.valueOf(type, raw);
@@ -68,6 +87,7 @@ public final class MissionLoader {
         }
     }
 
+    /** Retorna un valor o un per defecte si és buit. */
     private static String value(String value, String def) {
         return value == null || value.isBlank() ? def : value;
     }

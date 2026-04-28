@@ -14,18 +14,25 @@ import static rpgcombat.utils.ui.Ansi.*;
  */
 public class MenuWithInformation extends SimpleMenu {
 
-    private static final int MIN_INFO_COLUMN = 34;
+    private static final int MIN_INFO_COLUMN = 42;
+    private static final int INFO_HORIZONTAL_GAP = 12;
     private static final int INFO_WIDTH = 52;
     private static final int INFO_MIN_HEIGHT = 9;
     private static final int INFO_MAX_LINES = 6;
     private static final int CLEAR_ROWS = 20;
     private static final int CONTROL_ROWS = 1;
     private static final int BOTTOM_SAFE_MARGIN_ROWS = 2;
+    private static final int MISSION_WIDTH = 46;
+    private static final int MISSION_MAX_LINES = 4;
+    private static final int MISSION_CONTROLS_GAP_ROWS = 1;
 
     private int lastControlsRow = -1;
+    private int lastMissionRow = -1;
+    private int lastMissionHeight = 0;
 
     private final Map<String, String> information;
     private boolean informationVisible;
+    private String bottomRightMissionText = "";
 
     /**
      * Crea un menú amb informació.
@@ -43,6 +50,11 @@ public class MenuWithInformation extends SimpleMenu {
 
     public void setInformationVisible(boolean newState) {
         this.informationVisible = newState;
+    }
+
+    /** Defineix el text de missió que es mostra a baix a la dreta. */
+    public void setBottomRightMissionText(String text) {
+        this.bottomRightMissionText = formatMissionNumbers(safe(text));
     }
 
     /** Crea el mapa de tecles. */
@@ -91,6 +103,7 @@ public class MenuWithInformation extends SimpleMenu {
 
         drawInformation(terminal, options, cursor);
         drawControls(terminal, options.size());
+        drawBottomRightMission(terminal);
     }
 
     /** Dibuixa els controls inferiors. */
@@ -112,6 +125,104 @@ public class MenuWithInformation extends SimpleMenu {
         terminal.writer().print("[I] mostrar/amagar informació   ");
         terminal.writer().print("[Enter] seleccionar");
         terminal.writer().print(RESET);
+    }
+
+    /** Dibuixa la missió actual a la cantonada inferior dreta. */
+    private void drawBottomRightMission(Terminal terminal) {
+        clearPreviousMission(terminal);
+
+        if (bottomRightMissionText == null || bottomRightMissionText.isBlank()) {
+            return;
+        }
+
+        int width = Math.clamp(terminal.getWidth() - leftPadding - 2L, 24, MISSION_WIDTH);
+        List<MissionLine> lines = buildMissionLines(bottomRightMissionText, width - 4);
+
+        if (lines.size() > MISSION_MAX_LINES) {
+            lines = new ArrayList<>(lines.subList(0, MISSION_MAX_LINES));
+            MissionLine lastLine = lines.get(MISSION_MAX_LINES - 1);
+            lines.set(MISSION_MAX_LINES - 1,
+                    new MissionLine(trimToWidth(lastLine.text(), width - 5) + "…", lastLine.style()));
+        }
+
+        int contentHeight = lines.size() + 2;
+        int controlsRow = lastControlsRow > 0 ? lastControlsRow : terminal.getHeight() - BOTTOM_SAFE_MARGIN_ROWS;
+        int row = Math.max(TITLE_ROW + 1, controlsRow - contentHeight - MISSION_CONTROLS_GAP_ROWS);
+        int col = Math.max(leftPadding, terminal.getWidth() - width);
+
+        lastMissionRow = row;
+        lastMissionHeight = contentHeight;
+
+        moveCursor(terminal, row++, col);
+        terminal.writer().print(CYAN + "┌─ " + BOLD + "Missió" + RESET + CYAN +
+                " " + "─".repeat(Math.max(0, width - 11)) + RESET);
+
+        for (MissionLine line : lines) {
+            moveCursor(terminal, row++, col);
+            terminal.writer().print(CYAN + "│ " + RESET + line.style() + trimToWidth(line.text(), width - 4) + RESET);
+        }
+
+        terminal.flush();
+    }
+
+    /**
+     * Construeix les línies de missió mantenint títol, descripció i progrés
+     * separats.
+     */
+    private List<MissionLine> buildMissionLines(String text, int width) {
+        List<MissionLine> result = new ArrayList<>();
+        String[] sections = safe(text).split("\\R", -1);
+
+        for (int i = 0; i < sections.length; i++) {
+            String section = sections[i].trim();
+            if (section.isBlank()) {
+                continue;
+            }
+
+            String style = switch(i) {
+                case 0 -> BOLD;
+                case 1 -> DARK_GRAY;
+                default -> "";
+            };
+
+            List<String> wrapped = wrap(section, width);
+
+            for (String line : wrapped) {
+                result.add(new MissionLine(line, style));
+            }
+        }
+
+        return result.isEmpty() ? List.of(new MissionLine("", "")) : result;
+    }
+
+    /**
+     * Elimina decimals innecessaris del progrés de missió sense tocar la lògica
+     * interna.
+     */
+    private String formatMissionNumbers(String text) {
+        return safe(text).replaceAll("(?<!\\d)(\\d+)\\.0(?!\\d)", "$1");
+    }
+
+    /** Línia renderitzable de missió. */
+    private record MissionLine(String text, String style) {
+    }
+
+    /** Neteja la missió dibuixada anteriorment. */
+    private void clearPreviousMission(Terminal terminal) {
+        if (lastMissionRow < 0 || lastMissionHeight <= 0) {
+            return;
+        }
+
+        int width = Math.clamp(terminal.getWidth() - leftPadding - 2L, 24, MISSION_WIDTH);
+        int col = Math.max(leftPadding, terminal.getWidth() - width);
+
+        for (int i = 0; i < lastMissionHeight; i++) {
+            moveCursor(terminal, lastMissionRow + i, col);
+            terminal.writer().print(" ".repeat(width + 2));
+        }
+
+        lastMissionRow = -1;
+        lastMissionHeight = 0;
     }
 
     /** Dibuixa la informació lateral. */
@@ -160,6 +271,8 @@ public class MenuWithInformation extends SimpleMenu {
 
     /** Neteja l'àrea variable. */
     private void clearDynamicArea(Terminal terminal) {
+        clearPreviousMission(terminal);
+
         for (int i = OPTIONS_START_ROW; i < OPTIONS_START_ROW + CLEAR_ROWS; i++) {
             moveCursor(terminal, i, 1);
             clearCurrentLine(terminal);
@@ -196,7 +309,7 @@ public class MenuWithInformation extends SimpleMenu {
             longest = Math.max(longest, safe(option).length());
         }
 
-        return Math.max(MIN_INFO_COLUMN, leftPadding + longest + 12);
+        return Math.max(MIN_INFO_COLUMN, leftPadding + longest + INFO_HORIZONTAL_GAP);
     }
 
     /** Retorna l'alçada del bloc d'informació. */
@@ -246,7 +359,8 @@ public class MenuWithInformation extends SimpleMenu {
 
     public static void main(String[] args) {
         MenuWithInformation menu = new MenuWithInformation(Map.of(
-                "Atacar", "Canvies d'arma amb decisió, preparant-te per adaptar-te a les exigències del combat que tens davant.",
+                "Atacar",
+                "Canvies d'arma amb decisió, preparant-te per adaptar-te a les exigències del combat que tens davant.",
                 "Defensar", "Redueix el dany rebut durant aquest torn.",
                 "Inventari", "Obre la bossa d'objectes disponibles.",
                 "Sortir", "Tanca el menú actual."));
@@ -262,6 +376,6 @@ public class MenuWithInformation extends SimpleMenu {
                 "Menú principal");
 
         System.out.println("Opció seleccionada: " + option);
-        
+
     }
 }

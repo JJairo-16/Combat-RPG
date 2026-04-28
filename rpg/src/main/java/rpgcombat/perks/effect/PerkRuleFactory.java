@@ -11,10 +11,19 @@ import rpgcombat.models.effects.impl.Fatigue;
 import rpgcombat.perks.PerkDefinition.Rule;
 import rpgcombat.weapons.passives.HitContext.Event;
 
-/** Crea condicions i accions genèriques a partir de JSON. */
+/**
+ * Fàbrica que converteix regles JSON en condicions i accions executables.
+ */
 final class PerkRuleFactory {
-    private PerkRuleFactory() {}
+    private PerkRuleFactory() {
+    }
 
+    /**
+     * Crea una condició a partir d'una regla.
+     *
+     * @param rule regla definida al JSON
+     * @return condició executable
+     */
     static PerkCondition condition(Rule rule) {
         return switch (rule.type()) {
             case "CHANCE" -> ctx -> ctx.rng().nextDouble() < num(rule.params(), "value", 0.0);
@@ -32,6 +41,12 @@ final class PerkRuleFactory {
         };
     }
 
+    /**
+     * Crea una acció a partir d'una regla.
+     *
+     * @param rule regla definida al JSON
+     * @return acció executable
+     */
     static PerkAction action(Rule rule) {
         return switch (rule.type()) {
             case "MULTIPLY_DAMAGE" -> ctx -> {
@@ -54,47 +69,57 @@ final class PerkRuleFactory {
             };
             case "DEAL_EXTRA_DAMAGE" -> ctx -> {
                 double extra = round2(ctx.hit().damageDealt() * num(rule.params(), "ratioOfLastDamage", 0.0));
-                if (extra <= 0) return EffectResult.none();
+                if (extra <= 0)
+                    return EffectResult.none();
                 ctx.hit().defender().getDamage(extra);
                 return EffectResult.styled(MessageColor.YELLOW, MessageSymbol.POSITIVE,
-                        ctx.owner().getName() + " activa " + str(rule.params(), "label", "un efecte") + ": +" + extra + " dany.");
+                        ctx.owner().getName() + " activa " + str(rule.params(), "label", "un efecte") + ": +" + extra
+                                + " dany.");
             };
             case "HEAL_OWNER" -> ctx -> {
                 double amount = num(rule.params(), "amount", 0.0)
                         + ctx.hit().damageDealt() * num(rule.params(), "ratioOfDamage", 0.0);
                 double healed = ctx.owner().getStatistics().heal(round2(amount));
-                if (healed <= 0) return EffectResult.none();
+                if (healed <= 0)
+                    return EffectResult.none();
                 return EffectResult.positive(ctx.owner().getName() + " recupera " + round2(healed) + " de vida.");
             };
             case "RESTORE_MANA" -> ctx -> {
                 double restored = ctx.owner().getStatistics().restoreMana(num(rule.params(), "amount", 0.0));
-                if (restored <= 0) return EffectResult.none();
+                if (restored <= 0)
+                    return EffectResult.none();
                 return EffectResult.positive(ctx.owner().getName() + " recupera " + round2(restored) + " de mana.");
             };
             case "RESTORE_STAMINA" -> ctx -> {
                 double restored = ctx.owner().getStatistics().restoreStamina(num(rule.params(), "amount", 0.0));
-                if (restored <= 0) return EffectResult.none();
+                if (restored <= 0)
+                    return EffectResult.none();
                 return EffectResult.positive(ctx.owner().getName() + " recupera " + round2(restored) + " d'estamina.");
             };
             case "GAIN_MOMENTUM" -> ctx -> {
                 int before = ctx.owner().getMomentumStacks();
                 int amount = (int) num(rule.params(), "amount", 1);
-                for (int i = 0; i < amount; i++) ctx.owner().gainMomentum();
-                if (ctx.owner().getMomentumStacks() <= before) return EffectResult.none();
+                for (int i = 0; i < amount; i++)
+                    ctx.owner().gainMomentum();
+                if (ctx.owner().getMomentumStacks() <= before)
+                    return EffectResult.none();
                 return EffectResult.styled(MessageColor.CYAN, MessageSymbol.POSITIVE,
                         ctx.owner().getName() + " guanya impuls.");
             };
             case "APPLY_STATUS" -> ctx -> {
                 String status = str(rule.params(), "status", "");
                 int turns = (int) num(rule.params(), "turns", 1);
-                var target = "OWNER".equals(str(rule.params(), "target", "TARGET")) ? ctx.owner() : ctx.hit().defender();
+                var target = "OWNER".equals(str(rule.params(), "target", "TARGET")) ? ctx.owner()
+                        : ctx.hit().defender();
                 switch (status) {
                     case "VULNERABLE" -> target.applyVulnerable(turns);
                     case "BLEED" -> target.applyBleed(turns);
                     case "STAGGER" -> target.applyStagger(turns);
                     case "BLIND" -> target.addEffect(new BlindEffect(turns));
                     case "FATIGUE" -> target.addEffect(new Fatigue(turns));
-                    default -> { return EffectResult.none(); }
+                    default -> {
+                        return EffectResult.none();
+                    }
                 }
                 return EffectResult.warning(target.getName() + " rep " + status.toLowerCase() + ".");
             };
@@ -104,8 +129,10 @@ final class PerkRuleFactory {
             };
             case "SELF_DAMAGE" -> ctx -> {
                 double maxRatio = num(rule.params(), "maxHealthRatio", 0.0);
-                double amount = round2(ctx.owner().getStatistics().getMaxHealth() * maxRatio + num(rule.params(), "amount", 0.0));
-                if (amount <= 0) return EffectResult.none();
+                double amount = round2(
+                        ctx.owner().getStatistics().getMaxHealth() * maxRatio + num(rule.params(), "amount", 0.0));
+                if (amount <= 0)
+                    return EffectResult.none();
                 ctx.owner().getDamage(amount);
                 return EffectResult.negative(ctx.owner().getName() + " paga " + amount + " de vida.");
             };
@@ -113,24 +140,29 @@ final class PerkRuleFactory {
         };
     }
 
+    /** Obté un valor numèric dels paràmetres. */
     private static double num(Map<String, Object> params, String key, double def) {
         Object value = params.get(key);
         return value instanceof Number n ? n.doubleValue() : def;
     }
 
+    /** Obté un text dels paràmetres. */
     private static String str(Map<String, Object> params, String key, String def) {
         Object value = params.get(key);
         return value == null ? def : value.toString();
     }
 
+    /** Converteix un paràmetre a acció. */
     private static Action action(Map<String, Object> params, String key) {
         return Action.valueOf(str(params, key, "ATTACK"));
     }
 
+    /** Converteix un paràmetre a esdeveniment. */
     private static Event event(Map<String, Object> params, String key) {
         return Event.valueOf(str(params, key, "ON_HIT"));
     }
 
+    /** Arrodoneix a 2 decimals. */
     private static double round2(double n) {
         return Math.round(n * 100.0) / 100.0;
     }

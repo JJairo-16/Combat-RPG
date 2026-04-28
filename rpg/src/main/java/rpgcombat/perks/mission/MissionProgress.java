@@ -4,7 +4,9 @@ import java.util.List;
 
 import rpgcombat.combat.models.Action;
 
-/** Estat mutable d'una missió assignada. */
+/**
+ * Manté l'estat i el progrés d'una missió assignada.
+ */
 public final class MissionProgress {
     private final MissionDefinition definition;
     private double progress;
@@ -12,30 +14,45 @@ public final class MissionProgress {
     private boolean completed;
     private boolean rewardClaimed;
 
+    /**
+     * Crea el progrés per a una missió.
+     *
+     * @param definition definició de la missió
+     */
     public MissionProgress(MissionDefinition definition) {
         this.definition = definition;
     }
 
+    /** @return definició de la missió */
     public MissionDefinition definition() {
         return definition;
     }
 
+    /** @return progrés actual */
     public double progress() {
         return progress;
     }
 
+    /** @return si la missió està completada */
     public boolean completed() {
         return completed;
     }
 
+    /** @return si la recompensa s'ha reclamat */
     public boolean rewardClaimed() {
         return rewardClaimed;
     }
 
+    /** Marca la recompensa com a reclamada. */
     public void markRewardClaimed() {
         rewardClaimed = true;
     }
 
+    /**
+     * Actualitza el progrés segons un esdeveniment.
+     *
+     * @param update actualització de missió
+     */
     public void update(MissionUpdate update) {
         if (completed || update == null || definition == null) return;
 
@@ -54,12 +71,16 @@ public final class MissionProgress {
         if (progress >= definition.target()) complete();
     }
 
+    /**
+     * Text representatiu del progrés.
+     */
     public String progressText() {
         double target = definition.target();
         if (target <= 1.0) return completed ? "Completada" : "Pendent";
         return Math.min(target, Math.floor(progress)) + "/" + Math.floor(target);
     }
 
+    /** Gestiona esdeveniments consecutius. */
     private void updateConsecutive(MissionUpdate update) {
         if (update.has(definition.successEvent())) {
             add(1);
@@ -70,6 +91,7 @@ public final class MissionProgress {
         }
     }
 
+    /** Gestiona evitar esdeveniments durant torns. */
     private void updateAvoid(MissionUpdate update) {
         if (update.has(definition.event())) {
             progress = 0;
@@ -78,6 +100,7 @@ public final class MissionProgress {
         }
     }
 
+    /** Gestiona seqüències d'accions. */
     private void updateSequence(Action action) {
         List<Action> sequence = definition.sequence();
         if (sequence == null || sequence.isEmpty()) return;
@@ -93,6 +116,7 @@ public final class MissionProgress {
         progress = sequenceIndex;
     }
 
+    /** Gestiona mantenir un estat. */
     private void updateMaintained(MissionUpdate update) {
         if (update.has(definition.event())) {
             add(1);
@@ -101,27 +125,32 @@ public final class MissionProgress {
         }
     }
 
+    /** Gestiona reaccions a esdeveniments. */
     private void updateReact(MissionUpdate update) {
         if (update.has(definition.successEvent()) && update.has(definition.event())) {
             add(1);
         }
     }
 
+    /** Gestiona mecànica risc-recompensa. */
     private void updateRiskReward(MissionUpdate update) {
         if (update.has(definition.event()) && update.amountFor(definition.successEvent()) >= definition.value()) {
             add(1);
         }
     }
 
+    /** Afegeix progrés si es compleix una condició. */
     private void addIf(boolean condition, double amount) {
         if (condition) add(amount);
     }
 
+    /** Incrementa el progrés. */
     private void add(double amount) {
         if (amount <= 0) return;
         progress += amount;
     }
 
+    /** Marca la missió com a completada. */
     private void complete() {
         completed = true;
         progress = Math.max(progress, definition.target());

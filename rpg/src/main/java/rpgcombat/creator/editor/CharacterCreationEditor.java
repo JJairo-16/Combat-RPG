@@ -32,7 +32,8 @@ public final class CharacterCreationEditor {
             Terminal terminal = session.terminal();
             BindingReader reader = new BindingReader(terminal.reader());
             KeyMap<InputAction> keyMap = buildKeyMap(terminal);
-            Terminal.SignalHandler previousWinch = terminal.handle(Terminal.Signal.WINCH, signal -> resizePending = true);
+            Terminal.SignalHandler previousWinch = terminal.handle(Terminal.Signal.WINCH,
+                    signal -> resizePending = true);
 
             terminalWidth = terminal.getWidth();
             terminalHeight = terminal.getHeight();
@@ -126,12 +127,11 @@ public final class CharacterCreationEditor {
 
     /** Mou la selecció vertical. */
     private void moveCursor(int delta, CharacterDraft draft, Terminal terminal) {
-        int next = cursor + delta;
-        if (next < 0 || next >= fields().length) {
-            return;
-        }
         EditorAction oldAction = currentAction();
-        cursor = next;
+
+        int length = fields().length;
+        cursor = Math.floorMod(cursor + delta, length);
+
         message = "";
         renderer.renderSelectionChange(terminal, draft, oldAction, currentAction(), message);
     }
@@ -142,7 +142,8 @@ public final class CharacterCreationEditor {
         switch (action) {
             case EDIT_BREED -> draft.setBreed(nextBreed(draft.breed(), delta));
             case EDIT_STRENGTH, EDIT_DEXTERITY, EDIT_INTELLIGENCE, EDIT_WISDOM, EDIT_CHARISMA,
-                    EDIT_LUCK -> adjustStat(draft, action.statIndex(), delta, CharacterCreator.MIN_STAT);
+                    EDIT_LUCK ->
+                adjustStat(draft, action.statIndex(), delta, CharacterCreator.MIN_STAT);
             case EDIT_CONSTITUTION -> adjustStat(draft, action.statIndex(), delta, CharacterCreator.MIN_CONSTITUTION);
             default -> {
                 return;
@@ -306,7 +307,8 @@ public final class CharacterCreationEditor {
             case KeyCode.ARROW_RIGHT -> TextKey.RIGHT;
             case KeyCode.HOME_H, KeyCode.END_F -> second == KeyCode.HOME_H ? TextKey.HOME : TextKey.END;
             case KeyCode.CSI_ONE, KeyCode.CSI_DELETE, KeyCode.CSI_FOUR, KeyCode.CSI_FIVE, KeyCode.CSI_SEVEN,
-                    KeyCode.CSI_EIGHT -> readCsiInput(terminal, second);
+                    KeyCode.CSI_EIGHT ->
+                readCsiInput(terminal, second);
             default -> TextKey.NONE;
         };
     }

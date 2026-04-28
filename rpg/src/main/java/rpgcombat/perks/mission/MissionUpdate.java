@@ -7,7 +7,9 @@ import rpgcombat.combat.models.Action;
 import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.models.characters.Character;
 
-/** Dades d'un torn que poden fer avançar una missió. */
+/**
+ * Representa la informació d'un torn rellevant per al progrés de missions.
+ */
 public record MissionUpdate(
         Character owner,
         Character opponent,
@@ -17,6 +19,9 @@ public record MissionUpdate(
         int roundNumber,
         Set<MissionEvent> events) {
 
+    /**
+     * Crea una actualització a partir de les dades del torn.
+     */
     public static MissionUpdate from(Character owner, Character opponent, Action ownerAction, Action opponentAction,
             TurnResult result, int roundNumber) {
         EnumSet<MissionEvent> events = EnumSet.noneOf(MissionEvent.class);
@@ -48,10 +53,16 @@ public record MissionUpdate(
         return new MissionUpdate(owner, opponent, ownerAction, opponentAction, result, roundNumber, Set.copyOf(events));
     }
 
+    /**
+     * Indica si s'ha produït un esdeveniment.
+     */
     public boolean has(MissionEvent event) {
         return event != null && events.contains(event);
     }
 
+    /**
+     * Retorna el valor associat a un esdeveniment.
+     */
     public double amountFor(MissionEvent event) {
         if (event == MissionEvent.DAMAGE_DEALT && result != null) return Math.max(0.0, result.damageDealt());
         return has(event) ? 1.0 : 0.0;

@@ -1,10 +1,14 @@
 package rpgcombat.debug.test;
 
+import java.nio.file.Path;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
+import rpgcombat.balance.CombatBalanceLoader;
+import rpgcombat.balance.CombatBalanceRegistry;
+import rpgcombat.balance.config.CombatBalanceConfig;
 import rpgcombat.creator.CharacterCreator;
 import rpgcombat.models.characters.Character;
 import rpgcombat.utils.rng.DivineCharismaAffinity;
@@ -12,6 +16,9 @@ import rpgcombat.utils.rng.SpiritualCallingDie;
 
 public class SpiritualCallingDieTest {
     public static void main(String[] args) {
+        CombatBalanceConfig balance = CombatBalanceLoader.load(Path.of("rpg/data/combatBalance.json"));
+        CombatBalanceRegistry.initialize(balance);
+        
         Random rng = new Random(42);
         Character dummy = CharacterCreator.dummy();
         DivineCharismaAffinity.rollForRun(rng);

@@ -58,6 +58,7 @@ public class GameLoop {
         this.combatSystem = new CombatSystem(player1, player2, new rpgcombat.combat.turnservice.DefaultTurnPriorityPolicy(), perkSystem);
 
         this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers, information);
+        this.menu.setMissionTextProvider(perkSystem::missionSummary);
         this.cinematicsOptions = cinematicsOptions;
         this.homeScreenConfig = homeScreenConfig;
     }
@@ -68,9 +69,6 @@ public class GameLoop {
      */
     public EndGameAction init() {
         CinematicBuilder.playInit(cinematicsOptions, player1, player2);
-
-        cls.clear();
-        perkSystem.showInitialMissions(player1, player2);
 
         Winner winner;
         do {

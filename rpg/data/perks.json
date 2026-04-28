@@ -1757,5 +1757,608 @@
         }
       }
     ]
+  },
+  {
+    "id": "MOMENTUM_SURGE",
+    "name": "Allau d'impuls",
+    "description": "+6% de dany si tens impuls alt.",
+    "family": "STRATEGY",
+    "trigger": "MODIFY_DAMAGE",
+    "weight": 7,
+    "conditions": [
+      {
+        "type": "OWNER_IS_ATTACKER",
+        "params": {}
+      },
+      {
+        "type": "HAS_MOMENTUM",
+        "params": {
+          "min": 2
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "MULTIPLY_DAMAGE",
+        "params": {
+          "multiplier": 1.06
+        }
+      }
+    ]
+  },
+  {
+    "id": "DEFENSIVE_POSTURE",
+    "name": "Postura defensiva",
+    "description": "Quan reps dany defensant, redueixes el proper dany rebut.",
+    "family": "STRATEGY",
+    "trigger": "AFTER_HIT",
+    "weight": 7,
+    "conditions": [
+      {
+        "type": "OWNER_IS_DEFENDER",
+        "params": {}
+      },
+      {
+        "type": "OWNER_ACTION_IS",
+        "params": {
+          "action": "DEFEND"
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "MULTIPLY_NEXT_INCOMING_DAMAGE",
+        "params": {
+          "multiplier": 0.88
+        }
+      }
+    ]
+  },
+  {
+    "id": "MEASURED_CHARGE",
+    "name": "Càrrega mesurada",
+    "description": "Els atacs carregats recuperen una mica d'estamina.",
+    "family": "STRATEGY",
+    "trigger": "AFTER_HIT",
+    "weight": 7,
+    "conditions": [
+      {
+        "type": "OWNER_IS_ATTACKER",
+        "params": {}
+      },
+      {
+        "type": "META_TRUE",
+        "params": {
+          "key": "CHARGED_HIT"
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "RESTORE_STAMINA",
+        "params": {
+          "amount": 10
+        }
+      }
+    ]
+  },
+  {
+    "id": "CLEAN_EXECUTION",
+    "name": "Execució neta",
+    "description": "Els cops de 100 o més de dany recuperen mana.",
+    "family": "STRATEGY",
+    "trigger": "AFTER_HIT",
+    "weight": 6,
+    "conditions": [
+      {
+        "type": "OWNER_IS_ATTACKER",
+        "params": {}
+      },
+      {
+        "type": "DAMAGE_AT_LEAST",
+        "params": {
+          "amount": 100
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "RESTORE_MANA",
+        "params": {
+          "amount": 20
+        }
+      }
+    ]
+  },
+  {
+    "id": "LUCKY_MOMENTUM",
+    "name": "Impuls afortunat",
+    "description": "13% de guanyar impuls en impactar.",
+    "family": "LUCK",
+    "trigger": "AFTER_HIT",
+    "weight": 8,
+    "conditions": [
+      {
+        "type": "OWNER_IS_ATTACKER",
+        "params": {}
+      },
+      {
+        "type": "CHANCE",
+        "params": {
+          "value": 0.13
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "GAIN_MOMENTUM",
+        "params": {
+          "amount": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "SPARKING_GUARD",
+    "name": "Guàrdia espurnejant",
+    "description": "12% de recuperar mana quan reps dany.",
+    "family": "LUCK",
+    "trigger": "AFTER_HIT",
+    "weight": 7,
+    "conditions": [
+      {
+        "type": "OWNER_IS_DEFENDER",
+        "params": {}
+      },
+      {
+        "type": "CHANCE",
+        "params": {
+          "value": 0.12
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "RESTORE_MANA",
+        "params": {
+          "amount": 28
+        }
+      }
+    ]
+  },
+  {
+    "id": "BRIGHT_OPENING",
+    "name": "Obertura brillant",
+    "description": "9% d'afegir dany extra en impactar.",
+    "family": "LUCK",
+    "trigger": "AFTER_HIT",
+    "weight": 7,
+    "conditions": [
+      {
+        "type": "OWNER_IS_ATTACKER",
+        "params": {}
+      },
+      {
+        "type": "CHANCE",
+        "params": {
+          "value": 0.09
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "DEAL_EXTRA_DAMAGE",
+        "params": {
+          "ratioOfLastDamage": 0.4,
+          "label": "Obertura brillant"
+        }
+      }
+    ]
+  },
+  {
+    "id": "FORTUNE_GUARD",
+    "name": "Sort protectora",
+    "description": "14% de reduir el proper dany rebut quan reps un cop.",
+    "family": "LUCK",
+    "trigger": "AFTER_HIT",
+    "weight": 7,
+    "conditions": [
+      {
+        "type": "OWNER_IS_DEFENDER",
+        "params": {}
+      },
+      {
+        "type": "CHANCE",
+        "params": {
+          "value": 0.14
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "MULTIPLY_NEXT_INCOMING_DAMAGE",
+        "params": {
+          "multiplier": 0.78
+        }
+      }
+    ]
+  },
+  {
+    "id": "UNSTABLE_TEMPO",
+    "name": "Tempo inestable",
+    "description": "+10% de dany, però cada atac et desgasta lleument.",
+    "family": "CHAOS",
+    "trigger": "MODIFY_DAMAGE",
+    "weight": 7,
+    "conditions": [
+      {
+        "type": "OWNER_IS_ATTACKER",
+        "params": {}
+      }
+    ],
+    "actions": [
+      {
+        "type": "MULTIPLY_DAMAGE",
+        "params": {
+          "multiplier": 1.1
+        }
+      },
+      {
+        "type": "SELF_DAMAGE",
+        "params": {
+          "maxHealthRatio": 0.008
+        }
+      }
+    ]
+  },
+  {
+    "id": "GLASS_MOMENTUM",
+    "name": "Impuls de vidre",
+    "description": "Amb impuls fas +13% de dany, però el proper cop rebut fa més mal.",
+    "family": "CHAOS",
+    "trigger": "MODIFY_DAMAGE",
+    "weight": 6,
+    "conditions": [
+      {
+        "type": "OWNER_IS_ATTACKER",
+        "params": {}
+      },
+      {
+        "type": "HAS_MOMENTUM",
+        "params": {
+          "min": 1
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "MULTIPLY_DAMAGE",
+        "params": {
+          "multiplier": 1.13
+        }
+      },
+      {
+        "type": "MULTIPLY_NEXT_INCOMING_DAMAGE",
+        "params": {
+          "multiplier": 1.07
+        }
+      }
+    ]
+  },
+  {
+    "id": "MANA_RUPTURE",
+    "name": "Ruptura de mana",
+    "description": "En impactar, recuperes mana però quedes vulnerable.",
+    "family": "CHAOS",
+    "trigger": "AFTER_HIT",
+    "weight": 6,
+    "conditions": [
+      {
+        "type": "OWNER_IS_ATTACKER",
+        "params": {}
+      }
+    ],
+    "actions": [
+      {
+        "type": "RESTORE_MANA",
+        "params": {
+          "amount": 26
+        }
+      },
+      {
+        "type": "APPLY_STATUS",
+        "params": {
+          "target": "OWNER",
+          "status": "VULNERABLE",
+          "turns": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "DESPERATE_GUARD",
+    "name": "Guàrdia desesperada",
+    "description": "Quan reps dany, guanyes protecció temporal però també fatiga.",
+    "family": "CHAOS",
+    "trigger": "AFTER_HIT",
+    "weight": 6,
+    "conditions": [
+      {
+        "type": "OWNER_IS_DEFENDER",
+        "params": {}
+      }
+    ],
+    "actions": [
+      {
+        "type": "MULTIPLY_NEXT_INCOMING_DAMAGE",
+        "params": {
+          "multiplier": 0.72
+        }
+      },
+      {
+        "type": "APPLY_STATUS",
+        "params": {
+          "target": "OWNER",
+          "status": "FATIGUE",
+          "turns": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "BLOOD_ECHO",
+    "name": "Eco de sang",
+    "description": "En impactar, robes vida i el proper dany rebut augmenta.",
+    "family": "CORRUPTED",
+    "trigger": "AFTER_HIT",
+    "weight": 6,
+    "conditions": [
+      {
+        "type": "OWNER_IS_ATTACKER",
+        "params": {}
+      }
+    ],
+    "actions": [
+      {
+        "type": "HEAL_OWNER",
+        "params": {
+          "ratioOfDamage": 0.07
+        }
+      },
+      {
+        "type": "MULTIPLY_NEXT_INCOMING_DAMAGE",
+        "params": {
+          "multiplier": 1.05
+        }
+      }
+    ]
+  },
+  {
+    "id": "CRIMSON_ENGINE",
+    "name": "Motor carmesí",
+    "description": "+15% de dany en atacar, però cada cop et consumeix vida.",
+    "family": "CORRUPTED",
+    "trigger": "MODIFY_DAMAGE",
+    "weight": 7,
+    "conditions": [
+      {
+        "type": "OWNER_IS_ATTACKER",
+        "params": {}
+      }
+    ],
+    "actions": [
+      {
+        "type": "MULTIPLY_DAMAGE",
+        "params": {
+          "multiplier": 1.15
+        }
+      },
+      {
+        "type": "SELF_DAMAGE",
+        "params": {
+          "maxHealthRatio": 0.018
+        }
+      }
+    ]
+  },
+  {
+    "id": "DARK_MOMENTUM",
+    "name": "Impuls fosc",
+    "description": "Amb impuls alt, fas molt més dany però perds vida.",
+    "family": "CORRUPTED",
+    "trigger": "MODIFY_DAMAGE",
+    "weight": 6,
+    "conditions": [
+      {
+        "type": "OWNER_IS_ATTACKER",
+        "params": {}
+      },
+      {
+        "type": "HAS_MOMENTUM",
+        "params": {
+          "min": 2
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "MULTIPLY_DAMAGE",
+        "params": {
+          "multiplier": 1.22
+        }
+      },
+      {
+        "type": "SELF_DAMAGE",
+        "params": {
+          "maxHealthRatio": 0.02
+        }
+      }
+    ]
+  },
+  {
+    "id": "ABYSS_CRIT",
+    "name": "Crític abissal",
+    "description": "Els crítics fan més mal i et deixen vulnerable.",
+    "family": "CORRUPTED",
+    "trigger": "ROLL_CRIT",
+    "weight": 6,
+    "conditions": [
+      {
+        "type": "OWNER_IS_ATTACKER",
+        "params": {}
+      }
+    ],
+    "actions": [
+      {
+        "type": "MULTIPLY_CRIT_DAMAGE",
+        "params": {
+          "multiplier": 1.28
+        }
+      },
+      {
+        "type": "APPLY_STATUS",
+        "params": {
+          "target": "OWNER",
+          "status": "VULNERABLE",
+          "turns": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "BLEEDING_PACT",
+    "name": "Pacte sagnant",
+    "description": "En impactar, apliques sagnat però també perds vida.",
+    "family": "CORRUPTED",
+    "trigger": "AFTER_HIT",
+    "weight": 6,
+    "conditions": [
+      {
+        "type": "OWNER_IS_ATTACKER",
+        "params": {}
+      }
+    ],
+    "actions": [
+      {
+        "type": "APPLY_STATUS",
+        "params": {
+          "target": "TARGET",
+          "status": "BLEED",
+          "turns": 1
+        }
+      },
+      {
+        "type": "SELF_DAMAGE",
+        "params": {
+          "maxHealthRatio": 0.012
+        }
+      }
+    ]
+  },
+  {
+    "id": "BLIND_FURY",
+    "name": "Fúria cega",
+    "description": "12% de cegar el rival i guanyar impuls, però et fatigues.",
+    "family": "CORRUPTED",
+    "trigger": "AFTER_HIT",
+    "weight": 5,
+    "conditions": [
+      {
+        "type": "OWNER_IS_ATTACKER",
+        "params": {}
+      },
+      {
+        "type": "CHANCE",
+        "params": {
+          "value": 0.12
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "APPLY_STATUS",
+        "params": {
+          "target": "TARGET",
+          "status": "BLIND",
+          "turns": 1
+        }
+      },
+      {
+        "type": "GAIN_MOMENTUM",
+        "params": {
+          "amount": 1
+        }
+      },
+      {
+        "type": "APPLY_STATUS",
+        "params": {
+          "target": "OWNER",
+          "status": "FATIGUE",
+          "turns": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "LAST_OFFERING",
+    "name": "Última ofrena",
+    "description": "Amb poca vida, fas +32% de dany però et consumeixes.",
+    "family": "CORRUPTED",
+    "trigger": "MODIFY_DAMAGE",
+    "weight": 5,
+    "conditions": [
+      {
+        "type": "OWNER_IS_ATTACKER",
+        "params": {}
+      },
+      {
+        "type": "OWNER_HEALTH_BELOW",
+        "params": {
+          "ratio": 0.35
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "MULTIPLY_DAMAGE",
+        "params": {
+          "multiplier": 1.32
+        }
+      },
+      {
+        "type": "SELF_DAMAGE",
+        "params": {
+          "maxHealthRatio": 0.02
+        }
+      }
+    ]
+  },
+  {
+    "id": "SOUL_BURN",
+    "name": "Crema d'ànima",
+    "description": "En impactar, recuperes molt mana però el proper dany rebut puja.",
+    "family": "CORRUPTED",
+    "trigger": "AFTER_HIT",
+    "weight": 5,
+    "conditions": [
+      {
+        "type": "OWNER_IS_ATTACKER",
+        "params": {}
+      }
+    ],
+    "actions": [
+      {
+        "type": "RESTORE_MANA",
+        "params": {
+          "amount": 44
+        }
+      },
+      {
+        "type": "MULTIPLY_NEXT_INCOMING_DAMAGE",
+        "params": {
+          "multiplier": 1.08
+        }
+      }
+    ]
   }
 ]

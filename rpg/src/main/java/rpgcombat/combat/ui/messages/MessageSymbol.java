@@ -10,7 +10,13 @@ public enum MessageSymbol {
     CHAOS("?", MessageColor.MAGENTA),
     HIT("→", MessageColor.DARK_GRAY),
     INFO("·", MessageColor.CYAN),
-    EQUAL("=", MessageColor.CYAN);
+    EQUAL("=", MessageColor.CYAN),
+
+    // --- PERK FAMILIES ---
+    STRATEGY("◆", MessageColor.BLUE),
+    LUCK("✦", MessageColor.YELLOW),
+    CHAOTIC("✹", MessageColor.RED),
+    CORRUPTED("☠", MessageColor.MAGENTA);
 
     private final String glyph;
     private final MessageColor defaultColor;
@@ -20,16 +26,10 @@ public enum MessageSymbol {
         this.defaultColor = defaultColor;
     }
 
-    /**
-     * Retorna el símbol visible.
-     */
     public String glyph() {
         return glyph;
     }
 
-    /**
-     * Retorna el color per defecte.
-     */
     public MessageColor defaultColor() {
         return defaultColor;
     }

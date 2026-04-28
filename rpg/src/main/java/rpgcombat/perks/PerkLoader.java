@@ -14,12 +14,21 @@ import rpgcombat.perks.PerkDefinition.Rule;
 import rpgcombat.perks.config.PerkConfig;
 import rpgcombat.weapons.passives.HitContext.Phase;
 
-/** Carrega perks des del JSON. */
+/**
+ * Carrega i transforma perks definides en JSON a objectes de domini.
+ */
 public final class PerkLoader {
     private static final Gson GSON = new Gson();
 
     private PerkLoader() {}
 
+    /**
+     * Llegeix un fitxer JSON i construeix la llista de perks.
+     *
+     * @param path ruta del fitxer
+     * @return llista de perks
+     * @throws IOException si falla la lectura
+     */
     public static List<PerkDefinition> load(Path path) throws IOException {
         try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             PerkConfig[] raw = GSON.fromJson(reader, PerkConfig[].class);
@@ -34,6 +43,7 @@ public final class PerkLoader {
         }
     }
 
+    /** Converteix una configuració JSON en una definició de perk. */
     private static PerkDefinition toDefinition(PerkConfig cfg) {
         return new PerkDefinition(
                 cfg.id(),
@@ -46,6 +56,7 @@ public final class PerkLoader {
                 rules(cfg.actions()));
     }
 
+    /** Converteix configuracions JSON en regles de perk. */
     private static List<Rule> rules(List<PerkConfig.RuleConfig> configs) {
         if (configs == null || configs.isEmpty()) return List.of();
         return configs.stream()
@@ -54,6 +65,11 @@ public final class PerkLoader {
                 .toList();
     }
 
+    /**
+     * Converteix un valor a enum validant-lo.
+     *
+     * @throws IllegalArgumentException si el valor no és vàlid
+     */
     private static <T extends Enum<T>> T enumValue(Class<T> type, String raw, String perkId, String fieldName) {
         try {
             return Enum.valueOf(type, raw);
@@ -62,6 +78,7 @@ public final class PerkLoader {
         }
     }
 
+    /** Retorna un valor o un per defecte si és buit. */
     private static String value(String value, String def) {
         return value == null || value.isBlank() ? def : value;
     }

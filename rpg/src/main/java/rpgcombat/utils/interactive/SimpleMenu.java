@@ -26,9 +26,14 @@ public class SimpleMenu {
 
     protected final int leftPadding;
 
+    private volatile boolean resizePending;
+    private int terminalWidth;
+    private int terminalHeight;
+
     public SimpleMenu(int leftPadding) {
-        if (leftPadding < 0)
-            throw new IllegalArgumentException("El padding no pot ser menor a 0.");
+        if (leftPadding < 0) {
+            throw new IllegalArgumentException("El farciment no pot ser menor que 0.");
+        }
 
         this.leftPadding = leftPadding;
     }
@@ -60,53 +65,94 @@ public class SimpleMenu {
         try (TerminalSession session = SharedTerminal.openSession()) {
             Terminal terminal = session.terminal();
 
-            int cursor = 0;
-            renderFull(terminal, title, options, cursor);
+            terminalWidth = terminal.getWidth();
+            terminalHeight = terminal.getHeight();
 
-            new MenuInputGate(terminal, 80, 20).waitUntilReady();
+            int[] cursor = { 0 };
 
-            BindingReader reader = new BindingReader(terminal.reader());
-            KeyMap<Action> keyMap = buildKeyMap(terminal);
+            Terminal.SignalHandler previousWinch =
+                    terminal.handle(Terminal.Signal.WINCH, signal -> {
+                        resizePending = true;
+                        terminalWidth = terminal.getWidth();
+                        terminalHeight = terminal.getHeight();
+                        renderFull(terminal, title, options, cursor[0]);
+                    });
 
-            while (true) {
-                Action action = reader.readBinding(keyMap);
+            try {
+                renderFull(terminal, title, options, cursor[0]);
 
-                if (action == null) {
-                    continue;
-                }
+                new MenuInputGate(terminal, 80, 20).waitUntilReady();
 
-                int oldCursor = cursor;
+                renderFull(terminal, title, options, cursor[0]);
 
-                switch (action) {
-                    case UP -> {
-                        if (cursor > 0) {
-                            cursor--;
+                BindingReader reader = new BindingReader(terminal.reader());
+                KeyMap<Action> keyMap = buildKeyMap(terminal);
+
+                while (true) {
+                    consumeResize(terminal, title, options, cursor[0]);
+
+                    Action action = reader.readBinding(keyMap);
+
+                    consumeResize(terminal, title, options, cursor[0]);
+
+                    if (action == null) {
+                        continue;
+                    }
+
+                    int oldCursor = cursor[0];
+
+                    switch (action) {
+                        case UP -> cursor[0] = Math.floorMod(cursor[0] - 1, options.size());
+                        case DOWN -> cursor[0] = Math.floorMod(cursor[0] + 1, options.size());
+                        case SELECT -> {
+                            return cursor[0] + 1;
+                        }
+                        case EXTRA -> {
+                            handleExtraAction(terminal, title, options, cursor[0]);
+                            renderFull(terminal, title, options, cursor[0]);
                         }
                     }
-                    case DOWN -> {
-                        if (cursor < options.size() - 1) {
-                            cursor++;
-                        }
-                    }
-                    case SELECT -> {
-                        return cursor + 1;
-                    }
-                    case EXTRA -> {
-                        handleExtraAction(terminal, title, options, cursor);
-                        renderFull(terminal, title, options, cursor);
-                    }
-                }
 
-                if (oldCursor != cursor) {
-                    redrawSelection(terminal, options, oldCursor, cursor);
-                    afterSelectionChanged(terminal, title, options, cursor);
+                    if (oldCursor != cursor[0]) {
+                        redrawSelection(terminal, options, oldCursor, cursor[0]);
+                        afterSelectionChanged(terminal, title, options, cursor[0]);
+                    }
                 }
+            } finally {
+                terminal.handle(Terminal.Signal.WINCH, previousWinch);
             }
 
         } catch (IOException e) {
             System.out.println("No s'ha pogut obrir el menú interactiu: " + e.getMessage());
             return 1;
         }
+    }
+
+    /**
+     * Redibuixa el menú si el terminal ha canviat de mida.
+     *
+     * @param terminal terminal actual
+     * @param title    títol del menú
+     * @param options  opcions disponibles
+     * @param cursor   selecció actual
+     * @return cert si s'ha redibuixat el menú
+     */
+    private boolean consumeResize(Terminal terminal, String title, List<String> options, int cursor) {
+        int width = terminal.getWidth();
+        int height = terminal.getHeight();
+
+        boolean changed = resizePending || width != terminalWidth || height != terminalHeight;
+
+        if (!changed) {
+            return false;
+        }
+
+        resizePending = false;
+        terminalWidth = width;
+        terminalHeight = height;
+
+        renderFull(terminal, title, options, cursor);
+        return true;
     }
 
     /**
