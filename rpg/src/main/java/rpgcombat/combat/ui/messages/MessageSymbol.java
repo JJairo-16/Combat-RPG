@@ -16,7 +16,7 @@ public enum MessageSymbol {
     STRATEGY("◆", MessageColor.BLUE),
     LUCK("✦", MessageColor.YELLOW),
     CHAOTIC("✹", MessageColor.RED),
-    CORRUPTED("☠", MessageColor.MAGENTA);
+    CORRUPTED("☠ ", MessageColor.MAGENTA);
 
     private final String glyph;
     private final MessageColor defaultColor;

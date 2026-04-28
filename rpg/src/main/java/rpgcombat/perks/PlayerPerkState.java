@@ -1,54 +1,115 @@
 package rpgcombat.perks;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import rpgcombat.perks.mission.MissionProgress;
 
 /**
- * Manté l'estat de missions i recompenses pendents d'un jugador en combat.
+ * Manté l'estat de missions i perks d'un jugador en combat.
+ *
+ * El combat encara pot jugar-se amb una sola missió inicial, però internament
+ * l'estat ja no està acoblat a una única missió ni a una única perk. Això fa
+ * més simple afegir segones missions, recompenses encadenades o perks múltiples
+ * sense canviar les crides existents.
  */
 public final class PlayerPerkState {
-    private final MissionProgress mission;
+    private final List<MissionProgress> missions = new ArrayList<>();
+    private final List<PerkDefinition> perks = new ArrayList<>();
     private boolean pendingChoice;
-    private PerkDefinition chosenPerk;
+
+    public static final int MAX_PERKS = 4;
+
+    /** Crea l'estat del jugador amb una missió assignada. */
+    public PlayerPerkState(MissionProgress mission) {
+        addMission(mission);
+    }
+
+    /** Crea un estat buit. */
+    public PlayerPerkState() {
+    }
+
+    public boolean canGainMorePerks() {
+        return perks.size() < MAX_PERKS;
+    }
+
+    public boolean hasPerk(String perkId) {
+        return perkId != null && perks.stream().anyMatch(p -> p.id().equals(perkId));
+    }
+
+    public int perkCount() {
+        return perks.size();
+    }
+
+    /** Afegeix una missió activa si és vàlida. */
+    public void addMission(MissionProgress mission) {
+        if (mission != null)
+            missions.add(mission);
+    }
+
+    /** @return vista immutable de les missions del jugador. */
+    public List<MissionProgress> missions() {
+        return Collections.unmodifiableList(missions);
+    }
 
     /**
-     * Crea l'estat del jugador amb una missió assignada.
-     *
-     * @param mission progrés de la missió
+     * Compatibilitat amb el flux actual: retorna la primera missió pendent de
+     * recompensa, o si no n'hi ha, la primera missió existent.
      */
-    public PlayerPerkState(MissionProgress mission) {
-        this.mission = mission;
-    }
-
-    /** @return progrés de la missió */
     public MissionProgress mission() {
-        return mission;
+        return missions.stream()
+                .filter(m -> !m.rewardClaimed())
+                .findFirst()
+                .orElse(missions.isEmpty() ? null : missions.get(0));
     }
 
-    /** @return perk triada com a recompensa, si ja s'ha reclamat */
+    /** @return vista immutable de les perks triades pel jugador. */
+    public List<PerkDefinition> perks() {
+        return Collections.unmodifiableList(perks);
+    }
+
+    /** @return última perk triada, mantenint compatibilitat amb codi antic. */
     public PerkDefinition chosenPerk() {
-        return chosenPerk;
+        return perks.isEmpty() ? null : perks.get(perks.size() - 1);
     }
 
-    /** Desa la perk triada com a recompensa. */
+    /** Desa una perk triada com a recompensa. */
+    public void addPerk(PerkDefinition chosenPerk) {
+        if (chosenPerk != null && perks.stream().noneMatch(p -> p.id().equals(chosenPerk.id()))) {
+            perks.add(chosenPerk);
+        }
+    }
+
+    /** Compatibilitat amb el nom anterior. */
     public void setChosenPerk(PerkDefinition chosenPerk) {
-        this.chosenPerk = chosenPerk;
+        addPerk(chosenPerk);
     }
 
-    /** @return si hi ha una elecció de perk pendent */
+    /** @return si hi ha una elecció de perk pendent. */
     public boolean pendingChoice() {
         return pendingChoice;
     }
 
-    /** Marca que hi ha una elecció pendent si la missió està completada. */
+    /** Marca que hi ha una elecció pendent si alguna missió està completada. */
     public void updatePendingChoice() {
-        if (mission != null && mission.completed() && !mission.rewardClaimed()) {
-            pendingChoice = true;
-        }
+        pendingChoice = missions.stream().anyMatch(m -> m.completed() && !m.rewardClaimed());
     }
 
-    /** Neteja l'estat pendent i marca la recompensa com reclamada. */
+    /** Marca com reclamada la primera missió completada amb recompensa pendent. */
     public void clearPendingChoice() {
         pendingChoice = false;
-        if (mission != null) mission.markRewardClaimed();
+        missions.stream()
+                .filter(m -> m.completed() && !m.rewardClaimed())
+                .findFirst()
+                .ifPresent(MissionProgress::markRewardClaimed);
+        updatePendingChoice();
     }
+
+    public List<String> missionIds() {
+    return missions.stream()
+            .filter(m -> m.definition() != null)
+            .map(m -> m.definition().id())
+            .toList();
+}
 }

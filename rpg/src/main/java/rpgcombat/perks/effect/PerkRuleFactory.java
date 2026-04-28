@@ -30,6 +30,8 @@ final class PerkRuleFactory {
             case "CHANCE" -> ctx -> ctx.rng().nextDouble() < num(rule.params(), "value", 0.0);
             case "OWNER_HEALTH_BELOW" -> ctx -> ctx.owner().healthRatio() <= num(rule.params(), "ratio", 1.0);
             case "TARGET_HEALTH_BELOW" -> ctx -> ctx.hit().defender().healthRatio() <= num(rule.params(), "ratio", 1.0);
+            case "OWNER_HEALTH_ABOVE_MAX" -> ctx -> ctx.owner().getStatistics().getHealth() > ctx.owner().getStatistics().getMaxHealth();
+            case "OWNER_HEALTH_AT_OR_ABOVE_MAX" -> ctx -> ctx.owner().getStatistics().getHealth() >= ctx.owner().getStatistics().getMaxHealth();
             case "HAS_MOMENTUM" -> ctx -> ctx.owner().getMomentumStacks() >= (int) num(rule.params(), "min", 1);
             case "OWNER_ACTION_IS" -> ctx -> ownerAction(ctx) == action(rule.params(), "action");
             case "TARGET_ACTION_IS" -> ctx -> opponentAction(ctx) == action(rule.params(), "action");
@@ -94,6 +96,17 @@ final class PerkRuleFactory {
                 if (healed <= 0)
                     return EffectResult.positive(ctx.owner().getName() + " intenta robar vida, però ja està al màxim.");
                 return EffectResult.positive(ctx.owner().getName() + " roba " + round2(healed) + " de vida.");
+            };
+            case "OVERLOAD_HEAL_OWNER" -> ctx -> {
+                double amount = num(rule.params(), "amount", 0.0)
+                        + ctx.hit().damageDealt() * num(rule.params(), "ratioOfDamage", 0.0);
+                amount = round2(amount);
+                if (amount <= 0)
+                    return EffectResult.none();
+                double healed = ctx.owner().getStatistics().overloadHeal(amount);
+                if (healed <= 0)
+                    return EffectResult.none();
+                return EffectResult.positive(ctx.owner().getName() + " sobrecarga " + round2(healed) + " de vida.");
             };
             case "RESTORE_MANA" -> ctx -> {
                 double restored = ctx.owner().getStatistics().restoreMana(num(rule.params(), "amount", 0.0));

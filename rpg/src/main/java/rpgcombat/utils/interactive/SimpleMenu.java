@@ -47,7 +47,9 @@ public class SimpleMenu {
         UP,
         DOWN,
         SELECT,
-        EXTRA
+        EXTRA,
+        INFO,
+        PROGRESS
     }
 
     /**
@@ -83,8 +85,6 @@ public class SimpleMenu {
 
                 new MenuInputGate(terminal, 80, 20).waitUntilReady();
 
-                renderFull(terminal, title, options, cursor[0]);
-
                 BindingReader reader = new BindingReader(terminal.reader());
                 KeyMap<Action> keyMap = buildKeyMap(terminal);
 
@@ -109,6 +109,14 @@ public class SimpleMenu {
                         }
                         case EXTRA -> {
                             handleExtraAction(terminal, title, options, cursor[0]);
+                            renderFull(terminal, title, options, cursor[0]);
+                        }
+                        case INFO -> {
+                            handleInfoAction(terminal, title, options, cursor[0]);
+                            renderFull(terminal, title, options, cursor[0]);
+                        }
+                        case PROGRESS -> {
+                            handleProgressAction(terminal, title, options, cursor[0]);
                             renderFull(terminal, title, options, cursor[0]);
                         }
                     }
@@ -164,6 +172,14 @@ public class SimpleMenu {
      * @param cursor   selecció actual
      */
     protected void handleExtraAction(Terminal terminal, String title, List<String> options, int cursor) {
+    }
+
+    protected void handleInfoAction(Terminal terminal, String title, List<String> options, int cursor) {
+        handleExtraAction(terminal, title, options, cursor);
+    }
+
+    protected void handleProgressAction(Terminal terminal, String title, List<String> options, int cursor) {
+        handleExtraAction(terminal, title, options, cursor);
     }
 
     /**

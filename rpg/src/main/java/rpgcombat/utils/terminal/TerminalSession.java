@@ -30,7 +30,6 @@ public final class TerminalSession implements AutoCloseable {
 
         if (owner) {
             this.originalAttributes = terminal.enterRawMode();
-            terminal.puts(Capability.enter_ca_mode);
             terminal.puts(Capability.keypad_xmit);
             terminal.puts(Capability.cursor_invisible);
             terminal.flush();
@@ -69,7 +68,6 @@ public final class TerminalSession implements AutoCloseable {
             terminal.setAttributes(originalAttributes);
             terminal.puts(Capability.keypad_local);
             terminal.puts(Capability.cursor_visible);
-            terminal.puts(Capability.exit_ca_mode);
             terminal.flush();
         }
     }

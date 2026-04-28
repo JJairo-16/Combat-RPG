@@ -10,13 +10,13 @@ import rpgcombat.combat.models.Action;
 import rpgcombat.game.modifier.MenuStatusModifier;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.models.characters.Character;
-import rpgcombat.utils.interactive.MenuWithInformation;
+import rpgcombat.utils.interactive.PlayerProgressMenu;
 
 public class MenuCenter {
     private static final String BASE_SNAP = "base";
 
-    private final MenuWithInformation selector1;
-    private final MenuWithInformation selector2;
+    private final PlayerProgressMenu selector1;
+    private final PlayerProgressMenu selector2;
     private boolean infoVisible1 = false;
     private boolean infoVisible2 = false;
 
@@ -35,8 +35,8 @@ public class MenuCenter {
         this.player1 = player1;
         this.player2 = player2;
 
-        this.selector1 = new MenuWithInformation(information);
-        this.selector2 = new MenuWithInformation(information);
+        this.selector1 = new PlayerProgressMenu(information);
+        this.selector2 = new PlayerProgressMenu(information);
 
         DynamicMenu<Action, Character> baseMenuAction1 = MenuBuilder.build(selector1::getOption, changeWeaponHandler,
                 showPlayerInfoHandler);
@@ -63,25 +63,25 @@ public class MenuCenter {
 
     public Action playPlayer1() {
         selector1.setInformationVisible(infoVisible1);
-        selector1.setBottomRightMissionText(missionTextProvider.apply(player1));
+        selector1.setProgressText(missionTextProvider.apply(player1));
 
         mod1.mod(BASE_SNAP);
         Action action = menu1.run();
 
         this.infoVisible1 = selector1.getInformationVisible();
-        selector1.setBottomRightMissionText("");
+        selector1.setProgressText("");
         return action;
     }
 
     public Action playPlayer2() {
         selector2.setInformationVisible(infoVisible2);
-        selector2.setBottomRightMissionText(missionTextProvider.apply(player2));
+        selector2.setProgressText(missionTextProvider.apply(player2));
 
         mod2.mod(BASE_SNAP);
         Action action = menu2.run();
 
         this.infoVisible2 = selector2.getInformationVisible();
-        selector2.setBottomRightMissionText("");
+        selector2.setProgressText("");
         return action;
     }
 

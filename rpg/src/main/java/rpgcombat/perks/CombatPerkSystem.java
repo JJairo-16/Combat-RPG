@@ -16,97 +16,126 @@ import rpgcombat.perks.mission.MissionProgress;
 import rpgcombat.perks.mission.MissionRegistry;
 import rpgcombat.perks.mission.MissionUpdate;
 
-/**
- * Coordina missions i elecció de perks durant el combat.
- */
+/** Coordina missions i elecció de perks durant el combat. */
 public final class CombatPerkSystem {
     private final Map<Character, PlayerPerkState> states = new IdentityHashMap<>();
     private final Random rng = new Random();
 
-    /**
-     * Assigna una missió inicial a cada jugador.
-     */
+    /** Assigna una missió inicial a cada jugador. */
     public CombatPerkSystem(Character player1, Character player2) {
         states.put(player1, new PlayerPerkState(new MissionProgress(MissionRegistry.roll(rng))));
         states.put(player2, new PlayerPerkState(new MissionProgress(MissionRegistry.roll(rng))));
     }
 
-    /**
-     * Actualitza la missió del personatge després d'un torn.
-     */
+    /** Actualitza les missions del personatge després d'un torn. */
     public void afterTurn(Character actor, Character opponent, Action actorAction, Action opponentAction,
             TurnResult result, int roundNumber) {
         PlayerPerkState state = states.get(actor);
-        if (state == null || state.mission() == null || state.mission().rewardClaimed())
+        if (state == null)
             return;
 
-        state.mission().update(MissionUpdate.from(actor, opponent, actorAction, opponentAction, result, roundNumber));
+        MissionUpdate update = MissionUpdate.from(actor, opponent, actorAction, opponentAction, result, roundNumber);
+        for (MissionProgress mission : state.missions()) {
+            if (!mission.rewardClaimed()) {
+                mission.update(update);
+            }
+        }
         state.updatePendingChoice();
     }
 
-    /**
-     * Retorna un resum textual de la missió del jugador.
-     */
+    /** Retorna un resum textual de missions i perks del jugador. */
     public String missionSummary(Character player) {
         PlayerPerkState state = states.get(player);
-        if (state == null || state.mission() == null || state.mission().definition() == null) {
+        if (state == null)
             return "";
-        }
 
-        MissionProgress progress = state.mission();
+        StringBuilder sb = new StringBuilder();
+        if (!state.missions().isEmpty()) {
+            sb.append("Missions");
+            
+            for (MissionProgress progress : state.missions()) {
+                if (progress.definition() == null)
+                    continue;
+                MissionDefinition mission = progress.definition();
+                
+                String status;
+                if (!progress.completed())
+                    status = progress.progressText();
+                else if (progress.rewardClaimed())
+                    status = "Reclamada";
+                else
+                    status = "Completada";
 
-        if (progress.rewardClaimed()) {
-            PerkDefinition chosen = state.chosenPerk();
-            if (chosen == null) {
-                return "Perk\nRecompensa reclamada\nNo hi ha cap perk registrada";
+                sb.append("\n\n").append(mission.name())
+                        .append("\n").append(mission.description())
+                        .append("\nProgrés: ").append(status);
             }
-
-            return "Perk\n" + chosen.name()
-                    + "\n" + chosen.description()
-                    + "\nActivació: " + triggerLabel(chosen.trigger());
         }
 
-        MissionDefinition mission = progress.definition();
-        String status = progress.completed() ? "Completada" : progress.progressText();
-        return mission.name() + "\n" + mission.description() + "\nProgrés: " + status;
+        if (!state.perks().isEmpty()) {
+            if (!sb.isEmpty())
+                sb.append("\n---\n");
+            sb.append("Perks");
+            for (PerkDefinition chosen : state.perks()) {
+                sb.append("\n").append(chosen.name())
+                        .append("\n").append(chosen.description())
+                        .append("\nActivació: ").append(triggerLabel(chosen.trigger()));
+            }
+        }
+
+        return sb.toString();
     }
 
-    /**
-     * Resol l'elecció de perk pendent, si n'hi ha.
-     */
+    /** Resol l'elecció de perk pendent, si n'hi ha. */
     public void resolvePendingChoices(Character player) {
         PlayerPerkState state = states.get(player);
         if (state == null || !state.pendingChoice())
             return;
 
+        if (!state.canGainMorePerks()) {
+            state.clearPendingChoice();
+            return;
+        }
+
         boolean corruptedOnly = player.hasEffect(Chaos.INTERNAL_EFFECT_KEY);
-        List<PerkDefinition> options = PerkRegistry.rollOptions(corruptedOnly, 12, rng).stream()
+
+        List<PerkDefinition> options = PerkRegistry.rollOptions(corruptedOnly, 24, rng).stream()
+                .filter(perk -> !state.hasPerk(perk.id()))
                 .filter(perk -> !player.hasEffect(PerkEffectFactory.keyFor(perk)))
                 .limit(3)
                 .toList();
+
         if (options.isEmpty()) {
             state.clearPendingChoice();
             return;
         }
 
         PerkDefinition chosen = PerkChoiceMenu.choose(player, options);
-        if (chosen != null) {
-            Effect effect = PerkEffectFactory.create(chosen);
-            player.addEffect(effect);
-            state.setChosenPerk(chosen);
 
-            // Defensa explícita: després de triar una perk, el jugador ha de tenir-ne l'efecte actiu.
-            if (!player.hasEffect(effect.key())) {
-                player.removeEffect(effect.key());
-                player.addEffect(effect);
+        if (chosen != null && !state.hasPerk(chosen.id())) {
+            Effect effect = PerkEffectFactory.create(chosen);
+
+            player.removeEffect(effect.key());
+            player.addEffect(effect);
+
+            state.addPerk(chosen);
+            state.clearPendingChoice();
+
+            if (state.canGainMorePerks()) {
+                MissionDefinition nextMission = MissionRegistry.rollExcluding(rng, state.missionIds());
+                if (nextMission != null) {
+                    state.addMission(new MissionProgress(nextMission));
+                }
             }
+        } else {
+            state.clearPendingChoice();
         }
-        state.clearPendingChoice();
     }
 
     /** Etiqueta visible de la fase que activa una perk. */
     private static String triggerLabel(rpgcombat.weapons.passives.HitContext.Phase trigger) {
-        if (trigger == null) return "Desconeguda";
+        if (trigger == null)
+            return "Desconeguda";
         return switch (trigger) {
             case START_TURN -> "Inici de torn";
             case BEFORE_ATTACK -> "Abans d'atacar";
