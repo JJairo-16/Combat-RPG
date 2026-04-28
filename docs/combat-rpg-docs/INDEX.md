@@ -66,6 +66,14 @@
 - [Tests i simulacions](10-modifiers-debug-extensio/03-tests.md)
 - [Com ampliar el projecte](10-modifiers-debug-extensio/04-extensio.md)
 
+### ▌Perks
+- [Sistema de perks](11-perks/01-visio-general.md)
+- [Model de perk](11-perks/02-model-perk.md)
+- [Càrrega i registre de perks](11-perks/03-carrega-i-registre.md)
+- [Missions i progrés](11-perks/04-missions-i-progres.md)
+- [Efectes i regles de perks](11-perks/05-efectes-i-regles.md)
+- [Menú i integració amb combat](11-perks/06-menu-i-integracio-combat.md)
+
 ---
 
 ## ▌Com llegir aquesta documentació

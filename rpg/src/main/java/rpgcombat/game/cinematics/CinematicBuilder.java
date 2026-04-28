@@ -6,7 +6,6 @@ import rpgcombat.combat.models.Winner;
 import rpgcombat.config.ui.CinematicsOptions;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.triggers.Chaos;
-import rpgcombat.perks.mission.MissionDefinition;
 import rpgcombat.utils.cinematic.cinematic.TextCinematic;
 import rpgcombat.utils.cinematic.scene.BlockBuilder;
 import rpgcombat.utils.cinematic.scene.Scene;

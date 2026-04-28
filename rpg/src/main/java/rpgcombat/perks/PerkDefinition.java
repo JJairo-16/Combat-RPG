@@ -35,18 +35,4 @@ public record PerkDefinition(
      */
     public record Rule(String type, Map<String, Object> params) {}
 
-    /** @return línia descriptiva per mostrar al menú */
-    public String menuLine() {
-        return familyLabel() + " " + name + " — " + description;
-    }
-
-    /** @return etiqueta visible de la família */
-    private String familyLabel() {
-        return switch (family) {
-            case STRATEGY -> "[Estratègia]";
-            case LUCK -> "[Sort]";
-            case CHAOS -> "[Caos]";
-            case CORRUPTED -> "[Corrupta]";
-        };
-    }
 }
