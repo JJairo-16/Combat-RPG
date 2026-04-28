@@ -2,7 +2,7 @@ package rpgcombat.game.modifier;
 
 import menu.model.MenuResult;
 import rpgcombat.balance.CombatBalanceRegistry;
-import rpgcombat.balance.config.BloodPactConfig;
+import rpgcombat.balance.config.character.BloodPactConfig;
 import rpgcombat.combat.models.Action;
 import rpgcombat.game.modifier.ui.Messages;
 import rpgcombat.game.modifier.ui.Messages.CALL_SPIRITS;

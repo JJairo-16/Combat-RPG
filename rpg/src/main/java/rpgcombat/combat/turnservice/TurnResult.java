@@ -2,27 +2,35 @@ package rpgcombat.combat.turnservice;
 
 import java.util.List;
 
+import rpgcombat.combat.ui.messages.CombatMessage;
+
 /**
- * Representa el resultat complet d’un torn de combat.
- *
- * @param actorName nom de l’atacant
- * @param attackerMessage missatge de l’acció d’atac
- * @param startMessages missatges d’inici de torn
- * @param preDefenseMessages missatges abans de la defensa
- * @param defenseMessage resultat de la defensa
- * @param postDefenseMessages missatges després de la defensa
- * @param endTurnMessages missatges de final de torn
- * @param damageDealt dany infligit final
- * @param critical indica si ha estat cop crític
+ * Representa el resultat complet d'un torn de combat.
  */
 public record TurnResult(
         String actorName,
         String attackerMessage,
-        List<String> startMessages,
-        List<String> preDefenseMessages,
+        List<CombatMessage> startMessages,
+        List<CombatMessage> preDefenseMessages,
         String defenseMessage,
-        List<String> postDefenseMessages,
-        List<String> endTurnMessages,
+        List<CombatMessage> postDefenseMessages,
+        List<CombatMessage> endTurnMessages,
         double damageDealt,
-        boolean critical) {
+        boolean critical,
+        boolean selfHit,
+        boolean chargedHit) {
+
+    public TurnResult(
+            String actorName,
+            String attackerMessage,
+            List<CombatMessage> startMessages,
+            List<CombatMessage> preDefenseMessages,
+            String defenseMessage,
+            List<CombatMessage> postDefenseMessages,
+            List<CombatMessage> endTurnMessages,
+            double damageDealt,
+            boolean critical) {
+        this(actorName, attackerMessage, startMessages, preDefenseMessages, defenseMessage, postDefenseMessages,
+                endTurnMessages, damageDealt, critical, false, false);
+    }
 }

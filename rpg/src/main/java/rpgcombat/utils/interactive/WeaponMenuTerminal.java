@@ -6,16 +6,17 @@ import java.util.List;
 
 import org.jline.keymap.BindingReader;
 import org.jline.keymap.KeyMap;
-import org.jline.terminal.Attributes;
 import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
-import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.AttributedStringBuilder;
 import org.jline.utils.AttributedStyle;
 import org.jline.utils.InfoCmp.Capability;
 
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.utils.cache.TextWrapCache;
+import rpgcombat.utils.interactive.helpers.JLineAnsi;
+import rpgcombat.utils.terminal.SharedTerminal;
+import rpgcombat.utils.terminal.TerminalSession;
 import rpgcombat.weapons.config.WeaponDefinition;
 import rpgcombat.weapons.config.WeaponType;
 
@@ -49,14 +50,11 @@ final class WeaponMenuTerminal implements AutoCloseable {
 
     private static final String SEPARATOR = "────────────────────────────────────────────────────────";
 
-    /** Terminal compartit reutilitzat entre menús. */
-    private static Terminal sharedTerminal;
-
+    private final TerminalSession session;
     private final Terminal terminal;
     private final BindingReader reader;
     private final KeyMap<WeaponMenu.Action> keyMap;
 
-    private final Attributes originalAttributes;
     private final Terminal.SignalHandler previousWinchHandler;
 
     /** Amplada actual del terminal. */
@@ -66,23 +64,19 @@ final class WeaponMenuTerminal implements AutoCloseable {
     private int height;
 
     /**
-     * Crea el controlador del terminal i activa el mode interactiu.
+     * Crea el controlador del terminal sobre una sessió compartida.
      *
-     * @param terminal     terminal compartit
+     * @param session      sessió del terminal compartit
      * @param winchHandler gestor del senyal de redimensionament
      */
-    private WeaponMenuTerminal(Terminal terminal, Terminal.SignalHandler winchHandler) {
-        this.terminal = terminal;
-        this.originalAttributes = terminal.enterRawMode();
+    private WeaponMenuTerminal(TerminalSession session, Terminal.SignalHandler winchHandler) {
+        this.session = session;
+        this.terminal = session.terminal();
         this.reader = new BindingReader(terminal.reader());
         this.keyMap = buildKeyMap(terminal);
         this.previousWinchHandler = terminal.handle(Terminal.Signal.WINCH, winchHandler);
 
         refreshSize();
-
-        terminal.puts(Capability.enter_ca_mode);
-        terminal.puts(Capability.keypad_xmit);
-        terminal.puts(Capability.cursor_invisible);
         terminal.flush();
     }
 
@@ -94,7 +88,7 @@ final class WeaponMenuTerminal implements AutoCloseable {
      * @throws IOException si no es pot crear el terminal
      */
     static WeaponMenuTerminal open(Terminal.SignalHandler winchHandler) throws IOException {
-        return new WeaponMenuTerminal(getSharedTerminal(), winchHandler);
+        return new WeaponMenuTerminal(SharedTerminal.openSession(), winchHandler);
     }
 
     /**
@@ -103,7 +97,7 @@ final class WeaponMenuTerminal implements AutoCloseable {
      * @throws IOException si no es pot crear el terminal
      */
     static void preloadSharedTerminal() throws IOException {
-        getSharedTerminal();
+        SharedTerminal.preload();
     }
 
     /**
@@ -726,22 +720,6 @@ final class WeaponMenuTerminal implements AutoCloseable {
     }
 
     /**
-     * Retorna el terminal compartit, creant-lo si cal.
-     *
-     * @return terminal compartit
-     * @throws IOException si no es pot crear
-     */
-    private static Terminal getSharedTerminal() throws IOException {
-        if (sharedTerminal == null) {
-            sharedTerminal = TerminalBuilder.builder()
-                    .system(true)
-                    .nativeSignals(true)
-                    .build();
-        }
-        return sharedTerminal;
-    }
-
-    /**
      * Obté l'alçada del terminal amb valors de suport.
      *
      * @param terminal terminal actual
@@ -899,14 +877,10 @@ final class WeaponMenuTerminal implements AutoCloseable {
         return (int) Math.round(n * 100.0);
     }
 
-    /** Restaura el terminal al seu estat original. */
+    /** Restaura el gestor de mida i tanca la sessió. */
     @Override
     public void close() {
         terminal.handle(Terminal.Signal.WINCH, previousWinchHandler);
-        terminal.setAttributes(originalAttributes);
-        terminal.puts(Capability.keypad_local);
-        terminal.puts(Capability.cursor_visible);
-        terminal.puts(Capability.exit_ca_mode);
-        terminal.flush();
+        session.close();
     }
 }

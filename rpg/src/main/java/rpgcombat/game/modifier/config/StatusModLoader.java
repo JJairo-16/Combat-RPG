@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import menu.action.MenuAction;
@@ -29,7 +28,7 @@ import rpgcombat.models.characters.Character;
  * Carrega modificadors d'estat des de JSON.
  */
 public final class StatusModLoader {
-    private static final Gson GSON = new GsonBuilder().create();
+    private static final Gson GSON = new Gson();
 
     private static final Type MAP_TYPE = new TypeToken<Map<String, List<StatusModConfig>>>() {
     }.getType();

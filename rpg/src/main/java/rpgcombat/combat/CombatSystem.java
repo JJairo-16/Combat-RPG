@@ -6,10 +6,11 @@ import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.balance.CombatBalanceRegistry;
 import rpgcombat.balance.config.AntiStallConfig;
-import rpgcombat.balance.config.BloodPactConfig;
 import rpgcombat.balance.config.CombatBalanceConfig;
+import rpgcombat.balance.config.character.BloodPactConfig;
 import rpgcombat.combat.models.Action;
 import rpgcombat.combat.models.CombatRoundResult;
+import rpgcombat.combat.models.CombatantStatus;
 import rpgcombat.combat.models.EffectPipeline;
 import rpgcombat.combat.models.RegenResult;
 import rpgcombat.combat.models.Winner;
@@ -20,8 +21,10 @@ import rpgcombat.combat.turnservice.TurnPriorityPolicy;
 import rpgcombat.combat.turnservice.TurnResolver;
 import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.combat.ui.CombatRenderer;
+import rpgcombat.combat.ui.RoundResultPager;
 import rpgcombat.models.effects.impl.MagicalTiredness;
 import rpgcombat.models.effects.impl.SuddenDeathPoisonEffect;
+import rpgcombat.perks.CombatPerkSystem;
 
 /**
  * Coordina una ronda de combat entre dos personatges.
@@ -38,6 +41,7 @@ public class CombatSystem {
     private final EffectPipeline effectPipeline = new EffectPipeline();
     private final RoundRecoveryService recoveryService = new RoundRecoveryService();
     private final TurnResolver turnResolver = new TurnResolver(attackResolver, effectPipeline, recoveryService);
+    private final CombatPerkSystem perkSystem;
 
     private CombatBalanceConfig balance = CombatBalanceRegistry.get();
     private AntiStallConfig antiStall = balance.antiStall();
@@ -63,9 +67,26 @@ public class CombatSystem {
      * @param policy política de prioritat
      */
     public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy) {
+        this(p1, p2, policy, null);
+    }
+
+    /**
+     * Crea el sistema amb progressió de missions i perks.
+     *
+     * @param p1 primer personatge
+     * @param p2 segon personatge
+     * @param policy política de prioritat
+     * @param perkSystem sistema de perks
+     */
+    public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy, CombatPerkSystem perkSystem) {
         this.player1 = p1;
         this.player2 = p2;
         this.priorityPolicy = policy;
+        this.perkSystem = perkSystem;
+    }
+
+    public boolean preAntiStall() {
+        return roundNumber + 1 == antiStall.startTurn();
     }
 
     /**
@@ -77,26 +98,8 @@ public class CombatSystem {
      */
     public Winner play(Action a1, Action a2) {
         CombatRoundResult round = playRound(a1, a2);
-
-        renderer.printRoundHeader();
-        renderer.printTurnResult(round.firstTurn());
-        System.out.println();
-        renderer.printTurnResult(round.secondTurn());
-
-        System.out.println();
-        renderer.printRoundSummary(player1, round.p1DamageTaken());
-        renderer.printRoundSummary(player2, round.p2DamageTaken());
-
-        if (round.winner() != Winner.NONE) {
-            return round.winner();
-        }
-
-        System.out.println();
-        renderer.printRegenHeader();
-        renderer.printRegenSummary(player1, round.p1Regen().healthRecovered(), round.p1Regen().manaRecovered());
-        renderer.printRegenSummary(player2, round.p2Regen().healthRecovered(), round.p2Regen().manaRecovered());
-
-        return Winner.NONE;
+        new RoundResultPager(renderer).show(roundNumber, player1, player2, round);
+        return round.winner();
     }
 
     /**
@@ -119,6 +122,9 @@ public class CombatSystem {
         double p1HealthBefore = p1Stats.getHealth();
         double p2HealthBefore = p2Stats.getHealth();
 
+        CombatantStatus p1Initial = CombatantStatus.from(player1);
+        CombatantStatus p2Initial = CombatantStatus.from(player2);
+
         boolean p1First = priorityPolicy.player1First(player1, a1, player2, a2, combatRng);
 
         TurnResult firstTurn;
@@ -126,10 +132,14 @@ public class CombatSystem {
 
         if (p1First) {
             firstTurn = turnResolver.resolveTurn(player1, player2, a1, a2, p2Bonus);
+            updateMissionProgress(player1, player2, a1, a2, firstTurn);
             secondTurn = turnResolver.resolveTurn(player2, player1, a2, a1, p1Bonus);
+            updateMissionProgress(player2, player1, a2, a1, secondTurn);
         } else {
             firstTurn = turnResolver.resolveTurn(player2, player1, a2, a1, p1Bonus);
+            updateMissionProgress(player2, player1, a2, a1, firstTurn);
             secondTurn = turnResolver.resolveTurn(player1, player2, a1, a2, p2Bonus);
+            updateMissionProgress(player1, player2, a1, a2, secondTurn);
         }
 
         double p1HealthAfterAttacks = p1Stats.getHealth();
@@ -137,6 +147,9 @@ public class CombatSystem {
 
         double p1DamageTaken = p1HealthBefore - p1HealthAfterAttacks;
         double p2DamageTaken = p2HealthBefore - p2HealthAfterAttacks;
+
+        CombatantStatus p1AfterDamage = CombatantStatus.from(player1);
+        CombatantStatus p2AfterDamage = CombatantStatus.from(player2);
 
         player1.applyInvulnerability();
         player2.applyInvulnerability();
@@ -150,7 +163,13 @@ public class CombatSystem {
                     p2DamageTaken,
                     RegenResult.ZERO,
                     RegenResult.ZERO,
-                    winner);
+                    winner,
+                    p1Initial,
+                    p2Initial,
+                    p1AfterDamage,
+                    p2AfterDamage,
+                    p1AfterDamage,
+                    p2AfterDamage);
         }
 
         player1.tickSpiritualCallingCooldown();
@@ -179,6 +198,9 @@ public class CombatSystem {
         applyOrRemoveMagicalTiredness(player1);
         applyOrRemoveMagicalTiredness(player2);
 
+        CombatantStatus p1Final = CombatantStatus.from(player1);
+        CombatantStatus p2Final = CombatantStatus.from(player2);
+
         return new CombatRoundResult(
                 firstTurn,
                 secondTurn,
@@ -186,15 +208,30 @@ public class CombatSystem {
                 p2DamageTaken,
                 p1Regen,
                 p2Regen,
-                Winner.NONE);
+                Winner.NONE,
+                p1Initial,
+                p2Initial,
+                p1AfterDamage,
+                p2AfterDamage,
+                p1Final,
+                p2Final);
+    }
+
+
+    /**
+     * Actualitza la missió del personatge si el sistema està actiu.
+     */
+    private void updateMissionProgress(Character actor, Character opponent, Action actorAction, Action opponentAction,
+            TurnResult result) {
+        if (perkSystem != null) {
+            perkSystem.afterTurn(actor, opponent, actorAction, opponentAction, result, roundNumber);
+        }
     }
 
     /**
-     * Aplica o elimina l'efecte de {@link MagicalTiredness} en funció del percentatge de mana actual.
-     * <p>
-     * Si el mana del personatge és igual o inferior al 90% del màxim, s'aplica l'efecte de fatiga màgica. En cas contrari, l'efecte s'elimina.
+     * Aplica o elimina la fatiga màgica segons el mana actual.
      *
-     * @param player el personatge sobre el qual s'avalua i s'aplica l'efecte
+     * @param player personatge afectat
      */
     private void applyOrRemoveMagicalTiredness(Character player) {
         Statistics stats = player.getStatistics();
@@ -211,11 +248,7 @@ public class CombatSystem {
     }
 
     /**
-     * Aplica o elimina l'efecte de {@link MagicalTiredness} en funció del percentatge de mana actual.
-     * <p>
-     * Si el mana del personatge és igual o inferior al 90% del màxim, s'aplica l'efecte de fatiga màgica. En cas contrari, l'efecte s'elimina.
-     *
-     * @param player el personatge sobre el qual s'avalua i s'aplica l'efecte
+     * Sincronitza només els efectes derivats dels recursos.
      */
     public void syncEffectsOnly() {
         applyOrRemoveMagicalTiredness(player1);

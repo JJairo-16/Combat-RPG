@@ -6,23 +6,28 @@ import java.util.List;
 import java.util.Random;
 
 import rpgcombat.balance.CombatBalanceRegistry;
-import rpgcombat.balance.config.AdrenalineConfig;
 import rpgcombat.balance.config.AttackDefenseVarianceConfig;
-import rpgcombat.balance.config.ChargedAttackConfig;
 import rpgcombat.balance.config.CombatBalanceConfig;
-import rpgcombat.balance.config.GuardBreakConfig;
-import rpgcombat.balance.config.MomentumConfig;
+import rpgcombat.balance.config.character.AdrenalineConfig;
+import rpgcombat.balance.config.character.ChargedAttackConfig;
+import rpgcombat.balance.config.character.GuardBreakConfig;
+import rpgcombat.balance.config.character.MomentumConfig;
 import rpgcombat.combat.models.Action;
+import rpgcombat.combat.services.EndRoundRegenBonus;
+import rpgcombat.combat.ui.messages.CombatMessage;
+import rpgcombat.combat.ui.messages.CombatMessageBuffer;
+import rpgcombat.combat.ui.messages.MessageColor;
+import rpgcombat.combat.ui.messages.MessageSymbol;
+import rpgcombat.creator.score.CharacterBuildScore;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.StackingRule;
 import rpgcombat.models.effects.impl.Exhaustion;
 import rpgcombat.models.effects.impl.SpiritualCallingFlag;
-import rpgcombat.utils.ui.Ansi;
+import rpgcombat.models.effects.triggers.InternalConflict;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;
-import rpgcombat.weapons.config.WeaponType;
 import rpgcombat.weapons.passives.HitContext;
 
 /**
@@ -49,6 +54,7 @@ public class Character {
 
     protected final Random rng = new Random();
     protected final List<Effect> effects = new ArrayList<>();
+    protected final UnarmedAttack unarmedAttack;
 
     private int spiritualCallingCooldown = 0;
     private int guardStacks = 0;
@@ -64,6 +70,7 @@ public class Character {
     private double attackModifierThisTurn = 1.0;
     private double defenseModifierThisTurn = 1.0;
     private double dodgeModifierThisTurn = 1.0;
+    private double nextIncomingDamageMultiplier = 1.0;
 
     public Character(String name, int age, int[] stats, Breed breed) {
         validateName(name);
@@ -76,6 +83,16 @@ public class Character {
         this.age = age;
         this.breed = breed;
         this.stats = new Statistics(effectiveStats);
+        this.unarmedAttack = new UnarmedAttack(this.stats, rng);
+
+        applyInternalConflictIfNeeded(stats);
+    }
+
+    private void applyInternalConflictIfNeeded(int[] stats) {
+        if (!CharacterBuildScore.hasPowerConflict(stats))
+            return;
+
+        addEffect(new InternalConflict());
     }
 
     /**
@@ -264,31 +281,20 @@ public class Character {
      */
     public AttackResult attack() {
         if (weapon == null)
-            return attackUnarmed();
+            return unarmedAttack.attackUnarmed();
+
+        double manaCost = weapon.getManaPrice();
+        double mana = stats.getMana();
+        if (manaCost > mana)
+            return unarmedAttack.fallbackAttack();
+
         return weapon.attack(stats, rng);
-    }
-
-    /**
-     * Executa un atac desarmat.
-     */
-    protected AttackResult attackUnarmed() {
-        double damage = WeaponType.PHYSICAL.getBasicDamage(7, stats) * damageVariance(rng);
-        return new AttackResult(damage, "ataca amb les mans desnudes.");
-    }
-
-    /**
-     * Aplica la variació de dany configurada al combat.
-     */
-    private double damageVariance(Random rng) {
-        AttackDefenseVarianceConfig.AttackConfig cfg = varianceCfg().attack();
-        double roll = (rng.nextDouble() + rng.nextDouble()) / 2.0;
-        return cfg.minMultiplier() + roll * (cfg.maxMultiplier() - cfg.minMultiplier());
     }
 
     /**
      * Prepara l'estat del personatge a l'inici del torn.
      */
-    public void onTurnStart(Action action, List<String> out) {
+    public void onTurnStart(Action action, CombatMessageBuffer out) {
         attackModifierThisTurn = 1.0;
         defenseModifierThisTurn = 1.0;
         dodgeModifierThisTurn = 1.0;
@@ -300,9 +306,10 @@ public class Character {
     /**
      * Aplica el tick de sagnat a l'inici del torn.
      */
-    private void applyBleedTick(Action action, List<String> out) {
-        if (bleedTurns <= 0 || !isAlive())
+    private void applyBleedTick(Action action, CombatMessageBuffer out) {
+        if (bleedTurns <= 0 || !isAlive()) {
             return;
+        }
 
         double bleedDamage = stats.getMaxHealth() * BLEED_MAX_HEALTH_RATIO;
         if (action == Action.DEFEND) {
@@ -310,42 +317,54 @@ public class Character {
         }
 
         bleedDamage = round2(Math.max(0.0, bleedDamage));
+        if (bleedDamage > 0 && out != null) {
+            String suffix = action == Action.DEFEND ? " però la defensa en redueix part." : ".";
+            out.styled(MessageColor.RED, MessageSymbol.NEGATIVE,
+                    name + " pateix " + bleedDamage + " de sagnat" + suffix);
+        }
+
         if (bleedDamage > 0) {
             stats.damage(bleedDamage);
-            if (out != null) {
-                String suffix = action == Action.DEFEND ? " però la defensa en redueix part." : ".";
-                out.add(Ansi.RED + "  - " + name + " pateix " + bleedDamage + " de sagnat" + suffix);
-            }
         }
+
         bleedTurns--;
     }
 
     /**
      * Aplica la penalització d'aturdiment segons l'acció del torn.
      */
-    private void applyStaggerPenalty(Action action, List<String> out) {
-        if (staggerTurns <= 0)
+    private void applyStaggerPenalty(Action action, CombatMessageBuffer out) {
+        if (staggerTurns <= 0) {
             return;
+        }
 
         switch (action) {
             case ATTACK -> {
                 attackModifierThisTurn = STAGGER_ATTACK_MULTIPLIER;
-                if (out != null)
-                    out.add(Ansi.YELLOW + "  ! " + name + " està desequilibrat: el seu atac perd força.");
+                if (out != null) {
+                    out.styled(MessageColor.YELLOW, MessageSymbol.WARNING,
+                            name + " està desequilibrat: el seu atac perd força.");
+                }
             }
             case DEFEND -> {
                 defenseModifierThisTurn = STAGGER_DEFEND_MULTIPLIER;
-                if (out != null)
-                    out.add(Ansi.YELLOW + "  ! " + name + " defensa mal posicionat.");
+                if (out != null) {
+                    out.styled(MessageColor.YELLOW, MessageSymbol.WARNING,
+                            name + " defensa mal posicionat.");
+                }
             }
             case DODGE -> {
                 dodgeModifierThisTurn = STAGGER_DODGE_MULTIPLIER;
-                if (out != null)
-                    out.add(Ansi.YELLOW + "  ! " + name + " intenta esquivar desequilibrat.");
+                if (out != null) {
+                    out.styled(MessageColor.YELLOW, MessageSymbol.WARNING,
+                            name + " intenta esquivar desequilibrat.");
+                }
             }
             case CHARGE -> {
-                if (out != null)
-                    out.add(Ansi.YELLOW + "  ! " + name + " carrega lentament per l'aturdiment.");
+                if (out != null) {
+                    out.styled(MessageColor.YELLOW, MessageSymbol.WARNING,
+                            name + " carrega lentament per l'aturdiment.");
+                }
             }
         }
 
@@ -506,9 +525,20 @@ public class Character {
      */
     public double consumeIncomingDamageMultiplier() {
         double multiplier = isVulnerable() ? guardBreak().vulnerableDamageMultiplier() : 1.0;
+        multiplier *= nextIncomingDamageMultiplier;
+        nextIncomingDamageMultiplier = 1.0;
         if (vulnerableTurns > 0)
             vulnerableTurns--;
         return multiplier;
+    }
+
+    /**
+     * Multiplica el proper dany entrant directe.
+     */
+    public void multiplyNextIncomingDamage(double multiplier) {
+        if (multiplier > 0) {
+            nextIncomingDamageMultiplier *= multiplier;
+        }
     }
 
     /**
@@ -516,6 +546,27 @@ public class Character {
      */
     public void applyBleed(int turns) {
         bleedTurns = Math.max(bleedTurns, turns);
+    }
+
+    /**
+     * Elimina el sagnat actiu.
+     */
+    public void clearBleed() {
+        bleedTurns = 0;
+    }
+
+    /**
+     * Elimina la vulnerabilitat activa.
+     */
+    public void clearVulnerable() {
+        vulnerableTurns = 0;
+    }
+
+    /**
+     * Elimina l'aturdiment actiu.
+     */
+    public void clearStagger() {
+        staggerTurns = 0;
     }
 
     /**
@@ -622,8 +673,8 @@ public class Character {
     /**
      * Intenta activar una pujada d'adrenalina i afegir bonus de regeneració.
      */
-    public boolean tryTriggerAdrenalineSurge(Character opponent, rpgcombat.combat.services.EndRoundRegenBonus bonus,
-            List<String> out) {
+    public boolean tryTriggerAdrenalineSurge(Character opponent, EndRoundRegenBonus bonus,
+            CombatMessageBuffer out) {
         AdrenalineConfig cfg = adrenalineCfg();
 
         if (bonus == null || adrenalineSurgeUsed || !isAlive() || healthRatio() > cfg.triggerHealthRatio()) {
@@ -639,8 +690,8 @@ public class Character {
         bonus.add(hpPct, manaPct);
 
         if (out != null) {
-            out.add("[GREEN|!] " + name
-                    + " entra en adrenalina: accelera la seva regeneració per al final de la ronda.");
+            out.styled(MessageColor.GREEN, MessageSymbol.WARNING,
+                    name + " entra en adrenalina: accelera la seva regeneració per al final de la ronda.");
         }
 
         return true;
@@ -751,19 +802,19 @@ public class Character {
     /**
      * Dispara els efectes d'una fase i retorna els missatges generats.
      */
-    public List<String> triggerEffects(HitContext ctx, HitContext.Phase phase, Random rng) {
+    public List<CombatMessage> triggerEffects(HitContext ctx, HitContext.Phase phase, Random rng) {
         if (effects.isEmpty())
             return List.of();
 
-        List<String> messages = new ArrayList<>();
+        CombatMessageBuffer messages = new CombatMessageBuffer();
         triggerEffects(ctx, phase, rng, messages);
-        return messages;
+        return messages.messages();
     }
 
     /**
      * Dispara els efectes d'una fase i afegeix els missatges a la sortida donada.
      */
-    public void triggerEffects(HitContext ctx, HitContext.Phase phase, Random rng, List<String> out) {
+    public void triggerEffects(HitContext ctx, HitContext.Phase phase, Random rng, CombatMessageBuffer out) {
         if (effects.isEmpty())
             return;
 
@@ -775,9 +826,10 @@ public class Character {
 
             EffectResult r = e.onPhase(ctx, phase, rng, this);
 
-            if (r != null && r.message() != null && !r.message().isBlank()) {
+            if (r != null && r.message() != null && out != null) {
                 out.add(r.message());
             }
+
         }
 
         cleanupExpiredEffects();

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -14,10 +15,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import rpgcombat.balance.CombatBalanceRegistry;
-import rpgcombat.balance.config.BloodPactConfig;
+import rpgcombat.balance.config.character.BloodPactConfig;
 import rpgcombat.combat.CombatSystem;
 import rpgcombat.creator.CharacterCreator;
-import rpgcombat.game.MenuCenter;
+import rpgcombat.game.menu.MenuCenter;
 import rpgcombat.game.modifier.Actions;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.models.characters.Character;
@@ -59,7 +60,8 @@ class BloodPactTest {
 				enemyDummy,
 				c -> System.out.println("Canviar arma"),
 				c -> System.out.println("Mostrar informació"),
-				modifiers);
+				modifiers,
+				Collections.emptyMap());
 
 		combatSystem = new CombatSystem(dummy, enemyDummy);
 	}
@@ -96,10 +98,10 @@ class BloodPactTest {
 		setManaTo(threshold, dummy);
 		syncBloodPactEffect();
 
-        if (!dummy.hasEffect(EFFECT_KEY)) {
-            double percent = (dummy.getStatistics().getMana() / dummy.getStatistics().getMaxMana());
-            throw new IllegalArgumentException("" + percent);
-        }
+		if (!dummy.hasEffect(EFFECT_KEY)) {
+			double percent = (dummy.getStatistics().getMana() / dummy.getStatistics().getMaxMana());
+			throw new IllegalArgumentException("" + percent);
+		}
 
 		assertTrue(dummy.hasEffect(EFFECT_KEY),
 				"L'efecte s'hauria d'aplicar al llindar exacte.");
@@ -208,7 +210,7 @@ class BloodPactTest {
 	}
 
 	private void syncBloodPactEffect() {
-        combatSystem.syncEffectsOnly();
+		combatSystem.syncEffectsOnly();
 	}
 
 	private void invokeBloodPactCore(Character player) throws Exception {

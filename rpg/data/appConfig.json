@@ -10,12 +10,19 @@
   "paths": {
     "weaponsConfig": "rpg/data/weapons.json",
     "statusMenuModifier": "rpg/data/menuModifiers.json",
-    "balanceConfig": "rpg/data/combatBalance.json"
+    "balanceConfig": "rpg/data/combatBalance.json",
+    "menuDescriptions": "rpg/data/menuDescription.json"
   },
   "ui": {
     "showLoadingIntro": true,
     "loadingAuthor": "Jairo Linares",
     "clearBetweenCharacterCreation": true
+  },
+  "cinematic": {
+    "preCreation": true,
+    "postCreation": true,
+    "antiStall": true,
+    "chaos": 0.15
   },
   "debug": {
     "enabled": false,
@@ -29,5 +36,10 @@
     "player2": {
       "mode": "NORMAL"
     }
+  },
+  "homeScreen": {
+    "enabled": true,
+    "allowReturnFromEnd": true,
+    "title": "RPG Combat"
   }
 }

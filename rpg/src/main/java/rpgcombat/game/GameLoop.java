@@ -2,15 +2,19 @@ package rpgcombat.game;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-
 import rpgcombat.combat.CombatSystem;
 import rpgcombat.combat.models.Action;
 import rpgcombat.combat.models.Winner;
+import rpgcombat.config.ui.CinematicsOptions;
+import rpgcombat.config.ui.HomeScreenConfig;
+import rpgcombat.game.cinematics.CinematicBuilder;
+import rpgcombat.game.menu.EndGameMenu;
+import rpgcombat.game.menu.MenuCenter;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
+import rpgcombat.perks.CombatPerkSystem;
 
 import rpgcombat.utils.cache.TextWrapCache;
 import rpgcombat.utils.input.Menu;
@@ -38,44 +42,54 @@ public class GameLoop {
     private final Character player2;
 
     private final CombatSystem combatSystem;
+    private final CombatPerkSystem perkSystem;
     private final Cleaner cls = new Cleaner();
     private final TextWrapCache wrapCache = new TextWrapCache();
+    private final CinematicsOptions cinematicsOptions;
+    private final HomeScreenConfig homeScreenConfig;
 
     // Cache d'armes (assumim que no canvia durant la partida)
     private final List<WeaponDefinition> entries = Arsenal.values();
 
-    public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers) {
+    public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers, Map<String, String> information, CinematicsOptions cinematicsOptions, HomeScreenConfig homeScreenConfig) {
         this.player1 = player1;
         this.player2 = player2;
-        this.combatSystem = new CombatSystem(player1, player2);
+        this.perkSystem = new CombatPerkSystem(player1, player2);
+        this.combatSystem = new CombatSystem(player1, player2, new rpgcombat.combat.turnservice.DefaultTurnPriorityPolicy(), perkSystem);
 
-        this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers);
-
-        DivineCharismaAffinity.rollForRun(new Random());
+        this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers, information);
+        this.menu.setMissionTextProvider(perkSystem::missionSummary);
+        this.cinematicsOptions = cinematicsOptions;
+        this.homeScreenConfig = homeScreenConfig;
     }
 
     /**
      * Inicia el combat i el manté en execució fins que hi hagi un vencedor (o
      * empat).
      */
-    public void init() {
-        cls.clear();
+    public EndGameAction init() {
+        CinematicBuilder.playInit(cinematicsOptions, player1, player2);
 
         Winner winner;
         do {
             Action action1 = menu.playPlayer1();
             Action action2 = menu.playPlayer2();
 
-            cls.clear();
             winner = combatSystem.play(action1, action2);
-            Menu.pause();
+
+            perkSystem.resolvePendingChoices(player1);
+            perkSystem.resolvePendingChoices(player2);
+
+            if (cinematicsOptions.antiStall() && combatSystem.preAntiStall()) {
+                CinematicBuilder.playAntiStall();
+            }
         } while (winner == Winner.NONE);
 
-        finish(winner);
+        return finish(winner);
     }
 
-    /** Mostra el resultat final del combat. */
-    private void finish(Winner winner) {
+    /** Mostra el resultat final del combat i demana què fer després. */
+    private EndGameAction finish(Winner winner) {
         StringBuilder sb = new StringBuilder(2048);
 
         sb.append("====================================\n");
@@ -107,10 +121,15 @@ public class GameLoop {
         }
 
         sb.append('\n');
-        sb.append("====================================\n");
+        sb.append("====================================\n\n");
 
         cls.clear();
         System.out.print(sb.toString());
+        
+        Menu.pause();
+        CinematicBuilder.playEnd(winner);
+
+        return EndGameMenu.ask(homeScreenConfig.allowReturnFromEnd());
     }
 
     private void showPlayerInfoWrapper(Character player) {
@@ -128,7 +147,6 @@ public class GameLoop {
         boolean loop = true;
 
         Statistics stats = player.getStatistics();
-        boolean equipped = false;
 
         WeaponMenu.FilterState filters = new WeaponMenu.FilterState();
         filters.setOnlyEquippable(true);
@@ -151,20 +169,13 @@ public class GameLoop {
 
             if (weapon.canEquip(stats)) {
                 loop = false;
-                equipped = true;
             } else {
                 Prettier.warn("No compleixes els requisits per equipar aquesta arma.");
                 Menu.pause();
             }
         } while (loop);
 
-        if (!equipped) {
-            Prettier.info("No s'ha realitzat cap canvi d'arma.");
-            return;
-        }
-
         player.setWeapon(weapon);
-        Prettier.info("S'ha equipat l'arma %s.", weapon.getName());
     }
 
     private final StringBuilder playerInfo = new StringBuilder(24_000);

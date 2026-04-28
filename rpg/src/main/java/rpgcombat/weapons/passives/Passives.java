@@ -2,34 +2,29 @@ package rpgcombat.weapons.passives;
 
 import java.util.Random;
 
+import rpgcombat.combat.ui.messages.CombatMessage;
+import rpgcombat.combat.ui.messages.MessageColor;
+import rpgcombat.combat.ui.messages.MessageSymbol;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.models.effects.impl.BlindEffect;
 import rpgcombat.models.effects.impl.PoisonEffect;
-import rpgcombat.utils.ui.Ansi;
 import rpgcombat.weapons.Weapon;
 
 /**
- * Fàbrica d'efectes passius d'arma.
- * Conté helpers per crear {@link WeaponPassive} reutilitzables.
+ * Fàbrica de passius d'arma.
  */
 public final class Passives {
     private Passives() {
-        // Classe utilitària: no instanciable.
     }
 
-    private static final String HP = Ansi.RED + "HP" + Ansi.RESET;
-
     /**
-     * Crea un passiu que cura l'atacant un percentatge del dany real infligit.
-     *
-     * @param pct percentatge de robatori de vida
-     * @return passiu que s'aplica després d'encertar
+     * Cura l'atacant segons el dany real infligit.
      */
     public static WeaponPassive lifeSteal(double pct) {
         return new WeaponPassive() {
             @Override
-            public String afterHit(Weapon weapon, HitContext ctx, Random rng) {
+            public CombatMessage afterHit(Weapon weapon, HitContext ctx, Random rng) {
                 double healAmount = ctx.damageDealt() * pct;
                 double realHealed = ctx.attacker().getStatistics().heal(healAmount);
 
@@ -37,23 +32,24 @@ public final class Passives {
                     return null;
                 }
 
-                return String.format("%s roba %.1f %s",
-                        ctx.attacker().getName(),
-                        realHealed,
-                        HP);
+                return CombatMessage.of(
+                        MessageSymbol.POSITIVE,
+                        MessageColor.GREEN,
+                        String.format("%s roba %.1f HP",
+                                ctx.attacker().getName(),
+                                realHealed)
+                );
             }
         };
     }
 
     /**
-     * Crea un passiu que aplica dany verdader després d'un impacte real.
-     *
-     * @param pct percentatge de vida màxima convertit en dany
+     * Aplica dany verdader després d'un impacte real.
      */
     public static WeaponPassive trueHarm(double pct) {
         return new WeaponPassive() {
             @Override
-            public String afterHit(Weapon weapon, HitContext ctx, Random rng) {
+            public CombatMessage afterHit(Weapon weapon, HitContext ctx, Random rng) {
                 double opponentMaxHealth = ctx.defender().getStatistics().getMaxHealth();
                 double extra = opponentMaxHealth * pct;
 
@@ -63,24 +59,24 @@ public final class Passives {
 
                 ctx.defender().getStatistics().damage(extra);
 
-                return String.format("%s connecta un dany verdader del %.2f%%",
-                        ctx.attacker().getName(),
-                        roundPercent(pct));
+                return CombatMessage.of(
+                        MessageSymbol.WARNING,
+                        MessageColor.RED,
+                        String.format("%s connecta un dany verdader del %.2f%%",
+                                ctx.attacker().getName(),
+                                round2(pct * 100.0))
+                );
             }
         };
     }
 
     /**
-     * Passiu d'execució: quan l'enemic està per sota d'un llindar de vida,
-     * augmenta el dany abans de defensar.
-     *
-     * @param thresholdLife ratio de vida
-     * @param damageBonus bonus multiplicatiu extra
+     * Augmenta el dany si l'enemic té poca vida.
      */
     public static WeaponPassive executor(double thresholdLife, double damageBonus) {
         return new WeaponPassive() {
             @Override
-            public String modifyDamage(Weapon weapon, HitContext ctx, Random rng) {
+            public CombatMessage modifyDamage(Weapon weapon, HitContext ctx, Random rng) {
                 Character defender = ctx.defender();
                 Statistics defenderStats = defender.getStatistics();
 
@@ -91,17 +87,24 @@ public final class Passives {
 
                 ctx.multiplyDamage(1.0 + damageBonus);
 
-                return String.format("%s prepara una execució (+%d%% de dany)",
-                        ctx.attacker().getName(),
-                        roundPercent(damageBonus));
+                return CombatMessage.of(
+                        MessageSymbol.WARNING,
+                        MessageColor.YELLOW,
+                        String.format("%s prepara una execució (+%d%% de dany)",
+                                ctx.attacker().getName(),
+                                roundPercent(damageBonus))
+                );
             }
         };
     }
 
+    /**
+     * Pot aplicar ceguesa després d'un impacte.
+     */
     public static WeaponPassive blindOnHit(double applyProb, double missProb, int duration) {
         return new WeaponPassive() {
             @Override
-            public String afterHit(Weapon weapon, HitContext ctx, Random rng) {
+            public CombatMessage afterHit(Weapon weapon, HitContext ctx, Random rng) {
                 if (ctx.damageDealt() <= 0) {
                     return null;
                 }
@@ -111,24 +114,23 @@ public final class Passives {
                 }
 
                 ctx.defender().addEffect(new BlindEffect(duration, missProb));
-                return ctx.defender().getName() + " queda encegat temporalment.";
+
+                return CombatMessage.of(
+                        MessageSymbol.NEGATIVE,
+                        MessageColor.RED,
+                        ctx.defender().getName() + " queda encegat temporalment."
+                );
             }
         };
     }
 
     /**
-     * Passiu de verí acumulatiu.
-     *
-     * <p>
-     * El cop actual llegeix els stacks de verí existents sobre el defensor
-     * i hi suma dany extra. Si l'impacte connecta, afegeix 1 stack nou.
-     * Si la cadena es trenca, el verí desapareix.
-     * </p>
+     * Verí acumulatiu amb dany extra i trencament de cadena.
      */
     public static WeaponPassive poisonChain(double extraDamagePerStack, int softCapStart, double falloff) {
         return new WeaponPassive() {
             @Override
-            public String modifyDamage(Weapon weapon, HitContext ctx, Random rng) {
+            public CombatMessage modifyDamage(Weapon weapon, HitContext ctx, Random rng) {
                 PoisonEffect poison = PoisonEffect.from(ctx.defender());
                 if (poison == null) {
                     return null;
@@ -141,14 +143,17 @@ public final class Passives {
 
                 ctx.addFlatDamage(bonus);
 
-                return String.format(
-                        "El verí amplifica el cop (+%.2f de dany amb %d càrregues).",
-                        bonus,
-                        poison.stacks());
+                return CombatMessage.of(
+                        MessageSymbol.POSITIVE,
+                        MessageColor.GREEN,
+                        String.format("El verí amplifica el cop (+%.2f de dany amb %d càrregues).",
+                                bonus,
+                                poison.stacks())
+                );
             }
 
             @Override
-            public String afterDefense(Weapon weapon, HitContext ctx, Random rng) {
+            public CombatMessage afterDefense(Weapon weapon, HitContext ctx, Random rng) {
                 if (ctx.damageDealt() > 0) {
                     return null;
                 }
@@ -158,11 +163,15 @@ public final class Passives {
                     return null;
                 }
 
-                return "La cadena del verí es trenca i el verí s'esvaeix.";
+                return CombatMessage.of(
+                        MessageSymbol.NEGATIVE,
+                        MessageColor.YELLOW,
+                        "La cadena del verí es trenca i el verí s'esvaeix."
+                );
             }
 
             @Override
-            public String afterHit(Weapon weapon, HitContext ctx, Random rng) {
+            public CombatMessage afterHit(Weapon weapon, HitContext ctx, Random rng) {
                 if (ctx.damageDealt() <= 0) {
                     return null;
                 }
@@ -176,15 +185,22 @@ public final class Passives {
                 PoisonEffect updated = PoisonEffect.from(ctx.defender());
                 int stacks = (updated == null) ? 1 : updated.stacks();
 
-                return String.format(
-                        "%s acumula verí (%d càrregues).",
-                        ctx.defender().getName(),
-                        stacks);
+                return CombatMessage.of(
+                        MessageSymbol.POSITIVE,
+                        MessageColor.GREEN,
+                        String.format("%s acumula verí (%d càrregues).",
+                                ctx.defender().getName(),
+                                stacks)
+                );
             }
         };
     }
 
-    private static double roundPercent(double n) {
-        return Math.round(n * 100.0);
+    private static double round2(double n) {
+        return Math.round(n * 100.0) / 190.0;
+    }
+
+    private static int roundPercent(double n) {
+        return (int) Math.round(n * 100.0);
     }
 }

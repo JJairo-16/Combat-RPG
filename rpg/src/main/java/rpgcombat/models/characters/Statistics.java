@@ -4,12 +4,12 @@ import java.util.Map;
 
 import rpgcombat.balance.CombatBalanceRegistry;
 import rpgcombat.balance.config.CombatBalanceConfig;
-import rpgcombat.balance.config.StaminaConfig;
-import rpgcombat.balance.config.StaminaConfig.AttackCostConfig;
-import rpgcombat.balance.config.StaminaConfig.DamageMultiplierConfig;
-import rpgcombat.balance.config.StaminaConfig.FatigueChanceConfig;
-import rpgcombat.balance.config.StaminaConfig.MaxConfig;
-import rpgcombat.balance.config.StaminaConfig.RecoveryConfig;
+import rpgcombat.balance.config.character.StaminaConfig;
+import rpgcombat.balance.config.character.StaminaConfig.AttackCostConfig;
+import rpgcombat.balance.config.character.StaminaConfig.DamageMultiplierConfig;
+import rpgcombat.balance.config.character.StaminaConfig.FatigueChanceConfig;
+import rpgcombat.balance.config.character.StaminaConfig.MaxConfig;
+import rpgcombat.balance.config.character.StaminaConfig.RecoveryConfig;
 import rpgcombat.combat.models.Action;
 
 /**
@@ -303,6 +303,19 @@ public class Statistics {
 
         stamina = affectClamp(stamina, regen, maxStamina, 0);
     }
+
+    /**
+     * Recupera estamina sense superar el màxim.
+     */
+    public double restoreStamina(double amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+        double before = stamina;
+        stamina = Math.min(maxStamina, stamina + amount);
+        return stamina - before;
+    }
+
 
     /**
      * Recupera resistència en atacar.

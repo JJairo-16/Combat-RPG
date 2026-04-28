@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import rpgcombat.weapons.config.WeaponConfig;
 import rpgcombat.weapons.config.WeaponDefinition;
@@ -19,7 +18,7 @@ import rpgcombat.weapons.config.WeaponType;
  * Lector de definicions d'armes des d'un JSON amb Gson.
  */
 public final class WeaponLoader {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson GSON = new Gson();
 
     private WeaponLoader() {
     }

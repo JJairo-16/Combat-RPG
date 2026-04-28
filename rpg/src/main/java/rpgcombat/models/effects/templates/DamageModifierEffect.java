@@ -1,32 +1,22 @@
 package rpgcombat.models.effects.templates;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
+import rpgcombat.combat.ui.messages.CombatMessage;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.weapons.passives.HitContext;
 
 /**
  * Efecte que modifica el dany infligit, el rebut, o tots dos.
- *
- * Exemples:
- * - Frenesí: +25% dany infligit
- * - Resistència: -20% dany rebut
- * - Corromput: +15% dany infligit i +10% dany rebut
  */
 public abstract class DamageModifierEffect extends TimedEffect {
 
     protected final double outgoingMultiplier;
     protected final double incomingMultiplier;
 
-    /**
-     * @param key clau única de l'efecte
-     * @param turns duració en torns
-     * @param outgoingMultiplier multiplicador del dany infligit pel portador
-     *                           (1.0 = cap canvi, 1.25 = +25%, 0.8 = -20%)
-     * @param incomingMultiplier multiplicador del dany rebut pel portador
-     *                           (1.0 = cap canvi, 1.25 = +25%, 0.8 = -20%)
-     */
     protected DamageModifierEffect(
             String key,
             int turns,
@@ -48,29 +38,28 @@ public abstract class DamageModifierEffect extends TimedEffect {
 
     /**
      * Hook opcional per restringir quan s'aplica l'efecte.
-     * Per defecte, sempre s'aplica si el portador participa en el cop.
      */
     protected boolean applies(HitContext ctx, Character owner) {
         return owner == ctx.attacker() || owner == ctx.defender();
     }
 
-   /** Hook opcional per ajustar dinàmicament el multiplicador del dany infligit. */
+    /** Hook opcional per ajustar el multiplicador del dany infligit. */
     protected double resolveOutgoingMultiplier(HitContext ctx, Random rng, Character owner) {
         return outgoingMultiplier;
     }
 
-   /** Hook opcional per ajustar dinàmicament el multiplicador del dany rebut. */
+    /** Hook opcional per ajustar el multiplicador del dany rebut. */
     protected double resolveIncomingMultiplier(HitContext ctx, Random rng, Character owner) {
         return incomingMultiplier;
     }
 
-   /** Missatge opcional quan modifica dany infligit. */
-    protected String buildOutgoingMessage(double multiplier, Character owner) {
+    /** Missatge opcional quan modifica dany infligit. */
+    protected CombatMessage buildOutgoingMessage(double multiplier, Character owner) {
         return null;
     }
 
-   /** Missatge opcional quan modifica dany rebut. */
-    protected String buildIncomingMessage(double multiplier, Character owner) {
+    /** Missatge opcional quan modifica dany rebut. */
+    protected CombatMessage buildIncomingMessage(double multiplier, Character owner) {
         return null;
     }
 
@@ -80,7 +69,7 @@ public abstract class DamageModifierEffect extends TimedEffect {
             return EffectResult.none();
         }
 
-        StringBuilder message = new StringBuilder();
+        List<CombatMessage> messages = new ArrayList<>();
         boolean changed = false;
 
         if (owner == ctx.attacker()) {
@@ -89,9 +78,9 @@ public abstract class DamageModifierEffect extends TimedEffect {
                 ctx.multiplyDamage(out);
                 changed = true;
 
-                String msg = buildOutgoingMessage(out, owner);
-                if (msg != null && !msg.isBlank()) {
-                    message.append(msg);
+                CombatMessage msg = buildOutgoingMessage(out, owner);
+                if (msg != null && !msg.text().isBlank()) {
+                    messages.add(msg);
                 }
             }
         }
@@ -102,12 +91,9 @@ public abstract class DamageModifierEffect extends TimedEffect {
                 ctx.multiplyDamage(in);
                 changed = true;
 
-                String msg = buildIncomingMessage(in, owner);
-                if (msg != null && !msg.isBlank()) {
-                    if (!message.isEmpty()) {
-                        message.append(" ");
-                    }
-                    message.append(msg);
+                CombatMessage msg = buildIncomingMessage(in, owner);
+                if (msg != null && !msg.text().isBlank()) {
+                    messages.add(msg);
                 }
             }
         }
@@ -116,11 +102,31 @@ public abstract class DamageModifierEffect extends TimedEffect {
             return EffectResult.none();
         }
 
-        if (message.isEmpty()) {
+        if (messages.isEmpty()) {
             return EffectResult.changed(null);
         }
 
-        return EffectResult.changed(message.toString());
+        if (messages.size() == 1) {
+            return EffectResult.changed(messages.get(0));
+        }
+
+        return EffectResult.changed(mergeMessages(messages));
+    }
+
+    private CombatMessage mergeMessages(List<CombatMessage> messages) {
+        CombatMessage first = messages.get(0);
+
+        String text = messages.stream()
+                .map(CombatMessage::text)
+                .filter(s -> s != null && !s.isBlank())
+                .reduce((a, b) -> a + " " + b)
+                .orElse("");
+
+        return CombatMessage.of(
+                first.symbol(),
+                first.color(),
+                text
+        );
     }
 
     @Override

@@ -1,29 +1,20 @@
 package rpgcombat.combat.models;
 
-import java.util.List;
 import java.util.Random;
 
+import rpgcombat.combat.ui.messages.CombatMessageBuffer;
 import rpgcombat.models.characters.Character;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.passives.HitContext;
 import rpgcombat.weapons.passives.HitContext.Phase;
 
 /**
- * Gestiona l'execució de les fases d'efectes durant el combat.
+ * Gestiona l'execució de fases d'efectes.
  */
 public class EffectPipeline {
 
     /**
-     * Executa una fase aplicant efectes de l'atacant, defensor i arma (si n'hi ha).
-     *
-     * @param ctx Context de l'impacte
-     * @param phase Fase actual
-     * @param attacker Personatge atacant
-     * @param defender Personatge defensor
-     * @param weapon Arma utilitzada (pot ser null)
-     * @param attackerRng Generador aleatori de l'atacant
-     * @param defenderRng Generador aleatori del defensor
-     * @param out Llista de sortida de missatges
+     * Executa una fase amb atacant, defensor i arma.
      */
     public void runPhase(
             HitContext ctx,
@@ -33,7 +24,7 @@ public class EffectPipeline {
             Weapon weapon,
             Random attackerRng,
             Random defenderRng,
-            List<String> out) {
+            CombatMessageBuffer out) {
 
         attacker.triggerEffects(ctx, phase, attackerRng, out);
         defender.triggerEffects(ctx, phase, defenderRng, out);
@@ -44,20 +35,14 @@ public class EffectPipeline {
     }
 
     /**
-     * Executa una fase només amb els efectes de l'atacant.
-     *
-     * @param ctx Context de l'impacte
-     * @param phase Fase actual
-     * @param attacker Personatge atacant
-     * @param attackerRng Generador aleatori de l'atacant
-     * @param out Llista de sortida de missatges
+     * Executa una fase només amb l'atacant.
      */
     public void runAttackerOnly(
             HitContext ctx,
             Phase phase,
             Character attacker,
             Random attackerRng,
-            List<String> out) {
+            CombatMessageBuffer out) {
 
         attacker.triggerEffects(ctx, phase, attackerRng, out);
     }

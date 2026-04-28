@@ -37,9 +37,10 @@
 
 ### ▌Efectes
 - [Sistema d'efectes](06-efectes/01-sistema-efectes.md)
-- [Pipeline d'efectes](06-efectes/02-pipeline-efectes.md)
-- [Efectes base i plantilles](06-efectes/03-plantilles.md)
-- [Triggers](06-efectes/04-triggers.md)
+- [▌Missatges d'efectes](06-efectes/02-missatges-efectes.md)
+- [Pipeline d'efectes](06-efectes/03-pipeline-efectes.md)
+- [Efectes base i plantilles](06-efectes/04-plantilles.md)
+- [Triggers](06-efectes/05-triggers.md)
 
 ### ▌Configuració i balance
 - [Configuració d'aplicació](07-configuracio-i-balance/01-app-config.md)
@@ -53,11 +54,25 @@
 - [Crida espiritual](08-rng-i-mecaniques/02-crida-espiritual.md)
 - [Stats budget](08-rng-i-mecaniques/03-stats-budget.md)
 
+### ▌Cinemàtiques
+- [Sistema de cinemàtiques](09-cinematiques/01-sistema-cinematic.md)
+- [Escenes i blocs](09-cinematiques/02-escenes-i-blocs.md)
+- [Tags i escriptura intel·ligent](09-cinematiques/03-tags-i-escriptura-intelligent.md)
+- [Terminal i càrrega externa](09-cinematiques/04-terminal-i-carrega-externa.md)
+
 ### ▌Modifiers, debug i extensió
-- [Status menu modifiers](09-modifiers-debug-extensio/01-status-modifiers.md)
-- [Debug i crash reports](09-modifiers-debug-extensio/02-debug.md)
-- [Tests i simulacions](09-modifiers-debug-extensio/03-tests.md)
-- [Com ampliar el projecte](09-modifiers-debug-extensio/04-extensio.md)
+- [Status menu modifiers](10-modifiers-debug-extensio/01-status-modifiers.md)
+- [Debug i crash reports](10-modifiers-debug-extensio/02-debug.md)
+- [Tests i simulacions](10-modifiers-debug-extensio/03-tests.md)
+- [Com ampliar el projecte](10-modifiers-debug-extensio/04-extensio.md)
+
+### ▌Perks
+- [Sistema de perks](11-perks/01-visio-general.md)
+- [Model de perk](11-perks/02-model-perk.md)
+- [Càrrega i registre de perks](11-perks/03-carrega-i-registre.md)
+- [Missions i progrés](11-perks/04-missions-i-progres.md)
+- [Efectes i regles de perks](11-perks/05-efectes-i-regles.md)
+- [Menú i integració amb combat](11-perks/06-menu-i-integracio-combat.md)
 
 ---
 

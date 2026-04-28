@@ -135,8 +135,89 @@
 		"minRate": 0.03,
 		"maxRate": 0.2,
 		"C": 24,
-		"n": 2,
+		"n": 2.0,
 		"damageMultiplier": 0.08,
 		"duration": 1
+	},
+	"unarmedFallback": {
+		"improviseChance": {
+			"minRate": 0.12,
+			"maxRate": 0.78,
+			"curve": 1.45,
+			"wisdomCenter": 18.0,
+			"intPenalty": 0.16,
+			"intK": 45.0
+		},
+		"weaponType": {
+			"strIntRepulsion": 0.42,
+			"dexIntSynergy": 0.12,
+			"typeK": 50.0,
+			"wisdomWeight": 0.35
+		},
+		"damage": {
+			"baseMin": 4.0,
+			"physicalBaseScale": 0.22,
+			"rangeBaseScale": 0.21,
+			"intDamageRepulsion": 0.22,
+			"intDamageSynergy": 0.06,
+			"damageK": 55.0,
+			"qualityMin": 0.4,
+			"qualityMax": 0.62,
+			"qualityCenter": 18.0,
+			"fallbackPower": 0.5
+		}
+	},
+	"chaos": {
+		"enabled": true,
+		"seed": {
+			"combatSalt": 7640891576956012809,
+			"ownerSalt": -7046029254386353131,
+			"turnSalt": -4417276706812531889
+		},
+		"antiFrustration": {
+			"noRepeatOutcome": true,
+			"noDoubleSevere": true,
+			"maxRerolls": 4
+		},
+		"damage": {
+			"upMultiplier": 1.15,
+			"downMultiplier": 0.85,
+			"overloadMultiplier": 1.35,
+			"overloadIncomingMultiplier": 1.2,
+			"selfHitMultiplier": 0.6,
+			"selfHitCanKill": false
+		},
+		"crit": {
+			"flipForceChance": 0.5
+		},
+		"mana": {
+			"spikeRestoreMaxManaRatio": 0.12
+		},
+		"status": {
+			"blindTurns": 1,
+			"blindMissChance": 0.2,
+			"bleedTurns": 1,
+			"staggerTurns": 1,
+			"vulnerableTurns": 1,
+			"fatigueTurns": 2
+		},
+		"outcomes": {
+			"DAMAGE_UP": 8,
+			"DAMAGE_DOWN": 8,
+			"ACTION_SWAP": 8,
+			"SELF_HIT": 4,
+			"RANDOM_DEBUFF": 8,
+			"FORCE_CRIT": 5,
+			"FORBID_CRIT": 5,
+			"CRIT_FLIP": 5,
+			"GAIN_MOMENTUM": 8,
+			"FREE_CHARGE": 5,
+			"FAIL_ACTION": 3,
+			"OVERLOAD": 3,
+			"CLEANSE_MINOR": 6,
+			"BLOOD_RUSH": 5,
+			"MANA_SPIKE": 5,
+			"UNSTABLE_GUARD": 9
+		}
 	}
 }
