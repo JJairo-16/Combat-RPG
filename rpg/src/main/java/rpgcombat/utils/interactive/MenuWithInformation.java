@@ -17,7 +17,6 @@ public class MenuWithInformation extends SimpleMenu {
     private static final int INFO_WIDTH = 52;
     private static final int INFO_MIN_HEIGHT = 9;
     private static final int INFO_MAX_LINES = 6;
-    private static final int CLEAR_ROWS = 20;
     private static final int CONTROL_ROWS = 1;
     private static final int BOTTOM_SAFE_MARGIN_ROWS = 2;
 
@@ -51,8 +50,7 @@ public class MenuWithInformation extends SimpleMenu {
     @Override
     protected void handleInfoAction(Terminal terminal, String title, List<String> options, int cursor) {
         informationVisible = !informationVisible;
-        clearDynamicArea(terminal);
-        redrawAllContent(terminal, options, cursor);
+        drawInformation(terminal, options, cursor);
         terminal.flush();
     }
 
@@ -115,11 +113,13 @@ public class MenuWithInformation extends SimpleMenu {
     /** Dibuixa la informació lateral. */
     private void drawInformation(Terminal terminal, List<String> options, int cursor) {
         clearInformationBlock(terminal, options);
-        if (!informationVisible || cursor < 0 || cursor >= options.size()) return;
+        if (!informationVisible || cursor < 0 || cursor >= options.size())
+            return;
 
         String label = safe(options.get(cursor));
         String text = safe(information.get(label));
-        if (text.isBlank()) text = "No hi ha informació disponible.";
+        if (text.isBlank())
+            text = "No hi ha informació disponible.";
 
         List<String> lines = wrap(text, INFO_WIDTH - 4);
         if (lines.size() > INFO_MAX_LINES) {
@@ -143,19 +143,10 @@ public class MenuWithInformation extends SimpleMenu {
         }
     }
 
-    /** Neteja l'àrea variable. */
-    private void clearDynamicArea(Terminal terminal) {
-        beforeDynamicAreaCleared(terminal);
-        for (int i = OPTIONS_START_ROW; i < OPTIONS_START_ROW + CLEAR_ROWS; i++) {
-            moveCursor(terminal, i, 1);
-            clearCurrentLine(terminal);
-        }
-        lastControlsRow = -1;
-    }
-
     /** Neteja els controls anteriors. */
     private void clearPreviousControls(Terminal terminal) {
-        if (lastControlsRow < 0) return;
+        if (lastControlsRow < 0)
+            return;
         moveCursor(terminal, lastControlsRow, leftPadding);
         clearCurrentLine(terminal);
     }
@@ -163,7 +154,7 @@ public class MenuWithInformation extends SimpleMenu {
     /** Neteja el bloc lateral. */
     private void clearInformationBlock(Terminal terminal, List<String> options) {
         int col = getInfoColumn(options);
-        for (int i = 0; i < getInformationHeight(); i++) {
+        for (int i = 0; i < getInformationHeight() + 2; i++) {
             moveCursor(terminal, TITLE_ROW + i, col);
             terminal.writer().print(" ".repeat(INFO_WIDTH + 6));
         }
@@ -172,7 +163,8 @@ public class MenuWithInformation extends SimpleMenu {
     /** Retorna la columna del bloc d'informació. */
     private int getInfoColumn(List<String> options) {
         int longest = 0;
-        for (String option : options) longest = Math.max(longest, safe(option).length());
+        for (String option : options)
+            longest = Math.max(longest, safe(option).length());
         return Math.max(MIN_INFO_COLUMN, leftPadding + longest + INFO_HORIZONTAL_GAP);
     }
 
@@ -182,7 +174,8 @@ public class MenuWithInformation extends SimpleMenu {
 
     protected List<String> wrap(String text, int width) {
         List<String> lines = new ArrayList<>();
-        if (text == null || text.isBlank()) return List.of("");
+        if (text == null || text.isBlank())
+            return List.of("");
         String[] words = text.trim().split("\\s+");
         StringBuilder line = new StringBuilder();
         for (String word : words) {
@@ -190,21 +183,25 @@ public class MenuWithInformation extends SimpleMenu {
                 lines.add(line.toString());
                 line.setLength(0);
             }
-            if (!line.isEmpty()) line.append(' ');
+            if (!line.isEmpty())
+                line.append(' ');
             line.append(word);
         }
-        if (!line.isEmpty()) lines.add(line.toString());
+        if (!line.isEmpty())
+            lines.add(line.toString());
         return lines;
     }
 
     protected String trimToWidth(String text, int width) {
-        if (text == null || text.length() <= width) return safe(text);
+        if (text == null || text.length() <= width)
+            return safe(text);
         return text.substring(0, Math.max(0, width));
     }
 
     public static void main(String[] args) {
         MenuWithInformation menu = new MenuWithInformation(Map.of(
-                "Atacar", "Canvies d'arma amb decisió, preparant-te per adaptar-te a les exigències del combat que tens davant.",
+                "Atacar",
+                "Canvies d'arma amb decisió, preparant-te per adaptar-te a les exigències del combat que tens davant.",
                 "Defensar", "Redueix el dany rebut durant aquest torn.",
                 "Inventari", "Obre la bossa d'objectes disponibles.",
                 "Sortir", "Tanca el menú actual."));

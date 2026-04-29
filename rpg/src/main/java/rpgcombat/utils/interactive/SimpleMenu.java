@@ -111,14 +111,9 @@ public class SimpleMenu {
                             handleExtraAction(terminal, title, options, cursor[0]);
                             renderFull(terminal, title, options, cursor[0]);
                         }
-                        case INFO -> {
-                            handleInfoAction(terminal, title, options, cursor[0]);
-                            renderFull(terminal, title, options, cursor[0]);
-                        }
-                        case PROGRESS -> {
-                            handleProgressAction(terminal, title, options, cursor[0]);
-                            renderFull(terminal, title, options, cursor[0]);
-                        }
+                        case INFO -> handleInfoAction(terminal, title, options, cursor[0]);
+
+                        case PROGRESS -> handleProgressAction(terminal, title, options, cursor[0]);
                     }
 
                     if (oldCursor != cursor[0]) {

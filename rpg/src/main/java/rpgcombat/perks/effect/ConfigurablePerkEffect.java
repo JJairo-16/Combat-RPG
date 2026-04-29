@@ -137,4 +137,9 @@ public final class ConfigurablePerkEffect implements Effect {
     private static List<PerkDefinition.Rule> safeRules(List<PerkDefinition.Rule> rules) {
         return rules == null ? List.of() : rules.stream().filter(Objects::nonNull).toList();
     }
+
+    @Override
+    public boolean isExpired() {
+        return false;
+    }
 }

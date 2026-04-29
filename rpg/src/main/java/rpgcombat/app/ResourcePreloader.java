@@ -18,6 +18,8 @@ import rpgcombat.perks.PerkLoader;
 import rpgcombat.perks.PerkRegistry;
 import rpgcombat.perks.mission.MissionLoader;
 import rpgcombat.perks.mission.MissionRegistry;
+import rpgcombat.perks.synergy.SynergyLoader;
+import rpgcombat.perks.synergy.SynergyRegistry;
 import rpgcombat.utils.rng.D20Terminal;
 import rpgcombat.utils.rng.DivineCharismaAffinity;
 import rpgcombat.utils.terminal.SharedTerminal;
@@ -59,6 +61,7 @@ public final class ResourcePreloader {
 
         MissionRegistry.initialize(MissionLoader.load(Path.of(paths.missionsConfig())));
         PerkRegistry.initialize(PerkLoader.load(Path.of(paths.perksConfig())));
+        SynergyRegistry.initialize(SynergyLoader.load(Path.of(paths.synergiesConfig())));
 
         gameStaticLoaded = true;
     }

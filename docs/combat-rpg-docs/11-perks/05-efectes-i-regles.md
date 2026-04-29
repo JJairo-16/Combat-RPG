@@ -17,111 +17,68 @@
 
 ## ▌De perk a efecte
 
-Quan el jugador tria una perk, `PerkEffectFactory` crea un efecte permanent.
+Quan el jugador selecciona una perk, es crea un efecte actiu.
 
 ```java
-public static Effect create(PerkDefinition perk) {
-    return new ConfigurablePerkEffect(perk);
-}
+Effect effect = PerkEffectFactory.create(perk);
 ```
 
-Aquest efecte s'afegeix al personatge i participa en el mateix pipeline que la resta d'efectes de combat.
+---
+
+## ▌`ConfigurablePerkEffect`
+
+Implementa el comportament en temps d’execució.
+
+Funcions:
+
+- avaluar condicions
+- executar accions
+- respondre a triggers
 
 ---
 
-## ▌Efecte configurable
+## ▌Condicions
 
-`ConfigurablePerkEffect` adapta una `PerkDefinition` al contracte `Effect`.
+`PerkCondition` decideix si l’efecte s’activa.
 
-La seva clau és estable i depèn de l'identificador de la perk.
+Exemples:
 
-```java
-@Override
-public String key() {
-    return "PERK_" + perk.id();
-}
-```
-
-La regla d'apilament és `IGNORE`, de manera que la mateixa perk no s'acumula repetidament.
+- estat del jugador
+- context del combat
+- tipus d’esdeveniment
 
 ---
 
-## ▌Execució per fase
+## ▌Accions
 
-L'efecte només actua quan la fase rebuda coincideix amb el `trigger` de la perk.
+`PerkAction` defineix què passa:
 
-Després:
-
-1. crea un `PerkContext`
-2. avalua totes les condicions
-3. si alguna condició falla, no fa res
-4. executa les accions en ordre
-5. aplica l'estil visual de la família al missatge resultant
+- aplicar dany
+- modificar stats
+- generar efectes
 
 ---
 
-## ▌Condicions disponibles
+## ▌Context
 
-`PerkRuleFactory.condition(...)` converteix les regles JSON en predicats executables.
+`PerkContext` encapsula:
 
-Condicions implementades:
-
-- `CHANCE`
-- `OWNER_HEALTH_BELOW`
-- `TARGET_HEALTH_BELOW`
-- `HAS_MOMENTUM`
-- `OWNER_ACTION_IS`
-- `TARGET_ACTION_IS`
-- `DAMAGE_AT_LEAST`
-- `EVENT`
-- `META_TRUE`
-- `OWNER_IS_ATTACKER`
-- `OWNER_IS_DEFENDER`
-
-Si el tipus no existeix, la condició retorna `false`.
+- jugador
+- objectiu
+- estat del combat
 
 ---
 
-## ▌Accions disponibles
+## ▌Regles
 
-`PerkRuleFactory.action(...)` converteix les regles JSON en accions de combat.
+`PerkRuleFactory` construeix la lògica combinant:
 
-Accions implementades:
-
-- `MULTIPLY_DAMAGE`
-- `ADD_FLAT_DAMAGE`
-- `ADD_CRIT_CHANCE`
-- `MULTIPLY_CRIT_DAMAGE`
-- `DEAL_EXTRA_DAMAGE`
-- `HEAL_OWNER`
-- `RESTORE_MANA`
-- `RESTORE_STAMINA`
-- `GAIN_MOMENTUM`
-- `APPLY_STATUS`
-- `MULTIPLY_NEXT_INCOMING_DAMAGE`
-- `SELF_DAMAGE`
-
-Si el tipus no existeix, l'acció no fa res.
+- condicions
+- accions
 
 ---
 
-## ▌Context d'execució
+## ▌Notes
 
-`PerkContext` agrupa la informació necessària per executar una regla.
-
-Conté:
-
-- `HitContext`: dades de l'impacte o fase
-- `Phase`: fase actual
-- `Random`: generador aleatori
-- `Character owner`: propietari de la perk
-
-Això evita passar molts paràmetres separats a cada condició i acció.
-
----
-
-## ▌Missatges estilitzats
-
-Quan una acció retorna un missatge, `ConfigurablePerkEffect` el reescriu amb el símbol i color de la família de la perk.
-
-Així totes les perks d'una mateixa família mantenen una identitat visual coherent.
+- arquitectura basada en composició
+- permet crear perks complexes sense codi nou

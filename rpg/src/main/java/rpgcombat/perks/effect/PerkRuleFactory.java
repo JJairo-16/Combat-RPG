@@ -106,7 +106,7 @@ final class PerkRuleFactory {
                 double healed = ctx.owner().getStatistics().overloadHeal(amount);
                 if (healed <= 0)
                     return EffectResult.none();
-                return EffectResult.positive(ctx.owner().getName() + " sobrecarga " + round2(healed) + " de vida.");
+                return EffectResult.positive(ctx.owner().getName() + " sobrecàrrega " + round2(healed) + " de vida.");
             };
             case "RESTORE_MANA" -> ctx -> {
                 double restored = ctx.owner().getStatistics().restoreMana(num(rule.params(), "amount", 0.0));
@@ -144,7 +144,7 @@ final class PerkRuleFactory {
                         return EffectResult.none();
                     }
                 }
-                return EffectResult.warning(target.getName() + " rep " + status.toLowerCase() + ".");
+                return EffectResult.warning(target.getName() + " rep " + statusLabel(status) + ".");
             };
             case "MULTIPLY_NEXT_INCOMING_DAMAGE" -> ctx -> {
                 double multiplier = num(rule.params(), "multiplier", 1.0);
@@ -197,7 +197,17 @@ final class PerkRuleFactory {
         };
     }
 
-    /** Text curt per a multiplicadors percentuals. */
+    private static String statusLabel(String status) {
+        return switch (status) {
+            case "VULNERABLE" -> "vulnerabilitat";
+            case "BLEED" -> "sagnat";
+            case "STAGGER" -> "aturdiment";
+            case "BLIND" -> "ceguesa";
+            case "FATIGUE" -> "fatiga";
+            default -> status == null ? "un estat" : status.toLowerCase();
+        };
+    }
+
     private static String percentChangeText(String label, double multiplier) {
         double percent = round2((multiplier - 1.0) * 100.0);
         return label + " " + (percent > 0 ? "+" : "") + percent + "%.";

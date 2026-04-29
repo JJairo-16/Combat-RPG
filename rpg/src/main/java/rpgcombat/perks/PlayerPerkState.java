@@ -2,22 +2,21 @@ package rpgcombat.perks;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import rpgcombat.perks.mission.MissionProgress;
 
 /**
- * Manté l'estat de missions i perks d'un jugador en combat.
- *
- * El combat encara pot jugar-se amb una sola missió inicial, però internament
- * l'estat ja no està acoblat a una única missió ni a una única perk. Això fa
- * més simple afegir segones missions, recompenses encadenades o perks múltiples
- * sense canviar les crides existents.
+ * Manté l'estat de missions, perks i sinergies d'un jugador en combat.
  */
 public final class PlayerPerkState {
     private final List<MissionProgress> missions = new ArrayList<>();
     private final List<PerkDefinition> perks = new ArrayList<>();
     private boolean pendingChoice;
+    private Map<String, List<String>> synergyDescriptions = Map.of();
+    private List<String> activeSynergyNames = List.of();
 
     public static final int MAX_PERKS = 4;
 
@@ -106,10 +105,41 @@ public final class PlayerPerkState {
         updatePendingChoice();
     }
 
+    public List<String> synergyDescriptionsFor(String perkId) {
+        if (perkId == null) return List.of();
+        return synergyDescriptions.getOrDefault(perkId, List.of());
+    }
+
+    public void setSynergyDescriptions(Map<String, List<String>> descriptions) {
+        if (descriptions == null || descriptions.isEmpty()) {
+            synergyDescriptions = Map.of();
+            return;
+        }
+
+        Map<String, List<String>> copy = new HashMap<>();
+        descriptions.forEach((key, value) -> {
+            if (key != null && value != null && !value.isEmpty()) {
+                copy.put(key, List.copyOf(value));
+            }
+        });
+        synergyDescriptions = Map.copyOf(copy);
+    }
+
+    public List<String> activeSynergyNames() {
+        return activeSynergyNames;
+    }
+
+    public void setActiveSynergyNames(List<String> names) {
+        activeSynergyNames = names == null ? List.of() : names.stream()
+                .filter(name -> name != null && !name.isBlank())
+                .distinct()
+                .toList();
+    }
+
     public List<String> missionIds() {
-    return missions.stream()
-            .filter(m -> m.definition() != null)
-            .map(m -> m.definition().id())
-            .toList();
-}
+        return missions.stream()
+                .filter(m -> m.definition() != null)
+                .map(m -> m.definition().id())
+                .toList();
+    }
 }

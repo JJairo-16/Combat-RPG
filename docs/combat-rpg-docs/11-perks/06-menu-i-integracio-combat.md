@@ -10,7 +10,6 @@
 - `perks/PlayerPerkState.java`
 - `perks/PerkChoiceMenu.java`
 - `perks/PerkRegistry.java`
-- `perks/effect/PerkEffectFactory.java`
 
 ---
 
@@ -18,99 +17,70 @@
 
 `PlayerPerkState` guarda:
 
-- la missió assignada
-- si hi ha una elecció de perk pendent
-
-Quan la missió està completada i la recompensa encara no s'ha reclamat, `updatePendingChoice()` activa l'elecció pendent.
-
-```java
-public void updatePendingChoice() {
-    if (mission != null && mission.completed() && !mission.rewardClaimed()) {
-        pendingChoice = true;
-    }
-}
-```
+- missió activa
+- progrés
+- perks actives
+- elecció pendent
 
 ---
 
-## ▌Sistema coordinador
+## ▌Elecció de perk
 
-`CombatPerkSystem` és el punt d'integració amb el combat.
-
-Fa servir un `IdentityHashMap<Character, PlayerPerkState>` per associar l'estat a cada instància concreta de personatge.
-
-En construir-se, assigna una missió inicial a cada jugador.
-
----
-
-## ▌Després de cada torn
-
-`afterTurn(...)` actualitza la missió del personatge actiu.
+Quan una missió es completa:
 
 ```java
-state.mission().update(
-    MissionUpdate.from(actor, opponent, actorAction, opponentAction, result, roundNumber)
-);
 state.updatePendingChoice();
 ```
 
-Si el jugador no té estat, no té missió o ja ha reclamat la recompensa, el mètode surt sense fer res.
+Això activa el menú de selecció.
 
 ---
 
-## ▌Resum de missió
+## ▌Menú
 
-`missionSummary(...)` retorna un text amb:
+`PerkChoiceMenu` mostra opcions al jugador.
 
-- nom de la missió
-- descripció
-- progrés actual
+Funcions:
 
-El progrés pot mostrar:
-
-- `Recompensa reclamada`
-- `Completada`
-- el text generat per `progressText()`
+- renderitzar perks
+- gestionar selecció
+- confirmar elecció
 
 ---
 
-## ▌Resolució d'eleccions pendents
+## ▌Integració amb combat
 
-`resolvePendingChoices(...)` només actua si el jugador té una elecció pendent.
+`CombatPerkSystem`:
 
-El flux és:
-
-1. comprovar si el jugador està afectat per caos intern
-2. generar tres opcions amb `PerkRegistry`
-3. mostrar el menú amb `PerkChoiceMenu`
-4. crear l'efecte de la perk triada
-5. afegir l'efecte al jugador
-6. netejar l'elecció pendent i marcar la recompensa com reclamada
+- escolta esdeveniments
+- actualitza missions
+- executa efectes de perks
 
 ---
 
-## ▌Mode corrupte
+## ▌Execució d’efectes
 
-Si el jugador té l'efecte intern de caos, el sistema demana opcions només corruptes.
+Durant el combat:
 
 ```java
-boolean corruptedOnly = player.hasEffect(Chaos.INTERNAL_EFFECT_KEY);
-List<PerkDefinition> options = PerkRegistry.rollOptions(corruptedOnly, 3, rng);
+effect.apply(context);
 ```
-
-Aquesta regla permet que altres mecàniques del combat modifiquin el tipus de recompensa disponible.
 
 ---
 
-## ▌Menú visual
+## ▌Flux complet
 
-`PerkChoiceMenu` mostra les opcions com targetes i permet moure el cursor amb el teclat.
+1. combat genera esdeveniment
+2. missions s’actualitzen
+3. possible completat
+4. menú de perks
+5. selecció
+6. efecte registrat
+7. execució en triggers
 
-Responsabilitats del menú:
+---
 
-- ordenar les opcions
-- renderitzar el títol i les targetes
-- gestionar navegació
-- retornar la perk seleccionada
+## ▌Notes
 
-La lògica de selecció queda separada del sistema de combat, de manera que el combat només rep el resultat final.
+- integració desacoblada via esdeveniments
+- sistema escalable i modular

@@ -73,9 +73,9 @@ public class CombatSystem {
     /**
      * Crea el sistema amb progressió de missions i perks.
      *
-     * @param p1 primer personatge
-     * @param p2 segon personatge
-     * @param policy política de prioritat
+     * @param p1         primer personatge
+     * @param p2         segon personatge
+     * @param policy     política de prioritat
      * @param perkSystem sistema de perks
      */
     public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy, CombatPerkSystem perkSystem) {
@@ -217,14 +217,19 @@ public class CombatSystem {
                 p2Final);
     }
 
-
     /**
      * Actualitza la missió del personatge si el sistema està actiu.
      */
     private void updateMissionProgress(Character actor, Character opponent, Action actorAction, Action opponentAction,
             TurnResult result) {
-        if (perkSystem != null) {
-            perkSystem.afterTurn(actor, opponent, actorAction, opponentAction, result, roundNumber);
+        if (perkSystem == null) {
+            return;
+        }
+
+        perkSystem.afterTurn(actor, opponent, actorAction, opponentAction, result, roundNumber);
+
+        if (actorAction == Action.ATTACK && opponentAction == Action.DODGE) {
+            perkSystem.afterTurn(opponent, actor, opponentAction, actorAction, result, roundNumber);
         }
     }
 

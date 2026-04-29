@@ -7,7 +7,8 @@ public record PathsConfig(
         String balanceConfig,
         String menuDescriptions,
         String missionsConfig,
-        String perksConfig) {
+        String perksConfig,
+        String synergiesConfig) {
 
     public static final String DEFAULT_WEAPONS_CONFIG = "rpg/data/weapons.json";
     public static final String DEFAULT_STATUS_MENU_MODIFIER = "rpg/data/menuModifiers.json";
@@ -15,26 +16,16 @@ public record PathsConfig(
     public static final String DEFAULT_MENU_DESCRIPTIONS = "rpg/data/menuDescription.json";
     public static final String DEFAULT_MISSIONS_CONFIG = "rpg/data/missions.json";
     public static final String DEFAULT_PERKS_CONFIG = "rpg/data/perks.json";
+    public static final String DEFAULT_SYNERGIES_CONFIG = "rpg/data/synergies.json";
 
     public PathsConfig {
-        if (weaponsConfig == null || weaponsConfig.isBlank()) {
-            weaponsConfig = DEFAULT_WEAPONS_CONFIG;
-        }
-        if (statusMenuModifier == null || statusMenuModifier.isBlank()) {
-            statusMenuModifier = DEFAULT_STATUS_MENU_MODIFIER;
-        }
-        if (balanceConfig == null || balanceConfig.isBlank()) {
-            balanceConfig = DEFAULT_BALANCE_CONFIG;
-        }
-        if (menuDescriptions == null || menuDescriptions.isBlank()) {
-            menuDescriptions = DEFAULT_MENU_DESCRIPTIONS;
-        }
-        if (missionsConfig == null || missionsConfig.isBlank()) {
-            missionsConfig = DEFAULT_MISSIONS_CONFIG;
-        }
-        if (perksConfig == null || perksConfig.isBlank()) {
-            perksConfig = DEFAULT_PERKS_CONFIG;
-        }
+        weaponsConfig = fallback(weaponsConfig, DEFAULT_WEAPONS_CONFIG);
+        statusMenuModifier = fallback(statusMenuModifier, DEFAULT_STATUS_MENU_MODIFIER);
+        balanceConfig = fallback(balanceConfig, DEFAULT_BALANCE_CONFIG);
+        menuDescriptions = fallback(menuDescriptions, DEFAULT_MENU_DESCRIPTIONS);
+        missionsConfig = fallback(missionsConfig, DEFAULT_MISSIONS_CONFIG);
+        perksConfig = fallback(perksConfig, DEFAULT_PERKS_CONFIG);
+        synergiesConfig = fallback(synergiesConfig, DEFAULT_SYNERGIES_CONFIG);
     }
 
     public static PathsConfig defaultConfig() {
@@ -44,6 +35,12 @@ public record PathsConfig(
                 DEFAULT_BALANCE_CONFIG,
                 DEFAULT_MENU_DESCRIPTIONS,
                 DEFAULT_MISSIONS_CONFIG,
-                DEFAULT_PERKS_CONFIG);
+                DEFAULT_PERKS_CONFIG,
+                DEFAULT_SYNERGIES_CONFIG);
     }
+
+    private static String fallback(String input, String fallback) {
+        return input == null || input.isBlank() ? fallback : input;
+    }
+
 }

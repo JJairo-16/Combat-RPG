@@ -21,6 +21,10 @@ public final class PlayerProgressMenu extends MenuWithInformation {
     private static final int PANEL_CONTROLS_GAP_ROWS = 1;
     private static final int BOTTOM_SAFE_MARGIN_ROWS = 2;
 
+    private static final Pattern SECTION_SEPARATOR_PATTERN = Pattern.compile("\\R---\\R");
+    private static final Pattern FIRST_LINE_PATTERN = Pattern.compile("\\R");
+    private static final Pattern LINE_PATTERN = Pattern.compile("\\R");
+
     private String progressText = "";
     private int selectedSection;
     private int lastPanelRow = -1;
@@ -52,8 +56,7 @@ public final class PlayerProgressMenu extends MenuWithInformation {
             super.handleProgressAction(terminal, title, options, cursor);
             return;
         }
-        beforeDynamicAreaCleared(terminal);
-        afterContentRendered(terminal, options, cursor, terminal.getHeight() - BOTTOM_SAFE_MARGIN_ROWS);
+        drawProgressPanel(terminal, terminal.getHeight() - BOTTOM_SAFE_MARGIN_ROWS);
         terminal.flush();
     }
 
@@ -106,10 +109,10 @@ public final class PlayerProgressMenu extends MenuWithInformation {
         String text = safe(progressText).trim();
         if (text.isBlank())
             return List.of();
-        String[] raw = text.split("\\R---\\R");
+        String[] raw = SECTION_SEPARATOR_PATTERN.split(text);
         List<ProgressSection> result = new ArrayList<>();
         for (String block : raw) {
-            String[] parts = block.trim().split("\\R", 2);
+            String[] parts = FIRST_LINE_PATTERN.split(block.trim(), 2);
             if (parts.length == 0 || parts[0].isBlank())
                 continue;
             result.add(new ProgressSection(parts[0].trim(), parts.length > 1 ? parts[1].trim() : ""));
@@ -131,7 +134,7 @@ public final class PlayerProgressMenu extends MenuWithInformation {
      */
     private List<PanelLine> buildLines(String text, int width) {
         List<PanelLine> result = new ArrayList<>();
-        String[] rawLines = safe(text).split("\\R", -1);
+        String[] rawLines = LINE_PATTERN.split(safe(text), -1);
 
         int lineInBlock = 0;
 
@@ -153,7 +156,8 @@ public final class PlayerProgressMenu extends MenuWithInformation {
             }
 
             boolean closesBlock = lineText.startsWith("Progrés:")
-                    || lineText.startsWith("Activació:");
+                    || lineText.startsWith("Activació:")
+                    || lineText.startsWith("Tipus:");
 
             if (closesBlock) {
                 lineInBlock = 0;

@@ -41,8 +41,7 @@ public final class PerkRegistry {
 
         if (result.size() < count) {
             List<PerkDefinition> remaining = perks.stream()
-                    .filter(p -> p.family() != PerkFamily.CORRUPTED)
-                    .filter(p -> !result.contains(p))
+                    .filter(p -> p.family() != PerkFamily.CORRUPTED && !result.contains(p))
                     .toList();
             result.addAll(rollWeighted(remaining, count - result.size(), rng));
         }

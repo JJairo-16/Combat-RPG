@@ -6,7 +6,7 @@
     "DEBUG_INVULNERABLE",
     "FULL_DEBUG"
   ],
-  "profile": "FAST_TEST",
+  "profile": "NORMAL",
   "paths": {
     "weaponsConfig": "rpg/data/weapons.json",
     "statusMenuModifier": "rpg/data/menuModifiers.json",

@@ -15,11 +15,17 @@ import rpgcombat.perks.mission.MissionDefinition;
 import rpgcombat.perks.mission.MissionProgress;
 import rpgcombat.perks.mission.MissionRegistry;
 import rpgcombat.perks.mission.MissionUpdate;
+import rpgcombat.perks.synergy.SynergyDisplayInfo;
+import rpgcombat.perks.synergy.SynergyPreview;
+import rpgcombat.perks.synergy.SynergyRegistry;
+import rpgcombat.perks.synergy.SynergySystem;
+import rpgcombat.perks.synergy.SynergyType;
 
-/** Coordina missions i elecció de perks durant el combat. */
+/** Coordina missions, perks i sinergies durant el combat. */
 public final class CombatPerkSystem {
     private final Map<Character, PlayerPerkState> states = new IdentityHashMap<>();
     private final Random rng = new Random();
+    private final SynergySystem synergySystem = new SynergySystem(SynergyRegistry.all());
 
     /** Assigna una missió inicial a cada jugador. */
     public CombatPerkSystem(Character player1, Character player2) {
@@ -43,7 +49,7 @@ public final class CombatPerkSystem {
         state.updatePendingChoice();
     }
 
-    /** Retorna un resum textual de missions i perks del jugador. */
+    /** Retorna un resum textual de missions, perks i sinergies del jugador. */
     public String missionSummary(Character player) {
         PlayerPerkState state = states.get(player);
         if (state == null)
@@ -52,12 +58,12 @@ public final class CombatPerkSystem {
         StringBuilder sb = new StringBuilder();
         if (!state.missions().isEmpty()) {
             sb.append("Missions");
-            
+
             for (MissionProgress progress : state.missions()) {
                 if (progress.definition() == null)
                     continue;
                 MissionDefinition mission = progress.definition();
-                
+
                 String status;
                 if (!progress.completed())
                     status = progress.progressText();
@@ -72,14 +78,40 @@ public final class CombatPerkSystem {
             }
         }
 
-        if (!state.perks().isEmpty()) {
+        if (state.perks().isEmpty())
+            return sb.toString();
+
+        if (!sb.isEmpty())
+            sb.append("\n---\n");
+        
+        sb.append("Perks");
+        for (PerkDefinition chosen : state.perks()) {
+            List<String> alteredDescriptions = state.synergyDescriptionsFor(chosen.id());
+            sb.append("\n").append(chosen.name()).append(alteredDescriptions.isEmpty() ? "" : " ✦")
+                    .append("\n").append(chosen.description());
+            for (String description : alteredDescriptions) {
+                sb.append("\nSinergia activa: ").append(description);
+            }
+            sb.append("\nActivació: ").append(triggerLabel(chosen.trigger()));
+        }
+
+        List<SynergyDisplayInfo> activeSynergies = synergySystem.activeDisplayInfo(state);
+
+        if (!activeSynergies.isEmpty()) {
             if (!sb.isEmpty())
                 sb.append("\n---\n");
-            sb.append("Perks");
-            for (PerkDefinition chosen : state.perks()) {
-                sb.append("\n").append(chosen.name())
-                        .append("\n").append(chosen.description())
-                        .append("\nActivació: ").append(triggerLabel(chosen.trigger()));
+
+            sb.append("Sinergies");
+
+            for (SynergyDisplayInfo synergy : activeSynergies) {
+                sb.append("\n")
+                        .append(synergy.name())
+                        .append("\n")
+                        .append(synergy.description())
+                        .append("\nTipus: ")
+                        .append(synergy.type() == SynergyType.BONUS_EXTRA
+                                ? "Bonus extra"
+                                : "Perk modificada");
             }
         }
 
@@ -110,7 +142,8 @@ public final class CombatPerkSystem {
             return;
         }
 
-        PerkDefinition chosen = PerkChoiceMenu.choose(player, options);
+        Map<String, SynergyPreview> previews = synergySystem.previewAll(state, options);
+        PerkDefinition chosen = PerkChoiceMenu.choose(player, options, previews);
 
         if (chosen != null && !state.hasPerk(chosen.id())) {
             Effect effect = PerkEffectFactory.create(chosen);
@@ -119,6 +152,7 @@ public final class CombatPerkSystem {
             player.addEffect(effect);
 
             state.addPerk(chosen);
+            synergySystem.refresh(player, state);
             state.clearPendingChoice();
 
             if (state.canGainMorePerks()) {
