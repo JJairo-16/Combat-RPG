@@ -83,7 +83,7 @@ public final class ConfigurablePerkEffect implements Effect {
     public EffectResult onPhase(HitContext ctx, Phase phase, Random rng, Character owner) {
         if (phase != perk.trigger() || !defaultOwnerScopeMatches(ctx, phase, owner)) return EffectResult.none();
 
-        PerkContext context = new PerkContext(ctx, phase, rng, owner);
+        PerkContext context = new PerkContext(ctx, phase, rng, owner, state);
         for (PerkCondition condition : conditions) {
             if (!condition.matches(context)) return EffectResult.none();
         }

@@ -14,6 +14,7 @@ public final class PerkEffectFactory {
 
     /** Crea un efecte bàsic a partir d’un perk. */
     public static Effect create(PerkDefinition perk) {
+        if (perk != null && perk.family() == rpgcombat.perks.PerkFamily.DIVINE) return new DivinePerkEffect(perk);
         return new ConfigurablePerkEffect(perk);
     }
 

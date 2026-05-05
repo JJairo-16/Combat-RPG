@@ -8,6 +8,7 @@ public record PathsConfig(
         String menuDescriptions,
         String missionsConfig,
         String perksConfig,
+        String divinePerksConfig,
         String synergiesConfig) {
 
     public static final String DEFAULT_WEAPONS_CONFIG = "rpg/data/weapons.json";
@@ -16,6 +17,7 @@ public record PathsConfig(
     public static final String DEFAULT_MENU_DESCRIPTIONS = "rpg/data/menuDescription.json";
     public static final String DEFAULT_MISSIONS_CONFIG = "rpg/data/missions.json";
     public static final String DEFAULT_PERKS_CONFIG = "rpg/data/perks.json";
+    public static final String DEFAULT_DIVINE_PERKS_CONFIG = "rpg/data/divinePerks.json";
     public static final String DEFAULT_SYNERGIES_CONFIG = "rpg/data/synergies.json";
 
     public PathsConfig {
@@ -25,6 +27,7 @@ public record PathsConfig(
         menuDescriptions = fallback(menuDescriptions, DEFAULT_MENU_DESCRIPTIONS);
         missionsConfig = fallback(missionsConfig, DEFAULT_MISSIONS_CONFIG);
         perksConfig = fallback(perksConfig, DEFAULT_PERKS_CONFIG);
+        divinePerksConfig = fallback(divinePerksConfig, DEFAULT_DIVINE_PERKS_CONFIG);
         synergiesConfig = fallback(synergiesConfig, DEFAULT_SYNERGIES_CONFIG);
     }
 
@@ -36,6 +39,7 @@ public record PathsConfig(
                 DEFAULT_MENU_DESCRIPTIONS,
                 DEFAULT_MISSIONS_CONFIG,
                 DEFAULT_PERKS_CONFIG,
+                DEFAULT_DIVINE_PERKS_CONFIG,
                 DEFAULT_SYNERGIES_CONFIG);
     }
 

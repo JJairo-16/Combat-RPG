@@ -60,7 +60,7 @@ public final class SynergyBonusEffect implements Effect {
     public EffectResult onPhase(HitContext ctx, Phase phase, Random rng, Character owner) {
         if (phase != level.trigger() || ctx == null || owner == null) return EffectResult.none();
 
-        PerkContext context = new PerkContext(ctx, phase, rng, owner);
+        PerkContext context = new PerkContext(ctx, phase, rng, owner, state);
         for (PerkCondition condition : conditions) {
             if (!condition.matches(context)) return EffectResult.none();
         }

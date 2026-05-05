@@ -10,6 +10,7 @@ import rpgcombat.models.breeds.*;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.impl.SpiritualCallingFlag;
 import rpgcombat.models.effects.triggers.FractureTrigger;
+import rpgcombat.perks.divine.DivinePerkRegistry;
 import rpgcombat.utils.input.Menu;
 import rpgcombat.utils.rng.StatsBudget;
 import rpgcombat.utils.rng.StatsBudget.Result;
@@ -47,7 +48,7 @@ public class CharacterCreator {
     public static Character createNewCharacter() {
         CharacterDraft draft = CharacterDraft.from("Aventurer", MIN_AGE, autoGenerate());
         new CharacterCreationEditor().edit(draft);
-        return convert(draft.name(), draft.age(), new Generation(draft.statsCopy(), draft.breed()));
+        return convert(draft.name(), draft.age(), new Generation(draft.statsCopy(), draft.breed()), draft.divinePerkId());
     }
 
     /**
@@ -57,7 +58,7 @@ public class CharacterCreator {
      */
     public static Character createDebugCharacter() {
         String name = "test" + id++;
-        return convert(name, MIN_AGE, autoGenerate());
+        return convert(name, MIN_AGE, autoGenerate(), DivinePerkRegistry.NO_EFFECT_ID);
     }
 
     /** Resultat de la generació d'estadístiques i raça. */
@@ -189,6 +190,12 @@ public class CharacterCreator {
 
     /** Converteix les dades en la classe concreta de personatge. */
     private static Character convert(String name, int age, Generation g) {
+        String divinePerkId = DivinePerkRegistry.defaultFor(g.breed()) == null ? null : DivinePerkRegistry.defaultFor(g.breed()).id();
+        return convert(name, age, g, divinePerkId);
+    }
+
+    /** Converteix les dades en la classe concreta de personatge amb perk divina explícita. */
+    private static Character convert(String name, int age, Generation g, String divinePerkId) {
         Breed b = g.breed();
         int[] stats = g.stats();
 
@@ -203,6 +210,7 @@ public class CharacterCreator {
         };
 
         addTriggers(character);
+        DivinePerkRegistry.create(divinePerkId).ifPresent(character::addEffect);
         return character;
     }
 

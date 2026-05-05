@@ -6,10 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import rpgcombat.perks.divine.DivinePerkDefinition;
 import rpgcombat.perks.mission.MissionProgress;
 
 /**
- * Manté l'estat de missions, perks i sinergies d'un jugador en combat.
+ * Estat de perks, missions i sinergies d'un jugador durant el combat.
  */
 public final class PlayerPerkState {
     private final List<MissionProgress> missions = new ArrayList<>();
@@ -17,44 +18,49 @@ public final class PlayerPerkState {
     private boolean pendingChoice;
     private Map<String, List<String>> synergyDescriptions = Map.of();
     private List<String> activeSynergyNames = List.of();
+    private DivinePerkDefinition divinePerk;
 
+    /** Nombre màxim de perks equipables. */
     public static final int MAX_PERKS = 4;
 
-    /** Crea l'estat del jugador amb una missió assignada. */
+    /** Inicialitza amb una missió activa. */
     public PlayerPerkState(MissionProgress mission) {
         addMission(mission);
     }
 
-    /** Crea un estat buit. */
+    /** Inicialitza buit. */
     public PlayerPerkState() {
     }
 
+    /** Indica si el jugador pot obtenir més perks. */
     public boolean canGainMorePerks() {
         return perks.size() < MAX_PERKS;
     }
 
+    /** Comprova si el jugador ja té una perk concreta. */
     public boolean hasPerk(String perkId) {
         return perkId != null && perks.stream().anyMatch(p -> p.id().equals(perkId));
     }
 
+    /** Nombre de perks actuals. */
     public int perkCount() {
         return perks.size();
     }
 
-    /** Afegeix una missió activa si és vàlida. */
+    /** Afegeix una missió si és vàlida. */
     public void addMission(MissionProgress mission) {
         if (mission != null)
             missions.add(mission);
     }
 
-    /** @return vista immutable de les missions del jugador. */
+    /** Retorna les missions (només lectura). */
     public List<MissionProgress> missions() {
         return Collections.unmodifiableList(missions);
     }
 
     /**
-     * Compatibilitat amb el flux actual: retorna la primera missió pendent de
-     * recompensa, o si no n'hi ha, la primera missió existent.
+     * Retorna una missió rellevant:
+     * primer pendent de recompensa, sinó la primera.
      */
     public MissionProgress mission() {
         return missions.stream()
@@ -63,39 +69,49 @@ public final class PlayerPerkState {
                 .orElse(missions.isEmpty() ? null : missions.get(0));
     }
 
-    /** @return vista immutable de les perks triades pel jugador. */
+    /** Retorna la perk divina activa. */
+    public DivinePerkDefinition divinePerk() {
+        return divinePerk;
+    }
+
+    /** Assigna la perk divina. */
+    public void setDivinePerk(DivinePerkDefinition divinePerk) {
+        this.divinePerk = divinePerk;
+    }
+
+    /** Retorna les perks del jugador (només lectura). */
     public List<PerkDefinition> perks() {
         return Collections.unmodifiableList(perks);
     }
 
-    /** @return última perk triada, mantenint compatibilitat amb codi antic. */
+    /** Retorna l'última perk triada. */
     public PerkDefinition chosenPerk() {
         return perks.isEmpty() ? null : perks.get(perks.size() - 1);
     }
 
-    /** Desa una perk triada com a recompensa. */
+    /** Afegeix una perk si no està repetida. */
     public void addPerk(PerkDefinition chosenPerk) {
         if (chosenPerk != null && perks.stream().noneMatch(p -> p.id().equals(chosenPerk.id()))) {
             perks.add(chosenPerk);
         }
     }
 
-    /** Compatibilitat amb el nom anterior. */
+    /** Alias per compatibilitat amb codi antic. */
     public void setChosenPerk(PerkDefinition chosenPerk) {
         addPerk(chosenPerk);
     }
 
-    /** @return si hi ha una elecció de perk pendent. */
+    /** Indica si hi ha una elecció de perk pendent. */
     public boolean pendingChoice() {
         return pendingChoice;
     }
 
-    /** Marca que hi ha una elecció pendent si alguna missió està completada. */
+    /** Marca si alguna missió completada requereix elecció. */
     public void updatePendingChoice() {
         pendingChoice = missions.stream().anyMatch(m -> m.completed() && !m.rewardClaimed());
     }
 
-    /** Marca com reclamada la primera missió completada amb recompensa pendent. */
+    /** Consumeix la recompensa pendent de la primera missió completada. */
     public void clearPendingChoice() {
         pendingChoice = false;
         missions.stream()
@@ -105,11 +121,13 @@ public final class PlayerPerkState {
         updatePendingChoice();
     }
 
+    /** Retorna descripcions de sinergia per perk. */
     public List<String> synergyDescriptionsFor(String perkId) {
         if (perkId == null) return List.of();
         return synergyDescriptions.getOrDefault(perkId, List.of());
     }
 
+    /** Defineix les descripcions de sinergia actives. */
     public void setSynergyDescriptions(Map<String, List<String>> descriptions) {
         if (descriptions == null || descriptions.isEmpty()) {
             synergyDescriptions = Map.of();
@@ -125,10 +143,12 @@ public final class PlayerPerkState {
         synergyDescriptions = Map.copyOf(copy);
     }
 
+    /** Noms de sinergies actives. */
     public List<String> activeSynergyNames() {
         return activeSynergyNames;
     }
 
+    /** Defineix els noms de sinergies actives. */
     public void setActiveSynergyNames(List<String> names) {
         activeSynergyNames = names == null ? List.of() : names.stream()
                 .filter(name -> name != null && !name.isBlank())
@@ -136,6 +156,7 @@ public final class PlayerPerkState {
                 .toList();
     }
 
+    /** Retorna els identificadors de missions actuals. */
     public List<String> missionIds() {
         return missions.stream()
                 .filter(m -> m.definition() != null)

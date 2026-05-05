@@ -274,6 +274,7 @@ public final class PerkChoiceMenu {
             case LUCK -> "Sort";
             case CHAOS -> "Caos";
             case CORRUPTED -> "Corrupte";
+            default -> "Error";
         };
     }
 
@@ -283,6 +284,7 @@ public final class PerkChoiceMenu {
             case LUCK -> YELLOW;
             case CHAOS -> BRIGHT_RED;
             case CORRUPTED -> MAGENTA;
+            default -> "";
         };
     }
 

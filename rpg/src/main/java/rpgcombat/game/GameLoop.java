@@ -51,13 +51,16 @@ public class GameLoop {
     // Cache d'armes (assumim que no canvia durant la partida)
     private final List<WeaponDefinition> entries = Arsenal.values();
 
-    public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers, Map<String, String> information, CinematicsOptions cinematicsOptions, HomeScreenConfig homeScreenConfig) {
+    public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers,
+            Map<String, String> information, CinematicsOptions cinematicsOptions, HomeScreenConfig homeScreenConfig) {
         this.player1 = player1;
         this.player2 = player2;
         this.perkSystem = new CombatPerkSystem(player1, player2);
-        this.combatSystem = new CombatSystem(player1, player2, new rpgcombat.combat.turnservice.DefaultTurnPriorityPolicy(), perkSystem);
+        this.combatSystem = new CombatSystem(player1, player2,
+                new rpgcombat.combat.turnservice.DefaultTurnPriorityPolicy(), perkSystem);
 
-        this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers, information);
+        this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers,
+                information);
         this.menu.setMissionTextProvider(perkSystem::missionSummary);
         this.cinematicsOptions = cinematicsOptions;
         this.homeScreenConfig = homeScreenConfig;
@@ -125,7 +128,7 @@ public class GameLoop {
 
         cls.clear();
         System.out.print(sb.toString());
-        
+
         Menu.pause();
         CinematicBuilder.playEnd(winner);
 
@@ -175,7 +178,8 @@ public class GameLoop {
             }
         } while (loop);
 
-        player.setWeapon(weapon);
+        if (weapon != null)
+            player.setWeapon(weapon);
     }
 
     private final StringBuilder playerInfo = new StringBuilder(24_000);

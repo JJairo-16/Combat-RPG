@@ -11,9 +11,9 @@ final class EditorLayout {
     static final int RIGHT_COL = 66;
     static final int CONTENT_COL = 7;
     static final int LEFT_BOX_WIDTH = 56;
-    static final int RIGHT_BOX_WIDTH = 68;
+    static final int RIGHT_BOX_WIDTH = 74;
     static final int IDENTITY_ROW = 3;
-    static final int STATS_ROW = 10;
+    static final int STATS_ROW = 11;
     static final int ACTIONS_ROW = 22;
     static final int HELP_ROW = 33;
     static final int MESSAGE_ROW = 36;
@@ -31,6 +31,7 @@ final class EditorLayout {
     private static final int NAME_ROW = IDENTITY_ROW + 1;
     private static final int AGE_ROW = IDENTITY_ROW + 2;
     private static final int BREED_ROW = IDENTITY_ROW + 3;
+    private static final int DIVINE_PERK_ROW = IDENTITY_ROW + 4;
     private static final int STRENGTH_ROW = STATS_ROW + 1;
     static final int BUILD_SCORE_ROW = ACTIONS_ROW + 1;
 
@@ -46,6 +47,7 @@ final class EditorLayout {
             case EDIT_NAME -> NAME_ROW;
             case EDIT_AGE -> AGE_ROW;
             case EDIT_BREED -> BREED_ROW;
+            case EDIT_DIVINE_PERK -> DIVINE_PERK_ROW;
             case EDIT_STRENGTH, EDIT_DEXTERITY, EDIT_CONSTITUTION, EDIT_INTELLIGENCE,
                     EDIT_WISDOM, EDIT_CHARISMA, EDIT_LUCK -> STRENGTH_ROW + action.statIndex();
             case RANDOMIZE -> RANDOMIZE_ROW;

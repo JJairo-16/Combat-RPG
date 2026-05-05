@@ -15,6 +15,8 @@ import rpgcombat.game.menu.MenuDescriptionsLoader;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.game.modifier.config.StatusModLoader;
 import rpgcombat.perks.PerkLoader;
+import rpgcombat.perks.divine.DivinePerkLoader;
+import rpgcombat.perks.divine.DivinePerkRegistry;
 import rpgcombat.perks.PerkRegistry;
 import rpgcombat.perks.mission.MissionLoader;
 import rpgcombat.perks.mission.MissionRegistry;
@@ -61,6 +63,7 @@ public final class ResourcePreloader {
 
         MissionRegistry.initialize(MissionLoader.load(Path.of(paths.missionsConfig())));
         PerkRegistry.initialize(PerkLoader.load(Path.of(paths.perksConfig())));
+        DivinePerkRegistry.initialize(DivinePerkLoader.load(Path.of(paths.divinePerksConfig())));
         SynergyRegistry.initialize(SynergyLoader.load(Path.of(paths.synergiesConfig())));
 
         gameStaticLoaded = true;

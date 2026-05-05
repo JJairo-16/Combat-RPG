@@ -9,7 +9,10 @@ import rpgcombat.combat.models.Action;
 import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
+import rpgcombat.perks.divine.DivineAwakeningView;
 import rpgcombat.models.effects.triggers.Chaos;
+import rpgcombat.perks.divine.DivinePerkDefinition;
+import rpgcombat.perks.divine.DivinePerkRegistry;
 import rpgcombat.perks.effect.PerkEffectFactory;
 import rpgcombat.perks.mission.MissionDefinition;
 import rpgcombat.perks.mission.MissionProgress;
@@ -20,17 +23,25 @@ import rpgcombat.perks.synergy.SynergyPreview;
 import rpgcombat.perks.synergy.SynergyRegistry;
 import rpgcombat.perks.synergy.SynergySystem;
 import rpgcombat.perks.synergy.SynergyType;
+import rpgcombat.utils.ui.Ansi;
 
-/** Coordina missions, perks i sinergies durant el combat. */
+/** Coordina missions, perks, perks divines i sinergies durant el combat. */
 public final class CombatPerkSystem {
     private final Map<Character, PlayerPerkState> states = new IdentityHashMap<>();
     private final Random rng = new Random();
     private final SynergySystem synergySystem = new SynergySystem(SynergyRegistry.all());
 
-    /** Assigna una missió inicial a cada jugador. */
+    /** Assigna l'estat inicial de perks a cada jugador. */
     public CombatPerkSystem(Character player1, Character player2) {
-        states.put(player1, new PlayerPerkState(new MissionProgress(MissionRegistry.roll(rng))));
-        states.put(player2, new PlayerPerkState(new MissionProgress(MissionRegistry.roll(rng))));
+        states.put(player1, initialStateFor(player1));
+        states.put(player2, initialStateFor(player2));
+    }
+
+    /** Crea l'estat inicial d'un jugador. */
+    private PlayerPerkState initialStateFor(Character player) {
+        PlayerPerkState state = new PlayerPerkState(new MissionProgress(MissionRegistry.roll(rng)));
+        DivinePerkRegistry.activeFor(player).ifPresent(state::setDivinePerk);
+        return state;
     }
 
     /** Actualitza les missions del personatge després d'un torn. */
@@ -49,13 +60,14 @@ public final class CombatPerkSystem {
         state.updatePendingChoice();
     }
 
-    /** Retorna un resum textual de missions, perks i sinergies del jugador. */
+    /** Retorna el resum visible de progrés del jugador. */
     public String missionSummary(Character player) {
         PlayerPerkState state = states.get(player);
         if (state == null)
             return "";
 
         StringBuilder sb = new StringBuilder();
+
         if (!state.missions().isEmpty()) {
             sb.append("Missions");
 
@@ -78,12 +90,28 @@ public final class CombatPerkSystem {
             }
         }
 
+        DivinePerkDefinition divinePerk = state.divinePerk();
+        if (divinePerk != null) {
+            if (!sb.isEmpty())
+                sb.append("\n---\n");
+
+            DivineAwakeningView awakening = divineAwakeningFor(player, divinePerk.id());
+            String name = awakening == null ? coloredDivineName(divinePerk) : awakening.awakenedDisplayName();
+            String description = awakening == null ? divineDescriptionFallback(divinePerk)
+                    : awakening.awakenedDescription();
+
+            sb.append("Perk divina")
+                    .append("\n\n").append(name)
+                    .append("\n").append(description)
+                    .append("\nActivació: ").append(triggerLabel(divinePerk.perk().trigger()));
+        }
+
         if (state.perks().isEmpty())
             return sb.toString();
 
         if (!sb.isEmpty())
             sb.append("\n---\n");
-        
+
         sb.append("Perks");
         for (PerkDefinition chosen : state.perks()) {
             List<String> alteredDescriptions = state.synergyDescriptionsFor(chosen.id());
@@ -116,6 +144,30 @@ public final class CombatPerkSystem {
         }
 
         return sb.toString();
+    }
+
+    /** Cerca la vista de despertar diví activa al personatge. */
+    private DivineAwakeningView divineAwakeningFor(Character player, String divinePerkId) {
+        if (player == null || divinePerkId == null)
+            return null;
+
+        for (Effect effect : player.getEffects()) {
+            if (effect instanceof DivineAwakeningView awakening && divinePerkId.equals(awakening.divinePerkId())) {
+                return awakening;
+            }
+        }
+        return null;
+    }
+
+    /** Retorna la descripció base si l'efecte encara no exposa despertar. */
+    private String divineDescriptionFallback(DivinePerkDefinition divinePerk) {
+        if (divinePerk.awakeningMaxCharge() <= 0)
+            return divinePerk.description();
+
+        String wake = divinePerk.awakeningDescription().isBlank()
+                ? ""
+                : "\nDespertar: " + divinePerk.awakeningDescription();
+        return divinePerk.description() + wake;
     }
 
     /** Resol l'elecció de perk pendent, si n'hi ha. */
@@ -164,6 +216,26 @@ public final class CombatPerkSystem {
         } else {
             state.clearPendingChoice();
         }
+    }
+
+    /** Retorna el nom diví acolorit pel déu. */
+    private static String coloredDivineName(DivinePerkDefinition divinePerk) {
+        return godColor(divinePerk.god()) + divinePerk.name() + Ansi.RESET;
+    }
+
+    /** Retorna el color associat a un déu. */
+    private static String godColor(String god) {
+        if (god == null)
+            return Ansi.BOLD;
+        return switch (god.toLowerCase()) {
+            case "ares", "morrigan", "hecate" -> Ansi.RED + Ansi.BOLD;
+            case "artemis", "thoth", "athena" -> Ansi.CYAN + Ansi.BOLD;
+            case "brigid", "hephaestus", "hestia" -> Ansi.YELLOW + Ansi.BOLD;
+            case "cernunnos", "hermes" -> Ansi.GREEN + Ansi.BOLD;
+            case "loki", "janus" -> Ansi.MAGENTA + Ansi.BOLD;
+            case "thor" -> Ansi.BLUE + Ansi.BOLD;
+            default -> Ansi.BOLD;
+        };
     }
 
     /** Etiqueta visible de la fase que activa una perk. */

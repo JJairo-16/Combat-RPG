@@ -65,7 +65,7 @@ public final class AugmentedPerkEffect implements Effect {
         for (RuleSet ruleSet : ruleSets) {
             if (ruleSet.trigger() != phase) continue;
 
-            PerkContext context = new PerkContext(ctx, phase, rng, owner);
+            PerkContext context = new PerkContext(ctx, phase, rng, owner, state);
             boolean matches = true;
 
             for (PerkCondition condition : ruleSet.conditions()) {

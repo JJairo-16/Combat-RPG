@@ -5,6 +5,7 @@ enum FormField {
     NAME(EditorAction.EDIT_NAME),
     AGE(EditorAction.EDIT_AGE),
     BREED(EditorAction.EDIT_BREED),
+    DIVINE_PERK(EditorAction.EDIT_DIVINE_PERK),
     STRENGTH(EditorAction.EDIT_STRENGTH),
     DEXTERITY(EditorAction.EDIT_DEXTERITY),
     CONSTITUTION(EditorAction.EDIT_CONSTITUTION),
