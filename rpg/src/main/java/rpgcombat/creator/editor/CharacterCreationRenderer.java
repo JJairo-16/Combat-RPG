@@ -23,6 +23,7 @@ final class CharacterCreationRenderer {
     void renderAll(Terminal terminal, CharacterDraft draft, EditorAction selected, EditorAction editing,
             String editValue, int editCursor, String message) {
         painter.clear(terminal);
+        invalidateRightPanelCache();
         renderTitle(terminal, draft);
         renderIdentityBox(terminal, draft, selected, editing, editValue, editCursor);
         renderStatsBox(terminal, draft, selected);
@@ -140,73 +141,124 @@ final class CharacterCreationRenderer {
 
     /** Dibuixa la informació de raça. */
     private void renderBreedInfoBox(Terminal terminal, CharacterDraft draft) {
-        clearBreedArea(terminal);
-        Breed breed = draft.breed();
-        int row = painter.boxTop(terminal, EditorLayout.IDENTITY_ROW, EditorLayout.RIGHT_COL,
-                EditorLayout.RIGHT_BOX_WIDTH, "Informació de la raça");
+        int firstRow = EditorLayout.IDENTITY_ROW;
+        int maxRow = rightPanelLastRow();
+        List<String> lines = blankRightPanelLines(firstRow, maxRow);
 
-        painter.replaceLine(terminal, row++, EditorLayout.RIGHT_COL + 3,
-                Ansi.BOLD + Ansi.CYAN + breed.getName() + Ansi.RESET);
+        Breed breed = draft.breed();
+        int row = EditorLayout.IDENTITY_ROW;
+        putRightPanelLine(lines, firstRow, row++, rightBoxTop("Informació de la raça"));
+
+        putRightPanelContent(lines, firstRow, row++, Ansi.BOLD + Ansi.CYAN + breed.getName() + Ansi.RESET);
         row++;
 
         String bonus = "+" + (int) Math.round(breed.bonus() * 100.0) + "% a " + breed.bonusStat().getName();
-        painter.replaceLine(terminal, row++, EditorLayout.RIGHT_COL + 3, Ansi.GREEN + "Bonus racial" + Ansi.RESET
+        putRightPanelContent(lines, firstRow, row++, Ansi.GREEN + "Bonus racial" + Ansi.RESET
                 + Ansi.DARK_GRAY + "  │  " + Ansi.RESET + Ansi.BOLD + bonus + Ansi.RESET);
         row++;
 
-        painter.replaceLine(terminal, row++, EditorLayout.RIGHT_COL + 3, Ansi.BOLD + "Descripció" + Ansi.RESET);
-        for (String line : wrap(breed.getDescription(),
-                EditorLayout.RIGHT_BOX_WIDTH - EditorLayout.BOX_HORIZONTAL_PADDING)) {
-            painter.replaceLine(terminal, row++, EditorLayout.RIGHT_COL + 3, Ansi.DARK_GRAY + line + Ansi.RESET);
-        }
+        putRightPanelContent(lines, firstRow, row++, Ansi.BOLD + "Descripció" + Ansi.RESET);
+        row = putRightPanelWrappedContent(lines, firstRow, maxRow, row, breed.getDescription());
 
         row++;
         DivinePerkDefinition perk = draft.divinePerk();
-        painter.replaceLine(terminal, row++, EditorLayout.RIGHT_COL + 3, Ansi.BOLD + "Perk divina" + Ansi.RESET);
+        putRightPanelContent(lines, firstRow, row++, Ansi.BOLD + "Perk divina" + Ansi.RESET);
         if (perk == null) {
-            painter.replaceLine(terminal, row++, EditorLayout.RIGHT_COL + 3,
+            putRightPanelContent(lines, firstRow, row++,
                     Ansi.YELLOW + "No hi ha perks divines carregades per a aquesta raça." + Ansi.RESET);
         } else {
-            painter.replaceLine(terminal, row++, EditorLayout.RIGHT_COL + 3,
-                    Ansi.CYAN + perk.displayName() + Ansi.RESET);
+            putRightPanelContent(lines, firstRow, row++, Ansi.CYAN + perk.displayName() + Ansi.RESET);
             if (!perk.shortDescription().isBlank()) {
-                painter.replaceLine(terminal, row++, EditorLayout.RIGHT_COL + 3,
-                        Ansi.DARK_GRAY + perk.shortDescription() + Ansi.RESET);
+                putRightPanelContent(lines, firstRow, row++, Ansi.DARK_GRAY + perk.shortDescription() + Ansi.RESET);
             }
-            for (String line : wrap(perk.description(),
-                    EditorLayout.RIGHT_BOX_WIDTH - EditorLayout.BOX_HORIZONTAL_PADDING)) {
-                painter.replaceLine(terminal, row++, EditorLayout.RIGHT_COL + 3, Ansi.DARK_GRAY + line + Ansi.RESET);
-            }
+            row = putRightPanelWrappedContent(lines, firstRow, maxRow, row, perk.description());
         }
 
         int bottom = Math.max(row + 1, EditorLayout.BOX_MIN_BREED_BOTTOM);
-        painter.boxBottom(terminal, bottom, EditorLayout.RIGHT_COL, EditorLayout.RIGHT_BOX_WIDTH);
-        painter.replaceLine(terminal, bottom + EditorLayout.BREED_HINT_GAP, EditorLayout.RIGHT_COL,
-                Ansi.DARK_GRAY + DESCRIPTION_FOOT + Ansi.RESET);
+        bottom = Math.min(bottom, maxRow);
+        putRightPanelLine(lines, firstRow, bottom, rightBoxBottom());
 
-        lastBreedAreaBottom = Math.max(
-                bottom + EditorLayout.BREED_HINT_GAP,
-                EditorLayout.BOX_MIN_BREED_BOTTOM + EditorLayout.BREED_HINT_GAP);
+        int footRow = bottom + EditorLayout.BREED_HINT_GAP;
+        if (footRow < EditorLayout.HELP_ROW) {
+            putRightPanelLine(lines, firstRow, footRow, Ansi.DARK_GRAY + DESCRIPTION_FOOT + Ansi.RESET);
+        }
+
+        paintRightPanelLines(terminal, firstRow, lines);
     }
 
-    private int lastBreedAreaBottom = EditorLayout.BOX_MIN_BREED_BOTTOM + EditorLayout.BREED_HINT_GAP;
+    private List<String> lastRightPanelLines = List.of();
 
-    /** Neteja la zona dreta de raça. */
-    private void clearBreedArea(Terminal terminal) {
-        int terminalWidth = Math.max(terminal.getWidth(), EditorLayout.RIGHT_COL + EditorLayout.RIGHT_BOX_WIDTH);
-        int width = Math.max(1, terminalWidth - EditorLayout.RIGHT_COL - 1);
-
-        int from = EditorLayout.IDENTITY_ROW;
-        int to = Math.max(lastBreedAreaBottom, EditorLayout.BOX_MIN_BREED_BOTTOM + EditorLayout.BREED_HINT_GAP);
-
-        // No limpiar nunca la zona de ayuda/mensajes.
-        to = Math.min(to, EditorLayout.HELP_ROW - 1);
-
-        String blank = " ".repeat(width);
-
-        for (int row = from; row <= to; row++) {
-            painter.replaceLine(terminal, row, EditorLayout.RIGHT_COL, blank);
+    /** Crea línies buides per al panell dret. */
+    private List<String> blankRightPanelLines(int firstRow, int lastRow) {
+        int count = Math.max(0, lastRow - firstRow + 1);
+        List<String> lines = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            lines.add("");
         }
+        return lines;
+    }
+
+    /** Escriu una línia completa del panell dret al buffer de dibuix. */
+    private void putRightPanelLine(List<String> lines, int firstRow, int row, String text) {
+        int index = row - firstRow;
+        if (index >= 0 && index < lines.size()) {
+            lines.set(index, text == null ? "" : text);
+        }
+    }
+
+    /** Escriu una línia de contingut del panell dret al buffer de dibuix. */
+    private void putRightPanelContent(List<String> lines, int firstRow, int row, String text) {
+        putRightPanelLine(lines, firstRow, row, "   " + (text == null ? "" : text));
+    }
+
+    /** Escriu text partit al buffer del panell dret sense envair la zona d'ajuda. */
+    private int putRightPanelWrappedContent(List<String> lines, int firstRow, int maxRow, int row, String text) {
+        int width = EditorLayout.RIGHT_BOX_WIDTH - EditorLayout.BOX_HORIZONTAL_PADDING;
+        for (String line : wrap(text, width)) {
+            if (row > maxRow) {
+                return row;
+            }
+            putRightPanelContent(lines, firstRow, row++, Ansi.DARK_GRAY + line + Ansi.RESET);
+        }
+        return row;
+    }
+
+    /** Dibuixa només les línies que han canviat del panell dret. */
+    private void paintRightPanelLines(Terminal terminal, int firstRow, List<String> lines) {
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            String previous = i < lastRightPanelLines.size() ? lastRightPanelLines.get(i) : null;
+            if (!line.equals(previous)) {
+                painter.replaceLine(terminal, firstRow + i, EditorLayout.RIGHT_COL, line);
+            }
+        }
+
+        for (int i = lines.size(); i < lastRightPanelLines.size(); i++) {
+            painter.replaceLine(terminal, firstRow + i, EditorLayout.RIGHT_COL, "");
+        }
+
+        lastRightPanelLines = List.copyOf(lines);
+    }
+
+    /** Invalida la memòria del panell dret després d'una neteja completa. */
+    private void invalidateRightPanelCache() {
+        lastRightPanelLines = List.of();
+    }
+
+    /** Retorna la vora superior de la caixa dreta. */
+    private String rightBoxTop(String title) {
+        String line = "┌─ " + title + " " + "─".repeat(Math.max(0, EditorLayout.RIGHT_BOX_WIDTH - title.length() - 5)) + "┐";
+        return Ansi.DARK_GRAY + line + Ansi.RESET;
+    }
+
+    /** Retorna la vora inferior de la caixa dreta. */
+    private String rightBoxBottom() {
+        return Ansi.DARK_GRAY + "└" + "─".repeat(EditorLayout.RIGHT_BOX_WIDTH - 2) + "┘" + Ansi.RESET;
+    }
+
+    /** Retorna l'última fila segura del panell dret. */
+    private int rightPanelLastRow() {
+        return EditorLayout.HELP_ROW - 1;
     }
 
     /** Dibuixa la caixa d'accions. */
