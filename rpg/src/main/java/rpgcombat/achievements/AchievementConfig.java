@@ -14,6 +14,9 @@ public record AchievementConfig(
     /** Opcions de visibilitat dins del JSON. */
     public record VisibilityConfig(Boolean showNameBeforeComplete, Boolean showDescriptionBeforeComplete) {}
 
+    /** Condició declarativa dins del JSON. */
+    public record ConditionConfig(String field, String operator, Object value) {}
+
     /** Objectiu de progrés dins del JSON. */
     public record ObjectiveConfig(
             String type,
@@ -23,16 +26,9 @@ public record AchievementConfig(
             List<String> sequence,
             Double target,
             Double value,
-            List<ConditionConfig> conditions,
-            String valueKey,
-            String uniqueKey,
+            String valueField,
+            String uniqueField,
             List<String> requiredValues,
-            Boolean requireAllValues) {}
-
-    /** Condició declarativa dins del JSON. */
-    public record ConditionConfig(
-            String key,
-            String operator,
-            String value,
-            List<String> values) {}
+            Double targetPerValue,
+            List<ConditionConfig> conditions) {}
 }

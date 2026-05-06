@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 import com.google.gson.Gson;
@@ -17,7 +16,7 @@ import rpgcombat.achievements.AchievementConfig;
 import rpgcombat.achievements.AchievementEvent;
 import rpgcombat.combat.models.Action;
 
-/** Carrega assoliments definits en JSON amb objectius genèrics i validats. */
+/** Carrega assoliments definits en JSON. */
 public final class AchievementLoader {
     private static final Gson GSON = new Gson();
 
@@ -53,16 +52,14 @@ public final class AchievementLoader {
 
     /** Converteix una configuració JSON en una definició validada. */
     private static AchievementDefinition toDefinition(AchievementConfig cfg) {
-        String id = value(cfg.id(), value(cfg.name(), "ACHIEVEMENT")).trim();
+        String id = value(cfg.id(), value(cfg.name(), "ACHIEVEMENT"));
         AchievementConfig.ObjectiveConfig obj = cfg.objective();
         AchievementObjectiveType type = enumValue(AchievementObjectiveType.class, value(obj.type(), "COUNT_EVENT"), id,
                 "tipus d'objectiu");
         List<Action> sequence = actions(obj.sequence(), id);
-        List<String> requiredValues = normalizedValues(obj.requiredValues());
-        double target = obj.target() == null ? defaultTarget(type, sequence, requiredValues, cfg.goal())
-                : Math.max(1.0, obj.target());
-        int goal = cfg.goal() == null ? (int) Math.ceil(displayGoal(type, target, sequence, requiredValues))
-                : Math.max(1, cfg.goal());
+        List<String> requiredValues = obj.requiredValues() == null ? List.of() : List.copyOf(obj.requiredValues());
+        double target = obj.target() == null ? defaultTarget(type, sequence, requiredValues, cfg.goal()) : Math.max(1.0, obj.target());
+        int goal = cfg.goal() == null ? (int) Math.ceil(target) : Math.max(1, cfg.goal());
 
         return new AchievementDefinition(
                 id,
@@ -78,41 +75,23 @@ public final class AchievementLoader {
                         sequence,
                         target,
                         obj.value() == null ? 0.0 : obj.value(),
-                        conditions(obj.conditions(), id),
-                        value(obj.valueKey(), null),
-                        value(obj.uniqueKey(), null),
+                        value(obj.valueField(), null),
+                        value(obj.uniqueField(), null),
                         requiredValues,
-                        obj.requireAllValues() == null || obj.requireAllValues()));
+                        obj.targetPerValue() == null ? 1.0 : Math.max(1.0, obj.targetPerValue()),
+                        conditions(obj.conditions())));
     }
 
-    /** Calcula l'objectiu intern per defecte. */
-    private static double defaultTarget(AchievementObjectiveType type, List<Action> sequence, List<String> requiredValues,
-            Integer goal) {
+    /** Calcula l'objectiu per defecte. */
+    private static double defaultTarget(AchievementObjectiveType type, List<Action> sequence, List<String> requiredValues, Integer goal) {
         if (type == AchievementObjectiveType.ACTION_SEQUENCE && sequence != null && !sequence.isEmpty()) {
             return sequence.size();
         }
-        if (type == AchievementObjectiveType.ALL_UNIQUE_VALUES && requiredValues != null && !requiredValues.isEmpty()) {
+        if ((type == AchievementObjectiveType.ALL_UNIQUE_VALUES || type == AchievementObjectiveType.EACH_UNIQUE_VALUE_COUNT)
+                && requiredValues != null && !requiredValues.isEmpty()) {
             return requiredValues.size();
-        }
-        if (type == AchievementObjectiveType.EACH_UNIQUE_VALUE_COUNT) {
-            return goal == null ? 1.0 : Math.max(1, goal);
         }
         return goal == null ? 1.0 : Math.max(1, goal);
-    }
-
-    /** Calcula l'objectiu que veurà el visor. */
-    private static double displayGoal(AchievementObjectiveType type, double target, List<Action> sequence,
-            List<String> requiredValues) {
-        if (type == AchievementObjectiveType.ACTION_SEQUENCE && sequence != null && !sequence.isEmpty()) {
-            return sequence.size();
-        }
-        if (type == AchievementObjectiveType.ALL_UNIQUE_VALUES && requiredValues != null && !requiredValues.isEmpty()) {
-            return requiredValues.size();
-        }
-        if (type == AchievementObjectiveType.EACH_UNIQUE_VALUE_COUNT && requiredValues != null && !requiredValues.isEmpty()) {
-            return requiredValues.size() * Math.max(1.0, target);
-        }
-        return target;
     }
 
     /** Converteix la visibilitat JSON en domini. */
@@ -121,6 +100,15 @@ public final class AchievementLoader {
         boolean showName = cfg.showNameBeforeComplete() == null || cfg.showNameBeforeComplete();
         boolean showDescription = cfg.showDescriptionBeforeComplete() == null || cfg.showDescriptionBeforeComplete();
         return new AchievementVisibility(showName, showDescription);
+    }
+
+    /** Converteix condicions JSON en domini. */
+    private static List<AchievementCondition> conditions(List<AchievementConfig.ConditionConfig> raw) {
+        if (raw == null || raw.isEmpty()) return List.of();
+        return raw.stream()
+                .filter(c -> c != null && c.field() != null && !c.field().isBlank())
+                .map(c -> new AchievementCondition(c.field(), value(c.operator(), "=="), String.valueOf(c.value())))
+                .toList();
     }
 
     /** Converteix un text a esdeveniment. */
@@ -135,38 +123,10 @@ public final class AchievementLoader {
         return raw.stream().map(action -> enumValue(Action.class, action, achievementId, "acció")).toList();
     }
 
-    /** Converteix condicions JSON en domini. */
-    private static List<AchievementCondition> conditions(List<AchievementConfig.ConditionConfig> raw, String achievementId) {
-        if (raw == null || raw.isEmpty()) return List.of();
-        List<AchievementCondition> result = new ArrayList<>();
-        for (AchievementConfig.ConditionConfig cfg : raw) {
-            if (cfg == null || cfg.key() == null || cfg.key().isBlank()) continue;
-            try {
-                result.add(new AchievementCondition(
-                        cfg.key(),
-                        AchievementCondition.operatorFrom(cfg.operator()),
-                        cfg.value(),
-                        normalizedValues(cfg.values())));
-            } catch (IllegalArgumentException ex) {
-                throw new IllegalArgumentException("Condició invàlida a " + achievementId + ": " + cfg.operator(), ex);
-            }
-        }
-        return List.copyOf(result);
-    }
-
-    /** Normalitza valors textuals configurables. */
-    private static List<String> normalizedValues(List<String> raw) {
-        if (raw == null || raw.isEmpty()) return List.of();
-        return raw.stream()
-                .filter(value -> value != null && !value.isBlank())
-                .map(value -> value.trim().toUpperCase(Locale.ROOT))
-                .toList();
-    }
-
     /** Converteix un valor a enum validant-lo. */
     private static <T extends Enum<T>> T enumValue(Class<T> type, String raw, String ownerId, String fieldName) {
         try {
-            return Enum.valueOf(type, raw.trim().toUpperCase(Locale.ROOT));
+            return Enum.valueOf(type, raw);
         } catch (IllegalArgumentException ex) {
             throw new IllegalArgumentException("Valor invàlid a " + ownerId + " (" + fieldName + "): " + raw, ex);
         }

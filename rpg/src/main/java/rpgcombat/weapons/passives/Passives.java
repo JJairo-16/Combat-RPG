@@ -27,6 +27,10 @@ public final class Passives {
             public CombatMessage afterHit(Weapon weapon, HitContext ctx, Random rng) {
                 double healAmount = ctx.damageDealt() * pct;
                 double realHealed = ctx.attacker().getStatistics().heal(healAmount);
+                if (realHealed > 0) {
+                    double previous = ctx.getMeta("LIFE_STOLEN", Double.class, 0.0);
+                    ctx.putMeta("LIFE_STOLEN", previous + realHealed);
+                }
 
                 if (realHealed <= 0) {
                     return null;

@@ -3,7 +3,9 @@ package rpgcombat.combat.turnservice;
 import static rpgcombat.combat.models.Action.ATTACK;
 import static rpgcombat.combat.models.Action.CHARGE;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import rpgcombat.balance.CombatBalanceRegistry;
@@ -101,11 +103,20 @@ public class TurnResolver {
         }
 
         AttackResult attackResult = attacker.attack();
+        Map<String, Object> attackMeta = new HashMap<>(attackResult.meta());
         String attackerMessage = attacker.getName() + " " + attackResult.message();
 
         Character realTarget = attackResolver.chooseTarget(attacker, defender, attackResult);
         Weapon weapon = attacker.getWeapon();
         boolean hasWeapon = weapon != null;
+        String weaponId = weapon == null ? null : weapon.getId();
+        String weaponName = weapon == null ? null : weapon.getName();
+        double grimoireMultiplier = resolveGrimoireMultiplier(weapon, attackResult);
+        String failKind = attackResult == null ? null : attackResult.failKind();
+        boolean attackFailed = attackResult != null && attackResult.failed();
+        attackMeta.put("weaponId", weaponId);
+        attackMeta.put("weaponName", weaponName);
+        attackMeta.put("grimoireMultiplier", grimoireMultiplier);
 
         if (realTarget == attacker) {
             double damage = attackResult.damage();
@@ -113,13 +124,18 @@ public class TurnResolver {
                 attacker.getDamage(damage);
             return new TurnResult(attacker.getName(), attackerMessage, startMessages.messages(), List.of(), null,
                     List.of(),
-                    List.of(), damage, false, true, false);
+                    List.of(), damage, false, true, false, false, failKind, damage, grimoireMultiplier, 0.0,
+                    weaponId, weaponName, attackMeta);
         }
 
         Random attackerRng = attacker.rng();
         Random defenderRng = defender.rng();
         HitContext ctx = new HitContext(attacker, defender, weapon, attackerRng, attackerAction, defenderAction);
         ctx.setAttackResult(attackResult);
+        ctx.putMeta("WEAPON_ID", weaponId);
+        ctx.putMeta("WEAPON_NAME", weaponName);
+        ctx.putMeta("GRIMOIRE_MULTIPLIER", grimoireMultiplier);
+        if (attackFailed) ctx.putMeta("ATTACK_FAIL_KIND", failKind);
 
         configureHitContext(ctx, attacker, attackResult, weapon);
 
@@ -186,7 +202,8 @@ public class TurnResolver {
             return new TurnResult(attacker.getName(), attackerMessage, startMessages.messages(),
                     preDefenseMessages.messages(),
                     selfResult.message(), postDefenseMessages.messages(), endTurnMessages.messages(), selfDamage,
-                    critical, true, Boolean.TRUE.equals(ctx.getMeta("CHARGED_HIT")));
+                    critical, true, Boolean.TRUE.equals(ctx.getMeta("CHARGED_HIT")), false, failKind, selfDamage,
+                    grimoireMultiplier, ctx.getMeta("LIFE_STOLEN", Double.class, 0.0), weaponId, weaponName, mergeTurnMeta(attackMeta, ctx));
         }
         if (defender.isDesperate()) {
             preDefenseMessages.styled(MessageColor.GREEN, MessageSymbol.WARNING,
@@ -229,7 +246,24 @@ public class TurnResolver {
         return new TurnResult(attacker.getName(), attackerMessage, startMessages.messages(),
                 preDefenseMessages.messages(), defenseMessage,
                 postDefenseMessages.messages(), endTurnMessages.messages(), ctx.damageDealt(), critical,
-                false, Boolean.TRUE.equals(ctx.getMeta("CHARGED_HIT")));
+                false, Boolean.TRUE.equals(ctx.getMeta("CHARGED_HIT")), isMiss(attackFailed, damageToResolve, ctx.damageDealt()),
+                failKind, damageToResolve, grimoireMultiplier, ctx.getMeta("LIFE_STOLEN", Double.class, 0.0),
+                weaponId, weaponName, mergeTurnMeta(attackMeta, ctx));
+    }
+
+
+    /**
+     * Combina metadades pròpies de l'habilitat amb dades generades durant la resolució del cop.
+     */
+    private Map<String, Object> mergeTurnMeta(Map<String, Object> attackMeta, HitContext ctx) {
+        Map<String, Object> merged = new HashMap<>();
+        if (attackMeta != null) merged.putAll(attackMeta);
+        if (ctx == null) return merged;
+        merged.put("lifeStolen", ctx.getMeta("LIFE_STOLEN", Double.class, 0.0));
+        merged.put("chargedHit", Boolean.TRUE.equals(ctx.getMeta("CHARGED_HIT")));
+        merged.put("rawDamage", ctx.getMeta("RAW_DAMAGE"));
+        merged.put("originalWeaponCrit", ctx.getMeta("ORIGINAL_WEAPON_CRIT"));
+        return merged;
     }
 
     /**
@@ -510,10 +544,26 @@ public class TurnResolver {
     }
 
     /**
+     * Detecta si un atac ha fallat sense importar-ne l'origen.
+     */
+    private boolean isMiss(boolean attackFailed, double damageToResolve, double damageDealt) {
+        return attackFailed || (damageToResolve > 0 && damageDealt <= 0);
+    }
+
+    /**
+     * Estima el multiplicador propi del Grimori a partir del dany generat per l'arma.
+     */
+    private double resolveGrimoireMultiplier(Weapon weapon, AttackResult attackResult) {
+        if (!isGrimori(weapon) || attackResult == null) return 0.0;
+        double rolledDamage = Math.max(0.0001, weapon.lastAttackDamage());
+        return round2(attackResult.damage() / rolledDamage);
+    }
+
+    /**
      * Indica si l'arma és un Grimori.
      */
     private boolean isGrimori(Weapon weapon) {
-        return weapon != null && "GRIMORI".equals(weapon.getId());
+        return weapon != null && ("GRIMORI".equals(weapon.getId()) || "GRIMORIE".equals(weapon.getId()));
     }
 
     /**

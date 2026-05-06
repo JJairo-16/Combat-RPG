@@ -1,6 +1,6 @@
 package rpgcombat.achievements.config;
 
-/** Tipus d'objectiu que pot observar el motor genèric d'assoliments. */
+/** Tipus d'objectiu que pot observar el motor d'assoliments. */
 public enum AchievementObjectiveType {
     COUNT_EVENT,
     SUM_VALUE,
@@ -11,8 +11,6 @@ public enum AchievementObjectiveType {
     ACTION_SEQUENCE,
     STATE_REACHED,
     STATE_MAINTAINED,
-    REACT_TO_EVENT,
-    RISK_REWARD,
     ALL_UNIQUE_VALUES,
     EACH_UNIQUE_VALUE_COUNT,
     MAX_VALUE_REACHED

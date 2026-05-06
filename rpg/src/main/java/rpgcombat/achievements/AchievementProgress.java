@@ -3,7 +3,6 @@ package rpgcombat.achievements;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import rpgcombat.achievements.config.AchievementCondition;
@@ -28,15 +27,22 @@ public final class AchievementProgress {
 
     /** Restaura un progrés desat. */
     public AchievementProgress(AchievementDefinition definition, double progress, int sequenceIndex, boolean completed,
+            Instant completedAt) {
+        this(definition, progress, sequenceIndex, completed, completedAt, Map.of());
+    }
+
+    /** Restaura un progrés desat amb dades per valor únic. */
+    public AchievementProgress(AchievementDefinition definition, double progress, int sequenceIndex, boolean completed,
             Instant completedAt, Map<String, Double> valueProgress) {
         this.definition = definition;
         this.progress = Math.max(0.0, progress);
         this.sequenceIndex = Math.max(0, sequenceIndex);
         if (valueProgress != null) {
             valueProgress.forEach((key, value) -> {
-                if (key != null && value != null) this.valueProgress.put(normalizeValue(key), Math.max(0.0, value));
+                if (key != null && value != null) this.valueProgress.put(key, Math.max(0.0, value));
             });
         }
+        recomputeCollectionProgress();
         this.completed = completed || this.progress >= effectiveTarget();
         this.completedAt = completedAt;
         if (this.completed && this.completedAt == null) this.completedAt = Instant.now();
@@ -59,52 +65,52 @@ public final class AchievementProgress {
         Map<String, Double> valuesBefore = Map.copyOf(valueProgress);
 
         AchievementObjective objective = definition.objective();
-        if (!matchesConditions(update, objective.conditions())) return false;
-
         switch (objective.type()) {
-            case COUNT_EVENT, CONDITIONAL_COUNT -> addIf(update.has(objective.event()), 1);
-            case SUM_VALUE, CONDITIONAL_SUM -> addIf(update.has(objective.event()), update.amountFor(objective.valueKey(), objective.event()));
+            case COUNT_EVENT -> addIf(update.has(objective.event()), 1);
+            case SUM_VALUE -> add(update.amountFor(objective));
+            case CONDITIONAL_COUNT -> addIf(update.has(objective.event()) && matches(update, objective), 1);
+            case CONDITIONAL_SUM -> addIf(matchesEventOrNoEvent(update, objective) && matches(update, objective), update.amountFor(objective));
             case CONSECUTIVE_EVENT -> updateConsecutive(update, objective);
-            case AVOID_EVENT_FOR_TURNS -> updateAvoid(update, objective);
+            case AVOID_EVENT_FOR_TURNS -> updateAvoidForTurns(update, objective);
             case ACTION_SEQUENCE -> updateSequence(update.ownerAction(), objective.sequence());
-            case STATE_REACHED -> addIf(update.has(objective.event()), effectiveTarget());
+            case STATE_REACHED -> addIf(matches(update, objective) && matchesEventOrNoEvent(update, objective), effectiveTarget());
             case STATE_MAINTAINED -> updateMaintained(update, objective);
-            case REACT_TO_EVENT -> updateReact(update, objective);
-            case RISK_REWARD -> updateRiskReward(update, objective);
-            case ALL_UNIQUE_VALUES -> updateAllUniqueValues(update, objective);
-            case EACH_UNIQUE_VALUE_COUNT -> updateEachUniqueValueCount(update, objective);
+            case ALL_UNIQUE_VALUES -> updateAllUnique(update, objective);
+            case EACH_UNIQUE_VALUE_COUNT -> updateEachUniqueCount(update, objective);
             case MAX_VALUE_REACHED -> updateMaxValue(update, objective);
         }
 
+        recomputeCollectionProgress();
         if (progress >= effectiveTarget()) complete();
-        return before != progress || sequenceBefore != sequenceIndex || completedBefore != completed
-                || !valuesBefore.equals(valueProgress);
+        return before != progress || sequenceBefore != sequenceIndex || completedBefore != completed || !valuesBefore.equals(valueProgress);
     }
 
     /** Text curt de progrés per al visor. */
     public int viewProgress() {
-        return (int) Math.min(viewTarget(), Math.floor(progress));
+        return (int) Math.min(effectiveTarget(), Math.floor(progress));
     }
 
-    /** Objectiu visual, que pot diferir de l'objectiu intern en col·leccions. */
+    /** Objectiu curt per al visor. */
     public int viewGoal() {
-        return (int) Math.max(1, Math.ceil(viewTarget()));
+        return (int) Math.ceil(effectiveTarget());
     }
 
     /** Gestiona esdeveniments consecutius. */
     private void updateConsecutive(AchievementUpdate update, AchievementObjective objective) {
-        if (update.has(objective.successEvent())) {
+        if (!matches(update, objective)) return;
+        if (update.has(objective.successEvent() == null ? objective.event() : objective.successEvent())) {
             add(1);
             return;
         }
-        if (update.has(objective.resetEvent())) {
+        if (objective.resetEvent() == null || update.has(objective.resetEvent())) {
             progress = 0;
         }
     }
 
-    /** Gestiona evitar esdeveniments durant torns. */
-    private void updateAvoid(AchievementUpdate update, AchievementObjective objective) {
-        if (update.has(objective.event())) {
+    /** Gestiona evitar un esdeveniment durant torns consecutius. */
+    private void updateAvoidForTurns(AchievementUpdate update, AchievementObjective objective) {
+        if (!matches(update, objective)) return;
+        if (update.has(objective.resetEvent() == null ? objective.event() : objective.resetEvent())) {
             progress = 0;
         } else {
             add(1);
@@ -129,89 +135,60 @@ public final class AchievementProgress {
 
     /** Gestiona mantenir un estat. */
     private void updateMaintained(AchievementUpdate update, AchievementObjective objective) {
-        if (update.has(objective.event())) {
+        if (matchesEventOrNoEvent(update, objective) && matches(update, objective)) {
             add(1);
         } else {
             progress = 0;
         }
     }
 
-    /** Gestiona reaccions condicionades a dos esdeveniments. */
-    private void updateReact(AchievementUpdate update, AchievementObjective objective) {
-        if (update.has(objective.successEvent()) && update.has(objective.event())) {
-            add(1);
-        }
+    /** Gestiona col·leccions on cada valor només compta una vegada. */
+    private void updateAllUnique(AchievementUpdate update, AchievementObjective objective) {
+        if (!matchesEventOrNoEvent(update, objective) || !matches(update, objective)) return;
+        String key = update.stringField(fieldOrDefault(objective.uniqueField(), "weaponId"));
+        if (key == null || key.isBlank()) return;
+        if (objective.requiredValues() != null && !objective.requiredValues().isEmpty()
+                && !objective.requiredValues().contains(key)) return;
+        valueProgress.putIfAbsent(key, 1.0);
     }
 
-    /** Gestiona objectius de risc-recompensa. */
-    private void updateRiskReward(AchievementUpdate update, AchievementObjective objective) {
-        if (update.has(objective.event()) && update.amountFor(objective.valueKey(), objective.successEvent()) >= objective.value()) {
-            add(1);
-        }
+    /** Gestiona col·leccions on cada valor ha d'arribar a un mínim. */
+    private void updateEachUniqueCount(AchievementUpdate update, AchievementObjective objective) {
+        if (!matchesEventOrNoEvent(update, objective) || !matches(update, objective)) return;
+        String key = update.stringField(fieldOrDefault(objective.uniqueField(), "weaponId"));
+        if (key == null || key.isBlank()) return;
+        if (objective.requiredValues() != null && !objective.requiredValues().isEmpty()
+                && !objective.requiredValues().contains(key)) return;
+        valueProgress.merge(key, 1.0, Double::sum);
     }
 
-    /** Gestiona col·leccions on cada valor únic només compta una vegada. */
-    private void updateAllUniqueValues(AchievementUpdate update, AchievementObjective objective) {
-        if (!update.has(objective.event())) return;
-        String value = uniqueValue(update, objective);
-        if (value == null) return;
-        if (!isRequiredOrOpen(value, objective)) return;
-        valueProgress.putIfAbsent(value, 1.0);
-        progress = collectedRequiredCount(objective);
-    }
-
-    /** Gestiona col·leccions on cada valor requerit ha d'arribar a X repeticions. */
-    private void updateEachUniqueValueCount(AchievementUpdate update, AchievementObjective objective) {
-        if (!update.has(objective.event())) return;
-        String value = uniqueValue(update, objective);
-        if (value == null) return;
-        if (!isRequiredOrOpen(value, objective)) return;
-
-        valueProgress.merge(value, 1.0, Double::sum);
-        double perValueTarget = Math.max(1.0, objective.target());
-        progress = objective.requiredValues() == null || objective.requiredValues().isEmpty()
-                ? cappedSum(perValueTarget)
-                : objective.requiredValues().stream()
-                        .map(this::normalizeValue)
-                        .mapToDouble(key -> Math.min(perValueTarget, valueProgress.getOrDefault(key, 0.0)))
-                        .sum();
-    }
-
-    /** Gestiona marques de valor màxim. */
+    /** Gestiona assolir un valor màxim puntual. */
     private void updateMaxValue(AchievementUpdate update, AchievementObjective objective) {
-        double amount = update.amountFor(objective.valueKey(), objective.event());
-        if (amount > progress) progress = amount;
+        if (!matchesEventOrNoEvent(update, objective) || !matches(update, objective)) return;
+        progress = Math.max(progress, update.numericField(fieldOrDefault(objective.valueField(), "damage")));
     }
 
-    /** Avalua totes les condicions declaratives. */
-    private boolean matchesConditions(AchievementUpdate update, List<AchievementCondition> conditions) {
-        if (conditions == null || conditions.isEmpty()) return true;
-        return conditions.stream().allMatch(condition -> condition.matches(update));
+    /** Recalcula progrés visual de col·leccions. */
+    private void recomputeCollectionProgress() {
+        if (definition == null || definition.objective() == null) return;
+        AchievementObjective objective = definition.objective();
+        if (objective.type() == AchievementObjectiveType.ALL_UNIQUE_VALUES) {
+            progress = countRequiredCollected(objective);
+        } else if (objective.type() == AchievementObjectiveType.EACH_UNIQUE_VALUE_COUNT) {
+            double targetPerValue = Math.max(1.0, objective.targetPerValue());
+            if (objective.requiredValues() == null || objective.requiredValues().isEmpty()) {
+                progress = valueProgress.values().stream().filter(v -> v >= targetPerValue).count();
+            } else {
+                progress = objective.requiredValues().stream()
+                        .filter(v -> valueProgress.getOrDefault(v, 0.0) >= targetPerValue)
+                        .count();
+            }
+        }
     }
 
-    /** Obté el valor que identifica un element únic. */
-    private String uniqueValue(AchievementUpdate update, AchievementObjective objective) {
-        String key = objective.uniqueKey() == null || objective.uniqueKey().isBlank() ? objective.valueKey() : objective.uniqueKey();
-        String value = update.text(key);
-        return value == null || value.isBlank() ? null : normalizeValue(value);
-    }
-
-    /** Indica si el valor és acceptable per a la col·lecció. */
-    private boolean isRequiredOrOpen(String value, AchievementObjective objective) {
-        List<String> required = objective.requiredValues();
-        return required == null || required.isEmpty() || required.stream().map(this::normalizeValue).anyMatch(value::equals);
-    }
-
-    /** Suma limitada per objectiu individual. */
-    private double cappedSum(double perValueTarget) {
-        return valueProgress.values().stream().mapToDouble(value -> Math.min(perValueTarget, value)).sum();
-    }
-
-    /** Comptador d'elements requerits ja presents. */
-    private double collectedRequiredCount(AchievementObjective objective) {
-        List<String> required = objective.requiredValues();
-        if (required == null || required.isEmpty()) return valueProgress.size();
-        return required.stream().map(this::normalizeValue).filter(valueProgress::containsKey).count();
+    private long countRequiredCollected(AchievementObjective objective) {
+        if (objective.requiredValues() == null || objective.requiredValues().isEmpty()) return valueProgress.size();
+        return objective.requiredValues().stream().filter(valueProgress::containsKey).count();
     }
 
     /** Afegeix progrés si es compleix una condició. */
@@ -223,6 +200,53 @@ public final class AchievementProgress {
     private void add(double amount) {
         if (amount <= 0) return;
         progress += amount;
+    }
+
+    private boolean matchesEventOrNoEvent(AchievementUpdate update, AchievementObjective objective) {
+        return objective.event() == null || update.has(objective.event());
+    }
+
+    private boolean matches(AchievementUpdate update, AchievementObjective objective) {
+        if (objective.conditions() == null || objective.conditions().isEmpty()) return true;
+        for (AchievementCondition condition : objective.conditions()) {
+            if (!matchesCondition(update, condition)) return false;
+        }
+        return true;
+    }
+
+    private boolean matchesCondition(AchievementUpdate update, AchievementCondition condition) {
+        String field = condition.field();
+        String op = condition.operator() == null || condition.operator().isBlank() ? "==" : condition.operator();
+        String expected = condition.value();
+        Object actual = update.field(field);
+        if (actual instanceof Number || isNumber(expected)) {
+            double left = update.numericField(field);
+            double right = parseDouble(expected, 0.0);
+            return switch (op) {
+                case "==" -> Double.compare(left, right) == 0;
+                case "!=" -> Double.compare(left, right) != 0;
+                case ">" -> left > right;
+                case ">=" -> left >= right;
+                case "<" -> left < right;
+                case "<=" -> left <= right;
+                default -> false;
+            };
+        }
+        if (actual instanceof Boolean || "true".equalsIgnoreCase(expected) || "false".equalsIgnoreCase(expected)) {
+            boolean left = update.booleanField(field);
+            boolean right = Boolean.parseBoolean(expected);
+            return switch (op) {
+                case "==" -> left == right;
+                case "!=" -> left != right;
+                default -> false;
+            };
+        }
+        String left = actual == null ? null : String.valueOf(actual);
+        return switch (op) {
+            case "==" -> expected == null ? left == null : expected.equals(left);
+            case "!=" -> expected == null ? left != null : !expected.equals(left);
+            default -> false;
+        };
     }
 
     /** Marca l'assoliment com a completat. */
@@ -240,23 +264,25 @@ public final class AchievementProgress {
             List<Action> sequence = objective.sequence();
             if (sequence != null && !sequence.isEmpty()) return sequence.size();
         }
-        if (objective.type() == AchievementObjectiveType.ALL_UNIQUE_VALUES) {
-            List<String> required = objective.requiredValues();
-            if (required != null && !required.isEmpty()) return required.size();
-        }
-        if (objective.type() == AchievementObjectiveType.EACH_UNIQUE_VALUE_COUNT) {
-            List<String> required = objective.requiredValues();
-            if (required != null && !required.isEmpty()) return required.size() * Math.max(1.0, objective.target());
+        if ((objective.type() == AchievementObjectiveType.ALL_UNIQUE_VALUES
+                || objective.type() == AchievementObjectiveType.EACH_UNIQUE_VALUE_COUNT)
+                && objective.requiredValues() != null && !objective.requiredValues().isEmpty()) {
+            return objective.requiredValues().size();
         }
         return Math.max(1.0, objective.target());
     }
 
-    /** Objectiu que es mostra al visor. */
-    private double viewTarget() {
-        return effectiveTarget();
+    private String fieldOrDefault(String value, String def) {
+        return value == null || value.isBlank() ? def : value;
     }
 
-    private String normalizeValue(String value) {
-        return value == null ? null : value.trim().toUpperCase(Locale.ROOT);
+    private boolean isNumber(String value) {
+        if (value == null) return false;
+        try { Double.parseDouble(value); return true; } catch (NumberFormatException ignored) { return false; }
+    }
+
+    private double parseDouble(String value, double def) {
+        if (value == null) return def;
+        try { return Double.parseDouble(value); } catch (NumberFormatException ignored) { return def; }
     }
 }

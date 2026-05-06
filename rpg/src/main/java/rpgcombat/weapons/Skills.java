@@ -3,6 +3,7 @@ package rpgcombat.weapons;
 import static rpgcombat.utils.ui.Ansi.*;
 import static rpgcombat.weapons.attack.Target.SELF;
 
+import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.function.UnaryOperator;
@@ -231,7 +232,11 @@ public final class Skills {
             message += " (" + crits + " crític" + (crits > 1 ? "s" : "") + ")";
         }
 
-        return new AttackResult(totalDamage, message);
+        return new AttackResult(totalDamage, message, Map.of(
+                "ballistaProjectiles", shots,
+                "projectiles", shots,
+                "ballistaCriticalProjectiles", crits,
+                "projectileCriticalCount", crits));
     }
 
     /**
@@ -307,7 +312,12 @@ public final class Skills {
         }
 
         finalDamage = round2(finalDamage);
-        return new AttackResult(finalDamage, msg);
+        return new AttackResult(finalDamage, msg, Map.of(
+                "grimoireCodeSolved", correct,
+                "grimoireCorrect", correct,
+                "grimoireSeconds", round2(seconds),
+                "grimoireMultiplier", multiplier,
+                "grimoireCritical", crit));
     }
 
     /**
