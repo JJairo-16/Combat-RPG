@@ -101,6 +101,7 @@ public class Chaos extends Trigger {
         if (pendingOutcome == Outcome.FAIL_ACTION) {
             ctx.setBaseDamage(0);
             ctx.markEffectFail(INTERNAL_EFFECT_KEY);
+            ctx.putMeta("chaosFailAction", true);
             return chaosResult(MessageSymbol.WARNING,
                     "El caos devora l'acció de " + owner.getName() + ".");
         }
@@ -118,24 +119,35 @@ public class Chaos extends Trigger {
         }
 
         return switch (pendingOutcome) {
+            case PERFECT_CHAOS -> {
+                ctx.forceCritical();
+                ctx.putMeta("chaosPerfect", true);
+                ctx.putMeta("chaosForceCrit", true);
+                yield chaosResult(MessageSymbol.POSITIVE,
+                        "El caos esdevé simetria perfecta: crític concedit.");
+            }
             case FORCE_CRIT -> {
                 ctx.forceCritical();
+                ctx.putMeta("chaosForceCrit", true);
                 yield chaosResult(MessageSymbol.POSITIVE,
                         "El caos força un cop crític.");
             }
             case FORBID_CRIT -> {
                 ctx.forbidCritical();
+                ctx.putMeta("chaosForbidCrit", true);
                 yield chaosResult(MessageSymbol.NEGATIVE,
                         "El caos apaga qualsevol opció de crític.");
             }
             case CRIT_FLIP -> {
                 if (rng.nextDouble() < cfg().crit().flipForceChance()) {
                     ctx.forceCritical();
+                    ctx.putMeta("chaosForceCrit", true);
                     yield chaosResult(MessageSymbol.POSITIVE,
                             "La moneda caòtica cau de cara: crític forçat.");
                 }
 
                 ctx.forbidCritical();
+                ctx.putMeta("chaosForbidCrit", true);
                 yield chaosResult(MessageSymbol.NEGATIVE,
                         "La moneda caòtica cau de creu: crític prohibit.");
             }
@@ -155,18 +167,31 @@ public class Chaos extends Trigger {
         ChaosConfig cfg = cfg();
 
         return switch (pendingOutcome) {
+            case PERFECT_CHAOS -> {
+                ctx.multiplyDamage(cfg.damage().upMultiplier());
+                ctx.putMeta("chaosPerfect", true);
+                ctx.putMeta("chaosDamageMultiplier", cfg.damage().upMultiplier());
+                yield chaosResult(MessageSymbol.POSITIVE,
+                        "La ruptura perfecta amplifica el dany.");
+            }
             case DAMAGE_UP -> {
                 ctx.multiplyDamage(cfg.damage().upMultiplier());
+                ctx.putMeta("chaosDamageMultiplier", cfg.damage().upMultiplier());
+                ctx.putMeta("chaosDamageUp", true);
                 yield chaosResult(MessageSymbol.POSITIVE,
                         "El caos potencia el cop.");
             }
             case DAMAGE_DOWN -> {
                 ctx.multiplyDamage(cfg.damage().downMultiplier());
+                ctx.putMeta("chaosDamageMultiplier", cfg.damage().downMultiplier());
+                ctx.putMeta("chaosDamageDown", true);
                 yield chaosResult(MessageSymbol.NEGATIVE,
                         "El caos distorsiona el cop i en redueix la força.");
             }
             case OVERLOAD -> {
                 ctx.multiplyDamage(cfg.damage().overloadMultiplier());
+                ctx.putMeta("chaosDamageMultiplier", cfg.damage().overloadMultiplier());
+                ctx.putMeta("chaosOverload", true);
                 owner.applyVulnerable(cfg.status().vulnerableTurns());
                 owner.multiplyNextIncomingDamage(cfg.damage().overloadIncomingMultiplier());
 
@@ -177,6 +202,8 @@ public class Chaos extends Trigger {
             case UNSTABLE_GUARD -> {
                 if (ctx.attackerAction() == Action.ATTACK) {
                     ctx.multiplyDamage(cfg.damage().downMultiplier());
+                    ctx.putMeta("chaosUnstableGuard", true);
+                    ctx.putMeta("chaosDamageMultiplier", cfg.damage().downMultiplier());
                     yield chaosResult(MessageSymbol.NEGATIVE,
                             "La guàrdia inestable fa tremolar l'atac.");
                 }
@@ -187,6 +214,7 @@ public class Chaos extends Trigger {
                 ctx.putMeta(META_SELF_HIT, true);
                 ctx.putMeta(META_SELF_HIT_MULTIPLIER, cfg.damage().selfHitMultiplier());
                 ctx.putMeta(META_SELF_HIT_CAN_KILL, cfg.damage().selfHitCanKill());
+                ctx.putMeta("chaosSelfHit", true);
 
                 yield chaosResult(MessageSymbol.WARNING,
                         "El caos gira el cop contra el seu origen.");
@@ -301,6 +329,17 @@ public class Chaos extends Trigger {
     private void applyImmediateOutcome(Character owner, Outcome outcome, Random rng, ChaosConfig cfg,
             CombatMessageBuffer out) {
         switch (outcome) {
+            case PERFECT_CHAOS -> {
+                owner.gainMomentum();
+                owner.prepareChargedAttack();
+                double restored = owner.getStatistics().restoreMana(
+                        owner.getStatistics().getMaxMana() * cfg.mana().spikeRestoreMaxManaRatio());
+                if (out != null) {
+                    out.styled(MessageColor.MAGENTA, MessageSymbol.POSITIVE,
+                            owner.getName() + " rep una simetria impossible del caos"
+                                    + (restored > 0 ? " i recupera " + round2(restored) + " de manà." : "."));
+                }
+            }
             case GAIN_MOMENTUM -> owner.gainMomentum();
             case FREE_CHARGE -> owner.prepareChargedAttack();
             case BLOOD_RUSH -> {
@@ -412,6 +451,21 @@ public class Chaos extends Trigger {
         return z ^ (z >>> 33);
     }
 
+    /** Retorna el resultat caòtic més recent. */
+    public String lastOutcomeName() {
+        return lastOutcome == null ? null : lastOutcome.name();
+    }
+
+    /** Retorna l'etiqueta visible del resultat caòtic més recent. */
+    public String lastOutcomeLabel() {
+        return lastOutcome == null ? null : lastOutcome.label;
+    }
+
+    /** Indica si l'últim resultat caòtic era sever. */
+    public boolean lastOutcomeSevere() {
+        return lastOutcome != null && lastOutcome.severe;
+    }
+
     /**
      * Retorna la configuració actual de Caos.
      */
@@ -459,7 +513,8 @@ public class Chaos extends Trigger {
         CLEANSE_MINOR("neteja menor", false),
         BLOOD_RUSH("frenesí de sang", false),
         MANA_SPIKE("pic de manà", false),
-        UNSTABLE_GUARD("guàrdia inestable", false);
+        UNSTABLE_GUARD("guàrdia inestable", false),
+        PERFECT_CHAOS("caos perfecte", false);
 
         private final String label;
         private final boolean severe;

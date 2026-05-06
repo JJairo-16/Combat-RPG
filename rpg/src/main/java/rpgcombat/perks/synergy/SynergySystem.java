@@ -94,10 +94,19 @@ public final class SynergySystem {
         }
 
         state.setSynergyDescriptions(descriptionsByPerk);
+        state.setActiveSynergyIds(active.stream()
+                .map(a -> a.definition().id())
+                .distinct()
+                .toList());
         state.setActiveSynergyNames(active.stream()
                 .map(a -> a.definition().name())
                 .distinct()
                 .toList());
+        Map<String, String> namesById = new HashMap<>();
+        for (ActiveSynergy activeSynergy : active) {
+            namesById.put(activeSynergy.definition().id(), activeSynergy.definition().name());
+        }
+        state.setActiveSynergyNamesById(namesById);
     }
 
     /** Retorna la informació de les sinergies actives per mostrar-la. */
@@ -107,9 +116,12 @@ public final class SynergySystem {
 
         return activeList(state.perks()).stream()
                 .map(active -> new SynergyDisplayInfo(
+                        active.definition().id(),
                         active.definition().name(),
                         active.definition().description(),
-                        active.definition().type()))
+                        active.definition().type(),
+                        active.members(),
+                        active.rank()))
                 .toList();
     }
 

@@ -79,6 +79,11 @@ public final class SynergyBonusEffect implements Effect {
             }
         }
 
+        boolean activated = consumedCharge || changedState || !messages.isEmpty() || !actions.isEmpty();
+        if (activated) {
+            registerSynergyTrigger(ctx);
+        }
+
         if (messages.isEmpty()) {
             return new EffectResult(null, consumedCharge, changedState);
         }
@@ -86,6 +91,29 @@ public final class SynergyBonusEffect implements Effect {
         String text = synergy.name() + ": " + String.join(" ", messages);
         CombatMessage styled = CombatMessage.of(PerkFamily.STRATEGY.symbol(), PerkFamily.STRATEGY.color(), text);
         return new EffectResult(styled, consumedCharge, true);
+    }
+
+    /** Registra que el bonus de sinergia s'ha disparat al context flexible. */
+    private void registerSynergyTrigger(HitContext ctx) {
+        if (ctx == null || synergy == null) return;
+        appendToken(ctx, "triggeredSynergyIds", synergy.id());
+        appendToken(ctx, "triggeredSynergyNames", synergy.name());
+    }
+
+    /** Afegeix un token textual en format estable separat per '|'. */
+    private void appendToken(HitContext ctx, String key, String value) {
+        if (ctx == null || key == null || value == null || value.isBlank()) return;
+        Object previous = ctx.getMeta(key);
+        String token = value.trim();
+        if (previous == null || String.valueOf(previous).isBlank()) {
+            ctx.putMeta(key, token);
+            return;
+        }
+        String text = String.valueOf(previous);
+        for (String existing : text.split("[|,]")) {
+            if (token.equals(existing.trim())) return;
+        }
+        ctx.putMeta(key, text + "|" + token);
     }
 
     /**

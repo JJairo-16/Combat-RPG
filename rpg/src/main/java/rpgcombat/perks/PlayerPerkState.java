@@ -18,6 +18,8 @@ public final class PlayerPerkState {
     private boolean pendingChoice;
     private Map<String, List<String>> synergyDescriptions = Map.of();
     private List<String> activeSynergyNames = List.of();
+    private List<String> activeSynergyIds = List.of();
+    private Map<String, String> activeSynergyNamesById = Map.of();
     private DivinePerkDefinition divinePerk;
 
     /** Nombre màxim de perks equipables. */
@@ -154,6 +156,42 @@ public final class PlayerPerkState {
                 .filter(name -> name != null && !name.isBlank())
                 .distinct()
                 .toList();
+    }
+
+    /** Identificadors de sinergies actives. */
+    public List<String> activeSynergyIds() {
+        return activeSynergyIds;
+    }
+
+    /** Defineix els identificadors de sinergies actives. */
+    public void setActiveSynergyIds(List<String> ids) {
+        activeSynergyIds = ids == null ? List.of() : ids.stream()
+                .filter(id -> id != null && !id.isBlank())
+                .distinct()
+                .toList();
+    }
+
+    /** Defineix el mapa d'identificador a nom visible de sinergia. */
+    public void setActiveSynergyNamesById(Map<String, String> namesById) {
+        if (namesById == null || namesById.isEmpty()) {
+            activeSynergyNamesById = Map.of();
+            return;
+        }
+        Map<String, String> copy = new HashMap<>();
+        namesById.forEach((id, name) -> {
+            if (id != null && !id.isBlank()) copy.put(id, name == null ? id : name);
+        });
+        activeSynergyNamesById = Map.copyOf(copy);
+    }
+
+    /** Retorna el nom visible d'una sinergia activa. */
+    public String activeSynergyName(String id) {
+        return activeSynergyNamesById.getOrDefault(id, id);
+    }
+
+    /** Nombre de missions de perk completades. */
+    public int completedMissionCount() {
+        return (int) missions.stream().filter(MissionProgress::completed).count();
     }
 
     /** Retorna els identificadors de missions actuals. */

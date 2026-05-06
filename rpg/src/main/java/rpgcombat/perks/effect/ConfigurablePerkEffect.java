@@ -104,6 +104,11 @@ public final class ConfigurablePerkEffect implements Effect {
             }
         }
 
+        boolean activated = consumedCharge || changedState || !messages.isEmpty() || !actions.isEmpty();
+        if (activated) {
+            registerPerkActivation(ctx);
+        }
+
         if (messages.isEmpty()) {
             return new EffectResult(null, consumedCharge, changedState);
         }
@@ -111,6 +116,33 @@ public final class ConfigurablePerkEffect implements Effect {
         String text = perk.name() + ": " + String.join(" ", messages);
         CombatMessage styled = CombatMessage.of(perk.family().symbol(), perk.family().color(), text);
         return new EffectResult(styled, consumedCharge, true);
+    }
+
+    /** Registra l'activació al context flexible perquè els assoliments la puguin observar. */
+    private void registerPerkActivation(HitContext ctx) {
+        if (ctx == null || perk == null) return;
+        appendToken(ctx, "activatedPerkIds", perk.id());
+        appendToken(ctx, "activatedPerkNames", perk.name());
+        appendToken(ctx, "activatedPerkFamilies", perk.family() == null ? null : perk.family().name());
+        for (String tag : perk.tags()) {
+            appendToken(ctx, "activatedPerkTags", tag);
+        }
+    }
+
+    /** Afegeix un token textual en format estable separat per '|'. */
+    private void appendToken(HitContext ctx, String key, String value) {
+        if (ctx == null || key == null || value == null || value.isBlank()) return;
+        Object previous = ctx.getMeta(key);
+        String token = value.trim();
+        if (previous == null || String.valueOf(previous).isBlank()) {
+            ctx.putMeta(key, token);
+            return;
+        }
+        String text = String.valueOf(previous);
+        for (String existing : text.split("[|,]")) {
+            if (token.equals(existing.trim())) return;
+        }
+        ctx.putMeta(key, text + "|" + token);
     }
 
     /**

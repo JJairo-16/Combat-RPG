@@ -3,8 +3,11 @@ package rpgcombat.perks;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Random;
 
+import rpgcombat.achievements.AchievementSystem;
 import rpgcombat.combat.models.Action;
 import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.models.characters.Character;
@@ -30,11 +33,21 @@ public final class CombatPerkSystem {
     private final Map<Character, PlayerPerkState> states = new IdentityHashMap<>();
     private final Random rng = new Random();
     private final SynergySystem synergySystem = new SynergySystem(SynergyRegistry.all());
+    private final AchievementSystem achievementSystem;
+    private int currentRoundNumber;
 
     /** Assigna l'estat inicial de perks a cada jugador. */
     public CombatPerkSystem(Character player1, Character player2) {
+        this(player1, player2, null);
+    }
+
+    /** Assigna l'estat inicial de perks a cada jugador i connecta assoliments. */
+    public CombatPerkSystem(Character player1, Character player2, AchievementSystem achievementSystem) {
+        this.achievementSystem = achievementSystem;
         states.put(player1, initialStateFor(player1));
         states.put(player2, initialStateFor(player2));
+        registerInitialDivinePerk(player1);
+        registerInitialDivinePerk(player2);
     }
 
     /** Crea l'estat inicial d'un jugador. */
@@ -47,6 +60,7 @@ public final class CombatPerkSystem {
     /** Actualitza les missions del personatge després d'un torn. */
     public void afterTurn(Character actor, Character opponent, Action actorAction, Action opponentAction,
             TurnResult result, int roundNumber) {
+        currentRoundNumber = roundNumber;
         PlayerPerkState state = states.get(actor);
         if (state == null)
             return;
@@ -54,7 +68,11 @@ public final class CombatPerkSystem {
         MissionUpdate update = MissionUpdate.from(actor, opponent, actorAction, opponentAction, result, roundNumber);
         for (MissionProgress mission : state.missions()) {
             if (!mission.rewardClaimed()) {
+                boolean wasCompleted = mission.completed();
                 mission.update(update);
+                if (!wasCompleted && mission.completed()) {
+                    registerPerkMissionCompleted(actor, state, mission, roundNumber);
+                }
             }
         }
         state.updatePendingChoice();
@@ -203,8 +221,11 @@ public final class CombatPerkSystem {
             player.removeEffect(effect.key());
             player.addEffect(effect);
 
+            Set<String> previousSynergies = new HashSet<>(state.activeSynergyIds());
             state.addPerk(chosen);
             synergySystem.refresh(player, state);
+            registerPerkGained(player, state, chosen, currentRoundNumber);
+            registerNewSynergies(player, state, previousSynergies, currentRoundNumber);
             state.clearPendingChoice();
 
             if (state.canGainMorePerks()) {
@@ -215,6 +236,48 @@ public final class CombatPerkSystem {
             }
         } else {
             state.clearPendingChoice();
+        }
+    }
+
+    /** Registra la perk divina inicial, si existeix. */
+    private void registerInitialDivinePerk(Character player) {
+        if (achievementSystem == null || player == null) return;
+        PlayerPerkState state = states.get(player);
+        DivinePerkDefinition divine = state == null ? null : state.divinePerk();
+        if (divine == null) return;
+        achievementSystem.onDivinePerkAssigned(player, divine.id(), divine.name(), divine.god(), currentRoundNumber);
+    }
+
+    /** Registra una missió de perk completada. */
+    private void registerPerkMissionCompleted(Character player, PlayerPerkState state, MissionProgress mission,
+            int roundNumber) {
+        if (achievementSystem == null || mission == null || mission.definition() == null) return;
+        PerkDefinition chosen = state == null ? null : state.chosenPerk();
+        achievementSystem.onPerkMissionCompleted(player, mission.definition().id(),
+                chosen == null ? null : chosen.id(),
+                state == null ? 0 : state.completedMissionCount(),
+                state == null ? 0 : state.missions().size(),
+                roundNumber);
+    }
+
+    /** Registra una perk obtinguda. */
+    private void registerPerkGained(Character player, PlayerPerkState state, PerkDefinition chosen, int roundNumber) {
+        if (achievementSystem == null || state == null || chosen == null) return;
+        achievementSystem.onPerkGained(player, chosen.id(), chosen.name(),
+                chosen.family() == null ? null : chosen.family().name(),
+                chosen.tags(), state.perkCount(), PlayerPerkState.MAX_PERKS, roundNumber);
+    }
+
+    /** Registra les sinergies activades per primera vegada després de triar una perk. */
+    private void registerNewSynergies(Character player, PlayerPerkState state, Set<String> previousSynergies,
+            int roundNumber) {
+        if (achievementSystem == null || state == null) return;
+        Set<String> before = previousSynergies == null ? Set.of() : previousSynergies;
+        for (String synergyId : state.activeSynergyIds()) {
+            if (!before.contains(synergyId)) {
+                achievementSystem.onSynergyActivated(player, synergyId, state.activeSynergyName(synergyId),
+                        state.activeSynergyIds().size(), roundNumber);
+            }
         }
     }
 

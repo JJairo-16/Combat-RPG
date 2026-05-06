@@ -142,7 +142,7 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
     private EffectResult cernunnos(HitContext ctx, Phase phase, Character owner) {
         if (phase == Phase.START_TURN && ctx.attacker() == owner) {
             state.addStacks(1, Integer.MAX_VALUE);
-            boolean awakened = awaken(4);
+            boolean awakened = awaken(ctx, 4);
             String stance = state.stacks() % 2 == 0 ? "forma feral" : "forma guardiana";
             return msg("adopta la " + stance + awakeningText(awakened, 4) + ".");
         }
@@ -191,7 +191,7 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
     private EffectResult morrigan(HitContext ctx, Phase phase, Character owner) {
         if (!onceUsed && phase == Phase.START_TURN && owner.healthRatio() <= 0.35) {
             onceUsed = true;
-            awakening = 2;
+            setAwakening(ctx, 2, 2);
             state.setStacks(1);
             owner.addEffect(new rpgcombat.models.effects.impl.Fatigue(1));
             return msg("els corbs anuncien sang: el proper atac serà crític. El presagi desperta del tot.");
@@ -211,7 +211,7 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
         if (phase == Phase.AFTER_DEFENSE && ctx.defender() == owner && ctx.hasEvent(Event.ON_DODGE)
                 && ctx.damageDealt() <= 0) {
             state.setStacks(1);
-            boolean awakened = awaken(2);
+            boolean awakened = awaken(ctx, 2);
             return msg("l'esquiva perfecta prepara una caça lunar" + awakeningText(awakened, 2) + ".");
         }
         if (phase == Phase.ROLL_CRIT && ctx.attacker() == owner && state.stacks() > 0) {
@@ -261,7 +261,7 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
     private EffectResult hephaestus(HitContext ctx, Phase phase, Character owner) {
         if (phase == Phase.AFTER_DEFENSE && ctx.defender() == owner && ctx.defenderAction() == Action.DEFEND) {
             state.addStacks(1, 3);
-            boolean awakened = awaken(3);
+            boolean awakened = awaken(ctx, 3);
             return msg("acumula tremp de forja (" + state.stacks() + "/3)"
                     + awakeningText(awakened, 3) + ".");
         }
@@ -358,7 +358,7 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
             if (state.remainingTurns() == actionCode) {
                 state.setStacks(0);
             } else {
-                boolean awakened = awaken(2);
+                boolean awakened = awaken(ctx, 2);
                 state.addStacks(1, 1 + Math.min(awakening, 2));
                 if (awakened) {
                     return msg("reajusta la seva tàctica" + awakeningText(true, 2) + ".");
@@ -414,7 +414,7 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
             } else {
                 state.tickCooldown();
             }
-            awaken(2);
+            awaken(ctx, 2);
         }
         if (phase == Phase.MODIFY_DAMAGE && ctx.attacker() == owner
                 && state.cooldownTurns() <= 0 && ctx.damageToResolve() <= 0) {
@@ -434,7 +434,7 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
             int current = ctx.attackerAction().ordinal() + 1;
             int previous = state.remainingTurns();
             if (previous > 0 && isOffensiveCode(previous) != isOffensiveCode(current)) {
-                boolean awakened = awaken(2);
+                boolean awakened = awaken(ctx, 2);
                 state.setStacks(isOffensiveCode(current) ? 1 : 2);
                 state.setDuration(current);
                 return msg("obre una porta entre dues decisions" + awakeningText(awakened, 2) + ".");
@@ -463,12 +463,12 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
         if (phase == Phase.AFTER_DEFENSE && ctx.defender() == owner && ctx.defenderAction() == Action.DODGE
                 && ctx.damageDealt() <= 0) {
             state.setStacks(1);
-            boolean awakened = awaken(2);
+            boolean awakened = awaken(ctx, 2);
             return msg("roba un pas al rival" + awakeningText(awakened, 2) + ".");
         }
         if (phase == Phase.END_TURN && ctx.attacker() == owner && ctx.attackerAction() != Action.ATTACK) {
             state.setStacks(1);
-            boolean awakened = awaken(2);
+            boolean awakened = awaken(ctx, 2);
             return msg("guarda impuls per actuar amb avantatge" + awakeningText(awakened, 2) + ".");
         }
         if (phase == Phase.MODIFY_DAMAGE && ctx.attacker() == owner && state.stacks() > 0) {
@@ -664,13 +664,79 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
     }
 
     /**
-     * Incrementa el despertar fins al màxim indicat.
+     * Incrementa el despertar fins al màxim indicat i el registra per als assoliments.
      */
-    private boolean awaken(int max) {
-        if (awakening >= max)
+    private boolean awaken(HitContext ctx, int max) {
+        if (awakening >= max) {
+            registerAwakeningMeta(ctx, max, false);
             return false;
+        }
         awakening++;
+        registerAwakeningMeta(ctx, max, true);
         return true;
+    }
+
+    /** Fixa explícitament el despertar i el registra per als assoliments. */
+    private void setAwakening(HitContext ctx, int max, int level) {
+        int previous = awakening;
+        awakening = Math.max(awakening, Math.min(level, max));
+        registerAwakeningMeta(ctx, max, awakening > previous);
+    }
+
+    /** Registra el progrés de despertar diví al context flexible del torn. */
+    private void registerAwakeningMeta(HitContext ctx, int max, boolean advanced) {
+        if (ctx == null || perk == null || max <= 0) return;
+        appendToken(ctx, "divineAwakeningPerkIds", perk.id());
+        appendToken(ctx, "divineAwakeningPerkNames", perk.name());
+        appendToken(ctx, "divineAwakeningGods", godName());
+        appendToken(ctx, "divineAwakeningLevels", String.valueOf(Math.min(awakening, max)));
+        appendToken(ctx, "divineAwakeningMaxLevels", String.valueOf(max));
+        ctx.putMeta("divinePerkId", perk.id());
+        ctx.putMeta("divinePerkName", perk.name());
+        ctx.putMeta("god", godName());
+        ctx.putMeta("divineAwakeningLevel", Math.min(awakening, max));
+        ctx.putMeta("divineAwakeningMax", max);
+        ctx.putMeta("divineAwakeningAdvanced", advanced);
+        ctx.putMeta("divinePerkAwakened", awakening >= max);
+        ctx.putMeta("divinePerkFullPower", awakening >= max);
+        ctx.putMeta("divinePowerRatio", power(max));
+    }
+
+    /** Afegeix un token textual sense duplicats. */
+    private void appendToken(HitContext ctx, String key, String value) {
+        if (ctx == null || key == null || value == null || value.isBlank()) return;
+        Object previous = ctx.getMeta(key);
+        String token = value.trim();
+        if (previous == null || String.valueOf(previous).isBlank()) {
+            ctx.putMeta(key, token);
+            return;
+        }
+        String text = String.valueOf(previous);
+        for (String existing : text.split("[|,]")) {
+            if (token.equals(existing.trim())) return;
+        }
+        ctx.putMeta(key, text + "|" + token);
+    }
+
+    /** Retorna el déu associat a la perk divina. */
+    private String godName() {
+        return switch (perk.id()) {
+            case "CERNUNNOS_WILD_PULSE" -> "CERNUNNOS";
+            case "ARES_BLOOD_OATH" -> "ARES";
+            case "MORRIGAN_RAVEN_OMEN" -> "MORRIGAN";
+            case "ARTEMIS_MOON_HUNTER" -> "ARTEMIS";
+            case "BRIGID_OATH_FLAME" -> "BRIGID";
+            case "HEPHAESTUS_INNER_FORGE" -> "HEPHAESTUS";
+            case "THOR_HELD_THUNDER" -> "THOR";
+            case "HESTIA_UNBROKEN_HEARTH" -> "HESTIA";
+            case "THOTH_FATE_SCRIPT" -> "THOTH";
+            case "ATHENA_DIVINE_STRATEGIST" -> "ATHENA";
+            case "HECATE_CURSED_THRESHOLD" -> "HECATE";
+            case "LOKI_BROKEN_RULE" -> "LOKI";
+            case "JANUS_BETWEEN_DOORS" -> "JANUS";
+            case "HERMES_STOLEN_STEP" -> "HERMES";
+            default -> "DIVINE";
+        };
     }
 
     /**

@@ -79,18 +79,22 @@ public class TurnResolver {
             EndRoundRegenBonus defenderBonus) {
 
         CombatMessageBuffer startMessages = new CombatMessageBuffer();
+        Action selectedAction = attackerAction;
         attackerAction = Chaos.applyStartTurn(attacker, defender, attackerAction, startMessages);
+        Map<String, Object> startTurnMeta = chaosStartMeta(attacker, selectedAction, attackerAction);
         rhythmService.onActionStart(attacker, attackerAction);
         attacker.onTurnStart(attackerAction, startMessages);
 
         if (!attacker.isAlive()) {
             return new TurnResult(attacker.getName(), null, startMessages.messages(), List.of(), null, List.of(),
-                    List.of(), 0,
-                    false);
+                    List.of(), 0, false, false, false, false, null, 0.0, 0.0, 0.0,
+                    attacker.getWeapon() == null ? null : attacker.getWeapon().getId(),
+                    attacker.getWeapon() == null ? null : attacker.getWeapon().getName(),
+                    startTurnMeta);
         }
 
         if (attackerAction != ATTACK) {
-            return resolveNonAttackTurn(attacker, defender, attackerAction, defenderAction, startMessages);
+            return resolveNonAttackTurn(attacker, defender, attackerAction, defenderAction, startMessages, startTurnMeta);
         }
 
         CombatMessageBuffer preDefenseMessages = new CombatMessageBuffer();
@@ -103,14 +107,15 @@ public class TurnResolver {
         }
 
         AttackResult attackResult = attacker.attack();
-        Map<String, Object> attackMeta = new HashMap<>(attackResult.meta());
+        Map<String, Object> attackMeta = new HashMap<>(startTurnMeta);
+        attackMeta.putAll(attackResult.meta());
         String attackerMessage = attacker.getName() + " " + attackResult.message();
 
         Character realTarget = attackResolver.chooseTarget(attacker, defender, attackResult);
         Weapon weapon = attacker.getWeapon();
         boolean hasWeapon = weapon != null;
-        String weaponId = weapon == null ? null : weapon.getId();
-        String weaponName = weapon == null ? null : weapon.getName();
+        String weaponId = getWeaponId(weapon);
+        String weaponName = getWeaponName(weapon);
         double grimoireMultiplier = resolveGrimoireMultiplier(weapon, attackResult);
         String failKind = attackResult == null ? null : attackResult.failKind();
         boolean attackFailed = attackResult != null && attackResult.failed();
@@ -135,6 +140,7 @@ public class TurnResolver {
         ctx.putMeta("WEAPON_ID", weaponId);
         ctx.putMeta("WEAPON_NAME", weaponName);
         ctx.putMeta("GRIMOIRE_MULTIPLIER", grimoireMultiplier);
+        startTurnMeta.forEach(ctx::putMeta);
         if (attackFailed) ctx.putMeta("ATTACK_FAIL_KIND", failKind);
 
         configureHitContext(ctx, attacker, attackResult, weapon);
@@ -263,7 +269,43 @@ public class TurnResolver {
         merged.put("chargedHit", Boolean.TRUE.equals(ctx.getMeta("CHARGED_HIT")));
         merged.put("rawDamage", ctx.getMeta("RAW_DAMAGE"));
         merged.put("originalWeaponCrit", ctx.getMeta("ORIGINAL_WEAPON_CRIT"));
+        copyMeta(ctx, merged, "activatedPerkIds");
+        copyMeta(ctx, merged, "activatedPerkNames");
+        copyMeta(ctx, merged, "activatedPerkFamilies");
+        copyMeta(ctx, merged, "activatedPerkTags");
+        copyMeta(ctx, merged, "triggeredSynergyIds");
+        copyMeta(ctx, merged, "triggeredSynergyNames");
+        copyMeta(ctx, merged, "divineAwakeningPerkIds");
+        copyMeta(ctx, merged, "divineAwakeningPerkNames");
+        copyMeta(ctx, merged, "divineAwakeningGods");
+        copyMeta(ctx, merged, "divineAwakeningLevels");
+        copyMeta(ctx, merged, "divineAwakeningMaxLevels");
+        copyMeta(ctx, merged, "divinePerkAwakened");
+        copyMeta(ctx, merged, "divinePerkFullPower");
+        copyMeta(ctx, merged, "divineAwakeningLevel");
+        copyMeta(ctx, merged, "divineAwakeningMax");
+        copyMeta(ctx, merged, "divinePerkId");
+        copyMeta(ctx, merged, "divinePerkName");
+        copyMeta(ctx, merged, "god");
+        copyMeta(ctx, merged, Chaos.META_SELF_HIT);
+        copyMeta(ctx, merged, Chaos.META_SELF_HIT_MULTIPLIER);
+        copyMeta(ctx, merged, Chaos.META_SELF_HIT_CAN_KILL);
+        copyMeta(ctx, merged, "chaosSelfHit");
+        copyMeta(ctx, merged, "chaosForceCrit");
+        copyMeta(ctx, merged, "chaosForbidCrit");
+        copyMeta(ctx, merged, "chaosDamageMultiplier");
+        copyMeta(ctx, merged, "chaosDamageUp");
+        copyMeta(ctx, merged, "chaosDamageDown");
+        copyMeta(ctx, merged, "chaosOverload");
+        copyMeta(ctx, merged, "chaosUnstableGuard");
+        copyMeta(ctx, merged, "chaosFailAction");
         return merged;
+    }
+
+    /** Copia una metadada del context si existeix. */
+    private void copyMeta(HitContext ctx, Map<String, Object> target, String key) {
+        Object value = ctx.getMeta(key);
+        if (value != null) target.put(key, value);
     }
 
     /**
@@ -274,7 +316,8 @@ public class TurnResolver {
             Character defender,
             Action attackerAction,
             Action defenderAction,
-            CombatMessageBuffer startMessages) {
+            CombatMessageBuffer startMessages,
+            Map<String, Object> startTurnMeta) {
 
         CombatMessageBuffer endTurnMessages = new CombatMessageBuffer();
 
@@ -308,6 +351,7 @@ public class TurnResolver {
                 defenderAction);
 
         effectPipeline.runAttackerOnly(ctx, Phase.END_TURN, attacker, attackerRng, endTurnMessages);
+        Weapon weapon = attacker.getWeapon();
 
         return new TurnResult(
                 attacker.getName(),
@@ -318,7 +362,17 @@ public class TurnResolver {
                 List.of(),
                 endTurnMessages.messages(),
                 0,
-                false);
+                false,
+                false,
+                false,
+                false,
+                null,
+                0,
+                0.0,
+                0.0,
+                getWeaponId(weapon),
+                getWeaponName(weapon),
+                mergeTurnMeta(startTurnMeta, ctx));
     }
 
     /**
@@ -567,9 +621,40 @@ public class TurnResolver {
     }
 
     /**
+     * Recull informació del trigger de Caos resolt a l'inici del torn.
+     */
+    private Map<String, Object> chaosStartMeta(Character attacker, Action selectedAction, Action finalAction) {
+        Map<String, Object> meta = new HashMap<>();
+        if (attacker == null || !attacker.hasEffect(Chaos.INTERNAL_EFFECT_KEY)) {
+            return meta;
+        }
+        if (attacker.getEffect(Chaos.INTERNAL_EFFECT_KEY) instanceof Chaos chaos) {
+            meta.put("chaosActive", true);
+            meta.put("chaosTriggered", chaos.lastOutcomeName() != null);
+            meta.put("chaosOutcome", chaos.lastOutcomeName());
+            meta.put("chaosOutcomeLabel", chaos.lastOutcomeLabel());
+            meta.put("chaosOutcomeSevere", chaos.lastOutcomeSevere());
+            meta.put("chaosSelectedAction", selectedAction == null ? null : selectedAction.name());
+            meta.put("chaosFinalAction", finalAction == null ? null : finalAction.name());
+            meta.put("chaosActionChanged", selectedAction != null && finalAction != null && selectedAction != finalAction);
+        }
+        return meta;
+    }
+
+    /**
      * Arrodoneix a dues xifres decimals.
      */
     private static double round2(double n) {
         return Math.round(n * 100.0) / 100.0;
+    }
+
+    private static String getWeaponId(Weapon weapon) {
+        if (weapon == null) return "UNARMED";
+        return weapon.getId();
+    }
+
+    private static String getWeaponName(Weapon weapon) {
+        if (weapon == null) return "Desarmat";
+        return weapon.getName();
     }
 }

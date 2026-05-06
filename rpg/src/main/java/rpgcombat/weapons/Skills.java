@@ -146,8 +146,13 @@ public final class Skills {
         failChance = Math.clamp(failChance, 0.22, 0.30);
 
         if (rng.nextDouble() < failChance) {
-            return AttackResult.skillFail(
-                    "llença la disrupció arcana falla i la màgia es dissipa en el no-res. (molt útil ._.)");
+            return new AttackResult(0,
+                    "llença la disrupció arcana falla i la màgia es dissipa en el no-res. (molt útil ._.)",
+                    Target.ENEMY, AttackResult.FAIL_KIND_SKILL, Map.of(
+                            "arcaneDisruptionMiss", true,
+                            "arcaneDisruptionFailChance", failChance,
+                            "weaponId", weapon.getId(),
+                            "weaponName", weapon.getName()));
         }
 
         double damage = weapon.basicAttack(stats, rng);
@@ -312,11 +317,17 @@ public final class Skills {
         }
 
         finalDamage = round2(finalDamage);
+        boolean minMultiplier = Math.abs(multiplier - 0.55) < 0.0001;
+        boolean maxMultiplier = Math.abs(multiplier - 1.25) < 0.0001;
         return new AttackResult(finalDamage, msg, Map.of(
                 "grimoireCodeSolved", correct,
                 "grimoireCorrect", correct,
                 "grimoireSeconds", round2(seconds),
                 "grimoireMultiplier", multiplier,
+                "grimoireMinMultiplier", minMultiplier,
+                "grimoireMaxMultiplier", maxMultiplier,
+                "grimoireMinimumMultiplier", 0.55,
+                "grimoireMaximumMultiplier", 1.25,
                 "grimoireCritical", crit));
     }
 

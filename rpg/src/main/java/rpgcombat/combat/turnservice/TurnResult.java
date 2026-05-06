@@ -30,7 +30,7 @@ public record TurnResult(
         Map<String, Object> meta) {
 
     public TurnResult {
-        meta = meta == null ? Map.of() : Map.copyOf(meta);
+        meta = cleanMeta(meta);
     }
 
     public TurnResult(
@@ -102,19 +102,42 @@ public record TurnResult(
     /** Retorna una metadada booleana. */
     public boolean booleanMeta(String key) {
         Object value = meta(key);
-        if (value instanceof Boolean b) return b;
-        if (value instanceof Number n) return n.doubleValue() != 0.0;
+        if (value instanceof Boolean b)
+            return b;
+        if (value instanceof Number n)
+            return n.doubleValue() != 0.0;
         return value != null && Boolean.parseBoolean(String.valueOf(value));
     }
 
     /** Retorna una metadada numèrica. */
     public double numericMeta(String key) {
         Object value = meta(key);
-        if (value instanceof Number n) return n.doubleValue();
-        if (value instanceof Boolean b) return Boolean.TRUE.equals(b) ? 1.0 : 0.0;
+        if (value instanceof Number n)
+            return n.doubleValue();
+        if (value instanceof Boolean b)
+            return Boolean.TRUE.equals(b) ? 1.0 : 0.0;
         if (value != null) {
-            try { return Double.parseDouble(String.valueOf(value)); } catch (NumberFormatException ignored) {}
+            try {
+                return Double.parseDouble(String.valueOf(value));
+            } catch (NumberFormatException ignored) {
+            }
         }
         return 0.0;
+    }
+
+    private static Map<String, Object> cleanMeta(Map<String, Object> source) {
+        if (source == null || source.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, Object> clean = new java.util.HashMap<>();
+
+        for (Map.Entry<String, Object> entry : source.entrySet()) {
+            if (entry.getKey() != null && entry.getValue() != null) {
+                clean.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return Map.copyOf(clean);
     }
 }

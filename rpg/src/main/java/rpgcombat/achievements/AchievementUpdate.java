@@ -4,6 +4,8 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.List;
+import java.util.LinkedHashSet;
 
 import rpgcombat.combat.models.Action;
 import rpgcombat.combat.models.Winner;
@@ -11,6 +13,7 @@ import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.weapons.Weapon;
+import rpgcombat.models.effects.triggers.Chaos;
 import rpgcombat.achievements.config.AchievementObjective;
 
 /** Informació global d'un esdeveniment que pot fer avançar assoliments. */
@@ -60,6 +63,9 @@ public record AchievementUpdate(
             boolean finalJudgementWin = killingBlow && "EXECUTIONERS_EDGE".equals(result.weaponId());
             boolean grimoireSolved = result.booleanMeta("grimoireCodeSolved") || result.booleanMeta("grimoireCorrect");
             int ballistaProjectiles = (int) Math.round(result.numericMeta("ballistaProjectiles"));
+            boolean grimoireMinMultiplier = result.booleanMeta("grimoireMinMultiplier") || result.booleanMeta("grimoireMultiplierMin");
+            boolean grimoireMaxMultiplier = result.booleanMeta("grimoireMaxMultiplier") || result.booleanMeta("grimoireMultiplierMax");
+            boolean arcaneDisruptionMiss = missed && "ARCANE_DISRUPTION_STAFF".equals(result.weaponId());
             boolean successfulDodge = ownerAction == Action.DODGE
                     && opponentAction == Action.ATTACK
                     && !dealt
@@ -78,6 +84,9 @@ public record AchievementUpdate(
             fields.put("selfHit", result.selfHit());
             fields.put("chargedHit", result.chargedHit());
             fields.put("grimoireMultiplier", result.grimoireMultiplier());
+            fields.put("grimoireMinMultiplier", grimoireMinMultiplier);
+            fields.put("grimoireMaxMultiplier", grimoireMaxMultiplier);
+            fields.put("arcaneDisruptionMiss", arcaneDisruptionMiss);
             fields.put("lifeStolen", result.lifeStolen());
             fields.put("weaponId", value(result.weaponId(), stringField(fields, "weaponId")));
             fields.put("weaponName", value(result.weaponName(), stringField(fields, "weaponName")));
@@ -95,6 +104,7 @@ public record AchievementUpdate(
             fields.put("grimoireCorrect", grimoireSolved);
             fields.put("ballistaProjectiles", ballistaProjectiles);
             fields.put("projectiles", ballistaProjectiles);
+            addPerkActivationFields(fields);
 
             if (successfulAttack) events.add(AchievementEvent.ACTION_SUCCESSFUL_ATTACK);
             if (successfulDodge) events.add(AchievementEvent.ACTION_SUCCESSFUL_DODGE);
@@ -109,6 +119,7 @@ public record AchievementUpdate(
                 if ("SKILL".equals(result.failKind())) events.add(AchievementEvent.ATTACK_FAILED_BY_SKILL);
                 if ("EFFECT".equals(result.failKind())) events.add(AchievementEvent.ATTACK_FAILED_BY_EFFECT);
             }
+            if (arcaneDisruptionMiss) events.add(AchievementEvent.ARCANE_DISRUPTION_MISS);
             if (result.critical()) events.add(AchievementEvent.CRIT);
             if (result.chargedHit()) events.add(AchievementEvent.CHARGED_HIT);
             if (opponentDefeated) events.add(AchievementEvent.ENEMY_DEFEATED);
@@ -127,13 +138,25 @@ public record AchievementUpdate(
             if (result.lifeStolen() > 0) events.add(AchievementEvent.LIFE_STEAL);
             if (result.grimoireMultiplier() > 0) {
                 events.add(AchievementEvent.GRIMOIRE_USED);
+                events.add(AchievementEvent.GRIMOIRE_MULTIPLIER_ROLLED);
                 if (result.grimoireMultiplier() >= 1.0) events.add(AchievementEvent.GRIMOIRE_MULTIPLIER_AT_LEAST_ONE);
+                if (grimoireMinMultiplier) events.add(AchievementEvent.GRIMOIRE_MIN_MULTIPLIER);
+                if (grimoireMaxMultiplier) events.add(AchievementEvent.GRIMOIRE_MAX_MULTIPLIER);
             }
             if (grimoireSolved) {
                 events.add(AchievementEvent.GRIMOIRE_CODE_SOLVED);
                 if (result.critical()) events.add(AchievementEvent.GRIMOIRE_CODE_SOLVED_CRIT);
             }
             if (ballistaProjectiles > 0) events.add(AchievementEvent.BALLISTA_PROJECTILES);
+            if (hasTextField(fields, "activatedPerkIds")) events.add(AchievementEvent.PERK_ACTIVATED);
+            if (hasTextField(fields, "divineAwakeningPerkIds")) events.add(AchievementEvent.DIVINE_PERK_AWAKENING_PROGRESS);
+            if (booleanValue(fields.get("divinePerkAwakened"))) {
+                events.add(AchievementEvent.DIVINE_PERK_AWAKENED);
+                events.add(AchievementEvent.DIVINE_PERK_MISSION_COMPLETED);
+            }
+            if (booleanValue(fields.get("divinePerkFullPower"))) events.add(AchievementEvent.DIVINE_PERK_FULL_POWER);
+            if (hasTextField(fields, "triggeredSynergyIds")) events.add(AchievementEvent.SYNERGY_TRIGGERED);
+            addChaosEvents(events, fields);
             if (result.weaponId() != null && !result.weaponId().isBlank()) events.add(AchievementEvent.WEAPON_USED);
         }
 
@@ -145,11 +168,12 @@ public record AchievementUpdate(
             if (owner.getStatistics().getStamina() / Math.max(1.0, owner.getStatistics().getMaxStamina()) <= 0.40) {
                 events.add(AchievementEvent.LOW_STAMINA);
             }
+            if (owner.hasEffect(Chaos.INTERNAL_EFFECT_KEY)) events.add(AchievementEvent.CHAOS_ACTIVE_TURN);
             if (owner.isAlive()) events.add(AchievementEvent.SURVIVE_TURN);
         }
 
         return new AchievementUpdate(owner, opponent, ownerAction, opponentAction, result, Winner.NONE, roundNumber,
-                Set.copyOf(events), Map.copyOf(fields));
+                Set.copyOf(events), safeFields(fields));
     }
 
     /** Crea una actualització global de final de combat. */
@@ -169,19 +193,172 @@ public record AchievementUpdate(
         addLoserFields(fields, loserCharacter);
 
         events.add(AchievementEvent.MATCH_FINISHED);
+        boolean chaosMatch = booleanValue(fields.get("chaosMode"));
+        if (chaosMatch) events.add(AchievementEvent.CHAOS_MATCH_STARTED);
         if (winner == Winner.TIE) {
             events.add(AchievementEvent.MATCH_TIED);
         } else if (winner == Winner.PLAYER1 || winner == Winner.PLAYER2) {
             events.add(AchievementEvent.MATCH_WON);
             events.add(AchievementEvent.MATCH_LOST);
+            if (chaosMatch) events.add(AchievementEvent.CHAOS_MATCH_WON);
         }
-        return new AchievementUpdate(owner, opponent, null, null, null, winner, roundNumber, Set.copyOf(events), Map.copyOf(fields));
+        return new AchievementUpdate(owner, opponent, null, null, null, winner, roundNumber, Set.copyOf(events), safeFields(fields));
     }
 
     /** Crea una actualització simple d'un sol esdeveniment. */
     public static AchievementUpdate simple(Character owner, AchievementEvent event) {
         Map<String, Object> fields = baseFields(owner, null, null, null, 0);
-        return new AchievementUpdate(owner, null, null, null, null, Winner.NONE, 0, Set.of(event), Map.copyOf(fields));
+        return new AchievementUpdate(owner, null, null, null, null, Winner.NONE, 0, Set.of(event), safeFields(fields));
+    }
+
+    /** Crea una actualització de missió de perk completada. */
+    public static AchievementUpdate perkMissionCompleted(Character owner, String missionId, String perkId,
+            int completedMissionCount, int activeMissionCount, int roundNumber) {
+        Map<String, Object> fields = baseFields(owner, null, null, null, roundNumber);
+        fields.put("missionId", missionId);
+        fields.put("perkMissionId", missionId);
+        fields.put("perkId", perkId);
+        fields.put("completedPerkMissionCount", completedMissionCount);
+        fields.put("activePerkMissionCount", activeMissionCount);
+        return new AchievementUpdate(owner, null, null, null, null, Winner.NONE, roundNumber,
+                Set.of(AchievementEvent.PERK_MISSION_COMPLETED), safeFields(fields));
+    }
+
+    /** Crea una actualització de perk guanyada. */
+    public static AchievementUpdate perkGained(Character owner, String perkId, String perkName, String family,
+            List<String> tags, int perkCount, int maxPerks, int roundNumber) {
+        Map<String, Object> fields = baseFields(owner, null, null, null, roundNumber);
+        fields.put("perkId", perkId);
+        fields.put("perkName", perkName);
+        fields.put("perkFamily", family);
+        fields.put("perkTags", joinTokens(tags));
+        fields.put("perkCount", perkCount);
+        fields.put("maxPerks", maxPerks);
+        fields.put("perkLimitReached", perkCount >= maxPerks);
+        EnumSet<AchievementEvent> events = EnumSet.of(AchievementEvent.PERK_GAINED);
+        if (perkCount >= maxPerks) events.add(AchievementEvent.PERK_LIMIT_REACHED);
+        return new AchievementUpdate(owner, null, null, null, null, Winner.NONE, roundNumber,
+                Set.copyOf(events), safeFields(fields));
+    }
+
+    /** Crea una actualització de perk divina assignada al combat. */
+    public static AchievementUpdate divinePerkAssigned(Character owner, String divinePerkId, String divinePerkName,
+            String god, int roundNumber) {
+        Map<String, Object> fields = baseFields(owner, null, null, null, roundNumber);
+        fields.put("divinePerkId", divinePerkId);
+        fields.put("divinePerkName", divinePerkName);
+        fields.put("god", god);
+        fields.put("divinePerkDormant", true);
+        fields.put("divinePerkPartialPower", true);
+        fields.put("divinePowerRatio", 0.40);
+        return new AchievementUpdate(owner, null, null, null, null, Winner.NONE, roundNumber,
+                Set.of(AchievementEvent.DIVINE_PERK_ASSIGNED, AchievementEvent.DIVINE_PERK_DORMANT_ASSIGNED), safeFields(fields));
+    }
+
+    /** Crea una actualització de sinergia activada. */
+    public static AchievementUpdate synergyActivated(Character owner, String synergyId, String synergyName,
+            int synergyCount, int roundNumber) {
+        Map<String, Object> fields = baseFields(owner, null, null, null, roundNumber);
+        fields.put("synergyId", synergyId);
+        fields.put("synergyName", synergyName);
+        fields.put("synergyCount", synergyCount);
+        EnumSet<AchievementEvent> events = EnumSet.of(AchievementEvent.SYNERGY_ACTIVATED);
+        if (synergyCount > 0) events.add(AchievementEvent.SYNERGY_COUNT_REACHED);
+        return new AchievementUpdate(owner, null, null, null, null, Winner.NONE, roundNumber,
+                Set.copyOf(events), safeFields(fields));
+    }
+
+    /** Crea una actualització quan s'afegeix el trigger de Caos. */
+    public static AchievementUpdate chaosTriggerAdded(Character owner, int roundNumber) {
+        Map<String, Object> fields = baseFields(owner, null, null, null, roundNumber);
+        fields.put("chaosTriggerAdded", true);
+        fields.put("triggerId", Chaos.INTERNAL_EFFECT_KEY);
+        return new AchievementUpdate(owner, null, null, null, null, Winner.NONE, roundNumber,
+                Set.of(AchievementEvent.CHAOS_TRIGGER_ADDED), safeFields(fields));
+    }
+
+    /** Crea una actualització quan el combat comença amb Caos actiu. */
+    public static AchievementUpdate chaosMatchStarted(Character player1, Character player2, int roundNumber) {
+        Map<String, Object> fields = baseFields(player1, player2, null, null, roundNumber);
+        boolean player1Chaos = player1 != null && player1.hasEffect(Chaos.INTERNAL_EFFECT_KEY);
+        boolean player2Chaos = player2 != null && player2.hasEffect(Chaos.INTERNAL_EFFECT_KEY);
+        fields.put("player1HasChaos", player1Chaos);
+        fields.put("player2HasChaos", player2Chaos);
+        fields.put("bothPlayersHaveChaos", player1Chaos && player2Chaos);
+        fields.put("chaosMode", player1Chaos && player2Chaos);
+        return new AchievementUpdate(player1, player2, null, null, null, Winner.NONE, roundNumber,
+                Set.of(AchievementEvent.CHAOS_MATCH_STARTED), safeFields(fields));
+    }
+
+    /** Crea una actualització del Pacte de Sang. */
+    public static AchievementUpdate bloodPactUsed(Character owner, double manaRestored, double hpCost,
+            double hpCostPercent, double hpBeforePercent, double hpAfterPercent,
+            double manaBeforePercent, double manaAfterPercent, int roundNumber) {
+        Map<String, Object> fields = baseFields(owner, null, null, null, roundNumber);
+        boolean effective = manaRestored > 0.0 && hpCost > 0.0;
+        fields.put("specialAction", "bloodPact");
+        fields.put("bloodPactAttempted", true);
+        fields.put("bloodPactUsed", effective);
+        fields.put("manaRestored", manaRestored);
+        fields.put("bloodPactManaRestored", manaRestored);
+        fields.put("hpCost", hpCost);
+        fields.put("bloodPactHpCost", hpCost);
+        fields.put("bloodPactHpCostPercent", hpCostPercent * 100.0);
+        fields.put("bloodPactHpCostRatio", hpCostPercent);
+        fields.put("bloodPactHpBeforePercent", hpBeforePercent);
+        fields.put("bloodPactHpAfterPercent", hpAfterPercent);
+        fields.put("bloodPactManaBeforePercent", manaBeforePercent);
+        fields.put("bloodPactManaAfterPercent", manaAfterPercent);
+        fields.put("bloodPactLowHealth", hpBeforePercent <= 25.0);
+        fields.put("bloodPactCriticalHealth", hpBeforePercent <= 10.0);
+        fields.put("bloodPactFullRestore", manaAfterPercent >= 100.0 && manaBeforePercent < 100.0);
+        EnumSet<AchievementEvent> events = EnumSet.of(AchievementEvent.SPECIAL_ACTION_USED,
+                AchievementEvent.BLOOD_PACT_ATTEMPTED);
+        if (effective) {
+            events.add(AchievementEvent.BLOOD_PACT_USED);
+            events.add(AchievementEvent.BLOOD_PACT_LIFE_PAID);
+            events.add(AchievementEvent.BLOOD_PACT_MANA_RESTORED);
+            if (hpBeforePercent <= 25.0) events.add(AchievementEvent.BLOOD_PACT_LOW_HEALTH_USED);
+            if (hpBeforePercent <= 10.0) events.add(AchievementEvent.BLOOD_PACT_CRITICAL_HEALTH_USED);
+            if (manaAfterPercent >= 100.0 && manaBeforePercent < 100.0) {
+                events.add(AchievementEvent.BLOOD_PACT_FULL_RESTORE);
+            }
+        }
+        return new AchievementUpdate(owner, null, null, null, null, Winner.NONE, roundNumber,
+                Set.copyOf(events), safeFields(fields));
+    }
+
+    /** Crea una actualització de la Crida Espiritual. */
+    public static AchievementUpdate spiritualCallingUsed(Character owner, int face, double healPercent,
+            double healAmount, int roundNumber) {
+        Map<String, Object> fields = baseFields(owner, null, null, null, roundNumber);
+        fields.put("specialAction", "spiritualCalling");
+        fields.put("spiritualCallingUsed", true);
+        fields.put("spiritualCallingFace", face);
+        fields.put("spiritualRoll", face);
+        fields.put("spiritualCallingRoll", face);
+        fields.put("spiritualCallingNatural1", face == 1);
+        fields.put("spiritualCallingNatural20", face == 20);
+        fields.put("spiritualCallingHealPercent", healPercent * 100.0);
+        fields.put("spiritualCallingHealRatio", healPercent);
+        fields.put("healAmount", healAmount);
+        fields.put("spiritualCallingHealAmount", healAmount);
+        EnumSet<AchievementEvent> events = EnumSet.of(AchievementEvent.SPECIAL_ACTION_USED,
+                AchievementEvent.SPIRITUAL_CALLING_USED, AchievementEvent.SPIRITUAL_ROLL);
+        if (face == 1) events.add(AchievementEvent.SPIRITUAL_ROLL_NATURAL_1);
+        if (face == 20) events.add(AchievementEvent.SPIRITUAL_ROLL_NATURAL_20);
+        if (healAmount > 0) events.add(AchievementEvent.SPIRITUAL_CALLING_HEALED);
+        return new AchievementUpdate(owner, null, null, null, null, Winner.NONE, roundNumber,
+                Set.copyOf(events), safeFields(fields));
+    }
+
+    private static Map<String, Object> safeFields(Map<String, Object> fields) {
+        if (fields == null || fields.isEmpty()) return Map.of();
+        Map<String, Object> clean = new HashMap<>();
+        fields.forEach((key, value) -> {
+            if (key != null && value != null) clean.put(key, value);
+        });
+        return Map.copyOf(clean);
     }
 
     private static Character winnerCharacter(Character player1, Character player2, Winner winner) {
@@ -240,6 +417,9 @@ public record AchievementUpdate(
         if (event == AchievementEvent.DAMAGE_RECEIVED && result != null) return Math.max(0.0, result.damageToResolve());
         if (event == AchievementEvent.LIFE_STEAL && result != null) return Math.max(0.0, result.lifeStolen());
         if (event == AchievementEvent.BALLISTA_PROJECTILES && result != null) return Math.max(0.0, result.numericMeta("ballistaProjectiles"));
+        if (event == AchievementEvent.BLOOD_PACT_LIFE_PAID) return Math.max(0.0, numericField("bloodPactHpCost"));
+        if (event == AchievementEvent.BLOOD_PACT_MANA_RESTORED) return Math.max(0.0, numericField("bloodPactManaRestored"));
+        if (event == AchievementEvent.SPIRITUAL_CALLING_HEALED) return Math.max(0.0, numericField("spiritualCallingHealAmount"));
         return has(event) ? 1.0 : 0.0;
     }
 
@@ -284,6 +464,12 @@ public record AchievementUpdate(
         fields.put("opponentAction", opponentAction == null ? null : opponentAction.name());
         if (owner != null) addCharacterFields(fields, "", owner);
         if (opponent != null) addCharacterFields(fields, "opponent", opponent);
+        boolean ownerChaos = owner != null && owner.hasEffect(Chaos.INTERNAL_EFFECT_KEY);
+        boolean opponentChaos = opponent != null && opponent.hasEffect(Chaos.INTERNAL_EFFECT_KEY);
+        fields.put("actorHasChaos", ownerChaos);
+        fields.put("opponentHasChaos", opponentChaos);
+        fields.put("bothPlayersHaveChaos", ownerChaos && opponentChaos);
+        fields.put("chaosMode", ownerChaos && opponentChaos);
         return fields;
     }
 
@@ -301,6 +487,10 @@ public record AchievementUpdate(
         fields.put(p + sep + "maxMana", stats.getMaxMana());
         fields.put(p + sep + "momentum", character.getMomentumStacks());
         fields.put(p + sep + "alive", character.isAlive());
+        fields.put(p + sep + "hasChaos", character.hasEffect(Chaos.INTERNAL_EFFECT_KEY));
+        if (p.isEmpty()) {
+            fields.put("chaosActive", character.hasEffect(Chaos.INTERNAL_EFFECT_KEY));
+        }
         Weapon weapon = character.getWeapon();
         if (weapon != null) {
             fields.put(p + sep + "weaponId", weapon.getId());
@@ -310,6 +500,65 @@ public record AchievementUpdate(
                 fields.put("equippedWeapon", weapon.getId());
             }
         }
+    }
+
+    private static void addPerkActivationFields(Map<String, Object> fields) {
+        String perkIds = stringField(fields, "activatedPerkIds");
+        if (perkIds != null && !perkIds.isBlank()) {
+            fields.put("perkActivated", true);
+            fields.put("activatedPerkId", firstToken(perkIds));
+        }
+        String synergyIds = stringField(fields, "triggeredSynergyIds");
+        if (synergyIds != null && !synergyIds.isBlank()) {
+            fields.put("synergyTriggered", true);
+            fields.put("triggeredSynergyId", firstToken(synergyIds));
+        }
+        String divineAwakeningIds = stringField(fields, "divineAwakeningPerkIds");
+        if (divineAwakeningIds != null && !divineAwakeningIds.isBlank()) {
+            fields.put("divinePerkAwakeningProgress", true);
+            fields.put("divinePerkId", firstToken(divineAwakeningIds));
+        }
+    }
+
+    private static void addChaosEvents(EnumSet<AchievementEvent> events, Map<String, Object> fields) {
+        if (booleanValue(fields.get("chaosTriggered"))) events.add(AchievementEvent.CHAOS_OUTCOME_ROLLED);
+        if (booleanValue(fields.get("chaosActionChanged"))) events.add(AchievementEvent.CHAOS_ACTION_CHANGED);
+        if (booleanValue(fields.get(Chaos.META_SELF_HIT))) events.add(AchievementEvent.CHAOS_SELF_HIT);
+        if (booleanValue(fields.get("chaosForceCrit"))) events.add(AchievementEvent.CHAOS_FORCE_CRIT);
+        if (booleanValue(fields.get("chaosForbidCrit"))) events.add(AchievementEvent.CHAOS_FORBID_CRIT);
+        if ("DAMAGE_UP".equals(stringField(fields, "chaosOutcome"))) events.add(AchievementEvent.CHAOS_DAMAGE_UP);
+        if ("DAMAGE_DOWN".equals(stringField(fields, "chaosOutcome"))) events.add(AchievementEvent.CHAOS_DAMAGE_DOWN);
+        if ("FAIL_ACTION".equals(stringField(fields, "chaosOutcome"))) events.add(AchievementEvent.CHAOS_FAIL_ACTION);
+        if ("MANA_SPIKE".equals(stringField(fields, "chaosOutcome"))) events.add(AchievementEvent.CHAOS_MANA_SPIKE);
+        if ("BLOOD_RUSH".equals(stringField(fields, "chaosOutcome"))) events.add(AchievementEvent.CHAOS_BLOOD_RUSH);
+        if ("PERFECT_CHAOS".equals(stringField(fields, "chaosOutcome"))
+                || booleanValue(fields.get("chaosPerfect"))) events.add(AchievementEvent.CHAOS_PERFECT);
+    }
+
+    private static boolean hasTextField(Map<String, Object> fields, String key) {
+        String value = stringField(fields, key);
+        return value != null && !value.isBlank();
+    }
+
+    private static boolean booleanValue(Object value) {
+        if (value instanceof Boolean b) return b;
+        if (value instanceof Number n) return n.doubleValue() != 0.0;
+        return value != null && Boolean.parseBoolean(String.valueOf(value));
+    }
+
+    private static String joinTokens(List<String> values) {
+        if (values == null || values.isEmpty()) return "";
+        LinkedHashSet<String> tokens = new LinkedHashSet<>();
+        for (String value : values) {
+            if (value != null && !value.isBlank()) tokens.add(value.trim());
+        }
+        return String.join("|", tokens);
+    }
+
+    private static String firstToken(String text) {
+        if (text == null || text.isBlank()) return null;
+        String[] split = text.split("[|,]");
+        return split.length == 0 ? text.trim() : split[0].trim();
     }
 
     private static String stringField(Map<String, Object> fields, String key) {

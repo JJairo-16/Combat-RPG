@@ -1,6 +1,9 @@
 package rpgcombat.game.modifier;
 
+import java.util.function.IntSupplier;
+
 import menu.model.MenuResult;
+import rpgcombat.achievements.AchievementSystem;
 import rpgcombat.balance.CombatBalanceRegistry;
 import rpgcombat.balance.config.character.BloodPactConfig;
 import rpgcombat.combat.models.Action;
@@ -35,10 +38,22 @@ public final class Actions {
     /** Nombre de torns de cooldown per a Spiritual Calling */
     private static final int SPIRITUAL_CALLING_COOLDOWN = 3;
 
+    /** Sistema opcional per registrar assoliments d'accions especials. */
+    private static AchievementSystem achievementSystem;
+
+    /** Proveïdor del número de ronda actual. */
+    private static IntSupplier roundSupplier = () -> 0;
+
     /**
      * Constructor privat per evitar la instanciació d'aquesta classe utilitària.
      */
     private Actions() {
+    }
+
+    /** Configura el seguiment opcional d'assoliments per a accions especials. */
+    public static void configureAchievementTracking(AchievementSystem system, IntSupplier supplier) {
+        achievementSystem = system;
+        roundSupplier = supplier == null ? () -> 0 : supplier;
     }
 
     /**
@@ -87,6 +102,7 @@ public final class Actions {
 
         player.getStatistics().heal(healAmount);
         player.setSpiritualCallingCooldown(SPIRITUAL_CALLING_COOLDOWN);
+        registerSpiritualCalling(player, face, percentage, healAmount);
 
         System.out.println();
         CALL_SPIRITS.classifyShot(face).print();
@@ -130,7 +146,8 @@ public final class Actions {
         magicalTiredness.use();
 
         Messages.BLOOD_PACT.USE_BLOOD_PACT.print();
-        useBloodPact(player);
+        BloodPactResult result = useBloodPact(player);
+        registerBloodPact(player, result);
 
         System.out.println();
         Menu.pause();
@@ -145,14 +162,19 @@ public final class Actions {
      *
      * @param player el personatge afectat pel pacte
      */
-    private static void useBloodPact(Character player) {
+    private static BloodPactResult useBloodPact(Character player) {
         double maxMana = player.getStatistics().getMaxMana();
         double currentMana = player.getStatistics().getMana();
+        double maxHp = player.getStatistics().getMaxHealth();
+        double currentHp = player.getStatistics().getHealth();
+        double hpBeforePercent = percent(currentHp, maxHp);
+        double manaBeforePercent = percent(currentMana, maxMana);
         double missingMana = Math.max(0, maxMana - currentMana);
 
         if (missingMana <= 0) {
             Messages.BLOOD_PACT.MANA_ALREADY_FULL.print();
-            return;
+            return new BloodPactResult(0.0, 0.0, 0.0, hpBeforePercent, hpBeforePercent,
+                    manaBeforePercent, manaBeforePercent);
         }
 
         double hpCostPercent = bloodPactHpCostPercent(player);
@@ -160,11 +182,12 @@ public final class Actions {
         double scaling = 1.0 + (missingMana / maxMana) * 0.5;
         double hpCost = missingMana * hpCostPercent * scaling;
 
-        double currentHp = player.getStatistics().getHealth();
         hpCost = Math.clamp(hpCost, 0, currentHp - 1);
 
         player.getStatistics().restoreMana(missingMana);
         player.getStatistics().damage(hpCost);
+        double hpAfterPercent = percent(player.getStatistics().getHealth(), maxHp);
+        double manaAfterPercent = percent(player.getStatistics().getMana(), maxMana);
 
         System.out.println();
         System.out.println("  " + Ansi.GREEN + "+" + Ansi.RESET + " "
@@ -181,6 +204,32 @@ public final class Actions {
                 + " del mana restaurat.");
 
         printBloodPactBars(player);
+        return new BloodPactResult(missingMana, hpCost, hpCostPercent, hpBeforePercent, hpAfterPercent,
+                manaBeforePercent, manaAfterPercent);
+    }
+
+    /** Registra l'acció de Crida Espiritual al sistema d'assoliments, si existeix. */
+    private static void registerSpiritualCalling(Character player, int face, double percentage, double healAmount) {
+        if (achievementSystem == null) return;
+        achievementSystem.onSpiritualCallingUsed(player, face, percentage, healAmount, roundSupplier.getAsInt());
+    }
+
+    /** Registra l'acció de Pacte de Sang al sistema d'assoliments, si existeix. */
+    private static void registerBloodPact(Character player, BloodPactResult result) {
+        if (achievementSystem == null || result == null) return;
+        achievementSystem.onBloodPactUsed(player, result.manaRestored(), result.hpCost(),
+                result.hpCostPercent(), result.hpBeforePercent(), result.hpAfterPercent(),
+                result.manaBeforePercent(), result.manaAfterPercent(), roundSupplier.getAsInt());
+    }
+
+    /** Resultat intern del Pacte de Sang per alimentar assoliments. */
+    private record BloodPactResult(double manaRestored, double hpCost, double hpCostPercent,
+            double hpBeforePercent, double hpAfterPercent, double manaBeforePercent, double manaAfterPercent) {}
+
+    /** Calcula un percentatge segur per a metadades d'assoliments. */
+    private static double percent(double value, double max) {
+        if (max <= 0.0) return 0.0;
+        return Math.clamp((value / max) * 100.0, 0.0, 100.0);
     }
 
     /**

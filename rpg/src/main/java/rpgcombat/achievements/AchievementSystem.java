@@ -51,6 +51,55 @@ public final class AchievementSystem {
         apply(AchievementUpdate.simple(player, AchievementEvent.WEAPON_EQUIPPED));
     }
 
+    /** Registra que una missió de perk s'ha completat. */
+    public void onPerkMissionCompleted(Character player, String missionId, String perkId,
+            int completedMissionCount, int activeMissionCount, int roundNumber) {
+        apply(AchievementUpdate.perkMissionCompleted(player, missionId, perkId, completedMissionCount,
+                activeMissionCount, roundNumber));
+    }
+
+    /** Registra que el jugador ha obtingut una perk. */
+    public void onPerkGained(Character player, String perkId, String perkName, String family,
+            java.util.List<String> tags, int perkCount, int maxPerks, int roundNumber) {
+        apply(AchievementUpdate.perkGained(player, perkId, perkName, family, tags, perkCount, maxPerks, roundNumber));
+    }
+
+    /** Registra la perk divina inicial del jugador. */
+    public void onDivinePerkAssigned(Character player, String divinePerkId, String divinePerkName,
+            String god, int roundNumber) {
+        apply(AchievementUpdate.divinePerkAssigned(player, divinePerkId, divinePerkName, god, roundNumber));
+    }
+
+    /** Registra que una sinergia s'ha activat per primera vegada en el combat. */
+    public void onSynergyActivated(Character player, String synergyId, String synergyName,
+            int synergyCount, int roundNumber) {
+        apply(AchievementUpdate.synergyActivated(player, synergyId, synergyName, synergyCount, roundNumber));
+    }
+
+
+    /** Registra que s'ha afegit el trigger de Caos a un jugador. */
+    public void onChaosTriggerAdded(Character player, int roundNumber) {
+        apply(AchievementUpdate.chaosTriggerAdded(player, roundNumber));
+    }
+
+    /** Registra que el combat ha començat amb el mode caòtic actiu. */
+    public void onChaosMatchStarted(Character player1, Character player2, int roundNumber) {
+        apply(AchievementUpdate.chaosMatchStarted(player1, player2, roundNumber));
+    }
+
+    /** Registra l'ús del Pacte de Sang. */
+    public void onBloodPactUsed(Character player, double manaRestored, double hpCost, double hpCostPercent,
+            double hpBeforePercent, double hpAfterPercent, double manaBeforePercent, double manaAfterPercent,
+            int roundNumber) {
+        apply(AchievementUpdate.bloodPactUsed(player, manaRestored, hpCost, hpCostPercent,
+                hpBeforePercent, hpAfterPercent, manaBeforePercent, manaAfterPercent, roundNumber));
+    }
+
+    /** Registra l'ús de la Crida Espiritual. */
+    public void onSpiritualCallingUsed(Character player, int face, double healPercent, double healAmount, int roundNumber) {
+        apply(AchievementUpdate.spiritualCallingUsed(player, face, healPercent, healAmount, roundNumber));
+    }
+
     /** Converteix el progrés intern a models visuals. */
     public List<Achievement> toViewModels() {
         List<Achievement> result = new ArrayList<>();

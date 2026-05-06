@@ -11,10 +11,12 @@ import rpgcombat.config.ui.HomeScreenConfig;
 import rpgcombat.game.cinematics.CinematicBuilder;
 import rpgcombat.game.menu.EndGameMenu;
 import rpgcombat.game.menu.MenuCenter;
+import rpgcombat.game.modifier.Actions;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
+import rpgcombat.models.effects.triggers.Chaos;
 import rpgcombat.perks.CombatPerkSystem;
 
 import rpgcombat.utils.cache.TextWrapCache;
@@ -58,7 +60,7 @@ public class GameLoop {
             AchievementSystem achievementSystem) {
         this.player1 = player1;
         this.player2 = player2;
-        this.perkSystem = new CombatPerkSystem(player1, player2);
+        this.perkSystem = new CombatPerkSystem(player1, player2, achievementSystem);
         this.combatSystem = new CombatSystem(player1, player2,
                 new rpgcombat.combat.turnservice.DefaultTurnPriorityPolicy(), perkSystem, achievementSystem);
 
@@ -68,6 +70,7 @@ public class GameLoop {
         this.cinematicsOptions = cinematicsOptions;
         this.homeScreenConfig = homeScreenConfig;
         this.achievementSystem = achievementSystem;
+        Actions.configureAchievementTracking(achievementSystem, combatSystem::roundNumber);
     }
 
     /**
@@ -76,6 +79,7 @@ public class GameLoop {
      */
     public EndGameAction init() {
         CinematicBuilder.playInit(cinematicsOptions, player1, player2);
+        registerChaosStartIfNeeded();
 
         Winner winner;
         do {
@@ -94,6 +98,16 @@ public class GameLoop {
 
         achievementSystem.onMatchFinished(winner, player1, player2, combatSystem.roundNumber());
         return finish(winner);
+    }
+
+    /** Registra els assoliments inicials relacionats amb el mode caòtic. */
+    private void registerChaosStartIfNeeded() {
+        if (achievementSystem == null) return;
+        boolean p1Chaos = player1.hasEffect(Chaos.INTERNAL_EFFECT_KEY);
+        boolean p2Chaos = player2.hasEffect(Chaos.INTERNAL_EFFECT_KEY);
+        if (p1Chaos) achievementSystem.onChaosTriggerAdded(player1, combatSystem.roundNumber());
+        if (p2Chaos) achievementSystem.onChaosTriggerAdded(player2, combatSystem.roundNumber());
+        if (p1Chaos || p2Chaos) achievementSystem.onChaosMatchStarted(player1, player2, combatSystem.roundNumber());
     }
 
     /** Mostra el resultat final del combat i demana què fer després. */
