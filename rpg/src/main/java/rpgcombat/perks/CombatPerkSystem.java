@@ -69,9 +69,13 @@ public final class CombatPerkSystem {
         for (MissionProgress mission : state.missions()) {
             if (!mission.rewardClaimed()) {
                 boolean wasCompleted = mission.completed();
+                double progressBefore = mission.progress();
                 mission.update(update);
+                double progressAfter = mission.progress();
                 if (!wasCompleted && mission.completed()) {
                     registerPerkMissionCompleted(actor, state, mission, roundNumber);
+                } else if (!mission.completed() && progressAfter > progressBefore) {
+                    registerPerkMissionProgress(actor, state, mission, progressBefore, progressAfter, roundNumber);
                 }
             }
         }
@@ -239,6 +243,17 @@ public final class CombatPerkSystem {
         }
     }
 
+    /** Objectiu real d'una missió per alimentar metadades d'assoliments. */
+    private double missionTarget(MissionDefinition definition) {
+        if (definition == null) return 1.0;
+        if (definition.type() == rpgcombat.perks.mission.ObjectiveType.ACTION_SEQUENCE
+                && definition.sequence() != null
+                && !definition.sequence().isEmpty()) {
+            return definition.sequence().size();
+        }
+        return Math.max(1.0, definition.target());
+    }
+
     /** Registra la perk divina inicial, si existeix. */
     private void registerInitialDivinePerk(Character player) {
         if (achievementSystem == null || player == null) return;
@@ -246,6 +261,18 @@ public final class CombatPerkSystem {
         DivinePerkDefinition divine = state == null ? null : state.divinePerk();
         if (divine == null) return;
         achievementSystem.onDivinePerkAssigned(player, divine.id(), divine.name(), divine.god(), currentRoundNumber);
+    }
+
+    /** Registra progrés d'una missió de perk que encara no s'ha completat. */
+    private void registerPerkMissionProgress(Character player, PlayerPerkState state, MissionProgress mission,
+            double progressBefore, double progressAfter, int roundNumber) {
+        if (achievementSystem == null || mission == null || mission.definition() == null) return;
+        PerkDefinition chosen = state == null ? null : state.chosenPerk();
+        achievementSystem.onPerkMissionProgress(player, mission.definition().id(),
+                chosen == null ? null : chosen.id(),
+                progressBefore, progressAfter, missionTarget(mission.definition()),
+                state == null ? 0 : state.missions().size(),
+                roundNumber);
     }
 
     /** Registra una missió de perk completada. */

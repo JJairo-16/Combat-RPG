@@ -55,6 +55,8 @@ public class GameLoop {
     // Cache d'armes (assumim que no canvia durant la partida)
     private final List<WeaponDefinition> entries = Arsenal.values();
 
+    private int completedAchievementsLastTurn;
+
     public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers,
             Map<String, String> information, CinematicsOptions cinematicsOptions, HomeScreenConfig homeScreenConfig,
             AchievementSystem achievementSystem) {
@@ -80,13 +82,17 @@ public class GameLoop {
     public EndGameAction init() {
         CinematicBuilder.playInit(cinematicsOptions, player1, player2);
         registerChaosStartIfNeeded();
+        completedAchievementsLastTurn = achievementSystem.consumePendingCompletedCount();
 
         Winner winner;
         do {
+            menu.setCompletedAchievementsBadgeCount(completedAchievementsLastTurn);
+
             Action action1 = menu.playPlayer1();
             Action action2 = menu.playPlayer2();
 
             winner = combatSystem.play(action1, action2);
+            completedAchievementsLastTurn = achievementSystem.consumePendingCompletedCount();
 
             perkSystem.resolvePendingChoices(player1);
             perkSystem.resolvePendingChoices(player2);

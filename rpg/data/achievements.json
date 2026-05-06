@@ -14,9 +14,9 @@
     }
   },
   {
-    "id": "IRON_REMEMBERS",
-    "name": "El ferro recorda",
-    "description": "Utilitza una arma per primera vegada.",
+    "id": "IMMOBILE_COIN",
+    "name": "La moneda immòbil",
+    "description": "Empata un combat.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -24,21 +24,7 @@
     },
     "objective": {
       "type": "COUNT_EVENT",
-      "event": "WEAPON_USED"
-    }
-  },
-  {
-    "id": "FIRST_BLOOD",
-    "name": "Primera sang",
-    "description": "Infligeix el teu primer cop crític.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "COUNT_EVENT",
-      "event": "CRIT"
+      "event": "MATCH_TIED"
     }
   },
   {
@@ -98,24 +84,31 @@
     }
   },
   {
-    "id": "LAST_BELL",
-    "name": "L’últim campanar",
-    "description": "Completa un combat en mode caòtic.",
+    "id": "VOICE_IN_METAL",
+    "name": "La veu dins el metall",
+    "description": "Guanya amb la mateixa arma que et va veure començar.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": false
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "MATCH_WON"
+    }
+  },
+  {
+    "id": "FIRST_BLOOD",
+    "name": "Primera sang",
+    "description": "Infligeix el teu primer cop crític.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": true
     },
     "objective": {
-      "type": "CONDITIONAL_COUNT",
-      "event": "MATCH_FINISHED",
-      "conditions": [
-        {
-          "field": "chaosMode",
-          "operator": "==",
-          "value": true
-        }
-      ]
+      "type": "COUNT_EVENT",
+      "event": "CRIT"
     }
   },
   {
@@ -134,45 +127,18 @@
     }
   },
   {
-    "id": "RITUAL_CONTINUES",
-    "name": "El ritual continua",
-    "description": "Completa la teva primera missió de perk.",
-    "goal": 1,
+    "id": "COMBAT_HUNGER",
+    "name": "La fam del combat",
+    "description": "Infligeix 1.500 punts de dany total.",
+    "goal": 1500,
     "visibility": {
       "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": true
     },
     "objective": {
-      "type": "COUNT_EVENT",
-      "event": "PERK_MISSION_COMPLETED"
-    }
-  },
-  {
-    "id": "BLOOD_DANCE",
-    "name": "Dansa de sang",
-    "description": "Esquiva 3 cops consecutius.",
-    "goal": 3,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "CONSECUTIVE_EVENT",
-      "event": "ACTION_DODGE"
-    }
-  },
-  {
-    "id": "FLESH_AGAINST_STEEL",
-    "name": "Carn contra acer",
-    "description": "Defensa 5 cops consecutius.",
-    "goal": 5,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "CONSECUTIVE_EVENT",
-      "event": "ACTION_DEFEND"
+      "type": "SUM_VALUE",
+      "event": "DAMAGE_DEALT",
+      "valueField": "damage"
     }
   },
   {
@@ -197,21 +163,64 @@
     }
   },
   {
-    "id": "RHYTHM_OF_WAR",
-    "name": "El ritme de la guerra",
-    "description": "Mantén momentum alt durant 5 torns seguits.",
-    "goal": 5,
+    "id": "RAZOR_THREAD",
+    "name": "El fil de la navalla",
+    "description": "Guanya amb un 5% de vida o menys.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": false
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "MATCH_WON",
+      "conditions": [
+        {
+          "field": "winnerHpPercent",
+          "operator": "<=",
+          "value": 5
+        }
+      ]
+    }
+  },
+  {
+    "id": "BELLS_UNDERGROUND",
+    "name": "Les campanes sota terra",
+    "description": "Sobreviu mentre tens poca vida.",
+    "goal": 10,
+    "visibility": {
+      "showNameBeforeComplete": false,
+      "showDescriptionBeforeComplete": false
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "SURVIVE_TURN",
+      "conditions": [
+        {
+          "field": "hpPercent",
+          "operator": "<=",
+          "value": 10
+        }
+      ]
+    }
+  },
+  {
+    "id": "IRON_HEARTBEAT",
+    "name": "El batec del ferro",
+    "description": "Fes 10 crítics amb un 20% de vida o menys.",
+    "goal": 10,
     "visibility": {
       "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": true
     },
     "objective": {
-      "type": "STATE_MAINTAINED",
+      "type": "CONDITIONAL_COUNT",
+      "event": "CRIT",
       "conditions": [
         {
-          "field": "momentum",
-          "operator": ">=",
-          "value": 2
+          "field": "hpPercent",
+          "operator": "<=",
+          "value": 20
         }
       ]
     }
@@ -251,9 +260,9 @@
     }
   },
   {
-    "id": "WEIGHT_OF_SKY",
-    "name": "El pes del cel",
-    "description": "Fes un cop carregat de gran dany.",
+    "id": "BROKEN_BREATH",
+    "name": "Respiració trencada",
+    "description": "Sobreviu un torn després de quedar-te amb poca stamina.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -261,89 +270,10 @@
     },
     "objective": {
       "type": "CONDITIONAL_COUNT",
-      "event": "DAMAGE_DEALT",
+      "event": "SURVIVE_TURN",
       "conditions": [
         {
-          "field": "chargedHit",
-          "operator": "==",
-          "value": true
-        },
-        {
-          "field": "damage",
-          "operator": ">=",
-          "value": 120
-        }
-      ]
-    }
-  },
-  {
-    "id": "COLOSSUS_AWAKENS",
-    "name": "El colós desperta",
-    "description": "Guanya amb un cop carregat que decideix el combat.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "COUNT_EVENT",
-      "event": "CHARGED_MATCH_WINNING_BLOW"
-    }
-  },
-  {
-    "id": "PERFECT_CIRCLE",
-    "name": "El cercle perfecte",
-    "description": "Executa la seqüència ATAC → ESQUIVA → ATAC.",
-    "goal": 3,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "ACTION_SEQUENCE",
-      "sequence": [
-        "ATTACK",
-        "DODGE",
-        "ATTACK"
-      ]
-    }
-  },
-  {
-    "id": "SURVIVAL_INSTINCT",
-    "name": "Instint de supervivència",
-    "description": "Esquiva 3 cops quan no hi havia dany entrant.",
-    "goal": 3,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "CONDITIONAL_COUNT",
-      "event": "ACTION_DODGE",
-      "conditions": [
-        {
-          "field": "incomingDamage",
-          "operator": "==",
-          "value": 0
-        }
-      ]
-    }
-  },
-  {
-    "id": "IRON_HEARTBEAT",
-    "name": "El batec del ferro",
-    "description": "Fes 10 crítics amb un 20% de vida o menys.",
-    "goal": 10,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "CONDITIONAL_COUNT",
-      "event": "CRIT",
-      "conditions": [
-        {
-          "field": "hpPercent",
+          "field": "staminaPercent",
           "operator": "<=",
           "value": 20
         }
@@ -351,53 +281,58 @@
     }
   },
   {
-    "id": "PERFECT_SENTENCE",
-    "name": "La sentència perfecta",
-    "description": "Guanya amb Sentència Final.",
-    "goal": 3,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "COUNT_EVENT",
-      "event": "FINAL_JUDGEMENT_WIN"
-    }
-  },
-  {
-    "id": "RAZOR_THREAD",
-    "name": "El fil de la navalla",
-    "description": "Guanya amb un 5% de vida o menys.",
+    "id": "WEIGHT_OF_FATIGUE",
+    "name": "El pes del cansament",
+    "description": "Guanya amb un 10% de stamina o menys.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": false
+      "showDescriptionBeforeComplete": true
     },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "MATCH_WON",
       "conditions": [
         {
-          "field": "winnerHpPercent",
+          "field": "winnerStaminaPercent",
           "operator": "<=",
-          "value": 5
+          "value": 10
         }
       ]
     }
   },
   {
-    "id": "COMBAT_HUNGER",
-    "name": "La fam del combat",
-    "description": "Infligeix 1.500 punts de dany total.",
-    "goal": 1500,
+    "id": "RITUAL_OF_FATIGUE",
+    "name": "El ritual de la fatiga",
+    "description": "Arriba a 0 stamina 5 vegades.",
+    "goal": 5,
     "visibility": {
       "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": true
     },
     "objective": {
-      "type": "SUM_VALUE",
-      "event": "DAMAGE_DEALT",
-      "valueField": "damage"
+      "type": "COUNT_EVENT",
+      "event": "ZERO_STAMINA"
+    }
+  },
+  {
+    "id": "RHYTHM_OF_WAR",
+    "name": "El ritme de la guerra",
+    "description": "Mantén momentum alt durant 5 torns seguits.",
+    "goal": 5,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "STATE_MAINTAINED",
+      "conditions": [
+        {
+          "field": "momentum",
+          "operator": ">=",
+          "value": 2
+        }
+      ]
     }
   },
   {
@@ -435,24 +370,17 @@
     }
   },
   {
-    "id": "BROKEN_BREATH",
-    "name": "Respiració trencada",
-    "description": "Sobreviu un torn després de quedar-te amb poca stamina.",
-    "goal": 1,
+    "id": "VERTIGO",
+    "name": "El vertigen",
+    "description": "Passa 10 torns amb momentum alt.",
+    "goal": 10,
     "visibility": {
       "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": true
     },
     "objective": {
-      "type": "CONDITIONAL_COUNT",
-      "event": "SURVIVE_TURN",
-      "conditions": [
-        {
-          "field": "staminaPercent",
-          "operator": "<=",
-          "value": 20
-        }
-      ]
+      "type": "COUNT_EVENT",
+      "event": "HIGH_MOMENTUM"
     }
   },
   {
@@ -481,23 +409,94 @@
     }
   },
   {
-    "id": "VERTIGO",
-    "name": "El vertigen",
-    "description": "Passa 10 torns amb momentum alt.",
-    "goal": 10,
+    "id": "BLOOD_DANCE",
+    "name": "Dansa de sang",
+    "description": "Esquiva 3 cops consecutius.",
+    "goal": 3,
     "visibility": {
       "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": true
     },
     "objective": {
-      "type": "COUNT_EVENT",
-      "event": "HIGH_MOMENTUM"
+      "type": "CONSECUTIVE_EVENT",
+      "event": "ACTION_DODGE"
     }
   },
   {
-    "id": "WEIGHT_OF_FATIGUE",
-    "name": "El pes del cansament",
-    "description": "Guanya amb un 10% de stamina o menys.",
+    "id": "SURVIVAL_INSTINCT",
+    "name": "Instint de supervivència",
+    "description": "Esquiva 3 cops quan no hi havia dany entrant.",
+    "goal": 3,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "ACTION_DODGE",
+      "conditions": [
+        {
+          "field": "incomingDamage",
+          "operator": "==",
+          "value": 0
+        }
+      ]
+    }
+  },
+  {
+    "id": "FLESH_AGAINST_STEEL",
+    "name": "Carn contra acer",
+    "description": "Defensa 5 cops consecutius.",
+    "goal": 5,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONSECUTIVE_EVENT",
+      "event": "ACTION_DEFEND"
+    }
+  },
+  {
+    "id": "PERFECT_CIRCLE",
+    "name": "El cercle perfecte",
+    "description": "Executa la seqüència ATAC → ESQUIVA → ATAC.",
+    "goal": 3,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "ACTION_SEQUENCE",
+      "sequence": [
+        "ATTACK",
+        "DODGE",
+        "ATTACK"
+      ]
+    }
+  },
+  {
+    "id": "BLADE_WAITS",
+    "name": "La fulla espera",
+    "description": "Executa la seqüència CÀRREGA → DEFENSA → ATAC.",
+    "goal": 3,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "ACTION_SEQUENCE",
+      "sequence": [
+        "CHARGE",
+        "DEFEND",
+        "ATTACK"
+      ]
+    }
+  },
+  {
+    "id": "WEIGHT_OF_SKY",
+    "name": "El pes del cel",
+    "description": "Fes un cop carregat de gran dany.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -505,28 +504,146 @@
     },
     "objective": {
       "type": "CONDITIONAL_COUNT",
-      "event": "MATCH_WON",
+      "event": "DAMAGE_DEALT",
       "conditions": [
         {
-          "field": "winnerStaminaPercent",
-          "operator": "<=",
-          "value": 10
+          "field": "chargedHit",
+          "operator": "==",
+          "value": true
+        },
+        {
+          "field": "damage",
+          "operator": ">=",
+          "value": 120
         }
       ]
     }
   },
   {
-    "id": "RITUAL_OF_FATIGUE",
-    "name": "El ritual de la fatiga",
-    "description": "Arriba a 0 stamina 5 vegades.",
-    "goal": 5,
+    "id": "COLOSSUS",
+    "name": "El colós",
+    "description": "Derrota un enemic amb un atac carregat.",
+    "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": true
     },
     "objective": {
       "type": "COUNT_EVENT",
-      "event": "ZERO_STAMINA"
+      "event": "CHARGED_KILLING_BLOW"
+    }
+  },
+  {
+    "id": "COLOSSUS_AWAKENS",
+    "name": "El colós desperta",
+    "description": "Guanya amb un cop carregat que decideix el combat.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "CHARGED_MATCH_WINNING_BLOW"
+    }
+  },
+  {
+    "id": "IRON_THUNDER",
+    "name": "El tro de ferro",
+    "description": "Fes 300 punts de dany en un sol cop.",
+    "goal": 300,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "MAX_VALUE_REACHED",
+      "event": "DAMAGE_DEALT",
+      "valueField": "damage"
+    }
+  },
+  {
+    "id": "METAL_STORM",
+    "name": "La tempesta de metall",
+    "description": "Encadena 3 crítics amb armes físiques.",
+    "goal": 3,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONSECUTIVE_EVENT",
+      "event": "CRIT",
+      "conditions": [
+        {
+          "field": "weaponType",
+          "operator": "==",
+          "value": "PHYSICAL"
+        }
+      ]
+    }
+  },
+  {
+    "id": "PERFECT_SENTENCE",
+    "name": "La sentència perfecta",
+    "description": "Guanya amb Sentència Final.",
+    "goal": 3,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "FINAL_JUDGEMENT_WIN"
+    }
+  },
+  {
+    "id": "FINAL_BLOW",
+    "name": "El cop final",
+    "description": "Guanya amb un cop carregat de Sentència Final.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "CHARGED_FINAL_BLOW_WIN"
+    }
+  },
+  {
+    "id": "EXECUTIONERS_STILLNESS",
+    "name": "La quietud del botxí",
+    "description": "Carrega un atac mentre l’enemic té poca vida.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "ACTION_CHARGE",
+      "conditions": [
+        {
+          "field": "opponent.hpPercent",
+          "operator": "<=",
+          "value": 20
+        }
+      ]
+    }
+  },
+  {
+    "id": "IRON_REMEMBERS",
+    "name": "El ferro recorda",
+    "description": "Utilitza una arma per primera vegada.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "WEAPON_USED"
     }
   },
   {
@@ -588,7 +705,7 @@
   {
     "id": "CHAOS_ARMOURER",
     "name": "L’armer del caos",
-    "description": "Utilitza totes les armes en mode caòtic.",
+    "description": "Utilitza totes les armes durant combats en mode caòtic.",
     "goal": 11,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -703,32 +820,6 @@
     }
   },
   {
-    "id": "PAGES_BREATHE",
-    "name": "Les pàgines respiren",
-    "description": "Fes un crític amb el Grimori després d’un resultat impossible.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": false,
-      "showDescriptionBeforeComplete": false
-    },
-    "objective": {
-      "type": "CONDITIONAL_COUNT",
-      "event": "CRIT",
-      "conditions": [
-        {
-          "field": "weaponId",
-          "operator": "==",
-          "value": "GRIMORIE"
-        },
-        {
-          "field": "grimoireMultiplier",
-          "operator": "<",
-          "value": 0
-        }
-      ]
-    }
-  },
-  {
     "id": "KNOWLEDGE_DEVOURS",
     "name": "El coneixement devora",
     "description": "Guanya amb el Grimori del codi.",
@@ -752,7 +843,7 @@
   {
     "id": "TONGUE_DEAD_GODS",
     "name": "La llengua dels déus morts",
-    "description": "Utilitza el Grimori en mode caòtic.",
+    "description": "Utilitza el Grimori durant un combat en mode caòtic.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -776,9 +867,23 @@
     }
   },
   {
-    "id": "PACT_WRITTEN_BLOOD",
-    "name": "La sang compra paraules",
-    "description": "Utilitza el Pacte de Sang amb un 25% de vida o menys.",
+    "id": "GRIMOIRE_MIN_MULTIPLIER",
+    "name": "La pàgina més freda",
+    "description": "Treu el multiplicador mínim del Grimori.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": false
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "GRIMOIRE_MIN_MULTIPLIER"
+    }
+  },
+  {
+    "id": "GRIMOIRE_MAX_MULTIPLIER",
+    "name": "La pàgina que crema",
+    "description": "Treu el multiplicador màxim del Grimori.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -786,7 +891,7 @@
     },
     "objective": {
       "type": "COUNT_EVENT",
-      "event": "BLOOD_PACT_LOW_HEALTH_USED"
+      "event": "GRIMOIRE_MAX_MULTIPLIER"
     }
   },
   {
@@ -865,7 +970,7 @@
   {
     "id": "NO_ONE_KNOWS_HOW",
     "name": "Ningú sap com",
-    "description": "Fes un crític amb la Ballista en mode caòtic.",
+    "description": "Fes un crític amb la Ballista durant un combat en mode caòtic.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
@@ -967,88 +1072,17 @@
     }
   },
   {
-    "id": "THIRST_OF_MORRIGAN",
-    "name": "La set de Morrigan",
-    "description": "Fes avançar el despertar d’una perk divina de Morrigan diverses vegades.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "CONDITIONAL_COUNT",
-      "event": "DIVINE_PERK_AWAKENING_PROGRESS",
-      "conditions": [
-        {
-          "field": "god",
-          "operator": "==",
-          "value": "MORRIGAN"
-        }
-      ]
-    }
-  },
-  {
-    "id": "COLOSSUS",
-    "name": "El colós",
-    "description": "Derrota un enemic amb un atac carregat.",
-    "goal": 1,
+    "id": "ARCANE_DISRUPTION_STAFF_MISS_10",
+    "name": "La màgia s’ha negat",
+    "description": "Falla 10 vegades amb el Bastó de la Disrupció Arcana.",
+    "goal": 10,
     "visibility": {
       "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": true
     },
     "objective": {
       "type": "COUNT_EVENT",
-      "event": "CHARGED_KILLING_BLOW"
-    }
-  },
-  {
-    "id": "IRON_THUNDER",
-    "name": "El tro de ferro",
-    "description": "Fes 300 punts de dany en un sol cop.",
-    "goal": 300,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "MAX_VALUE_REACHED",
-      "event": "DAMAGE_DEALT",
-      "valueField": "damage"
-    }
-  },
-  {
-    "id": "METAL_STORM",
-    "name": "La tempesta de metall",
-    "description": "Encadena 3 crítics amb armes físiques.",
-    "goal": 3,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "CONSECUTIVE_EVENT",
-      "event": "CRIT",
-      "conditions": [
-        {
-          "field": "weaponType",
-          "operator": "==",
-          "value": "PHYSICAL"
-        }
-      ]
-    }
-  },
-  {
-    "id": "FINAL_BLOW",
-    "name": "El cop final",
-    "description": "Guanya amb un cop carregat de Sentència Final.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "COUNT_EVENT",
-      "event": "CHARGED_FINAL_BLOW_WIN"
+      "event": "ARCANE_DISRUPTION_MISS"
     }
   },
   {
@@ -1199,9 +1233,51 @@
     }
   },
   {
+    "id": "THIRST_OF_MORRIGAN",
+    "name": "La set de Morrigan",
+    "description": "Fes avançar el despertar d’una perk divina de Morrigan diverses vegades.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "DIVINE_PERK_AWAKENING_PROGRESS",
+      "conditions": [
+        {
+          "field": "god",
+          "operator": "==",
+          "value": "MORRIGAN"
+        }
+      ]
+    }
+  },
+  {
     "id": "LYSARA_VEIL",
     "name": "El vel de Lysara",
     "description": "Fes avançar el despertar d’una perk divina en mode caòtic.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "DIVINE_PERK_AWAKENING_PROGRESS",
+      "conditions": [
+        {
+          "field": "chaosMode",
+          "operator": "==",
+          "value": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "EYES_BEHIND_VEIL",
+    "name": "Els ulls darrere el vel",
+    "description": "Fes avançar el despertar d’una perk divina durant un combat en mode caòtic.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -1241,17 +1317,24 @@
     }
   },
   {
-    "id": "COMPLETE_RITUAL",
-    "name": "El ritual complet",
-    "description": "Completa una missió de perk.",
+    "id": "HUNGER_OF_GODS",
+    "name": "La fam dels déus",
+    "description": "Fes avançar el despertar d’una perk divina mentre tens poca vida.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": true
     },
     "objective": {
-      "type": "COUNT_EVENT",
-      "event": "PERK_MISSION_COMPLETED"
+      "type": "CONDITIONAL_COUNT",
+      "event": "DIVINE_PERK_AWAKENING_PROGRESS",
+      "conditions": [
+        {
+          "field": "hpPercent",
+          "operator": "<=",
+          "value": 20
+        }
+      ]
     }
   },
   {
@@ -1297,45 +1380,10 @@
     }
   },
   {
-    "id": "HUNGER_OF_GODS",
-    "name": "La fam dels déus",
-    "description": "Fes avançar el despertar d’una perk divina mentre tens poca vida.",
+    "id": "RITUAL_CONTINUES",
+    "name": "El ritual continua",
+    "description": "Completa la teva primera missió de perk.",
     "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "CONDITIONAL_COUNT",
-      "event": "DIVINE_PERK_AWAKENING_PROGRESS",
-      "conditions": [
-        {
-          "field": "hpPercent",
-          "operator": "<=",
-          "value": 20
-        }
-      ]
-    }
-  },
-  {
-    "id": "RITUAL_BEGUN",
-    "name": "El ritual ha començat",
-    "description": "Completa la primera missió.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "COUNT_EVENT",
-      "event": "PERK_MISSION_COMPLETED"
-    }
-  },
-  {
-    "id": "ANCIENT_ENGRAVINGS",
-    "name": "Els gravats antics",
-    "description": "Completa 10 missions.",
-    "goal": 10,
     "visibility": {
       "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": true
@@ -1350,6 +1398,20 @@
     "name": "La màquina ritual",
     "description": "Completa 3 missions de perk.",
     "goal": 3,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "PERK_MISSION_COMPLETED"
+    }
+  },
+  {
+    "id": "ANCIENT_ENGRAVINGS",
+    "name": "Els gravats antics",
+    "description": "Completa 10 missions.",
+    "goal": 10,
     "visibility": {
       "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": true
@@ -1383,7 +1445,7 @@
   {
     "id": "PERFECT_SYMBOL",
     "name": "El símbol perfecte",
-    "description": "Completa una missió en mode caos.",
+    "description": "Completa una missió durant un combat en mode caòtic.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -1413,6 +1475,20 @@
     "objective": {
       "type": "COUNT_EVENT",
       "event": "BLOOD_PACT_USED"
+    }
+  },
+  {
+    "id": "PACT_WRITTEN_BLOOD",
+    "name": "La sang compra paraules",
+    "description": "Utilitza el Pacte de Sang amb un 25% de vida o menys.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "BLOOD_PACT_LOW_HEALTH_USED"
     }
   },
   {
@@ -1488,6 +1564,27 @@
     }
   },
   {
+    "id": "SILENCE_OF_PACTS",
+    "name": "El silenci dels pactes",
+    "description": "Intenta utilitzar el Pacte de Sang sense que el pacte sigui efectiu.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": false
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "BLOOD_PACT_ATTEMPTED",
+      "conditions": [
+        {
+          "field": "bloodPactUsed",
+          "operator": "==",
+          "value": false
+        }
+      ]
+    }
+  },
+  {
     "id": "SPIRITUAL_CALL",
     "name": "La crida espiritual",
     "description": "Utilitza la Crida Espiritual.",
@@ -1517,9 +1614,37 @@
     }
   },
   {
+    "id": "SPIRITUAL_ROLL_20",
+    "name": "La crida escoltada",
+    "description": "Treu un 20 en la tirada espiritual.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "SPIRITUAL_ROLL_NATURAL_20"
+    }
+  },
+  {
+    "id": "SPIRITUAL_ROLL_1",
+    "name": "Els déus han rigut",
+    "description": "Treu un 1 en la tirada espiritual.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": false
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "SPIRITUAL_ROLL_NATURAL_1"
+    }
+  },
+  {
     "id": "REALITY_YIELDS",
     "name": "Quan la realitat cedeix",
-    "description": "Entra al mode caòtic.",
+    "description": "Combat per primera vegada en mode caòtic.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -1528,6 +1653,27 @@
     "objective": {
       "type": "COUNT_EVENT",
       "event": "CHAOS_MATCH_STARTED"
+    }
+  },
+  {
+    "id": "LAST_BELL",
+    "name": "L’últim campanar",
+    "description": "Completa un combat en mode caòtic.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "MATCH_FINISHED",
+      "conditions": [
+        {
+          "field": "chaosMode",
+          "operator": "==",
+          "value": true
+        }
+      ]
     }
   },
   {
@@ -1554,21 +1700,56 @@
   {
     "id": "SCHIZOPHRENIC_FIGHTER",
     "name": "Combatent esquizofrènic",
-    "description": "Activa 3 triggers de caos.",
+    "description": "Completa 3 combats en mode caòtic.",
     "goal": 3,
     "visibility": {
       "showNameBeforeComplete": false,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "MATCH_FINISHED",
+      "conditions": [
+        {
+          "field": "chaosMode",
+          "operator": "==",
+          "value": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "RITUAL_STORM",
+    "name": "La tempesta ritual",
+    "description": "Combat 5 vegades en mode caòtic.",
+    "goal": 5,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
       "type": "COUNT_EVENT",
-      "event": "CHAOS_TRIGGER_ADDED"
+      "event": "CHAOS_MATCH_STARTED"
+    }
+  },
+  {
+    "id": "WORLD_UNMADE",
+    "name": "El món desfet",
+    "description": "Sobreviu 8 torns durant combats en mode caòtic.",
+    "goal": 8,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "CHAOS_ACTIVE_TURN"
     }
   },
   {
     "id": "FLESH_BENDS",
     "name": "La carn es doblega",
-    "description": "Activa caos i roba vida.",
+    "description": "Roba vida durant un combat en mode caòtic.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -1629,7 +1810,7 @@
   {
     "id": "NOT_LEGAL",
     "name": "No crec que això fos legal",
-    "description": "Activa una perk en mode caòtic.",
+    "description": "Activa una perk durant un combat en mode caòtic.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
@@ -1648,55 +1829,6 @@
     }
   },
   {
-    "id": "WORLD_UNMADE",
-    "name": "El món desfet",
-    "description": "Mantén el caos durant 8 torns.",
-    "goal": 8,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "COUNT_EVENT",
-      "event": "CHAOS_ACTIVE_TURN"
-    }
-  },
-  {
-    "id": "EYES_BEHIND_VEIL",
-    "name": "Els ulls darrere el vel",
-    "description": "Fes avançar el despertar d’una perk divina en mode caòtic.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "CONDITIONAL_COUNT",
-      "event": "DIVINE_PERK_AWAKENING_PROGRESS",
-      "conditions": [
-        {
-          "field": "chaosMode",
-          "operator": "==",
-          "value": true
-        }
-      ]
-    }
-  },
-  {
-    "id": "RITUAL_STORM",
-    "name": "La tempesta ritual",
-    "description": "Activa 5 triggers caòtics.",
-    "goal": 5,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "COUNT_EVENT",
-      "event": "CHAOS_TRIGGER_ADDED"
-    }
-  },
-  {
     "id": "RULES_ARE_DEAD",
     "name": "Les regles s’han mort",
     "description": "Falla 5 accions per causes estranyes.",
@@ -1711,9 +1843,37 @@
     }
   },
   {
+    "id": "KING_OF_FOOLS",
+    "name": "El rei dels ximples",
+    "description": "Falla 10 vegades.",
+    "goal": 10,
+    "visibility": {
+      "showNameBeforeComplete": false,
+      "showDescriptionBeforeComplete": false
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "MISS"
+    }
+  },
+  {
+    "id": "FRACTURED_WILL",
+    "name": "La voluntat partida",
+    "description": "El caos canvia l’acció que havies triat.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": false
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "CHAOS_ACTION_CHANGED"
+    }
+  },
+  {
     "id": "LAUGHTER_UNDER_STORM",
     "name": "El riure sota la tempesta",
-    "description": "Sobreviu al teu propi caos.",
+    "description": "Sobreviu a un autogolpe durant un combat en mode caòtic.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
@@ -1734,7 +1894,7 @@
   {
     "id": "BLACK_DOOR",
     "name": "La porta negra",
-    "description": "Descobreix una interacció oculta del caos.",
+    "description": "Descobreix un resultat rar del mode caòtic.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
@@ -1746,23 +1906,23 @@
     }
   },
   {
-    "id": "KING_OF_FOOLS",
-    "name": "El rei dels ximples",
-    "description": "Falla 10 vegades.",
-    "goal": 10,
+    "id": "PERFECT_CHAOS_OUTCOME",
+    "name": "La simetria de la bogeria",
+    "description": "Obté el caos perfecte.",
+    "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
       "type": "COUNT_EVENT",
-      "event": "MISS"
+      "event": "CHAOS_PERFECT"
     }
   },
   {
     "id": "INVERTED_PRAYER",
     "name": "La pregària invertida",
-    "description": "Utilitza el Pacte de Sang en mode caòtic.",
+    "description": "Utilitza el Pacte de Sang durant un combat en mode caòtic.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
@@ -1773,7 +1933,7 @@
       "event": "BLOOD_PACT_USED",
       "conditions": [
         {
-          "field": "chaosActive",
+          "field": "chaosMode",
           "operator": "==",
           "value": true
         }
@@ -1783,7 +1943,7 @@
   {
     "id": "FORBIDDEN_RITUAL",
     "name": "El ritual prohibit",
-    "description": "Combina caos, Grimori i el despertar complet d’una perk divina.",
+    "description": "Desperta completament una perk divina durant un combat en mode caòtic empunyant el Grimori.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
@@ -1799,44 +1959,9 @@
           "value": true
         },
         {
-          "field": "equippedWeapon",
+          "field": "weaponId",
           "operator": "==",
-          "value": "GRIMOIRE"
-        }
-      ]
-    }
-  },
-  {
-    "id": "VOICE_IN_METAL",
-    "name": "La veu dins el metall",
-    "description": "Guanya amb la mateixa arma que et va veure començar.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": false
-    },
-    "objective": {
-      "type": "COUNT_EVENT",
-      "event": "MATCH_WON"
-    }
-  },
-  {
-    "id": "BELLS_UNDERGROUND",
-    "name": "Les campanes sota terra",
-    "description": "Sobreviu mentre tens poca vida.",
-    "goal": 10,
-    "visibility": {
-      "showNameBeforeComplete": false,
-      "showDescriptionBeforeComplete": false
-    },
-    "objective": {
-      "type": "CONDITIONAL_COUNT",
-      "event": "SURVIVE_TURN",
-      "conditions": [
-        {
-          "field": "hpPercent",
-          "operator": "<=",
-          "value": 10
+          "value": "GRIMORIE"
         }
       ]
     }
@@ -1844,7 +1969,7 @@
   {
     "id": "END_OF_LANGUAGE",
     "name": "La fi del llenguatge",
-    "description": "Activa sinergies en mode caòtic.",
+    "description": "Activa una sinergia durant un combat en mode caòtic.",
     "goal": 3,
     "visibility": {
       "showNameBeforeComplete": false,
@@ -1860,90 +1985,6 @@
           "value": true
         }
       ]
-    }
-  },
-  {
-    "id": "SPIRITUAL_ROLL_20",
-    "name": "La crida escoltada",
-    "description": "Treu un 20 en la tirada espiritual.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "COUNT_EVENT",
-      "event": "SPIRITUAL_ROLL_NATURAL_20"
-    }
-  },
-  {
-    "id": "SPIRITUAL_ROLL_1",
-    "name": "Els déus han rigut",
-    "description": "Treu un 1 en la tirada espiritual.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": false
-    },
-    "objective": {
-      "type": "COUNT_EVENT",
-      "event": "SPIRITUAL_ROLL_NATURAL_1"
-    }
-  },
-  {
-    "id": "GRIMOIRE_MIN_MULTIPLIER",
-    "name": "La pàgina més freda",
-    "description": "Treu el multiplicador mínim del Grimori.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": false
-    },
-    "objective": {
-      "type": "COUNT_EVENT",
-      "event": "GRIMOIRE_MIN_MULTIPLIER"
-    }
-  },
-  {
-    "id": "GRIMOIRE_MAX_MULTIPLIER",
-    "name": "La pàgina que crema",
-    "description": "Treu el multiplicador màxim del Grimori.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "COUNT_EVENT",
-      "event": "GRIMOIRE_MAX_MULTIPLIER"
-    }
-  },
-  {
-    "id": "ARCANE_DISRUPTION_STAFF_MISS_10",
-    "name": "La màgia s’ha negat",
-    "description": "Falla 10 vegades amb el Bastó de la Disrupció Arcana.",
-    "goal": 10,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
-    "objective": {
-      "type": "COUNT_EVENT",
-      "event": "ARCANE_DISRUPTION_MISS"
-    }
-  },
-  {
-    "id": "PERFECT_CHAOS_OUTCOME",
-    "name": "La simetria de la bogeria",
-    "description": "Obté el caos perfecte.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": false,
-      "showDescriptionBeforeComplete": false
-    },
-    "objective": {
-      "type": "COUNT_EVENT",
-      "event": "CHAOS_PERFECT"
     }
   }
 ]

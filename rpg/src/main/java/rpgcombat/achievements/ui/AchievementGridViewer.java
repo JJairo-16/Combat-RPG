@@ -4,6 +4,7 @@ import static rpgcombat.utils.ui.Ansi.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.jline.keymap.BindingReader;
@@ -15,13 +16,15 @@ import rpgcombat.utils.terminal.SharedTerminal;
 import rpgcombat.utils.terminal.TerminalSession;
 
 /**
- * Visor interactiu d'assoliments en format de graella amb pàgines horitzontals.
+ * Visor interactiu d'assoliments en format de graella amb pàgines horitzontals,
+ * filtres i ordenació.
  */
 public final class AchievementGridViewer {
     private static final int CARD_WIDTH = 45;
     private static final int CARD_HEIGHT = 9;
     private static final int GAP = 2;
-    private static final int HEADER_LINES = 4;
+    private static final int HEADER_LINES = 5;
+    private static final int FOOTER_LINES = 2;
     private static final int CONTENT_PADDING = 2;
 
     private AchievementGridViewer() {
@@ -31,7 +34,115 @@ public final class AchievementGridViewer {
      * Accions disponibles dins del visor.
      */
     private enum Action {
-        PREVIOUS_PAGE, NEXT_PAGE, EXIT
+        PREVIOUS_PAGE,
+        NEXT_PAGE,
+        NEXT_FILTER,
+        NEXT_SORT,
+        REVERSE_SORT,
+        CLEAR_OPTIONS,
+        EXIT,
+        IGNORE
+    }
+
+    /**
+     * Filtres disponibles per mostrar només una part dels assoliments.
+     */
+    private enum AchievementFilter {
+        ALL("Tots"),
+        COMPLETED("Completats"),
+        PENDING("Pendents");
+
+        private final String label;
+
+        AchievementFilter(String label) {
+            this.label = label;
+        }
+
+        public String label() {
+            return label;
+        }
+
+        public AchievementFilter next() {
+            AchievementFilter[] values = values();
+            return values[(ordinal() + 1) % values.length];
+        }
+
+        public boolean accepts(Achievement achievement) {
+            return switch (this) {
+                case ALL -> true;
+                case COMPLETED -> achievement.completed();
+                case PENDING -> !achievement.completed();
+            };
+        }
+    }
+
+    /**
+     * Criteris disponibles per ordenar els assoliments visibles.
+     */
+    private enum AchievementSort {
+        ORIGINAL("Original"),
+        NAME("Nom"),
+        PROGRESS("Progrés");
+
+        private final String label;
+
+        AchievementSort(String label) {
+            this.label = label;
+        }
+
+        public String label() {
+            return label;
+        }
+
+        public AchievementSort next() {
+            AchievementSort[] values = values();
+            return values[(ordinal() + 1) % values.length];
+        }
+    }
+
+    /**
+     * Estat actual dels controls de filtratge i ordenació.
+     */
+    private static final class ViewOptions {
+        private AchievementFilter filter = AchievementFilter.ALL;
+        private AchievementSort sort = AchievementSort.ORIGINAL;
+        private boolean reversed = false;
+
+        public void nextFilter() {
+            filter = filter.next();
+        }
+
+        public void nextSort() {
+            sort = sort.next();
+        }
+
+        public void reverseSort() {
+            reversed = !reversed;
+        }
+
+        public void clear() {
+            filter = AchievementFilter.ALL;
+            sort = AchievementSort.ORIGINAL;
+            reversed = false;
+        }
+
+        public AchievementFilter filter() {
+            return filter;
+        }
+
+        public AchievementSort sort() {
+            return sort;
+        }
+
+        public boolean reversed() {
+            return reversed;
+        }
+    }
+
+    /**
+     * Assoliment amb la seva posició original per poder restaurar l'ordre inicial.
+     */
+    private record IndexedAchievement(int index, Achievement achievement) {
     }
 
     /**
@@ -78,19 +189,22 @@ public final class AchievementGridViewer {
 
             int page = 0;
             String lastFrame = "";
+            ViewOptions options = new ViewOptions();
 
             while (true) {
                 int width = Math.max(1, terminal.getWidth());
                 int height = Math.max(1, terminal.getHeight());
 
+                List<Achievement> visibleAchievements = visibleAchievements(achievements, options);
+
                 int cols = columns(width);
                 int rows = visibleRows(height);
                 int pageSize = Math.max(1, cols * rows);
-                int totalPages = totalPages(achievements.size(), pageSize);
+                int totalPages = totalPages(visibleAchievements.size(), pageSize);
 
                 page = Math.clamp(page, 0, Math.max(0, totalPages - 1));
 
-                String frame = renderFrame(achievements, page, width, height);
+                String frame = renderFrame(achievements, visibleAchievements, options, page, width, height);
 
                 if (!frame.equals(lastFrame)) {
                     terminal.writer().print("\033[H");
@@ -106,6 +220,23 @@ public final class AchievementGridViewer {
                 switch (action) {
                     case PREVIOUS_PAGE -> page--;
                     case NEXT_PAGE -> page++;
+                    case NEXT_FILTER -> {
+                        options.nextFilter();
+                        page = 0;
+                    }
+                    case NEXT_SORT -> {
+                        options.nextSort();
+                        page = 0;
+                    }
+                    case REVERSE_SORT -> {
+                        options.reverseSort();
+                        page = 0;
+                    }
+                    case CLEAR_OPTIONS -> {
+                        options.clear();
+                        page = 0;
+                    }
+                    case IGNORE -> {}
                     case EXIT -> {
                         terminal.writer().print(RESET);
                         terminal.puts(Capability.exit_ca_mode);
@@ -131,10 +262,17 @@ public final class AchievementGridViewer {
 
         map.bind(Action.PREVIOUS_PAGE, "a", "A");
         map.bind(Action.NEXT_PAGE, "d", "D");
+        map.bind(Action.NEXT_FILTER, "f", "F");
+        map.bind(Action.NEXT_SORT, "o", "O");
+        map.bind(Action.REVERSE_SORT, "r", "R");
+        map.bind(Action.CLEAR_OPTIONS, "c", "C");
         map.bind(Action.EXIT, "q", "Q", "\033");
 
         bindTerminalKey(map, terminal, Capability.key_left, Action.PREVIOUS_PAGE);
         bindTerminalKey(map, terminal, Capability.key_right, Action.NEXT_PAGE);
+
+        bindTerminalKey(map, terminal, Capability.key_up, Action.IGNORE);
+        bindTerminalKey(map, terminal, Capability.key_down, Action.IGNORE);
 
         return map;
     }
@@ -157,16 +295,17 @@ public final class AchievementGridViewer {
      * Genera el fotograma complet del visor.
      */
     private static String renderFrame(
-            List<Achievement> achievements,
+            List<Achievement> allAchievements,
+            List<Achievement> visibleAchievements,
+            ViewOptions options,
             int page,
             int width,
             int height) {
         StringBuilder out = new StringBuilder();
 
         out.append(RESET);
-        out.append("\033[H");
 
-        if (width < CARD_WIDTH + 2 || height < HEADER_LINES + CARD_HEIGHT) {
+        if (width < CARD_WIDTH + 2 || height < HEADER_LINES + CARD_HEIGHT + FOOTER_LINES) {
             appendLine(out, width, RED + BOLD + "El terminal és massa petit per mostrar els assoliments." + RESET);
             appendLine(out, width, DARK_GRAY + "Augmenta la mida de la finestra." + RESET);
             fillRest(out, width, height, 2);
@@ -176,44 +315,123 @@ public final class AchievementGridViewer {
         int cols = columns(width);
         int rows = visibleRows(height);
         int pageSize = Math.max(1, cols * rows);
-        int totalPages = totalPages(achievements.size(), pageSize);
+        int totalPages = totalPages(visibleAchievements.size(), pageSize);
         int startIndex = page * pageSize;
+        int completed = (int) allAchievements.stream().filter(Achievement::completed).count();
 
-        appendLine(out, width, BOLD + MAGENTA + "VISOR D'ASSOLIMENTS" + RESET);
-        appendLine(out, width, DARK_GRAY + "Fletxes esquerra/dreta o A/D: canviar pàgina · Q/Esc: sortir" + RESET);
+        appendLine(out, width, "");
+        appendLine(out, width, BOLD + MAGENTA + "ASSOLIMENTS" + RESET);
+        appendLine(out, width, GREEN + "Completats " + completed + "/" + allAchievements.size()
+                + DARK_GRAY + " · Filtre: " + options.filter().label()
+                + " · Ordre: " + sortLabel(options) + RESET);
+        appendLine(out, width, DARK_GRAY + "Pàgina " + (page + 1) + "/" + totalPages
+                + " · Mostrats " + visibleAchievements.size() + "/" + allAchievements.size() + RESET);
         appendLine(out, width, "");
 
-        for (int gridRow = 0; gridRow < rows; gridRow++) {
-            String[] lines = new String[CARD_HEIGHT];
+        if (visibleAchievements.isEmpty()) {
+            appendLine(out, width, YELLOW + "No hi ha cap assoliment que coincideixi amb el filtre actual." + RESET);
+            fillRest(out, width, height - FOOTER_LINES, HEADER_LINES + 1);
+        } else {
+            for (int gridRow = 0; gridRow < rows; gridRow++) {
+                String[] lines = new String[CARD_HEIGHT];
 
-            for (int i = 0; i < CARD_HEIGHT; i++)
-                lines[i] = "";
+                for (int i = 0; i < CARD_HEIGHT; i++)
+                    lines[i] = "";
 
-            for (int col = 0; col < cols; col++) {
-                int index = startIndex + gridRow * cols + col;
+                for (int col = 0; col < cols; col++) {
+                    int index = startIndex + gridRow * cols + col;
 
-                String[] card = index < achievements.size()
-                        ? cardLines(achievements.get(index))
-                        : emptyCard();
+                    String[] card = index < visibleAchievements.size()
+                            ? cardLines(visibleAchievements.get(index))
+                            : emptyCard();
 
-                for (int line = 0; line < CARD_HEIGHT; line++) {
-                    lines[line] += card[line];
+                    for (int line = 0; line < CARD_HEIGHT; line++) {
+                        lines[line] += card[line];
 
-                    if (col < cols - 1)
-                        lines[line] += " ".repeat(GAP);
+                        if (col < cols - 1)
+                            lines[line] += " ".repeat(GAP);
+                    }
                 }
+
+                for (String line : lines)
+                    appendLine(out, width, line);
             }
 
-            for (String line : lines)
-                appendLine(out, width, line);
+            int usedLines = HEADER_LINES + rows * CARD_HEIGHT;
+
+            fillRest(out, width, height - FOOTER_LINES, usedLines);
         }
 
         appendLine(out, width, "");
-        appendLine(out, width, DARK_GRAY + "Pàgina " + (page + 1) + "/" + Math.max(1, totalPages) + RESET);
-
-        fillRest(out, width, height, HEADER_LINES + rows * CARD_HEIGHT + 2);
+        appendLine(out, width, DARK_GRAY
+                + "[←/→ o A/D] canviar pàgina · [F] filtre · [O] ordenar · [R] invertir · [C] netejar · [Q/Esc] sortir"
+                + RESET);
 
         return out.toString();
+    }
+
+    /**
+     * Retorna els assoliments visibles segons el filtre i l'ordre actuals.
+     */
+    private static List<Achievement> visibleAchievements(List<Achievement> achievements, ViewOptions options) {
+        List<IndexedAchievement> indexed = new ArrayList<>();
+
+        for (int i = 0; i < achievements.size(); i++) {
+            Achievement achievement = achievements.get(i);
+
+            if (options.filter().accepts(achievement))
+                indexed.add(new IndexedAchievement(i, achievement));
+        }
+
+        indexed.sort(comparator(options.sort()));
+
+        if (options.reversed())
+            indexed = indexed.reversed();
+
+        return indexed.stream()
+                .map(IndexedAchievement::achievement)
+                .toList();
+    }
+
+    /**
+     * Crea el comparador corresponent al criteri d'ordenació indicat.
+     */
+    private static Comparator<IndexedAchievement> comparator(AchievementSort sort) {
+        return switch (sort) {
+            case ORIGINAL -> Comparator.comparingInt(IndexedAchievement::index);
+            case NAME -> Comparator
+                    .comparing((IndexedAchievement item) -> item.achievement().name(), String.CASE_INSENSITIVE_ORDER)
+                    .thenComparingInt(IndexedAchievement::index);
+            case PROGRESS -> Comparator
+                    .comparingDouble((IndexedAchievement item) -> progressPercent(item.achievement()))
+                    .thenComparing((IndexedAchievement item) -> item.achievement().name(), String.CASE_INSENSITIVE_ORDER)
+                    .thenComparingInt(IndexedAchievement::index);
+        };
+    }
+
+    /**
+     * Genera el text visible de l'ordre actual, incloent-ne la direcció.
+     */
+    private static String sortLabel(ViewOptions options) {
+        if (options.sort() == AchievementSort.ORIGINAL)
+            return options.reversed()
+                    ? options.sort().label() + " ↓"
+                    : options.sort().label();
+
+        return options.sort().label() + (options.reversed() ? " ↓" : " ↑");
+    }
+
+    /**
+     * Calcula el percentatge de progrés d'un assoliment.
+     */
+    private static double progressPercent(Achievement achievement) {
+        if (achievement.completed())
+            return 100.0;
+
+        if (achievement.goal() <= 0)
+            return 0.0;
+
+        return Math.clamp((achievement.progress() * 100.0) / achievement.goal(), 0.0, 100.0);
     }
 
     /**
@@ -346,7 +564,7 @@ public final class AchievementGridViewer {
      * Calcula quantes files visibles caben al terminal.
      */
     private static int visibleRows(int height) {
-        return Math.max(1, (height - HEADER_LINES - 2) / CARD_HEIGHT);
+        return Math.max(1, (height - HEADER_LINES - FOOTER_LINES) / CARD_HEIGHT);
     }
 
     /**

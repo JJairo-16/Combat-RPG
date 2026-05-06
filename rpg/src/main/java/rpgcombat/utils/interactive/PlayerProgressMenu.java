@@ -29,8 +29,13 @@ public final class PlayerProgressMenu extends MenuWithInformation {
 
     private String progressText = "";
     private int selectedSection;
+
     private int lastPanelRow = -1;
     private int lastPanelHeight;
+    private int lastPanelCol;
+    private int lastPanelWidth;
+
+    private int completedAchievementsBadgeCount;
 
     public PlayerProgressMenu(Map<String, String> information) {
         super(information);
@@ -39,6 +44,10 @@ public final class PlayerProgressMenu extends MenuWithInformation {
     /** Defineix el text de missions/perks que es mostra al panell propi. */
     public void setProgressText(String text) {
         this.progressText = formatNumbers(safe(text));
+    }
+
+    public void setCompletedAchievementsBadgeCount(int count) {
+        this.completedAchievementsBadgeCount = Math.max(0, count);
     }
 
     @Override
@@ -65,6 +74,7 @@ public final class PlayerProgressMenu extends MenuWithInformation {
     @Override
     protected void afterContentRendered(Terminal terminal, List<String> options, int cursor, int controlsRow) {
         drawProgressPanel(terminal, controlsRow);
+        drawAchievementBadge(terminal);
     }
 
     @Override
@@ -100,6 +110,8 @@ public final class PlayerProgressMenu extends MenuWithInformation {
 
         lastPanelRow = row;
         lastPanelHeight = contentHeight;
+        lastPanelCol = col;
+        lastPanelWidth = width;
 
         String suffix = sections.size() > 1 ? " [P]" : "";
         String headerRaw = section.title() + suffix;
@@ -189,6 +201,23 @@ public final class PlayerProgressMenu extends MenuWithInformation {
         }
 
         return result.isEmpty() ? List.of(new PanelLine("", "")) : result;
+    }
+
+    private void drawAchievementBadge(Terminal terminal) {
+        if (completedAchievementsBadgeCount <= 0 || lastPanelRow < 0) {
+            return;
+        }
+
+        int row = Math.max(TITLE_ROW + 1, lastPanelRow - 1);
+        int col = lastPanelCol + 2;
+
+        String text = YELLOW + BOLD
+                + "✦ +" + completedAchievementsBadgeCount
+                + " assoliment" + (completedAchievementsBadgeCount == 1 ? "" : "s")
+                + RESET;
+
+        moveCursor(terminal, row, col);
+        terminal.writer().print(fitAnsi(text, Math.max(1, lastPanelWidth - 4)));
     }
 
     private List<String> wrapAnsiAware(String text, int maxWidth) {
@@ -283,16 +312,17 @@ public final class PlayerProgressMenu extends MenuWithInformation {
             return;
         }
 
-        int width = Math.clamp(terminal.getWidth() - leftPadding - 2L, 24, PANEL_WIDTH);
-        int col = Math.max(leftPadding, terminal.getWidth() - width);
+        int startRow = Math.max(TITLE_ROW + 1, lastPanelRow - 1);
 
-        for (int i = 0; i < lastPanelHeight; i++) {
-            moveCursor(terminal, lastPanelRow + i, col);
-            terminal.writer().print(" ".repeat(width + 2));
+        for (int row = startRow; row < lastPanelRow + lastPanelHeight; row++) {
+            moveCursor(terminal, row, lastPanelCol);
+            terminal.writer().print(" ".repeat(lastPanelWidth + 2));
         }
 
         lastPanelRow = -1;
         lastPanelHeight = 0;
+        lastPanelCol = 0;
+        lastPanelWidth = 0;
     }
 
     private String formatNumbers(String text) {

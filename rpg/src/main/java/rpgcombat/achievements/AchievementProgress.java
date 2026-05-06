@@ -19,6 +19,7 @@ public final class AchievementProgress {
     private boolean completed;
     private Instant completedAt;
     private final Map<String, Double> valueProgress = new LinkedHashMap<>();
+    private final Map<String, Integer> actorSequenceProgress = new LinkedHashMap<>();
 
     /** Crea un progrés nou. */
     public AchievementProgress(AchievementDefinition definition) {
@@ -34,6 +35,12 @@ public final class AchievementProgress {
     /** Restaura un progrés desat amb dades per valor únic. */
     public AchievementProgress(AchievementDefinition definition, double progress, int sequenceIndex, boolean completed,
             Instant completedAt, Map<String, Double> valueProgress) {
+        this(definition, progress, sequenceIndex, completed, completedAt, valueProgress, Map.of());
+    }
+
+    /** Restaura un progrés desat amb cursors de seqüència separats per actor. */
+    public AchievementProgress(AchievementDefinition definition, double progress, int sequenceIndex, boolean completed,
+            Instant completedAt, Map<String, Double> valueProgress, Map<String, Integer> actorSequenceProgress) {
         this.definition = definition;
         this.progress = Math.max(0.0, progress);
         this.sequenceIndex = Math.max(0, sequenceIndex);
@@ -42,7 +49,16 @@ public final class AchievementProgress {
                 if (key != null && value != null) this.valueProgress.put(key, Math.max(0.0, value));
             });
         }
+        if (actorSequenceProgress != null) {
+            actorSequenceProgress.forEach((key, value) -> {
+                if (key != null && !key.isBlank() && value != null) {
+                    this.actorSequenceProgress.put(key, Math.max(0, value));
+                }
+            });
+        }
+        migrateLegacySequenceProgress();
         recomputeCollectionProgress();
+        recomputeSequenceProgress();
         this.completed = completed || this.progress >= effectiveTarget();
         this.completedAt = completedAt;
         if (this.completed && this.completedAt == null) this.completedAt = Instant.now();
@@ -54,6 +70,7 @@ public final class AchievementProgress {
     public boolean completed() { return completed; }
     public Instant completedAt() { return completedAt; }
     public Map<String, Double> valueProgress() { return Map.copyOf(valueProgress); }
+    public Map<String, Integer> actorSequenceProgress() { return Map.copyOf(actorSequenceProgress); }
 
     /** Actualitza el progrés i indica si ha canviat. */
     public boolean update(AchievementUpdate update) {
@@ -63,6 +80,7 @@ public final class AchievementProgress {
         int sequenceBefore = sequenceIndex;
         boolean completedBefore = completed;
         Map<String, Double> valuesBefore = Map.copyOf(valueProgress);
+        Map<String, Integer> sequenceValuesBefore = Map.copyOf(actorSequenceProgress);
 
         AchievementObjective objective = definition.objective();
         switch (objective.type()) {
@@ -72,7 +90,7 @@ public final class AchievementProgress {
             case CONDITIONAL_SUM -> addIf(matchesEventOrNoEvent(update, objective) && matches(update, objective), update.amountFor(objective));
             case CONSECUTIVE_EVENT -> updateConsecutive(update, objective);
             case AVOID_EVENT_FOR_TURNS -> updateAvoidForTurns(update, objective);
-            case ACTION_SEQUENCE -> updateSequence(update.ownerAction(), objective.sequence());
+            case ACTION_SEQUENCE -> updateSequence(update.actorKey(), update.ownerAction(), objective.sequence());
             case STATE_REACHED -> addIf(matches(update, objective) && matchesEventOrNoEvent(update, objective), effectiveTarget());
             case STATE_MAINTAINED -> updateMaintained(update, objective);
             case ALL_UNIQUE_VALUES -> updateAllUnique(update, objective);
@@ -81,8 +99,13 @@ public final class AchievementProgress {
         }
 
         recomputeCollectionProgress();
+        recomputeSequenceProgress();
         if (progress >= effectiveTarget()) complete();
-        return before != progress || sequenceBefore != sequenceIndex || completedBefore != completed || !valuesBefore.equals(valueProgress);
+        return before != progress
+                || sequenceBefore != sequenceIndex
+                || completedBefore != completed
+                || !valuesBefore.equals(valueProgress)
+                || !sequenceValuesBefore.equals(actorSequenceProgress);
     }
 
     /** Text curt de progrés per al visor. */
@@ -118,19 +141,23 @@ public final class AchievementProgress {
     }
 
     /** Gestiona seqüències d'accions. */
-    private void updateSequence(Action action, List<Action> sequence) {
-        if (action == null || sequence == null || sequence.isEmpty()) return;
-        if (sequenceIndex < 0 || sequenceIndex >= sequence.size()) sequenceIndex = 0;
+    private void updateSequence(String actorKey, Action action, List<Action> sequence) {
+        if (actorKey == null || actorKey.isBlank() || action == null || sequence == null || sequence.isEmpty()) return;
 
-        if (action == sequence.get(sequenceIndex)) {
-            sequenceIndex++;
-            progress = sequenceIndex;
-            if (sequenceIndex >= sequence.size()) complete();
-            return;
+        int currentIndex = actorSequenceProgress.getOrDefault(actorKey, 0);
+        if (currentIndex < 0 || currentIndex >= sequence.size()) currentIndex = 0;
+
+        int nextIndex;
+        if (action == sequence.get(currentIndex)) {
+            nextIndex = currentIndex + 1;
+        } else {
+            nextIndex = action == sequence.get(0) ? 1 : 0;
         }
 
-        sequenceIndex = action == sequence.get(0) ? 1 : 0;
+        actorSequenceProgress.put(actorKey, nextIndex);
+        sequenceIndex = maxSequenceIndex();
         progress = sequenceIndex;
+        if (nextIndex >= sequence.size()) complete();
     }
 
     /** Gestiona mantenir un estat. */
@@ -165,7 +192,31 @@ public final class AchievementProgress {
     /** Gestiona assolir un valor màxim puntual. */
     private void updateMaxValue(AchievementUpdate update, AchievementObjective objective) {
         if (!matchesEventOrNoEvent(update, objective) || !matches(update, objective)) return;
-        progress = Math.max(progress, update.numericField(fieldOrDefault(objective.valueField(), "damage")));
+        double value = update.numericField(fieldOrDefault(objective.valueField(), "damage"));
+        if (value >= effectiveTarget()) {
+            progress = effectiveTarget();
+        }
+    }
+
+    /** Migra desaments antics amb un únic cursor de seqüència. */
+    private void migrateLegacySequenceProgress() {
+        if (definition == null || definition.objective() == null) return;
+        if (definition.objective().type() != AchievementObjectiveType.ACTION_SEQUENCE) return;
+        if (!actorSequenceProgress.isEmpty() || sequenceIndex <= 0) return;
+        actorSequenceProgress.put("legacy", sequenceIndex);
+    }
+
+    /** Recalcula el progrés visible de seqüències per actor. */
+    private void recomputeSequenceProgress() {
+        if (definition == null || definition.objective() == null) return;
+        if (definition.objective().type() != AchievementObjectiveType.ACTION_SEQUENCE) return;
+        sequenceIndex = maxSequenceIndex();
+        progress = sequenceIndex;
+    }
+
+    private int maxSequenceIndex() {
+        if (actorSequenceProgress.isEmpty()) return Math.max(0, sequenceIndex);
+        return actorSequenceProgress.values().stream().mapToInt(Integer::intValue).max().orElse(0);
     }
 
     /** Recalcula progrés visual de col·leccions. */

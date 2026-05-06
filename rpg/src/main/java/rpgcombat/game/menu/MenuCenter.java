@@ -29,8 +29,11 @@ public class MenuCenter {
     private final MenuStatusModifier mod2;
     private Function<Character, String> missionTextProvider = player -> "";
 
+    private int completedAchievementsBadgeCount;
+
     public MenuCenter(Character player1, Character player2, Consumer<Character> changeWeaponHandler,
-            Consumer<Character> showPlayerInfoHandler, Map<String, List<StatusMod>> modifiers, Map<String, String> information) {
+            Consumer<Character> showPlayerInfoHandler, Map<String, List<StatusMod>> modifiers,
+            Map<String, String> information) {
 
         this.player1 = player1;
         this.player2 = player2;
@@ -51,7 +54,8 @@ public class MenuCenter {
     }
 
     public MenuCenter(Character player1, Character player2, Consumer<Character> changeWeaponHandler,
-            Consumer<Character> showPlayerInfoHandler, Map<String, List<StatusMod>> modifiers, Map<String, String> information,
+            Consumer<Character> showPlayerInfoHandler, Map<String, List<StatusMod>> modifiers,
+            Map<String, String> information,
             Function<Character, String> missionTextProvider) {
         this(player1, player2, changeWeaponHandler, showPlayerInfoHandler, modifiers, information);
         setMissionTextProvider(missionTextProvider);
@@ -64,6 +68,7 @@ public class MenuCenter {
     public Action playPlayer1() {
         selector1.setInformationVisible(infoVisible1);
         selector1.setProgressText(missionTextProvider.apply(player1));
+        selector1.setCompletedAchievementsBadgeCount(completedAchievementsBadgeCount);
 
         mod1.mod(BASE_SNAP);
         Action action = menu1.run();
@@ -76,6 +81,7 @@ public class MenuCenter {
     public Action playPlayer2() {
         selector2.setInformationVisible(infoVisible2);
         selector2.setProgressText(missionTextProvider.apply(player2));
+        selector2.setCompletedAchievementsBadgeCount(completedAchievementsBadgeCount);
 
         mod2.mod(BASE_SNAP);
         Action action = menu2.run();
@@ -93,6 +99,10 @@ public class MenuCenter {
     public DynamicMenu<Action, Character> getMenu2() {
         mod2.mod(BASE_SNAP);
         return menu2;
+    }
+
+    public void setCompletedAchievementsBadgeCount(int count) {
+        this.completedAchievementsBadgeCount = Math.max(0, count);
     }
 
     private static MenuStatusModifier configMenu(DynamicMenu<Action, Character> menu, Character player,

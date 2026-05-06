@@ -57,7 +57,8 @@ public final class AchievementStore {
                     item.sequenceIndex(),
                     item.completed(),
                     parseInstant(item.completedAt()),
-                    item.valueProgress()));
+                    item.valueProgress(),
+                    item.actorSequenceProgress()));
         }
 
         return result;
@@ -75,7 +76,8 @@ public final class AchievementStore {
                         item.sequenceIndex(),
                         item.completed(),
                         item.completedAt() == null ? null : item.completedAt().toString(),
-                        item.valueProgress()));
+                        item.valueProgress(),
+                        item.actorSequenceProgress()));
             }
         }
 

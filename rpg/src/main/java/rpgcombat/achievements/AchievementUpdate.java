@@ -205,10 +205,48 @@ public record AchievementUpdate(
         return new AchievementUpdate(owner, opponent, null, null, null, winner, roundNumber, Set.copyOf(events), safeFields(fields));
     }
 
+    /** Crea una còpia de l'actualització afegint esdeveniments i camps derivats. */
+    public AchievementUpdate withAdditional(Set<AchievementEvent> extraEvents, Map<String, Object> extraFields) {
+        EnumSet<AchievementEvent> mergedEvents = EnumSet.noneOf(AchievementEvent.class);
+        if (events != null) mergedEvents.addAll(events);
+        if (extraEvents != null) {
+            for (AchievementEvent event : extraEvents) {
+                if (event != null) mergedEvents.add(event);
+            }
+        }
+
+        Map<String, Object> mergedFields = new HashMap<>();
+        if (fields != null) mergedFields.putAll(fields);
+        if (extraFields != null) {
+            extraFields.forEach((key, value) -> {
+                if (key != null && value != null) mergedFields.put(key, value);
+            });
+        }
+
+        return new AchievementUpdate(owner, opponent, ownerAction, opponentAction, result, winner, roundNumber,
+                Set.copyOf(mergedEvents), safeFields(mergedFields));
+    }
+
     /** Crea una actualització simple d'un sol esdeveniment. */
     public static AchievementUpdate simple(Character owner, AchievementEvent event) {
         Map<String, Object> fields = baseFields(owner, null, null, null, 0);
         return new AchievementUpdate(owner, null, null, null, null, Winner.NONE, 0, Set.of(event), safeFields(fields));
+    }
+
+    /** Crea una actualització de progrés d'una missió de perk encara no completada. */
+    public static AchievementUpdate perkMissionProgress(Character owner, String missionId, String perkId,
+            double progressBefore, double progressAfter, double target, int activeMissionCount, int roundNumber) {
+        Map<String, Object> fields = baseFields(owner, null, null, null, roundNumber);
+        fields.put("missionId", missionId);
+        fields.put("perkMissionId", missionId);
+        fields.put("perkId", perkId);
+        fields.put("perkMissionProgressBefore", progressBefore);
+        fields.put("perkMissionProgressAfter", progressAfter);
+        fields.put("perkMissionTarget", target);
+        fields.put("activePerkMissionCount", activeMissionCount);
+        fields.put("perkMissionCompleted", progressAfter >= target);
+        return new AchievementUpdate(owner, null, null, null, null, Winner.NONE, roundNumber,
+                Set.of(AchievementEvent.PERK_MISSION_PROGRESS), safeFields(fields));
     }
 
     /** Crea una actualització de missió de perk completada. */
@@ -453,6 +491,14 @@ public record AchievementUpdate(
         return value == null ? null : String.valueOf(value);
     }
 
+    /** Identificador estable de l'actor que ha generat aquesta actualització. */
+    public String actorKey() {
+        String explicit = stringField("actorKey");
+        if (explicit != null && !explicit.isBlank()) return explicit;
+        if (owner == null) return null;
+        return owner.getName();
+    }
+
     private static Map<String, Object> baseFields(Character owner, Character opponent, Action ownerAction,
             Action opponentAction, int roundNumber) {
         Map<String, Object> fields = new HashMap<>();
@@ -462,6 +508,11 @@ public record AchievementUpdate(
         fields.put("ownerAction", ownerAction == null ? null : ownerAction.name());
         fields.put("enemyAction", opponentAction == null ? null : opponentAction.name());
         fields.put("opponentAction", opponentAction == null ? null : opponentAction.name());
+        if (owner != null) {
+            fields.put("actorKey", owner.getName());
+            fields.put("ownerName", owner.getName());
+        }
+        if (opponent != null) fields.put("opponentName", opponent.getName());
         if (owner != null) addCharacterFields(fields, "", owner);
         if (opponent != null) addCharacterFields(fields, "opponent", opponent);
         boolean ownerChaos = owner != null && owner.hasEffect(Chaos.INTERNAL_EFFECT_KEY);
