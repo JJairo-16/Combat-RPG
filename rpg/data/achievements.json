@@ -1,0 +1,92 @@
+[
+  {
+    "id": "PRIMER_COP",
+    "name": "Primer cop",
+    "description": "Fes el teu primer atac.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "ACTION_ATTACK",
+      "target": 1
+    }
+  },
+  {
+    "id": "PRIMERA_VICTORIA",
+    "name": "Primera victòria",
+    "description": "Guanya un combat amb qualsevol jugador.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "MATCH_WON",
+      "target": 1
+    }
+  },
+  {
+    "id": "DEU_VICTORIES",
+    "name": "Campió persistent",
+    "description": "Guanya 10 combats en total. El progrés és global del dispositiu.",
+    "goal": 10,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "MATCH_WON",
+      "target": 10
+    }
+  },
+  {
+    "id": "COP_CRITIC",
+    "name": "Cop crític",
+    "description": "Aconsegueix un cop crític.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "CRIT",
+      "target": 1
+    }
+  },
+  {
+    "id": "ARSENAL_CANVIANT",
+    "name": "Arsenal canviant",
+    "description": "Equipa una arma des del menú d'armes.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "WEAPON_EQUIPPED",
+      "target": 1
+    }
+  },
+  {
+    "id": "OMBRA_SECRETA",
+    "name": "Assoliment secret",
+    "description": "Descobreix una condició oculta durant el combat.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": false,
+      "showDescriptionBeforeComplete": false
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "SELF_HIT",
+      "target": 1
+    }
+  }
+]

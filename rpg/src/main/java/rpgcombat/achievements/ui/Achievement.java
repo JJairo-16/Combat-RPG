@@ -1,4 +1,4 @@
-package rpgcombat.achievements;
+package rpgcombat.achievements.ui;
 
 /**
  * Representa un assoliment del joc.

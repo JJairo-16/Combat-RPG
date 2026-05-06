@@ -2,6 +2,8 @@ package rpgcombat.combat;
 
 import java.util.Random;
 
+import rpgcombat.achievements.AchievementSystem;
+import rpgcombat.achievements.AchievementUpdate;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.balance.CombatBalanceRegistry;
@@ -42,6 +44,7 @@ public class CombatSystem {
     private final RoundRecoveryService recoveryService = new RoundRecoveryService();
     private final TurnResolver turnResolver = new TurnResolver(attackResolver, effectPipeline, recoveryService);
     private final CombatPerkSystem perkSystem;
+    private final AchievementSystem achievementSystem;
 
     private CombatBalanceConfig balance = CombatBalanceRegistry.get();
     private AntiStallConfig antiStall = balance.antiStall();
@@ -67,7 +70,7 @@ public class CombatSystem {
      * @param policy política de prioritat
      */
     public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy) {
-        this(p1, p2, policy, null);
+        this(p1, p2, policy, null, null);
     }
 
     /**
@@ -79,14 +82,34 @@ public class CombatSystem {
      * @param perkSystem sistema de perks
      */
     public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy, CombatPerkSystem perkSystem) {
+        this(p1, p2, policy, perkSystem, null);
+    }
+
+    /**
+     * Crea el sistema amb progressió de missions, perks i assoliments globals.
+     *
+     * @param p1 primer personatge
+     * @param p2 segon personatge
+     * @param policy política de prioritat
+     * @param perkSystem sistema de perks
+     * @param achievementSystem sistema d'assoliments globals
+     */
+    public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy, CombatPerkSystem perkSystem,
+            AchievementSystem achievementSystem) {
         this.player1 = p1;
         this.player2 = p2;
         this.priorityPolicy = policy;
         this.perkSystem = perkSystem;
+        this.achievementSystem = achievementSystem;
     }
 
     public boolean preAntiStall() {
         return roundNumber + 1 == antiStall.startTurn();
+    }
+
+    /** @return número de ronda actual. */
+    public int roundNumber() {
+        return roundNumber;
     }
 
     /**
@@ -218,18 +241,27 @@ public class CombatSystem {
     }
 
     /**
-     * Actualitza la missió del personatge si el sistema està actiu.
+     * Actualitza missions i assoliments si els sistemes estan actius.
      */
     private void updateMissionProgress(Character actor, Character opponent, Action actorAction, Action opponentAction,
             TurnResult result) {
-        if (perkSystem == null) {
-            return;
+        if (perkSystem != null) {
+            perkSystem.afterTurn(actor, opponent, actorAction, opponentAction, result, roundNumber);
         }
 
-        perkSystem.afterTurn(actor, opponent, actorAction, opponentAction, result, roundNumber);
+        if (achievementSystem != null) {
+            achievementSystem.onTurn(AchievementUpdate.fromTurn(actor, opponent, actorAction, opponentAction, result,
+                    roundNumber));
+        }
 
         if (actorAction == Action.ATTACK && opponentAction == Action.DODGE) {
-            perkSystem.afterTurn(opponent, actor, opponentAction, actorAction, result, roundNumber);
+            if (perkSystem != null) {
+                perkSystem.afterTurn(opponent, actor, opponentAction, actorAction, result, roundNumber);
+            }
+            if (achievementSystem != null) {
+                achievementSystem.onTurn(AchievementUpdate.fromTurn(opponent, actor, opponentAction, actorAction, result,
+                        roundNumber));
+            }
         }
     }
 

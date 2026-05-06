@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;
 
+import rpgcombat.achievements.AchievementSystem;
+import rpgcombat.achievements.config.AchievementRegistry;
+import rpgcombat.achievements.ui.AchievementGridViewer;
 import rpgcombat.config.app.AppConfig;
 import rpgcombat.config.app.AppConfigLoader;
 import rpgcombat.game.EndGameAction;
@@ -19,6 +22,7 @@ public final class AppController {
 
     private final ResourcePreloader preloader = new ResourcePreloader();
     private AppConfig config;
+    private AchievementSystem achievementSystem;
 
     /** Inicia l'aplicació fins que l'usuari surt. */
     public void run() {
@@ -36,6 +40,11 @@ public final class AppController {
 
                 if (action == HomeMenu.Action.EXIT) {
                     return;
+                }
+
+                if (action == HomeMenu.Action.ACHIEVEMENTS) {
+                    AchievementGridViewer.show(achievementSystem.toViewModels());
+                    continue;
                 }
 
                 if (action == HomeMenu.Action.CREDITS) {
@@ -60,7 +69,7 @@ public final class AppController {
     private EndGameAction playOneMatch() {
         preloader.preloadNewMatch();
 
-        GameBootstrap bootstrap = new GameBootstrap(config, preloader);
+        GameBootstrap bootstrap = new GameBootstrap(config, preloader, achievementSystem);
         GameLoop game = bootstrap.createGame();
 
         return game.init();
@@ -115,6 +124,7 @@ public final class AppController {
     private void preloadAll() throws IOException {
         preloader.preloadApp();
         preloader.preloadGameStatic(config);
+        achievementSystem = AchievementSystem.load(AchievementRegistry.all(), config.paths().achievementSaveFile());
     }
 
     /** Indica si cal mostrar la intro de càrrega. */

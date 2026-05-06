@@ -1,5 +1,6 @@
 package rpgcombat.app;
 
+import rpgcombat.achievements.AchievementSystem;
 import rpgcombat.config.app.AppConfig;
 import rpgcombat.config.character.CharacterCreationMode;
 import rpgcombat.config.debug.DebugRuntime;
@@ -14,11 +15,13 @@ import rpgcombat.utils.ui.Cleaner;
 public class GameBootstrap {
     private final AppConfig config;
     private final ResourcePreloader preloader;
+    private final AchievementSystem achievementSystem;
 
     /** Crea el constructor de partides. */
-    public GameBootstrap(AppConfig config, ResourcePreloader preloader) {
+    public GameBootstrap(AppConfig config, ResourcePreloader preloader, AchievementSystem achievementSystem) {
         this.config = config;
         this.preloader = preloader;
+        this.achievementSystem = achievementSystem;
     }
 
     /** Crea una partida llesta per iniciar-se. */
@@ -40,7 +43,8 @@ public class GameBootstrap {
                 preloader.modifiers(),
                 preloader.menuInformation(),
                 cinematicsOptions,
-                config.homeScreen());
+                config.homeScreen(),
+                achievementSystem);
     }
 
     /** Crea un personatge segons el mode indicat. */

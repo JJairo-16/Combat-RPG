@@ -1,4 +1,4 @@
-package rpgcombat.achievements;
+package rpgcombat.achievements.ui;
 
 import static rpgcombat.utils.ui.Ansi.*;
 

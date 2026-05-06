@@ -2,6 +2,7 @@ package rpgcombat.game;
 
 import java.util.List;
 import java.util.Map;
+import rpgcombat.achievements.AchievementSystem;
 import rpgcombat.combat.CombatSystem;
 import rpgcombat.combat.models.Action;
 import rpgcombat.combat.models.Winner;
@@ -47,23 +48,26 @@ public class GameLoop {
     private final TextWrapCache wrapCache = new TextWrapCache();
     private final CinematicsOptions cinematicsOptions;
     private final HomeScreenConfig homeScreenConfig;
+    private final AchievementSystem achievementSystem;
 
     // Cache d'armes (assumim que no canvia durant la partida)
     private final List<WeaponDefinition> entries = Arsenal.values();
 
     public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers,
-            Map<String, String> information, CinematicsOptions cinematicsOptions, HomeScreenConfig homeScreenConfig) {
+            Map<String, String> information, CinematicsOptions cinematicsOptions, HomeScreenConfig homeScreenConfig,
+            AchievementSystem achievementSystem) {
         this.player1 = player1;
         this.player2 = player2;
         this.perkSystem = new CombatPerkSystem(player1, player2);
         this.combatSystem = new CombatSystem(player1, player2,
-                new rpgcombat.combat.turnservice.DefaultTurnPriorityPolicy(), perkSystem);
+                new rpgcombat.combat.turnservice.DefaultTurnPriorityPolicy(), perkSystem, achievementSystem);
 
         this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers,
                 information);
         this.menu.setMissionTextProvider(perkSystem::missionSummary);
         this.cinematicsOptions = cinematicsOptions;
         this.homeScreenConfig = homeScreenConfig;
+        this.achievementSystem = achievementSystem;
     }
 
     /**
@@ -88,6 +92,7 @@ public class GameLoop {
             }
         } while (winner == Winner.NONE);
 
+        achievementSystem.onMatchFinished(winner, player1, player2, combatSystem.roundNumber());
         return finish(winner);
     }
 
@@ -178,8 +183,10 @@ public class GameLoop {
             }
         } while (loop);
 
-        if (weapon != null)
+        if (weapon != null) {
             player.setWeapon(weapon);
+            achievementSystem.onWeaponEquipped(player);
+        }
     }
 
     private final StringBuilder playerInfo = new StringBuilder(24_000);

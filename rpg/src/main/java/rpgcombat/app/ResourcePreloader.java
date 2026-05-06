@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import rpgcombat.achievements.config.AchievementLoader;
+import rpgcombat.achievements.config.AchievementRegistry;
 import rpgcombat.balance.CombatBalanceLoader;
 import rpgcombat.balance.CombatBalanceRegistry;
 import rpgcombat.balance.config.CombatBalanceConfig;
@@ -65,6 +67,7 @@ public final class ResourcePreloader {
         PerkRegistry.initialize(PerkLoader.load(Path.of(paths.perksConfig())));
         DivinePerkRegistry.initialize(DivinePerkLoader.load(Path.of(paths.divinePerksConfig())));
         SynergyRegistry.initialize(SynergyLoader.load(Path.of(paths.synergiesConfig())));
+        AchievementRegistry.initialize(AchievementLoader.load(Path.of(paths.achievementsConfig())));
 
         gameStaticLoaded = true;
     }
