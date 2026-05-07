@@ -2,13 +2,14 @@ package rpgcombat.discovery;
 
 /** Categories disponibles dins el grimori de descobriments. */
 public enum DiscoveryCategory {
-    WEAPONS("Armes"),
     BREEDS("Races"),
-    PERKS("Perks"),
-    DIVINE_PERKS("Perks divines"),
-    MISSIONS("Missions"),
+    WEAPONS("Armes"),
     ACTIONS("Accions"),
     EFFECTS("Efectes"),
+
+    MISSIONS("Missions"),
+    PERKS("Perks"),
+    DIVINE_PERKS("Perks divines"),
     SYNERGIES("Sinergies");
 
     private final String defaultTitle;

@@ -19,6 +19,7 @@ public record DiscoveryEntryDefinition(
         boolean hiddenUntilDiscovered,
         int sortOrder) {
 
+    /** Normalitza els valors nuls o buits de l'entrada. */
     public DiscoveryEntryDefinition {
         if (title == null || title.isBlank()) title = id;
         if (lockedTitle == null || lockedTitle.isBlank()) lockedTitle = "???";
@@ -51,6 +52,7 @@ public record DiscoveryEntryDefinition(
                 override.sortOrder() == null ? sortOrder : override.sortOrder());
     }
 
+    /** Retorna el text o el valor alternatiu. */
     private static String textOr(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
     }

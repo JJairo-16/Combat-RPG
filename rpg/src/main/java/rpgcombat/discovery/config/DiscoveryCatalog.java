@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,6 +29,7 @@ public final class DiscoveryCatalog {
     private final Map<DiscoveryCategory, DiscoveryCategoryDefinition> categories;
     private final Map<DiscoveryKey, DiscoveryEntryDefinition> entries;
 
+    /** Crea un catàleg immutable. */
     private DiscoveryCatalog(Map<DiscoveryCategory, DiscoveryCategoryDefinition> categories,
             Map<DiscoveryKey, DiscoveryEntryDefinition> entries) {
         this.categories = Map.copyOf(categories);
@@ -80,6 +82,7 @@ public final class DiscoveryCatalog {
         return entries.size();
     }
 
+    /** Crea les categories per defecte. */
     private static Map<DiscoveryCategory, DiscoveryCategoryDefinition> defaultCategories() {
         Map<DiscoveryCategory, DiscoveryCategoryDefinition> result = new EnumMap<>(DiscoveryCategory.class);
         int order = 10;
@@ -90,6 +93,7 @@ public final class DiscoveryCatalog {
         return result;
     }
 
+    /** Aplica canvis JSON sobre les categories. */
     private static void applyCategoryOverrides(Map<DiscoveryCategory, DiscoveryCategoryDefinition> categories,
             List<DiscoveryCategoryConfig> overrides) {
         if (overrides == null) return;
@@ -106,6 +110,7 @@ public final class DiscoveryCatalog {
         }
     }
 
+    /** Afegeix les entrades generades des dels registres del joc. */
     private static void addAutomaticEntries(Map<DiscoveryKey, DiscoveryEntryDefinition> entries) {
         int order = 100;
         for (WeaponDefinition weapon : Arsenal.values()) {
@@ -222,6 +227,7 @@ public final class DiscoveryCatalog {
         }
     }
 
+    /** Aplica entrades manuals o modifica les automàtiques. */
     private static void applyManualEntries(Map<DiscoveryKey, DiscoveryEntryDefinition> entries,
             List<DiscoveryEntryConfig> configs) {
         if (configs == null) return;
@@ -251,7 +257,7 @@ public final class DiscoveryCatalog {
         }
     }
 
-
+    /** Genera els detalls visibles d'una arma. */
     private static List<String> weaponDetails(WeaponDefinition weapon) {
         List<String> details = new ArrayList<>();
         details.add("Dany base: " + weapon.getBaseDamage());
@@ -274,6 +280,7 @@ public final class DiscoveryCatalog {
         return List.copyOf(details);
     }
 
+    /** Genera els detalls visibles d'una perk. */
     private static List<String> perkDetails(PerkDefinition perk) {
         List<String> details = new ArrayList<>();
         if (perk.family() != null) {
@@ -286,6 +293,7 @@ public final class DiscoveryCatalog {
         return List.copyOf(details);
     }
 
+    /** Genera els detalls visibles d'una sinergia. */
     private static List<String> synergyDetails(SynergyDefinition synergy) {
         List<String> details = new ArrayList<>();
         if (synergy.type() != null) {
@@ -303,10 +311,12 @@ public final class DiscoveryCatalog {
         return List.copyOf(details);
     }
 
+    /** Desa una entrada pel seu identificador compost. */
     private static void put(Map<DiscoveryKey, DiscoveryEntryDefinition> entries, DiscoveryEntryDefinition entry) {
         entries.put(entry.key(), entry);
     }
 
+    /** Converteix text en una categoria vàlida. */
     private static DiscoveryCategory parseCategory(String id) {
         if (id == null || id.isBlank()) return null;
         try {
@@ -316,6 +326,7 @@ public final class DiscoveryCatalog {
         }
     }
 
+    /** Retorna només les línies amb text. */
     private static List<String> lines(String... values) {
         List<String> result = new ArrayList<>();
         if (values == null) return List.of();
@@ -325,15 +336,17 @@ public final class DiscoveryCatalog {
         return List.copyOf(result);
     }
 
+    /** Retorna el text o el valor alternatiu. */
     private static String textOr(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
     }
 
+    /** Indica si l'atac especial està buit. */
     private static boolean isEmptyAttackSkill(String attackSkill) {
         return attackSkill == null || attackSkill.isBlank() || "nothing".equalsIgnoreCase(attackSkill.trim());
     }
 
-
+    /** Fa llegible el nom d'un atac especial. */
     private static String readableAttackSkill(String key) {
         if (key == null || key.isBlank()) return "";
         return switch (key.trim()) {
@@ -349,6 +362,7 @@ public final class DiscoveryCatalog {
         };
     }
 
+    /** Fa llegible una passiva d'arma. */
     private static String readablePassive(rpgcombat.weapons.config.PassiveConfig passive) {
         if (passive == null || passive.type() == null || passive.type().isBlank()) return "";
         return switch (passive.type().trim()) {
@@ -361,11 +375,13 @@ public final class DiscoveryCatalog {
         };
     }
 
+    /** Formata un paràmetre passiu percentual. */
     private static String passiveParamPercent(rpgcombat.weapons.config.PassiveConfig passive, String key) {
         Optional<Double> value = passiveDouble(passive, key);
         return value.map(v -> " (" + formatPercent(v) + ")").orElse("");
     }
 
+    /** Genera els detalls de la passiva d'execució. */
     private static String executorPassiveDetails(rpgcombat.weapons.config.PassiveConfig passive) {
         Optional<Double> thresholdLife = passiveDouble(passive, "thresholdLife");
         Optional<Double> damageBonus = passiveDouble(passive, "damageBonus");
@@ -375,6 +391,7 @@ public final class DiscoveryCatalog {
         return parts.isEmpty() ? "" : " (" + String.join(", ", parts) + ")";
     }
 
+    /** Genera els detalls de la passiva de ceguesa. */
     private static String blindPassiveDetails(rpgcombat.weapons.config.PassiveConfig passive) {
         Optional<Double> applyProb = passiveDouble(passive, "applyProb");
         Optional<Integer> duration = passiveInteger(passive, "duration");
@@ -384,6 +401,7 @@ public final class DiscoveryCatalog {
         return parts.isEmpty() ? "" : " (" + String.join(", ", parts) + ")";
     }
 
+    /** Genera els detalls de la passiva de verí. */
     private static String poisonPassiveDetails(rpgcombat.weapons.config.PassiveConfig passive) {
         Optional<Double> extraDamagePerStack = passiveDouble(passive, "extraDamagePerStack");
         Optional<Integer> softCapStart = passiveInteger(passive, "softCapStart");
@@ -393,18 +411,21 @@ public final class DiscoveryCatalog {
         return parts.isEmpty() ? "" : " (" + String.join(", ", parts) + ")";
     }
 
+    /** Llegeix un paràmetre decimal d'una passiva. */
     private static Optional<Double> passiveDouble(rpgcombat.weapons.config.PassiveConfig passive, String key) {
         if (passive == null || passive.params() == null || !passive.params().containsKey(key)) return Optional.empty();
         Object value = passive.params().get(key);
         return value instanceof Number number ? Optional.of(number.doubleValue()) : Optional.empty();
     }
 
+    /** Llegeix un paràmetre enter d'una passiva. */
     private static Optional<Integer> passiveInteger(rpgcombat.weapons.config.PassiveConfig passive, String key) {
         if (passive == null || passive.params() == null || !passive.params().containsKey(key)) return Optional.empty();
         Object value = passive.params().get(key);
         return value instanceof Number number ? Optional.of(number.intValue()) : Optional.empty();
     }
 
+    /** Fa llegible una fase d'activació. */
     private static String readablePhase(String phase) {
         if (phase == null) return "";
         return switch (phase) {
@@ -420,6 +441,7 @@ public final class DiscoveryCatalog {
         };
     }
 
+    /** Fa llegible un tipus de sinergia. */
     private static String readableSynergyType(String type) {
         if (type == null) return "";
         return switch (type) {
@@ -429,10 +451,12 @@ public final class DiscoveryCatalog {
         };
     }
 
+    /** Formata un decimal com a percentatge. */
     private static String formatPercent(double value) {
         return formatNumber(value * 100.0) + "%";
     }
 
+    /** Fa llegible una llista d'etiquetes. */
     private static String readableTags(List<String> values) {
         return values.stream()
                 .filter(value -> value != null && !value.isBlank())
@@ -442,6 +466,7 @@ public final class DiscoveryCatalog {
                 .orElse("");
     }
 
+    /** Converteix un codi tècnic en text llegible. */
     private static String readableCode(String value) {
         if (value == null || value.isBlank()) return "";
         String cleaned = value.trim().replace('_', ' ');
@@ -462,8 +487,9 @@ public final class DiscoveryCatalog {
         return result.toString();
     }
 
+    /** Formata un número sense decimals innecessaris. */
     private static String formatNumber(double value) {
         if (value == Math.rint(value)) return Long.toString(Math.round(value));
-        return String.format(java.util.Locale.ROOT, "%.2f", value);
+        return String.format(Locale.ROOT, "%.2f", value);
     }
 }

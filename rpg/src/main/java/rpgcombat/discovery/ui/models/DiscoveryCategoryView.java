@@ -1,4 +1,4 @@
-package rpgcombat.discovery.ui;
+package rpgcombat.discovery.ui.models;
 
 import java.util.List;
 

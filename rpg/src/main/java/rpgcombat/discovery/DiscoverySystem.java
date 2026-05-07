@@ -12,9 +12,9 @@ import rpgcombat.discovery.config.DiscoveryCatalog;
 import rpgcombat.discovery.config.DiscoveryCategoryDefinition;
 import rpgcombat.discovery.config.DiscoveryEntryDefinition;
 import rpgcombat.discovery.persistence.DiscoveryStore;
-import rpgcombat.discovery.ui.DiscoveryCategoryView;
-import rpgcombat.discovery.ui.DiscoveryEntryView;
-import rpgcombat.discovery.ui.DiscoveryOverview;
+import rpgcombat.discovery.ui.models.DiscoveryCategoryView;
+import rpgcombat.discovery.ui.models.DiscoveryEntryView;
+import rpgcombat.discovery.ui.models.DiscoveryOverview;
 import rpgcombat.utils.ui.Prettier;
 
 /** Coordina catàleg, progrés i persistència dels descobriments globals. */
@@ -25,6 +25,7 @@ public final class DiscoverySystem {
     private final Map<DiscoveryKey, DiscoveryProgress> progressByKey;
     private boolean dirty;
 
+    /** Crea el sistema amb el progrés carregat. */
     private DiscoverySystem(DiscoveryCatalog catalog, DiscoveryStore store, Path savePath,
             Map<DiscoveryKey, DiscoveryProgress> progressByKey) {
         this.catalog = catalog;
@@ -114,6 +115,7 @@ public final class DiscoverySystem {
         return List.copyOf(progressByKey.values());
     }
 
+    /** Converteix una definició en model visual d'entrada. */
     private DiscoveryEntryView toEntryView(DiscoveryEntryDefinition definition, DiscoveryProgress progress) {
         boolean discovered = progress != null;
         if (!discovered) {

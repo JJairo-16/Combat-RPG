@@ -74,6 +74,7 @@ public final class DiscoveryStore {
         }
     }
 
+    /** Llegeix el fitxer de desament si existeix. */
     private DiscoverySaveData readSave(Path path) {
         if (path == null || !Files.exists(path)) return null;
         try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
@@ -83,6 +84,7 @@ public final class DiscoveryStore {
         }
     }
 
+    /** Converteix un text ISO-8601 en instant. */
     private Instant parseInstant(String value) {
         if (value == null || value.isBlank()) return null;
         try {
@@ -92,6 +94,7 @@ public final class DiscoveryStore {
         }
     }
 
+    /** Converteix text en una categoria vàlida. */
     private DiscoveryCategory parseCategory(String value) {
         if (value == null || value.isBlank()) return null;
         try {

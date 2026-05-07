@@ -12,11 +12,12 @@ import rpgcombat.config.app.AppConfigLoader;
 import rpgcombat.discovery.DiscoverySystem;
 import rpgcombat.discovery.config.DiscoveryCatalog;
 import rpgcombat.discovery.config.DiscoveryCatalogLoader;
-import rpgcombat.discovery.ui.DiscoveryListViewer;
+import rpgcombat.discovery.ui.DiscoveryInteractiveViewer;
 import rpgcombat.game.EndGameAction;
 import rpgcombat.game.GameLoop;
 import rpgcombat.game.cinematics.CinematicBuilder;
 import rpgcombat.game.menu.HomeMenu;
+import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.LoadingIntro;
 import rpgcombat.utils.ui.Prettier;
 
@@ -53,7 +54,7 @@ public final class AppController {
                 }
 
                 if (action == HomeMenu.Action.DISCOVERIES) {
-                    DiscoveryListViewer.show(discoverySystem.toOverview());
+                    DiscoveryInteractiveViewer.show(discoverySystem.toOverview());
                     continue;
                 }
 
@@ -69,6 +70,7 @@ public final class AppController {
                 case PLAY_AGAIN -> goHome = false;
                 case HOME -> goHome = config.homeScreen().enabled();
                 case EXIT -> {
+                    new Cleaner().clear();
                     return;
                 }
             }
