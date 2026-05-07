@@ -1,0 +1,279 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "id": "WEAPONS",
+      "title": "Armes",
+      "description": "Armes equipades o utilitzades durant la partida.",
+      "showLockedEntries": true,
+      "sortOrder": 10
+    },
+    {
+      "id": "BREEDS",
+      "title": "Races",
+      "description": "Races que han entrat en joc durant la creació de personatges.",
+      "showLockedEntries": true,
+      "sortOrder": 20
+    },
+    {
+      "id": "PERKS",
+      "title": "Perks",
+      "description": "Millores obtingudes en completar missions de perk.",
+      "showLockedEntries": true,
+      "sortOrder": 30
+    },
+    {
+      "id": "DIVINE_PERKS",
+      "title": "Perks divines",
+      "description": "Benediccions inicials atorgades per afinitat divina.",
+      "showLockedEntries": true,
+      "sortOrder": 40
+    },
+    {
+      "id": "MISSIONS",
+      "title": "Missions",
+      "description": "Objectius assignats al jugador durant el combat.",
+      "showLockedEntries": true,
+      "sortOrder": 50
+    },
+    {
+      "id": "ACTIONS",
+      "title": "Accions",
+      "description": "Accions bàsiques i especials utilitzades en combat.",
+      "showLockedEntries": true,
+      "sortOrder": 60
+    },
+    {
+      "id": "EFFECTS",
+      "title": "Efectes",
+      "description": "Estats visibles que poden alterar un combatent.",
+      "showLockedEntries": true,
+      "sortOrder": 70
+    },
+    {
+      "id": "SYNERGIES",
+      "title": "Sinergies",
+      "description": "Combinacions especials de perks activades durant una partida.",
+      "showLockedEntries": true,
+      "sortOrder": 80
+    }
+  ],
+  "entries": [
+    {
+      "category": "ACTIONS",
+      "id": "ATTACK",
+      "title": "Atacar",
+      "shortDescription": "Acció ofensiva bàsica amb l'arma equipada.",
+      "description": [
+        "El personatge intenta colpejar l'oponent amb l'arma equipada.",
+        "Si no pot pagar el cost de mana de l'arma, utilitza un atac alternatiu desarmat."
+      ],
+      "discoveredWhen": "Quan un personatge ataca per primera vegada.",
+      "hint": "Tria una acció ofensiva durant el combat.",
+      "tags": ["combat", "bàsica", "ofensiva"],
+      "sortOrder": 10
+    },
+    {
+      "category": "ACTIONS",
+      "id": "DEFEND",
+      "title": "Defensar-se",
+      "shortDescription": "Acció defensiva que intenta reduir el dany rebut.",
+      "description": [
+        "El personatge prepara la guàrdia per reduir part del dany entrant.",
+        "Defensar-se pot ser especialment útil quan l'oponent carrega un atac o quan cal guanyar temps."
+      ],
+      "discoveredWhen": "Quan un personatge es defensa per primera vegada.",
+      "hint": "No tots els torns s'han de resoldre atacant.",
+      "tags": ["combat", "bàsica", "defensiva"],
+      "sortOrder": 20
+    },
+    {
+      "category": "ACTIONS",
+      "id": "DODGE",
+      "title": "Esquivar",
+      "shortDescription": "Acció evasiva que intenta evitar completament un atac.",
+      "description": [
+        "El personatge intenta sortir de la trajectòria de l'atac enemic.",
+        "Si l'esquiva falla, el cop pot entrar amb força."
+      ],
+      "discoveredWhen": "Quan un personatge esquiva per primera vegada.",
+      "hint": "Prova de no rebre el cop en comptes de bloquejar-lo.",
+      "tags": ["combat", "bàsica", "evasiva"],
+      "sortOrder": 30
+    },
+    {
+      "category": "ACTIONS",
+      "id": "CHARGE",
+      "title": "Carregar atac",
+      "shortDescription": "Acció de preparació que potencia el proper atac.",
+      "description": [
+        "El personatge dedica el torn a preparar un atac més contundent.",
+        "És una aposta: pot donar avantatge, però també deixa marge a l'oponent."
+      ],
+      "discoveredWhen": "Quan un personatge carrega un atac per primera vegada.",
+      "hint": "Prepara't abans de colpejar.",
+      "tags": ["combat", "bàsica", "preparació"],
+      "sortOrder": 40
+    },
+    {
+      "category": "ACTIONS",
+      "id": "SPIRITUAL_CALLING",
+      "title": "Crida espiritual",
+      "lockedTitle": "???",
+      "shortDescription": "Invocació que pot curar el personatge quan la seva vida és baixa.",
+      "description": [
+        "El personatge invoca els esperits quan està en una situació crítica.",
+        "La curació depèn d'una tirada espiritual influïda per les seves estadístiques."
+      ],
+      "discoveredWhen": "Quan el jugador utilitza la Crida espiritual amb èxit.",
+      "hint": "Quan la vida cau prou, alguns personatges poden invocar ajuda espiritual.",
+      "tags": ["combat", "especial", "curació"],
+      "hiddenUntilDiscovered": true,
+      "sortOrder": 100
+    },
+    {
+      "category": "ACTIONS",
+      "id": "BLOOD_PACT",
+      "title": "Pacte de sang",
+      "lockedTitle": "???",
+      "shortDescription": "Acció arriscada que transforma vida en mana.",
+      "description": [
+        "El personatge paga un tribut de vida per restaurar mana.",
+        "Pot salvar un combat, però deixa el jugador més a prop de la derrota."
+      ],
+      "discoveredWhen": "Quan el jugador utilitza el Pacte de sang amb èxit.",
+      "hint": "La manca de mana pot obrir camins perillosos.",
+      "tags": ["combat", "especial", "mana", "risc"],
+      "hiddenUntilDiscovered": true,
+      "sortOrder": 110
+    },
+    {
+      "category": "EFFECTS",
+      "id": "POISON",
+      "title": "Verí",
+      "lockedTitle": "???",
+      "shortDescription": "Efecte persistent que causa dany amb el pas dels torns.",
+      "description": [
+        "El verí desgasta el combatent al llarg del temps.",
+        "És especialment perillós en combats llargs o quan el personatge ja està debilitat."
+      ],
+      "discoveredWhen": "Quan un combatent pateix verí per primera vegada.",
+      "hint": "Algunes armes, passives o situacions poden embrutar la sang.",
+      "tags": ["combat", "negatiu", "dany temporal"],
+      "hiddenUntilDiscovered": true,
+      "sortOrder": 10
+    },
+    {
+      "category": "EFFECTS",
+      "id": "SUDDEN_DEATH_POISON",
+      "title": "Verí de mort sobtada",
+      "lockedTitle": "???",
+      "shortDescription": "Pressió extrema que força el final dels combats massa llargs.",
+      "description": [
+        "Quan el combat s'allarga massa, una pressió letal comença a castigar els combatents.",
+        "Aquest efecte evita que una partida quedi encallada indefinidament."
+      ],
+      "discoveredWhen": "Quan s'activa la fase antiestancament del combat.",
+      "hint": "Els combats eterns tenen conseqüències.",
+      "tags": ["combat", "antiestancament", "dany temporal"],
+      "hiddenUntilDiscovered": true,
+      "sortOrder": 20
+    },
+    {
+      "category": "EFFECTS",
+      "id": "FRACTURE",
+      "title": "Fractura",
+      "lockedTitle": "???",
+      "shortDescription": "Lesió temporal que penalitza el combatent.",
+      "description": [
+        "Una fractura representa una lesió greu produïda durant el combat.",
+        "Pot limitar el rendiment del personatge fins que l'efecte desapareix."
+      ],
+      "discoveredWhen": "Quan un combatent pateix una fractura per primera vegada.",
+      "hint": "Els impactes greus poden trencar més que la moral.",
+      "tags": ["combat", "negatiu", "lesió"],
+      "hiddenUntilDiscovered": true,
+      "sortOrder": 30
+    },
+    {
+      "category": "EFFECTS",
+      "id": "BLIND",
+      "title": "Ceguesa",
+      "lockedTitle": "???",
+      "shortDescription": "Efecte que pot fer fallar atacs.",
+      "description": [
+        "La ceguesa dificulta que el combatent connecti els seus cops.",
+        "Mentre dura, cada atac pot perdre's abans d'arribar a l'objectiu."
+      ],
+      "discoveredWhen": "Quan un combatent queda encegat per primera vegada.",
+      "hint": "No tots els perills fan mal directament.",
+      "tags": ["combat", "negatiu", "precisió"],
+      "hiddenUntilDiscovered": true,
+      "sortOrder": 40
+    },
+    {
+      "category": "EFFECTS",
+      "id": "FATIGUE",
+      "title": "Fatiga",
+      "lockedTitle": "???",
+      "shortDescription": "Cansament que redueix la capacitat ofensiva.",
+      "description": [
+        "La fatiga redueix l'eficàcia del combatent durant un temps limitat.",
+        "Pot aparèixer com a conseqüència de caos, pressió o altres efectes."
+      ],
+      "discoveredWhen": "Quan un combatent pateix fatiga per primera vegada.",
+      "hint": "El cansament també és una arma.",
+      "tags": ["combat", "negatiu", "dany"],
+      "hiddenUntilDiscovered": true,
+      "sortOrder": 50
+    },
+    {
+      "category": "EFFECTS",
+      "id": "EXHAUSTION",
+      "title": "Esgotament",
+      "lockedTitle": "???",
+      "shortDescription": "Estat que fa el combatent més vulnerable al dany.",
+      "description": [
+        "L'esgotament deixa el combatent exposat i menys capaç de resistir els cops.",
+        "És un efecte breu, però pot decidir una ronda si coincideix amb un atac fort."
+      ],
+      "discoveredWhen": "Quan un combatent queda esgotat per primera vegada.",
+      "hint": "Quan les forces fallen, cada cop pesa més.",
+      "tags": ["combat", "negatiu", "vulnerabilitat"],
+      "hiddenUntilDiscovered": true,
+      "sortOrder": 60
+    },
+    {
+      "category": "EFFECTS",
+      "id": "MAGIAL_TIREDNESS",
+      "title": "Cansament màgic",
+      "lockedTitle": "???",
+      "shortDescription": "Estat relacionat amb tenir el mana massa baix.",
+      "description": [
+        "El cansament màgic apareix quan el mana cau per sota d'un llindar crític.",
+        "Pot obrir l'opció del Pacte de sang, però també indica que el personatge està en risc."
+      ],
+      "discoveredWhen": "Quan un personatge entra en cansament màgic per primera vegada.",
+      "hint": "La màgia també es pot esgotar.",
+      "tags": ["combat", "mana", "especial"],
+      "hiddenUntilDiscovered": true,
+      "sortOrder": 70
+    },
+    {
+      "category": "EFFECTS",
+      "id": "CHAOS",
+      "title": "Caos",
+      "lockedTitle": "???",
+      "shortDescription": "Trigger que altera el combat amb efectes imprevisibles.",
+      "description": [
+        "El caos introdueix variacions i conseqüències inesperades durant la partida.",
+        "Pot convertir una situació estable en una cadena d'esdeveniments perillosos."
+      ],
+      "discoveredWhen": "Quan un combat comença o evoluciona amb el trigger de Caos actiu.",
+      "hint": "Algunes partides neixen sota una influència inestable.",
+      "tags": ["combat", "trigger", "caos"],
+      "hiddenUntilDiscovered": true,
+      "sortOrder": 80
+    }
+  ]
+}

@@ -8,6 +8,8 @@ import java.util.regex.Pattern;
 
 import rpgcombat.models.breeds.*;
 import rpgcombat.models.characters.Character;
+import rpgcombat.discovery.DiscoveryCategory;
+import rpgcombat.discovery.DiscoveryRuntime;
 import rpgcombat.models.effects.impl.SpiritualCallingFlag;
 import rpgcombat.models.effects.triggers.FractureTrigger;
 import rpgcombat.perks.divine.DivinePerkRegistry;
@@ -210,6 +212,7 @@ public class CharacterCreator {
         };
 
         addTriggers(character);
+        DiscoveryRuntime.discover(DiscoveryCategory.BREEDS, b.name());
         DivinePerkRegistry.create(divinePerkId).ifPresent(character::addEffect);
         return character;
     }

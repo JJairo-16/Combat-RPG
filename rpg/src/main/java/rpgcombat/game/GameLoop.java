@@ -8,6 +8,8 @@ import rpgcombat.combat.models.Action;
 import rpgcombat.combat.models.Winner;
 import rpgcombat.config.ui.CinematicsOptions;
 import rpgcombat.config.ui.HomeScreenConfig;
+import rpgcombat.discovery.DiscoveryCategory;
+import rpgcombat.discovery.DiscoveryRuntime;
 import rpgcombat.game.cinematics.CinematicBuilder;
 import rpgcombat.game.menu.EndGameMenu;
 import rpgcombat.game.menu.MenuCenter;
@@ -51,11 +53,8 @@ public class GameLoop {
     private final CinematicsOptions cinematicsOptions;
     private final HomeScreenConfig homeScreenConfig;
     private final AchievementSystem achievementSystem;
-
     // Cache d'armes (assumim que no canvia durant la partida)
     private final List<WeaponDefinition> entries = Arsenal.values();
-
-    private int completedAchievementsLastTurn;
 
     public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers,
             Map<String, String> information, CinematicsOptions cinematicsOptions, HomeScreenConfig homeScreenConfig,
@@ -72,6 +71,7 @@ public class GameLoop {
         this.cinematicsOptions = cinematicsOptions;
         this.homeScreenConfig = homeScreenConfig;
         this.achievementSystem = achievementSystem;
+
         Actions.configureAchievementTracking(achievementSystem, combatSystem::roundNumber);
     }
 
@@ -82,7 +82,7 @@ public class GameLoop {
     public EndGameAction init() {
         CinematicBuilder.playInit(cinematicsOptions, player1, player2);
         registerChaosStartIfNeeded();
-        completedAchievementsLastTurn = achievementSystem.consumePendingCompletedCount();
+        int completedAchievementsLastTurn = achievementSystem.consumePendingCompletedCount();
 
         Winner winner;
         do {
@@ -205,6 +205,9 @@ public class GameLoop {
 
         if (weapon != null) {
             player.setWeapon(weapon);
+            if (weapon.getId() != null) {
+                DiscoveryRuntime.discover(DiscoveryCategory.WEAPONS, weapon.getId());
+            }
             achievementSystem.onWeaponEquipped(player);
         }
     }

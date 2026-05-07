@@ -19,6 +19,8 @@ import rpgcombat.combat.ui.messages.CombatMessageBuffer;
 import rpgcombat.combat.ui.messages.MessageColor;
 import rpgcombat.combat.ui.messages.MessageSymbol;
 import rpgcombat.creator.score.CharacterBuildScore;
+import rpgcombat.discovery.DiscoveryCategory;
+import rpgcombat.discovery.DiscoveryRuntime;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
@@ -763,6 +765,7 @@ public class Character {
     public void addEffect(Effect incoming) {
         if (incoming == null)
             return;
+        DiscoveryRuntime.discover(DiscoveryCategory.EFFECTS, incoming.key());
         if (effects.isEmpty()) {
             effects.add(incoming);
             return;

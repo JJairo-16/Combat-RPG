@@ -9,6 +9,10 @@ import rpgcombat.achievements.config.AchievementRegistry;
 import rpgcombat.achievements.ui.AchievementGridViewer;
 import rpgcombat.config.app.AppConfig;
 import rpgcombat.config.app.AppConfigLoader;
+import rpgcombat.discovery.DiscoverySystem;
+import rpgcombat.discovery.config.DiscoveryCatalog;
+import rpgcombat.discovery.config.DiscoveryCatalogLoader;
+import rpgcombat.discovery.ui.DiscoveryListViewer;
 import rpgcombat.game.EndGameAction;
 import rpgcombat.game.GameLoop;
 import rpgcombat.game.cinematics.CinematicBuilder;
@@ -23,6 +27,7 @@ public final class AppController {
     private final ResourcePreloader preloader = new ResourcePreloader();
     private AppConfig config;
     private AchievementSystem achievementSystem;
+    private DiscoverySystem discoverySystem;
 
     /** Inicia l'aplicació fins que l'usuari surt. */
     public void run() {
@@ -44,6 +49,11 @@ public final class AppController {
 
                 if (action == HomeMenu.Action.ACHIEVEMENTS) {
                     AchievementGridViewer.show(achievementSystem.toViewModels());
+                    continue;
+                }
+
+                if (action == HomeMenu.Action.DISCOVERIES) {
+                    DiscoveryListViewer.show(discoverySystem.toOverview());
                     continue;
                 }
 
@@ -125,6 +135,8 @@ public final class AppController {
         preloader.preloadApp();
         preloader.preloadGameStatic(config);
         achievementSystem = AchievementSystem.load(AchievementRegistry.all(), config.paths().achievementSaveFile());
+        DiscoveryCatalog catalog = DiscoveryCatalog.build(DiscoveryCatalogLoader.load(Path.of(config.paths().discoveryCatalogConfig())));
+        discoverySystem = DiscoverySystem.load(catalog, config.paths().discoverySaveFile());
     }
 
     /** Indica si cal mostrar la intro de càrrega. */

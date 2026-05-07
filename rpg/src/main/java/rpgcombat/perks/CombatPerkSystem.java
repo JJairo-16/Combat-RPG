@@ -9,6 +9,8 @@ import java.util.Random;
 
 import rpgcombat.achievements.AchievementSystem;
 import rpgcombat.combat.models.Action;
+import rpgcombat.discovery.DiscoveryCategory;
+import rpgcombat.discovery.DiscoveryRuntime;
 import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
@@ -41,7 +43,7 @@ public final class CombatPerkSystem {
         this(player1, player2, null);
     }
 
-    /** Assigna l'estat inicial de perks a cada jugador i connecta assoliments. */
+    /** Assigna l'estat inicial de perks a cada jugador i connecta descobriments. */
     public CombatPerkSystem(Character player1, Character player2, AchievementSystem achievementSystem) {
         this.achievementSystem = achievementSystem;
         states.put(player1, initialStateFor(player1));
@@ -52,7 +54,9 @@ public final class CombatPerkSystem {
 
     /** Crea l'estat inicial d'un jugador. */
     private PlayerPerkState initialStateFor(Character player) {
-        PlayerPerkState state = new PlayerPerkState(new MissionProgress(MissionRegistry.roll(rng)));
+        MissionDefinition initialMission = MissionRegistry.roll(rng);
+        PlayerPerkState state = new PlayerPerkState(new MissionProgress(initialMission));
+        discoverMission(initialMission);
         DivinePerkRegistry.activeFor(player).ifPresent(state::setDivinePerk);
         return state;
     }
@@ -236,10 +240,18 @@ public final class CombatPerkSystem {
                 MissionDefinition nextMission = MissionRegistry.rollExcluding(rng, state.missionIds());
                 if (nextMission != null) {
                     state.addMission(new MissionProgress(nextMission));
+                    discoverMission(nextMission);
                 }
             }
         } else {
             state.clearPendingChoice();
+        }
+    }
+
+    /** Registra una missió al grimori de descobriments si existeix. */
+    private void discoverMission(MissionDefinition mission) {
+        if (mission != null) {
+            DiscoveryRuntime.discover(DiscoveryCategory.MISSIONS, mission.id());
         }
     }
 
@@ -256,11 +268,14 @@ public final class CombatPerkSystem {
 
     /** Registra la perk divina inicial, si existeix. */
     private void registerInitialDivinePerk(Character player) {
-        if (achievementSystem == null || player == null) return;
+        if (player == null) return;
         PlayerPerkState state = states.get(player);
         DivinePerkDefinition divine = state == null ? null : state.divinePerk();
         if (divine == null) return;
-        achievementSystem.onDivinePerkAssigned(player, divine.id(), divine.name(), divine.god(), currentRoundNumber);
+        DiscoveryRuntime.discover(DiscoveryCategory.DIVINE_PERKS, divine.id());
+        if (achievementSystem != null) {
+            achievementSystem.onDivinePerkAssigned(player, divine.id(), divine.name(), divine.god(), currentRoundNumber);
+        }
     }
 
     /** Registra progrés d'una missió de perk que encara no s'ha completat. */
@@ -289,21 +304,27 @@ public final class CombatPerkSystem {
 
     /** Registra una perk obtinguda. */
     private void registerPerkGained(Character player, PlayerPerkState state, PerkDefinition chosen, int roundNumber) {
-        if (achievementSystem == null || state == null || chosen == null) return;
-        achievementSystem.onPerkGained(player, chosen.id(), chosen.name(),
-                chosen.family() == null ? null : chosen.family().name(),
-                chosen.tags(), state.perkCount(), PlayerPerkState.MAX_PERKS, roundNumber);
+        if (state == null || chosen == null) return;
+        DiscoveryRuntime.discover(DiscoveryCategory.PERKS, chosen.id());
+        if (achievementSystem != null) {
+            achievementSystem.onPerkGained(player, chosen.id(), chosen.name(),
+                    chosen.family() == null ? null : chosen.family().name(),
+                    chosen.tags(), state.perkCount(), PlayerPerkState.MAX_PERKS, roundNumber);
+        }
     }
 
     /** Registra les sinergies activades per primera vegada després de triar una perk. */
     private void registerNewSynergies(Character player, PlayerPerkState state, Set<String> previousSynergies,
             int roundNumber) {
-        if (achievementSystem == null || state == null) return;
+        if (state == null) return;
         Set<String> before = previousSynergies == null ? Set.of() : previousSynergies;
         for (String synergyId : state.activeSynergyIds()) {
             if (!before.contains(synergyId)) {
-                achievementSystem.onSynergyActivated(player, synergyId, state.activeSynergyName(synergyId),
-                        state.activeSynergyIds().size(), roundNumber);
+                DiscoveryRuntime.discover(DiscoveryCategory.SYNERGIES, synergyId);
+                if (achievementSystem != null) {
+                    achievementSystem.onSynergyActivated(player, synergyId, state.activeSynergyName(synergyId),
+                            state.activeSynergyIds().size(), roundNumber);
+                }
             }
         }
     }

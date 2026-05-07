@@ -5,6 +5,8 @@ import java.util.Random;
 import rpgcombat.achievements.AchievementSystem;
 import rpgcombat.achievements.AchievementUpdate;
 import rpgcombat.models.characters.Character;
+import rpgcombat.discovery.DiscoveryCategory;
+import rpgcombat.discovery.DiscoveryRuntime;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.balance.CombatBalanceRegistry;
 import rpgcombat.balance.config.AntiStallConfig;
@@ -245,6 +247,10 @@ public class CombatSystem {
      */
     private void updateMissionProgress(Character actor, Character opponent, Action actorAction, Action opponentAction,
             TurnResult result) {
+        if (actorAction != null) {
+            DiscoveryRuntime.discover(DiscoveryCategory.ACTIONS, actorAction.name());
+        }
+
         if (perkSystem != null) {
             perkSystem.afterTurn(actor, opponent, actorAction, opponentAction, result, roundNumber);
         }

@@ -7,6 +7,8 @@ import rpgcombat.achievements.AchievementSystem;
 import rpgcombat.balance.CombatBalanceRegistry;
 import rpgcombat.balance.config.character.BloodPactConfig;
 import rpgcombat.combat.models.Action;
+import rpgcombat.discovery.DiscoveryCategory;
+import rpgcombat.discovery.DiscoveryRuntime;
 import rpgcombat.game.modifier.ui.Messages;
 import rpgcombat.game.modifier.ui.Messages.CALL_SPIRITS;
 import rpgcombat.models.characters.Character;
@@ -102,6 +104,7 @@ public final class Actions {
 
         player.getStatistics().heal(healAmount);
         player.setSpiritualCallingCooldown(SPIRITUAL_CALLING_COOLDOWN);
+        DiscoveryRuntime.discover(DiscoveryCategory.ACTIONS, "SPIRITUAL_CALLING");
         registerSpiritualCalling(player, face, percentage, healAmount);
 
         System.out.println();
@@ -147,6 +150,7 @@ public final class Actions {
 
         Messages.BLOOD_PACT.USE_BLOOD_PACT.print();
         BloodPactResult result = useBloodPact(player);
+        DiscoveryRuntime.discover(DiscoveryCategory.ACTIONS, "BLOOD_PACT");
         registerBloodPact(player, result);
 
         System.out.println();

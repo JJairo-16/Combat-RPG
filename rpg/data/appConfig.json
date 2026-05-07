@@ -18,7 +18,9 @@
     "divinePerksConfig": "rpg/data/perks/divinePerks.json",
     "synergiesConfig": "rpg/data/perks/synergies.json",
     "achievementsConfig": "rpg/data/achievements.json",
-    "achievementSaveFile": "achievements.json"
+    "achievementSaveFile": "achievements.json",
+    "discoveryCatalogConfig": "rpg/data/discoveryCatalog.json",
+    "discoverySaveFile": "discoveries.json"
   },
   "ui": {
     "showLoadingIntro": true,

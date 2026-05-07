@@ -21,6 +21,12 @@ public final class MissionRegistry {
         missions = loaded == null ? List.of() : List.copyOf(loaded);
     }
 
+
+    /** Retorna totes les missions registrades. */
+    public static List<MissionDefinition> all() {
+        return missions;
+    }
+
     /**
      * Selecciona una missió aleatòria segons el seu pes.
      *

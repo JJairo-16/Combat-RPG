@@ -21,6 +21,12 @@ public final class PerkRegistry {
         perks = loaded == null ? List.of() : List.copyOf(loaded);
     }
 
+
+    /** Retorna totes les perks registrades. */
+    public static List<PerkDefinition> all() {
+        return perks;
+    }
+
     /**
      * Genera opcions de perk segons el mode indicat.
      *
