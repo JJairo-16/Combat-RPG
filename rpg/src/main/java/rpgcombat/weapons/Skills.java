@@ -137,10 +137,6 @@ public final class Skills {
     public static AttackResult arcaneDisruption(Weapon weapon, Statistics stats, Random rng) {
         double baseManaCost = weapon.getManaPrice();
 
-        if (baseManaCost > 0 && !stats.consumeMana(baseManaCost)) {
-            return AttackResult.resourceFail("no té prou mana per llençar la disrupció arcana.");
-        }
-
         double luck = stats.getLuck();
         double failChance = 0.3 - (luck * (0.08 / 30.0));
         failChance = Math.clamp(failChance, 0.22, 0.30);
@@ -254,11 +250,6 @@ public final class Skills {
      * @return resultat amb multiplicador aplicat i missatge
      */
     public static AttackResult grimoriCipher(Weapon weapon, Statistics stats, Random rng) {     
-        double manaCost = weapon.getManaPrice();
-        if (manaCost > 0 && !stats.consumeMana(manaCost)) {
-            return new AttackResult(0, "intenta llegir el grimori, però no té prou mana.");
-        }
-
         String expectedStr = grimoriCodeGenerator.generate();
 
         printGrimorieGame(expectedStr);
@@ -404,21 +395,22 @@ public final class Skills {
         int intelligence = stats.getIntelligence();
         int luck = stats.getLuck();
 
-        double bestChance = 0.20 + intelligence * 0.005 + luck * 0.003;
-        bestChance = Math.clamp(bestChance, 0.20, 0.60);
+        double bestChance = 0.16 + intelligence * 0.004 + luck * 0.002;
+        bestChance = Math.clamp(bestChance, 0.16, 0.45);
 
-        double worstChance = 0.30 - intelligence * 0.004;
-        worstChance = Math.clamp(worstChance, 0.10, 0.30);
+        double worstChance = 0.28 - intelligence * 0.003 - luck * 0.001;
+        worstChance = Math.clamp(worstChance, 0.12, 0.28);
 
+        double stableChance = Math.max(0.0, 1.0 - bestChance - worstChance);
         double roll = rng.nextDouble();
 
         int chosenIndex;
-        if (roll < bestChance) {
-            chosenIndex = 0; // ++
-        } else if (roll < bestChance + (1.0 - bestChance - worstChance)) {
-            chosenIndex = 1; // ===
+        if (roll < worstChance) {
+            chosenIndex = 0; // pitjor futur
+        } else if (roll < worstChance + stableChance) {
+            chosenIndex = 1; // futur estable
         } else {
-            chosenIndex = 2; // --
+            chosenIndex = 2; // millor futur
         }
 
         double finalDamage = damages[chosenIndex];

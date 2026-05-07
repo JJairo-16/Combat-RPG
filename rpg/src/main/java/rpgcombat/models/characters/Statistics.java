@@ -35,10 +35,10 @@ public class Statistics {
     private double stamina;
     private double resistance;
 
-    private static final int MAX_CONSTITUTION_FULL_EFFECT = 20;
+    private static final int MAX_CONSTITUTION_FULL_EFFECT = 22;
     private static final double CONSTITUTION_VALUE = 50.0;
 
-    private static final double HEALTH_SOFTCAP_FACTOR = 0.08;
+    private static final double HEALTH_SOFTCAP_FACTOR = 0.065;
     private static final double REGEN_SOFTCAP_FACTOR = 0.10;
 
     private static final double RESISTANCE_PRESSURE_START = 0.55;

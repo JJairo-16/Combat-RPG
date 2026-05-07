@@ -424,7 +424,9 @@ public class Character {
 
         if (recived <= 0)
             return new Result(0, name + " ha esquivat l'atac.");
-        return new Result(recived, name + " ha rebut l'atac de ple.");
+        if (recived > attack)
+            return new Result(recived, name + " falla l'esquiva i rep l'impacte en mala posició.");
+        return new Result(recived, name + " no aconsegueix esquivar l'atac.");
     }
 
     /**
@@ -446,8 +448,9 @@ public class Character {
                 cfg.finalMinClamp(),
                 cfg.finalMaxClamp());
 
-        double multiplier = (rng.nextDouble() < dodgeProb ? 0 : cfg.failedDodgeDamageMultiplier());
-        return new DodgeResult(attack * multiplier, false);
+        boolean dodged = rng.nextDouble() < dodgeProb;
+        double multiplier = dodged ? 0.0 : cfg.failedDodgeDamageMultiplier();
+        return new DodgeResult(round2(attack * multiplier), false);
     }
 
     /**
