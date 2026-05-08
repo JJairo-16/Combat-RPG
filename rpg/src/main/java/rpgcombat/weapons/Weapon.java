@@ -1,6 +1,8 @@
 package rpgcombat.weapons;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import rpgcombat.combat.ui.messages.CombatMessage;
@@ -32,6 +34,10 @@ public class Weapon {
     private final double manaPrice;
 
     private final List<WeaponPassive> passives;
+
+    // Metadades mutables i genèriques de la instància viva de l'arma.
+    // Serveixen per guardar estat propi de l'arma sense acoblar el combat a classes concretes.
+    private final Map<String, Object> metadata = new HashMap<>();
 
     // Estat intern informatiu de l'últim atac generat per l'arma.
     private boolean lastWasCrit = false;
@@ -94,9 +100,43 @@ public class Weapon {
         return manaPrice;
     }
 
+    /** Retorna el mapa mutable de metadades de la instància viva de l'arma. */
+    public Map<String, Object> metadata() {
+        return metadata;
+    }
+
+    /** Desa una metadada genèrica de l'arma. */
+    public void putMeta(String key, Object value) {
+        if (key == null || key.isBlank()) {
+            return;
+        }
+        if (value == null) {
+            metadata.remove(key);
+            return;
+        }
+        metadata.put(key, value);
+    }
+
+    /** Llegeix una metadada genèrica de l'arma. */
+    public Object getMeta(String key) {
+        return key == null ? null : metadata.get(key);
+    }
+
+    /** Llegeix una metadada tipada de l'arma amb valor per defecte. */
+    public <T> T getMeta(String key, Class<T> type, T defaultValue) {
+        Object value = getMeta(key);
+        if (type != null && type.isInstance(value)) {
+            return type.cast(value);
+        }
+        return defaultValue;
+    }
+
     public AttackResult attack(Statistics stats, Random rng) {
         if (manaPrice > 0 && !stats.consumeMana(manaPrice)) {
-            return AttackResult.resourceFail("no té prou mana per utilitzar " + name + ".");
+            stats.consumeMana(manaPrice);
+            return new AttackResult(
+                    WeaponType.PHYSICAL.getBasicDamage(5, stats),
+                    "no li quedava mana, aixi que li dona un cop.");
         }
         return attack.execute(this, stats, rng);
     }

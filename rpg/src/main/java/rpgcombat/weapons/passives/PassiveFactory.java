@@ -36,6 +36,14 @@ public final class PassiveFactory {
                 double falloff = getDouble(params, "falloff");
                 yield Passives.poisonChain(extraDamagePerStack, softCapStart, falloff);
             }
+            case "elementalDuality" -> Passives.elementalDuality(
+                    getDouble(params, "burnApplyProb"),
+                    getInteger(params, "burnTurns"),
+                    getDouble(params, "burnDamagePerTurn"),
+                    getDouble(params, "frozenApplyProb"),
+                    getInteger(params, "frozenTurns"),
+                    getDouble(params, "frozenOutgoingMultiplier"),
+                    getDouble(params, "frozenIncomingMultiplier"));
             default -> throw new IllegalArgumentException("Passiva desconeguda: " + cfg.type());
         };
     }

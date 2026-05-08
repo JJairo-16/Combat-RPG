@@ -8,6 +8,8 @@ import rpgcombat.combat.ui.messages.MessageSymbol;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.models.effects.impl.BlindEffect;
+import rpgcombat.models.effects.impl.BurnEffect;
+import rpgcombat.models.effects.impl.FrozenEffect;
 import rpgcombat.models.effects.impl.PoisonEffect;
 import rpgcombat.weapons.Weapon;
 
@@ -195,6 +197,85 @@ public final class Passives {
                         String.format("%s acumula verí (%d càrregues).",
                                 ctx.defender().getName(),
                                 stacks)
+                );
+            }
+        };
+    }
+
+
+    /**
+     * Dualitat elemental: després d'un impacte real, aplica foc o gel segons el
+     * mode calculat per l'habilitat de l'arma. El mode viatja per metadades per
+     * evitar acoblar la passiva a una subclasse concreta d'arma.
+     */
+    public static WeaponPassive elementalDuality(
+            double burnApplyProb,
+            int burnTurns,
+            double burnDamagePerTurn,
+            double frozenApplyProb,
+            int frozenTurns,
+            double frozenOutgoingMultiplier,
+            double frozenIncomingMultiplier) {
+        return new WeaponPassive() {
+            @Override
+            public CombatMessage afterHit(Weapon weapon, HitContext ctx, Random rng) {
+                if (ctx.damageDealt() <= 0) {
+                    return null;
+                }
+
+                Object rawMode = ctx.attackResult() == null ? null : ctx.attackResult().meta("elementalMode");
+                String mode = rawMode == null ? null : String.valueOf(rawMode);
+                if (mode == null || mode.isBlank()) {
+                    return null;
+                }
+
+                boolean fireMode = "FIRE".equals(mode);
+                boolean frostMode = "FROST".equals(mode);
+                if (!fireMode && !frostMode) {
+                    return null;
+                }
+
+                double chance = fireMode ? burnApplyProb : frozenApplyProb;
+                chance = Math.clamp(chance, 0.0, 1.0);
+
+                boolean applied = rng.nextDouble() < chance;
+                ctx.putMeta("elementalDuality", true);
+                ctx.putMeta("elementalMode", mode);
+                ctx.putMeta("elementalApplied", applied);
+                ctx.putMeta("elementalApplyChance", chance);
+
+                if (!applied) {
+                    ctx.putMeta("elementalEffect", "NONE");
+                    return CombatMessage.of(
+                            MessageSymbol.EQUAL,
+                            fireMode ? MessageColor.RED : MessageColor.CYAN,
+                            fireMode
+                                    ? "La flama no arriba a encendre el rival."
+                                    : "El gebre no arriba a fixar-se al rival."
+                    );
+                }
+
+                if (fireMode) {
+                    ctx.defender().addEffect(new BurnEffect(burnTurns, burnDamagePerTurn));
+                    ctx.putMeta("elementalEffect", BurnEffect.INTERNAL_EFFECT_KEY);
+                    ctx.putMeta("elementalBurnApplied", true);
+                    return CombatMessage.of(
+                            MessageSymbol.NEGATIVE,
+                            MessageColor.RED,
+                            ctx.defender().getName() + " queda marcat per una cremada elemental."
+                    );
+                }
+
+                ctx.defender().addEffect(new FrozenEffect(
+                        frozenTurns,
+                        frozenOutgoingMultiplier,
+                        frozenIncomingMultiplier));
+                ctx.putMeta("elementalEffect", FrozenEffect.INTERNAL_EFFECT_KEY);
+                ctx.putMeta("elementalFrozenApplied", true);
+                return CombatMessage.of(
+                        MessageSymbol.NEGATIVE,
+                        MessageColor.CYAN,
+                        ctx.defender().getName() + " queda congelat per la dualitat elemental."
                 );
             }
         };

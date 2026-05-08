@@ -137,6 +137,10 @@ public final class Skills {
     public static AttackResult arcaneDisruption(Weapon weapon, Statistics stats, Random rng) {
         double baseManaCost = weapon.getManaPrice();
 
+        if (baseManaCost > 0 && !stats.consumeMana(baseManaCost)) {
+            return AttackResult.resourceFail("no té prou mana per llençar la disrupció arcana.");
+        }
+
         double luck = stats.getLuck();
         double failChance = 0.3 - (luck * (0.08 / 30.0));
         failChance = Math.clamp(failChance, 0.22, 0.30);
@@ -250,6 +254,11 @@ public final class Skills {
      * @return resultat amb multiplicador aplicat i missatge
      */
     public static AttackResult grimoriCipher(Weapon weapon, Statistics stats, Random rng) {     
+        double manaCost = weapon.getManaPrice();
+        if (manaCost > 0 && !stats.consumeMana(manaCost)) {
+            return new AttackResult(0, "intenta llegir el grimori, però no té prou mana.");
+        }
+
         String expectedStr = grimoriCodeGenerator.generate();
 
         printGrimorieGame(expectedStr);
@@ -395,22 +404,21 @@ public final class Skills {
         int intelligence = stats.getIntelligence();
         int luck = stats.getLuck();
 
-        double bestChance = 0.16 + intelligence * 0.004 + luck * 0.002;
-        bestChance = Math.clamp(bestChance, 0.16, 0.45);
+        double bestChance = 0.20 + intelligence * 0.005 + luck * 0.003;
+        bestChance = Math.clamp(bestChance, 0.20, 0.60);
 
-        double worstChance = 0.28 - intelligence * 0.003 - luck * 0.001;
-        worstChance = Math.clamp(worstChance, 0.12, 0.28);
+        double worstChance = 0.30 - intelligence * 0.004;
+        worstChance = Math.clamp(worstChance, 0.10, 0.30);
 
-        double stableChance = Math.max(0.0, 1.0 - bestChance - worstChance);
         double roll = rng.nextDouble();
 
         int chosenIndex;
-        if (roll < worstChance) {
-            chosenIndex = 0; // pitjor futur
-        } else if (roll < worstChance + stableChance) {
-            chosenIndex = 1; // futur estable
+        if (roll < bestChance) {
+            chosenIndex = 0; // ++
+        } else if (roll < bestChance + (1.0 - bestChance - worstChance)) {
+            chosenIndex = 1; // ===
         } else {
-            chosenIndex = 2; // millor futur
+            chosenIndex = 2; // --
         }
 
         double finalDamage = damages[chosenIndex];
@@ -429,6 +437,46 @@ public final class Skills {
         }
 
         return new AttackResult(finalDamage, message);
+    }
+
+
+    /**
+     * Atac elemental dual: alterna entre mode de foc i mode de gel a cada atac.
+     *
+     * <p>
+     * L'estat persistent de l'arma no es guarda en camps específics, sinó dins la
+     * metadada genèrica de la instància de {@link Weapon}. La passiva
+     * elementalDuality llegeix el mode resolt en el {@link AttackResult} i aplica
+     * l'efecte corresponent només si el cop impacta realment.
+     * </p>
+     */
+    public static AttackResult elementalDuality(Weapon weapon, Statistics stats, Random rng) {
+        final String fire = "FIRE";
+        final String frost = "FROST";
+        final String key = "elementalDuality.nextMode";
+
+        String mode = weapon.getMeta(key, String.class, fire);
+        if (!fire.equals(mode) && !frost.equals(mode)) {
+            mode = fire;
+        }
+
+        String nextMode = fire.equals(mode) ? frost : fire;
+        weapon.putMeta(key, nextMode);
+
+        double damage = weapon.basicAttack(stats, rng);
+        String elementName = fire.equals(mode) ? "foc" : "gel";
+        String nextElementName = fire.equals(nextMode) ? "foc" : "gel";
+
+        String msg = weapon.lastWasCritic()
+                ? "allibera la dualitat de " + elementName + " amb un cop crític."
+                : "allibera la dualitat de " + elementName + ".";
+
+        return new AttackResult(damage, msg, Map.of(
+                "elementalDuality", true,
+                "elementalMode", mode,
+                "elementalNextMode", nextMode,
+                "elementalModeLabel", elementName,
+                "elementalNextModeLabel", nextElementName));
     }
 
     // -------------------------------------------------------------------------

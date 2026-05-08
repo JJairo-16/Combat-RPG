@@ -299,6 +299,16 @@ public class TurnResolver {
         copyMeta(ctx, merged, "chaosOverload");
         copyMeta(ctx, merged, "chaosUnstableGuard");
         copyMeta(ctx, merged, "chaosFailAction");
+        copyMeta(ctx, merged, "elementalDuality");
+        copyMeta(ctx, merged, "elementalMode");
+        copyMeta(ctx, merged, "elementalNextMode");
+        copyMeta(ctx, merged, "elementalModeLabel");
+        copyMeta(ctx, merged, "elementalNextModeLabel");
+        copyMeta(ctx, merged, "elementalApplied");
+        copyMeta(ctx, merged, "elementalApplyChance");
+        copyMeta(ctx, merged, "elementalEffect");
+        copyMeta(ctx, merged, "elementalBurnApplied");
+        copyMeta(ctx, merged, "elementalFrozenApplied");
         return merged;
     }
 

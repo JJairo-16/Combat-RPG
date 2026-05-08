@@ -1986,5 +1986,78 @@
         }
       ]
     }
+  },
+  {
+    "id": "ELEMENTAL_FIRST_SPARK",
+    "name": "La primera espurna",
+    "description": "Aplica una cremada amb La dualitat elemental.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "ELEMENTAL_DUALITY"
+        },
+        {
+          "field": "elementalBurnApplied",
+          "operator": "==",
+          "value": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "ELEMENTAL_FIRST_FROST",
+    "name": "El primer gebre",
+    "description": "Congela un rival amb La dualitat elemental.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "ELEMENTAL_DUALITY"
+        },
+        {
+          "field": "elementalFrozenApplied",
+          "operator": "==",
+          "value": true
+        }
+      ]
+    }
+  },
+  {
+    "id": "ELEMENTAL_PENDULUM",
+    "name": "El pèndol impossible",
+    "description": "Utilitza 20 cops La dualitat elemental.",
+    "goal": 20,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "ELEMENTAL_DUALITY"
+        }
+      ]
+    }
   }
 ]

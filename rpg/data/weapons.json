@@ -1,174 +1,199 @@
 [
-  {
-    "id": "EXPLOSIVE_CROSSBOW",
-    "name": "Ballesta explosiva",
-    "description": "Una ballesta inestable que converteix cada tret en una aposta.",
-    "baseDamage": 74,
-    "criticalProb": 0.11,
-    "criticalDamage": 1.42,
-    "type": "RANGE",
-    "manaPrice": 0,
-    "attackSkill": "explosiveShot",
-    "passives": []
-  },
-  {
-    "id": "VAMPIRICS_DAGGERS",
-    "name": "Dagues vampíriques",
-    "description": "Dues fulles àgils que colpegen dues vegades i et retornen vida amb cada impacte.",
-    "baseDamage": 25,
-    "criticalProb": 0.17,
-    "criticalDamage": 1.28,
-    "type": "PHYSICAL",
-    "manaPrice": 0,
-    "attackSkill": "crossCut",
-    "passives": [
-      {
-        "type": "lifeSteal",
-        "params": {
-          "pct": 0.08
-        }
-      }
-    ]
-  },
-  {
-    "id": "ARCANE_DISRUPTION_STAFF",
-    "name": "Bastó de la disrupció arcana",
-    "description": "Un bastó inestable que canalitza una explosió d'energia pura.",
-    "baseDamage": 92,
-    "criticalProb": 0.07,
-    "criticalDamage": 1.46,
-    "type": "MAGICAL",
-    "manaPrice": 152,
-    "attackSkill": "arcaneDisruption",
-    "passives": []
-  },
-  {
-    "id": "SCIMITAR",
-    "name": "Cimitarra del desert",
-    "description": "Una fulla corba i elegant dissenyada per a cops ràpids i precisos.",
-    "baseDamage": 72,
-    "criticalProb": 0.18,
-    "criticalDamage": 1.3,
-    "type": "PHYSICAL",
-    "manaPrice": 0,
-    "attackSkill": "nothing",
-    "passives": []
-  },
-  {
-    "id": "BALLISTA",
-    "name": "Ballista de la sort",
-    "description": "Una arma capritxosa que pot disparar entre un i quatre projectils.",
-    "baseDamage": 39,
-    "criticalProb": 0.14,
-    "criticalDamage": 1.3,
-    "type": "RANGE",
-    "manaPrice": 0,
-    "attackSkill": "luckyBallista",
-    "passives": []
-  },
-  {
-    "id": "GRIMORIE",
-    "name": "Grimori del codi",
-    "description": "Un grimori viu que et mostra un codi de 5 dígits (1-4).",
-    "baseDamage": 90,
-    "criticalProb": 0.11,
-    "criticalDamage": 1.33,
-    "type": "MAGICAL",
-    "manaPrice": 125,
-    "attackSkill": "grimoriCipher",
-    "passives": []
-  },
-  {
-    "id": "BLOODPIERCER_THROWING_DAGGER",
-    "name": "Daga Perforasang",
-    "description": "Una daga lleugera dissenyada per travessar defenses.",
-    "baseDamage": 37,
-    "criticalProb": 0.15,
-    "criticalDamage": 1.36,
-    "type": "RANGE",
-    "manaPrice": 0,
-    "attackSkill": "perforatingThrow",
-    "passives": [
-      {
-        "type": "trueHarm",
-        "params": {
-          "pct": 0.0025
-        }
-      }
-    ]
-  },
-  {
-    "id": "EXECUTIONERS_EDGE",
-    "name": "Sentència Final",
-    "description": "Una espasa concebuda per culminar el combat.",
-    "baseDamage": 70,
-    "criticalProb": 0.16,
-    "criticalDamage": 1.32,
-    "type": "PHYSICAL",
-    "manaPrice": 0,
-    "attackSkill": "nothing",
-    "passives": [
-      {
-        "type": "executor",
-        "params": {
-          "thresholdLife": 0.28,
-          "damageBonus": 0.2
-        }
-      }
-    ]
-  },
-  {
-    "id": "CHRONO_WEAVER_STAFF",
-    "name": "Teixidor del temps",
-    "description": "Un bastó antic que distorsiona el flux temporal.",
-    "baseDamage": 72,
-    "criticalProb": 0.13,
-    "criticalDamage": 1.42,
-    "type": "MAGICAL",
-    "manaPrice": 100,
-    "attackSkill": "chronoWeave",
-    "passives": []
-  },
-  {
-    "id": "DIVINE_SPARK",
-    "name": "Resplendor diví",
-    "description": "Un esclat de llum sagrada que impacta amb força i pot encegar l'enemic temporalment.",
-    "baseDamage": 88,
-    "criticalProb": 0.12,
-    "criticalDamage": 1.36,
-    "type": "MAGICAL",
-    "manaPrice": 115,
-    "attackSkill": "nothing",
-    "passives": [
-      {
-        "type": "blindOnHit",
-        "params": {
-          "applyProb": 0.22,
-          "missProb": 0.18,
-          "duration": 1
-        }
-      }
-    ]
-  },
-  {
-    "id": "WASP_HARPOON",
-    "name": "Arpó de vespa",
-    "description": "Un arpó impregnat de verí que castiga les cadenes d'impactes amb un dany creixent.",
-    "baseDamage": 43,
-    "criticalProb": 0.12,
-    "criticalDamage": 1.3,
-    "type": "RANGE",
-    "manaPrice": 0,
-    "attackSkill": "nothing",
-    "passives": [
-      {
-        "type": "poisonChain",
-        "params": {
-          "extraDamagePerStack": 6.0,
-          "softCapStart": 3,
-          "falloff": 0.25
-        }
-      }
-    ]
-  }
+	{
+		"id": "EXPLOSIVE_CROSSBOW",
+		"name": "Ballesta explosiva",
+		"description": "Una ballesta inestable que converteix cada tret en una aposta.",
+		"baseDamage": 76,
+		"criticalProb": 0.11,
+		"criticalDamage": 1.42,
+		"type": "RANGE",
+		"manaPrice": 0,
+		"attackSkill": "explosiveShot",
+		"passives": []
+	},
+	{
+		"id": "VAMPIRICS_DAGGERS",
+		"name": "Dagues vampíriques",
+		"description": "Dues fulles àgils que colpegen dues vegades i et retornen vida amb cada impacte.",
+		"baseDamage": 26,
+		"criticalProb": 0.17,
+		"criticalDamage": 1.28,
+		"type": "PHYSICAL",
+		"manaPrice": 0,
+		"attackSkill": "crossCut",
+		"passives": [
+			{
+				"type": "lifeSteal",
+				"params": {
+					"pct": 0.08
+				}
+			}
+		]
+	},
+	{
+		"id": "ARCANE_DISRUPTION_STAFF",
+		"name": "Bastó de la disrupció arcana",
+		"description": "Un bastó inestable que canalitza una explosió d'energia pura.",
+		"baseDamage": 100,
+		"criticalProb": 0.07,
+		"criticalDamage": 1.46,
+		"type": "MAGICAL",
+		"manaPrice": 150,
+		"attackSkill": "arcaneDisruption",
+		"passives": []
+	},
+	{
+		"id": "SCIMITAR",
+		"name": "Cimitarra del desert",
+		"description": "Una fulla corba i elegant dissenyada per a cops ràpids i precisos.",
+		"baseDamage": 76,
+		"criticalProb": 0.18,
+		"criticalDamage": 1.3,
+		"type": "PHYSICAL",
+		"manaPrice": 0,
+		"attackSkill": "nothing",
+		"passives": []
+	},
+	{
+		"id": "BALLISTA",
+		"name": "Ballista de la sort",
+		"description": "Una arma capritxosa que pot disparar entre un i quatre projectils.",
+		"baseDamage": 41,
+		"criticalProb": 0.14,
+		"criticalDamage": 1.3,
+		"type": "RANGE",
+		"manaPrice": 0,
+		"attackSkill": "luckyBallista",
+		"passives": []
+	},
+	{
+		"id": "GRIMORIE",
+		"name": "Grimori del codi",
+		"description": "Un grimori viu que et mostra un codi de 5 dígits (1-4).",
+		"baseDamage": 98,
+		"criticalProb": 0.11,
+		"criticalDamage": 1.33,
+		"type": "MAGICAL",
+		"manaPrice": 120,
+		"attackSkill": "grimoriCipher",
+		"passives": []
+	},
+	{
+		"id": "BLOODPIERCER_THROWING_DAGGER",
+		"name": "Daga Perforasang",
+		"description": "Una daga lleugera dissenyada per travessar defenses.",
+		"baseDamage": 36,
+		"criticalProb": 0.15,
+		"criticalDamage": 1.36,
+		"type": "RANGE",
+		"manaPrice": 0,
+		"attackSkill": "perforatingThrow",
+		"passives": [
+			{
+				"type": "trueHarm",
+				"params": {
+					"pct": 0.0025
+				}
+			}
+		]
+	},
+	{
+		"id": "EXECUTIONERS_EDGE",
+		"name": "Sentència Final",
+		"description": "Una espasa concebuda per culminar el combat.",
+		"baseDamage": 72,
+		"criticalProb": 0.16,
+		"criticalDamage": 1.32,
+		"type": "PHYSICAL",
+		"manaPrice": 0,
+		"attackSkill": "nothing",
+		"passives": [
+			{
+				"type": "executor",
+				"params": {
+					"thresholdLife": 0.28,
+					"damageBonus": 0.2
+				}
+			}
+		]
+	},
+	{
+		"id": "CHRONO_WEAVER_STAFF",
+		"name": "Teixidor del temps",
+		"description": "Un bastó antic que distorsiona el flux temporal.",
+		"baseDamage": 84,
+		"criticalProb": 0.13,
+		"criticalDamage": 1.42,
+		"type": "MAGICAL",
+		"manaPrice": 90,
+		"attackSkill": "chronoWeave",
+		"passives": []
+	},
+	{
+		"id": "DIVINE_SPARK",
+		"name": "Resplendor diví",
+		"description": "Un esclat de llum sagrada que impacta amb força i pot encegar l'enemic temporalment.",
+		"baseDamage": 96,
+		"criticalProb": 0.12,
+		"criticalDamage": 1.36,
+		"type": "MAGICAL",
+		"manaPrice": 110,
+		"attackSkill": "nothing",
+		"passives": [
+			{
+				"type": "blindOnHit",
+				"params": {
+					"applyProb": 0.22,
+					"missProb": 0.18,
+					"duration": 1
+				}
+			}
+		]
+	},
+	{
+		"id": "WASP_HARPOON",
+		"name": "Arpó de vespa",
+		"description": "Un arpó impregnat de verí que castiga les cadenes d'impactes amb un dany creixent.",
+		"baseDamage": 40,
+		"criticalProb": 0.12,
+		"criticalDamage": 1.3,
+		"type": "RANGE",
+		"manaPrice": 0,
+		"attackSkill": "nothing",
+		"passives": [
+			{
+				"type": "poisonChain",
+				"params": {
+					"extraDamagePerStack": 6.0,
+					"softCapStart": 3,
+					"falloff": 0.25
+				}
+			}
+		]
+	},
+	{
+		"id": "ELEMENTAL_DUALITY",
+		"name": "La dualitat elemental",
+		"description": "Una arma física imbuïda de foc i gel: cada atac prepara l'element contrari per al següent cop.",
+		"baseDamage": 78,
+		"criticalProb": 0.1,
+		"criticalDamage": 1.34,
+		"type": "PHYSICAL",
+		"manaPrice": 0,
+		"attackSkill": "elementalDuality",
+		"passives": [
+			{
+				"type": "elementalDuality",
+				"params": {
+					"burnApplyProb": 0.58,
+					"burnTurns": 2,
+					"burnDamagePerTurn": 18.0,
+					"frozenApplyProb": 0.5,
+					"frozenTurns": 1,
+					"frozenOutgoingMultiplier": 0.84,
+					"frozenIncomingMultiplier": 1.06
+				}
+			}
+		]
+	}
 ]

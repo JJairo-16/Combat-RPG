@@ -258,6 +258,38 @@
 			"tags": ["combat", "trigger", "caos"],
 			"hiddenUntilDiscovered": true,
 			"sortOrder": 80
+		},
+		{
+			"category": "EFFECTS",
+			"id": "BURN",
+			"title": "Cremada",
+			"lockedTitle": "???",
+			"shortDescription": "Dany de foc que crema el combatent al final del seu torn.",
+			"description": [
+				"La cremada és un efecte elemental persistent.",
+				"Quan el portador acaba el seu torn, pateix dany directe de foc si l'efecte continua actiu."
+			],
+			"discoveredWhen": "Quan un combatent pateix una cremada per primera vegada.",
+			"hint": "Algunes armes elementals poden encendre l'oponent.",
+			"tags": ["combat", "negatiu", "elemental", "foc", "dany temporal"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 70
+		},
+		{
+			"category": "EFFECTS",
+			"id": "FROZEN",
+			"title": "Congelat",
+			"lockedTitle": "???",
+			"shortDescription": "Gel temporal que redueix el dany infligit i deixa el cos més fràgil.",
+			"description": [
+				"La congelació entumeix el combatent i rebaixa la força dels seus atacs.",
+				"Mentre dura, també pot fer que els cops entrants siguin una mica més dolorosos."
+			],
+			"discoveredWhen": "Quan un combatent queda congelat per primera vegada.",
+			"hint": "Algunes armes elementals alternen entre foc i gel.",
+			"tags": ["combat", "negatiu", "elemental", "gel", "dany"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 75
 		}
 	]
 }

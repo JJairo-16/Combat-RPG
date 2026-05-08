@@ -16,7 +16,8 @@ public final class AttackRegistry {
             "grimoriCipher", Skills::grimoriCipher,
             "perforatingThrow", Skills::perforatingThrow,
             "chronoWeave", Skills::chronoWeave,
-            "crossCut", Skills::crossCut);
+            "crossCut", Skills::crossCut,
+            "elementalDuality", Skills::elementalDuality);
 
     private AttackRegistry() {
     }
