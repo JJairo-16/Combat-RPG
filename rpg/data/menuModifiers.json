@@ -24,5 +24,44 @@
 			"label": "Utilitzar pacte de sang",
 			"actionKey": "bloodPact"
 		}
+	],
+	"ULTIMATE_ARCANE_OVERLOAD": [
+		{
+			"priority": 80,
+			"minCharges": 0,
+			"maxCharges": -1,
+			"minStacks": 0,
+			"maxStacks": -1,
+			"minRemainingTurns": 0,
+			"maxRemainingTurns": -1,
+			"label": "Sobrecàrrega arcana",
+			"actionKey": "arcaneOverload"
+		}
+	],
+	"ULTIMATE_COLOSSAL_BREAK": [
+		{
+			"priority": 80,
+			"minCharges": 0,
+			"maxCharges": -1,
+			"minStacks": 0,
+			"maxStacks": -1,
+			"minRemainingTurns": 0,
+			"maxRemainingTurns": -1,
+			"label": "Trencament colossal",
+			"actionKey": "colossalBreak"
+		}
+	],
+	"ULTIMATE_ELVEN_OPENING_SHOT": [
+		{
+			"priority": 80,
+			"minCharges": 0,
+			"maxCharges": -1,
+			"minStacks": 0,
+			"maxStacks": -1,
+			"minRemainingTurns": 0,
+			"maxRemainingTurns": -1,
+			"label": "Tret èlfic d’obertura",
+			"actionKey": "elvenOpeningShot"
+		}
 	]
 }

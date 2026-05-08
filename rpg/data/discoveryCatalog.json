@@ -665,6 +665,57 @@
 			"tags": ["arma"],
 			"hiddenUntilDiscovered": true,
 			"sortOrder": 111
+		},
+		{
+			"category": "ACTIONS",
+			"id": "ARCANE_OVERLOAD",
+			"title": "Sobrecàrrega arcana",
+			"lockedTitle": "???",
+			"shortDescription": "Ulti màgica que converteix una càrrega en una descàrrega arcana d’un sol ús.",
+			"description": [
+				"Només apareix si el combatent ha descobert la càrrega, ha superat el llindar arcà, utilitza una arma màgica, manté una càrrega i conserva almenys el 75% del mana.",
+				"Consumeix la càrrega, paga un cost addicional de mana i potencia molt el proper atac",
+				"Només es pot utilitzar una vegada per combat."
+			],
+			"discoveredWhen": "Quan el jugador activa la Sobrecàrrega arcana per primera vegada.",
+			"hint": "La càrrega pot trencar-se en mana només després d’haver après prou màgia.",
+			"tags": ["combat", "especial", "ulti", "màgia", "càrrega"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 120
+		},
+		{
+			"category": "ACTIONS",
+			"id": "COLOSSAL_BREAK",
+			"title": "Trencament colossal",
+			"lockedTitle": "???",
+			"shortDescription": "Ulti física que transforma una càrrega en un impacte brutal.",
+			"description": [
+				"Només apareix si el combatent ha descobert la càrrega, ha demostrat que pot impactar amb un atac carregat, utilitza una arma física i manté una càrrega preparada.",
+				"Consumeix la càrrega i esgota estamina i resistència com a preu. El proper atac rep un gran multiplicador i pot desequilibrar el rival.",
+				"Només es pot utilitzar una vegada per combat."
+			],
+			"discoveredWhen": "Quan el jugador activa el Trencament colossal per primera vegada.",
+			"hint": "No n’hi ha prou amb carregar el cop: cal haver demostrat que una càrrega pot impactar de debò.",
+			"tags": ["combat", "especial", "ulti", "físic", "càrrega"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 130
+		},
+		{
+			"category": "ACTIONS",
+			"id": "ELVEN_OPENING_SHOT",
+			"title": "Tret èlfic d’obertura",
+			"lockedTitle": "???",
+			"shortDescription": "Ulti de rang reservada a elfs amb una destresa excepcional.",
+			"description": [
+				"Només apareix si el combatent ha descobert la càrrega, ha entrenat prou amb armes de rang, és elf, té molta destresa, utilitza una arma de rang i manté una càrrega preparada.",
+				"Consumeix la càrrega, paga estamina i potencia el proper atac amb més dany i probabilitat crítica",
+				"Només es pot utilitzar una vegada per combat."
+			],
+			"discoveredWhen": "Quan el jugador activa el Tret èlfic d’obertura per primera vegada.",
+			"hint": "Una càrrega pot obrir una esquerda, però cal haver après a esperar el tret abans que es tanqui.",
+			"tags": ["combat", "especial", "ulti", "rang", "elf", "càrrega"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 140
 		}
 	]
 }

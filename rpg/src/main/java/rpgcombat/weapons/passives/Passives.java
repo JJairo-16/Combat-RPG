@@ -8,11 +8,11 @@ import rpgcombat.combat.ui.messages.MessageSymbol;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.models.effects.impl.BlindEffect;
-import rpgcombat.models.effects.impl.BurnEffect;
-import rpgcombat.models.effects.impl.FrozenEffect;
-import rpgcombat.models.effects.impl.ChilledEffect;
+import rpgcombat.models.effects.impl.elemental.BurnEffect;
+import rpgcombat.models.effects.impl.elemental.ChilledEffect;
+import rpgcombat.models.effects.impl.elemental.FrozenEffect;
+import rpgcombat.models.effects.impl.elemental.PoisonEffect;
 import rpgcombat.combat.models.Action;
-import rpgcombat.models.effects.impl.PoisonEffect;
 import rpgcombat.weapons.Weapon;
 
 /**

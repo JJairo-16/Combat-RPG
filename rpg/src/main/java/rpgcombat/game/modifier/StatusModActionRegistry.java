@@ -6,6 +6,8 @@ import java.util.function.Predicate;
 import menu.action.MenuAction;
 import rpgcombat.combat.models.Action;
 import rpgcombat.models.characters.Character;
+import rpgcombat.game.modifier.ultimate.UltimateActionEffect;
+import rpgcombat.game.modifier.ultimate.UltimateActionType;
 
 /**
  * Registre d'accions i condicions de disponibilitat per a modificadors d'estat.
@@ -14,12 +16,18 @@ public final class StatusModActionRegistry {
 
     private static final Map<String, MenuAction<Action, Character>> ACTIONS = Map.of(
             "spiritualCalling", Actions::spiritualCalling,
-            "bloodPact", Actions::bloodPact
+            "bloodPact", Actions::bloodPact,
+            "arcaneOverload", Actions::arcaneOverload,
+            "colossalBreak", Actions::colossalBreak,
+            "elvenOpeningShot", Actions::elvenOpeningShot
     );
 
     private static final Map<String, Predicate<Character>> AVAILABILITY = Map.of(
             "spiritualCalling", Character::canUseSpiritualCalling,
-            "bloodPact", p -> true
+            "bloodPact", p -> true,
+            "arcaneOverload", p -> UltimateActionEffect.canActivate(p, UltimateActionType.ARCANE_OVERLOAD),
+            "colossalBreak", p -> UltimateActionEffect.canActivate(p, UltimateActionType.COLOSSAL_BREAK),
+            "elvenOpeningShot", p -> UltimateActionEffect.canActivate(p, UltimateActionType.ELVEN_OPENING_SHOT)
     );
 
     private StatusModActionRegistry() {

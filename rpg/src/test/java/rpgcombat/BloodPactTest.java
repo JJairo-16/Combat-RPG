@@ -23,7 +23,7 @@ import rpgcombat.game.modifier.Actions;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
-import rpgcombat.models.effects.impl.MagicalTiredness;
+import rpgcombat.models.effects.impl.menu.MagicalTiredness;
 
 class BloodPactTest {
 

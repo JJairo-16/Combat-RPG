@@ -74,6 +74,30 @@
 - [Efectes i regles de perks](11-perks/05-efectes-i-regles.md)
 - [Menú i integració amb combat](11-perks/06-menu-i-integracio-combat.md)
 
+### ▌Assoliments
+- [Visió general](12-assoliments/01-visio-general.md)
+- [Motor genèric d'objectius](12-assoliments/02-motor-objectius.md)
+- [Esdeveniments i disparadors](12-assoliments/03-esdeveniments-i-disparadors.md)
+- [Persistència i visualització](12-assoliments/04-persistencia-i-visualitzacio.md)
+
+### ▌Descobriments
+- [Visió general](13-descobriments/01-visio-general.md)
+- [Catàleg i entrades](13-descobriments/02-cataleg-i-entrades.md)
+- [Runtime i disparadors](13-descobriments/03-runtime-i-disparadors.md)
+- [Persistència i visor](13-descobriments/04-persistencia-i-visor.md)
+
+### ▌Armes desbloquejables
+- [Visió general](14-armes-desbloquejables/01-visio-general.md)
+- [Regles de desbloqueig](14-armes-desbloquejables/02-regles-unlock.md)
+- [Integració amb descobriments](14-armes-desbloquejables/03-integracio-descobriments.md)
+- [Selecció d'armes i proves](14-armes-desbloquejables/04-seleccio-i-tests.md)
+
+### ▌Ultis de segona etapa
+- [Visió general](15-ultis-segona-etapa/01-visio-general.md)
+- [Desbloqueig i menú](15-ultis-segona-etapa/02-desbloqueig-i-menu.md)
+- [Funcionament en combat](15-ultis-segona-etapa/03-funcionament-combat.md)
+- [Configuració i proves](15-ultis-segona-etapa/04-configuracio-i-tests.md)
+
 ---
 
 ## ▌Com llegir aquesta documentació
@@ -85,7 +109,10 @@ Ordre recomanat per integrar-se al projecte:
 3. Combat
 4. Personatges
 5. Armes i efectes
-6. Configuració i extensió
+6. Assoliments i descobriments
+7. Armes desbloquejables
+8. Ultis de segona etapa
+9. Configuració i extensió
 
 ---
 

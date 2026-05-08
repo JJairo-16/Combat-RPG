@@ -13,7 +13,7 @@ import rpgcombat.combat.models.Action;
 import rpgcombat.creator.CharacterCreator;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;
-import rpgcombat.models.effects.impl.SuddenDeathPoisonEffect;
+import rpgcombat.models.effects.impl.elemental.SuddenDeathPoisonEffect;
 
 /**
  * Proves de la mecànica anti-stall:

@@ -21,12 +21,15 @@ import rpgcombat.combat.ui.messages.MessageSymbol;
 import rpgcombat.creator.score.CharacterBuildScore;
 import rpgcombat.discovery.DiscoveryCategory;
 import rpgcombat.discovery.DiscoveryRuntime;
+import rpgcombat.game.modifier.ultimate.UltimateActionEffect;
+import rpgcombat.game.modifier.ultimate.UltimateActionType;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
+import rpgcombat.models.effects.MenuTurnEffect;
 import rpgcombat.models.effects.StackingRule;
 import rpgcombat.models.effects.impl.Exhaustion;
-import rpgcombat.models.effects.impl.SpiritualCallingFlag;
+import rpgcombat.models.effects.impl.menu.SpiritualCallingFlag;
 import rpgcombat.models.effects.triggers.InternalConflict;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;
@@ -68,6 +71,7 @@ public class Character {
     private int momentumStacks = 0;
     private boolean adrenalineSurgeUsed = false;
     private double adrenaline = 0.0;
+    private boolean specialMenuActionUsedThisTurn = false;
 
     private double attackModifierThisTurn = 1.0;
     private double defenseModifierThisTurn = 1.0;
@@ -88,6 +92,7 @@ public class Character {
         this.unarmedAttack = new UnarmedAttack(this.stats, rng);
 
         applyInternalConflictIfNeeded(stats);
+        installUltimateActionFlags();
     }
 
     private void applyInternalConflictIfNeeded(int[] stats) {
@@ -95,6 +100,13 @@ public class Character {
             return;
 
         addEffect(new InternalConflict());
+    }
+
+    /** Instal·la els indicadors interns de les ultis de segona etapa sense descobrir-los com a efectes visibles. */
+    private void installUltimateActionFlags() {
+        for (UltimateActionType type : UltimateActionType.values()) {
+            addInternalEffect(new UltimateActionEffect(type));
+        }
     }
 
     /**
@@ -273,7 +285,7 @@ public class Character {
         if (w == null)
             return false;
 
-        if (w.getId().equals(weapon.getId()))
+        if (weapon != null && w.getId().equals(weapon.getId()))
             return true;
 
         if (!w.canEquip(stats))
@@ -766,13 +778,54 @@ public class Character {
         return rng;
     }
 
+    /** Marca que ja s'ha utilitzat una acció especial de menú durant aquest torn. */
+    public void markSpecialMenuActionUsedThisTurn() {
+        specialMenuActionUsedThisTurn = true;
+    }
+
+    /** Indica si ja s'ha utilitzat una acció especial de menú durant aquest torn. */
+    public boolean hasSpecialMenuActionUsedThisTurn() {
+        return specialMenuActionUsedThisTurn;
+    }
+
+    /** Reinicia les restriccions transitòries de menú al final de la ronda. */
+    public void clearSpecialMenuActionUsedThisTurn() {
+        specialMenuActionUsedThisTurn = false;
+    }
+
+    /** Executa els efectes que avancen una vegada per ronda de menú. */
+    public void onMenuTurnEnd() {
+        if (!effects.isEmpty()) {
+            List<Effect> snapshot = List.copyOf(effects);
+            for (Effect effect : snapshot) {
+                if (effect instanceof MenuTurnEffect menuTurnEffect) {
+                    menuTurnEffect.onMenuTurnEnd(this);
+                }
+            }
+            cleanupExpiredEffects();
+        }
+        clearSpecialMenuActionUsedThisTurn();
+    }
+
+    /** Afegeix un efecte intern sense registrar-lo al catàleg de descobriments. */
+    public void addInternalEffect(Effect incoming) {
+        addEffectInternal(incoming, false);
+    }
+
     /**
      * Afegeix un efecte al personatge segons la seva regla d'apilament.
      */
     public void addEffect(Effect incoming) {
+        addEffectInternal(incoming, true);
+    }
+
+    /** Implementació comuna per afegir efectes visibles o interns. */
+    private void addEffectInternal(Effect incoming, boolean discover) {
         if (incoming == null)
             return;
-        DiscoveryRuntime.discover(DiscoveryCategory.EFFECTS, incoming.key());
+        if (discover) {
+            DiscoveryRuntime.discover(DiscoveryCategory.EFFECTS, incoming.key());
+        }
         if (effects.isEmpty()) {
             effects.add(incoming);
             return;

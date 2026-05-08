@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import rpgcombat.combat.models.Action;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;
-import rpgcombat.models.effects.impl.ChilledEffect;
+import rpgcombat.models.effects.impl.elemental.ChilledEffect;
 import rpgcombat.weapons.Arsenal;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;

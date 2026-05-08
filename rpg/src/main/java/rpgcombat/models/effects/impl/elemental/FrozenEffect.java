@@ -1,4 +1,4 @@
-package rpgcombat.models.effects.impl;
+package rpgcombat.models.effects.impl.elemental;
 
 import rpgcombat.combat.ui.messages.CombatMessage;
 import rpgcombat.combat.ui.messages.MessageColor;

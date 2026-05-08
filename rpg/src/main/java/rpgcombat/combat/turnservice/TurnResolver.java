@@ -23,7 +23,7 @@ import rpgcombat.combat.ui.messages.MessageSymbol;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Result;
 import rpgcombat.models.characters.Statistics;
-import rpgcombat.models.effects.impl.PoisonEffect;
+import rpgcombat.models.effects.impl.elemental.PoisonEffect;
 import rpgcombat.models.effects.triggers.Chaos;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;
@@ -309,6 +309,14 @@ public class TurnResolver {
         copyMeta(ctx, merged, "elementalEffect");
         copyMeta(ctx, merged, "elementalBurnApplied");
         copyMeta(ctx, merged, "elementalFrozenApplied");
+        copyMeta(ctx, merged, "ultimateUsed");
+        copyMeta(ctx, merged, "ultimateId");
+        copyMeta(ctx, merged, "ultimateName");
+        copyMeta(ctx, merged, "ultimateType");
+        copyMeta(ctx, merged, "ultimateMultiplier");
+        copyMeta(ctx, merged, "ultimateCritBonus");
+        copyMeta(ctx, merged, "ultimateStaggerApplied");
+        copyMeta(ctx, merged, "secondStageCharge");
         return merged;
     }
 

@@ -114,6 +114,12 @@ public final class AchievementSystem {
         apply(AchievementUpdate.spiritualCallingUsed(player, face, healPercent, healAmount, roundNumber));
     }
 
+    /** Registra l'ús d'una ulti de segona etapa. */
+    public void onUltimateUsed(Character player, String ultimateId, String ultimateName, String ultimateWeaponType,
+            int roundNumber) {
+        apply(AchievementUpdate.ultimateUsed(player, ultimateId, ultimateName, ultimateWeaponType, roundNumber));
+    }
+
     /** Converteix el progrés intern a models visuals. */
     public List<Achievement> toViewModels() {
         List<Achievement> result = new ArrayList<>();
@@ -174,7 +180,7 @@ public final class AchievementSystem {
     /** Aplica una actualització i persisteix immediatament qualsevol canvi. */
     private void apply(AchievementUpdate update) {
         Objects.requireNonNull(update, "La informació de l'event no pot ser nula.");
-
+        
         AchievementUpdate effectiveUpdate = enrichWithMatchMemory(update);
         boolean changed = false;
         int completedNow = 0;

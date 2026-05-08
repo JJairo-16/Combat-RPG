@@ -10,11 +10,13 @@ import rpgcombat.combat.models.Action;
 import rpgcombat.discovery.DiscoveryCategory;
 import rpgcombat.discovery.DiscoveryRuntime;
 import rpgcombat.game.modifier.ui.Messages;
+import rpgcombat.game.modifier.ultimate.UltimateActionEffect;
+import rpgcombat.game.modifier.ultimate.UltimateActionType;
 import rpgcombat.game.modifier.ui.Messages.CALL_SPIRITS;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
-import rpgcombat.models.effects.impl.MagicalTiredness;
-import rpgcombat.models.effects.impl.SpiritualCallingFlag;
+import rpgcombat.models.effects.impl.menu.MagicalTiredness;
+import rpgcombat.models.effects.impl.menu.SpiritualCallingFlag;
 import rpgcombat.utils.input.Menu;
 import rpgcombat.utils.rng.DivineCharismaAffinity;
 import rpgcombat.utils.rng.SpiritualCallingDie;
@@ -70,6 +72,11 @@ public final class Actions {
     public static MenuResult<Action> spiritualCalling(Character player) {
         cleaner.clear();
 
+        if (player.hasSpecialMenuActionUsedThisTurn()) {
+            cannotCombineSpecialActions();
+            return MenuResult.repeatLoop();
+        }
+
         if (!player.hasEffect(SpiritualCallingFlag.INTERNAL_EFFECT_KEY)) {
             cannotUseSpiritualCalling();
             return MenuResult.repeatLoop();
@@ -82,6 +89,7 @@ public final class Actions {
         }
 
         effect.use();
+        player.markSpecialMenuActionUsedThisTurn();
 
         CALL_SPIRITS.CALL_INIT.print();
 
@@ -136,6 +144,11 @@ public final class Actions {
     public static MenuResult<Action> bloodPact(Character player) {
         cleaner.clear();
 
+        if (player.hasSpecialMenuActionUsedThisTurn()) {
+            cannotCombineSpecialActions();
+            return MenuResult.repeatLoop();
+        }
+
         Effect e = player.getEffect(MagicalTiredness.INTERNAL_EFFECT_KEY);
         MagicalTiredness magicalTiredness = (MagicalTiredness) e;
 
@@ -147,6 +160,7 @@ public final class Actions {
         }
 
         magicalTiredness.use();
+        player.markSpecialMenuActionUsedThisTurn();
 
         Messages.BLOOD_PACT.USE_BLOOD_PACT.print();
         BloodPactResult result = useBloodPact(player);
@@ -156,6 +170,57 @@ public final class Actions {
         System.out.println();
         Menu.pause();
         return MenuResult.repeatLoop();
+    }
+
+    /** Activa la ulti màgica de segona etapa. */
+    public static MenuResult<Action> arcaneOverload(Character player) {
+        return useUltimate(player, UltimateActionType.ARCANE_OVERLOAD);
+    }
+
+    /** Activa la ulti física de segona etapa. */
+    public static MenuResult<Action> colossalBreak(Character player) {
+        return useUltimate(player, UltimateActionType.COLOSSAL_BREAK);
+    }
+
+    /** Activa la ulti èlfica de rang de segona etapa. */
+    public static MenuResult<Action> elvenOpeningShot(Character player) {
+        return useUltimate(player, UltimateActionType.ELVEN_OPENING_SHOT);
+    }
+
+    /** Executa la lògica comuna d'activació d'una ulti. */
+    private static MenuResult<Action> useUltimate(Character player, UltimateActionType type) {
+        cleaner.clear();
+
+        if (!UltimateActionEffect.canActivate(player, type)) {
+            Messages.ULTIMATE.CANNOT_USE.print();
+            System.out.println();
+            Menu.pause();
+            return MenuResult.repeatLoop();
+        }
+
+        boolean activated = UltimateActionEffect.activate(player, type);
+        if (!activated) {
+            Messages.ULTIMATE.CHARGE_FAILS.print();
+            System.out.println();
+            Menu.pause();
+            return MenuResult.repeatLoop();
+        }
+
+        DiscoveryRuntime.discover(DiscoveryCategory.ACTIONS, type.discoveryId());
+        registerUltimate(player, type);
+
+        Messages.ULTIMATE.releaseFor(type).print();
+        Messages.ULTIMATE.PRICE_PAID.print();
+        System.out.println();
+        Menu.pause();
+        return MenuResult.returnValue(Action.ATTACK);
+    }
+
+    /** Mostra que no es poden encadenar accions especials de menú en el mateix torn. */
+    private static void cannotCombineSpecialActions() {
+        Messages.ULTIMATE.CANNOT_COMBINE.print();
+        System.out.println();
+        Menu.pause();
     }
 
     /**
@@ -224,6 +289,13 @@ public final class Actions {
         achievementSystem.onBloodPactUsed(player, result.manaRestored(), result.hpCost(),
                 result.hpCostPercent(), result.hpBeforePercent(), result.hpAfterPercent(),
                 result.manaBeforePercent(), result.manaAfterPercent(), roundSupplier.getAsInt());
+    }
+
+    /** Registra l'ús d'una ulti de segona etapa. */
+    private static void registerUltimate(Character player, UltimateActionType type) {
+        if (achievementSystem == null || type == null) return;
+        achievementSystem.onUltimateUsed(player, type.discoveryId(), type.label(), type.weaponType().name(),
+                roundSupplier.getAsInt());
     }
 
     /** Resultat intern del Pacte de Sang per alimentar assoliments. */

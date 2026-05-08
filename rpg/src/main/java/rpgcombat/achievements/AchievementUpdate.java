@@ -390,6 +390,27 @@ public record AchievementUpdate(
                 Set.copyOf(events), safeFields(fields));
     }
 
+    /** Crea una actualització d'ús d'una ulti de segona etapa. */
+    public static AchievementUpdate ultimateUsed(Character owner, String ultimateId, String ultimateName,
+            String ultimateWeaponType, int roundNumber) {
+        Map<String, Object> fields = baseFields(owner, null, null, null, roundNumber);
+        fields.put("specialAction", "ultimate");
+        fields.put("ultimateUsed", true);
+        fields.put("ultimateId", ultimateId);
+        fields.put("ultimateName", ultimateName);
+        fields.put("ultimateType", ultimateWeaponType);
+        fields.put("ultimateWeaponType", ultimateWeaponType);
+
+        EnumSet<AchievementEvent> events = EnumSet.of(AchievementEvent.SPECIAL_ACTION_USED,
+                AchievementEvent.ULTIMATE_USED);
+        if ("ARCANE_OVERLOAD".equals(ultimateId)) events.add(AchievementEvent.ARCANE_OVERLOAD_USED);
+        if ("COLOSSAL_BREAK".equals(ultimateId)) events.add(AchievementEvent.COLOSSAL_BREAK_USED);
+        if ("ELVEN_OPENING_SHOT".equals(ultimateId)) events.add(AchievementEvent.ELVEN_OPENING_SHOT_USED);
+
+        return new AchievementUpdate(owner, null, null, null, null, Winner.NONE, roundNumber,
+                Set.copyOf(events), safeFields(fields));
+    }
+
     private static Map<String, Object> safeFields(Map<String, Object> fields) {
         if (fields == null || fields.isEmpty()) return Map.of();
         Map<String, Object> clean = new HashMap<>();

@@ -1,4 +1,4 @@
-package rpgcombat.models.effects.impl;
+package rpgcombat.models.effects.impl.elemental;
 
 import java.util.Random;
 

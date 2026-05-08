@@ -316,6 +316,30 @@ public class Statistics {
         return stamina - before;
     }
 
+    /**
+     * Consumeix estamina sense requerir que n'hi hagi prou.
+     */
+    public double consumeStamina(double amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+        double before = stamina;
+        stamina = Math.max(0, stamina - amount);
+        return before - stamina;
+    }
+
+    /**
+     * Consumeix resistència sense requerir que n'hi hagi prou.
+     */
+    public double consumeResistance(double amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+        double before = resistance;
+        resistance = Math.max(0, resistance - amount);
+        return before - resistance;
+    }
+
 
     /**
      * Recupera resistència en atacar.

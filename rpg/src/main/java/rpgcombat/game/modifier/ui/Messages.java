@@ -1,6 +1,8 @@
 package rpgcombat.game.modifier.ui;
 
+import rpgcombat.game.modifier.ultimate.UltimateActionType;
 import rpgcombat.utils.cache.TextWrapCache;
+import rpgcombat.utils.ui.Ansi;
 
 public class Messages {
     private Messages() {
@@ -74,4 +76,54 @@ public class Messages {
             System.out.println(msg);
         }
     }
+
+
+    public enum ULTIMATE {
+        CANNOT_USE(
+                Ansi.YELLOW,
+                "La càrrega encara no troba cap esquerda; aquest ritual no pot obrir-se ara."),
+        CANNOT_COMBINE(
+                Ansi.YELLOW,
+                "Aquest torn ja has reclamat una força excepcional; cap altra crida respondrà fins que passi el moment."),
+        ARCANE_RELEASE(
+                Ansi.MAGENTA,
+                "La càrrega es trenca dins teu; el mana puja com una marea impossible i el cop ja no pot esperar."),
+        COLOSSAL_RELEASE(
+                Ansi.ORANGE,
+                "El pes de la càrrega cau sobre els teus braços. No prepares un atac: prepares una ruptura."),
+        ELVEN_RELEASE(
+                Ansi.CYAN,
+                "La mirada troba una escletxa mínima. La càrrega es converteix en tret abans que el món respiri."),
+        CHARGE_FAILS(
+                Ansi.YELLOW,
+                "La càrrega vacil·la i torna al silenci abans de poder trencar-se."),
+        PRICE_PAID(
+                Ansi.DARK_GRAY,
+                "La càrrega original s'esvaeix; només en queda la ruptura i el preu que deixa al cos.");
+
+        private final String color;
+        private final String msg;
+
+        private ULTIMATE(String color, String msg) {
+            this.color = color;
+            this.msg = getWrapped(msg);
+        }
+
+        public void print() {
+            System.out.println(color + msg + Ansi.RESET);
+        }
+
+        public String text() {
+            return msg;
+        }
+
+        public static ULTIMATE releaseFor(UltimateActionType type) {
+            return switch (type) {
+                case ARCANE_OVERLOAD -> ARCANE_RELEASE;
+                case COLOSSAL_BREAK -> COLOSSAL_RELEASE;
+                case ELVEN_OPENING_SHOT -> ELVEN_RELEASE;
+            };
+        }
+    }
+
 }

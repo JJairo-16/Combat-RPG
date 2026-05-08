@@ -2496,5 +2496,144 @@
         }
       ]
     }
+  },
+  {
+    "id": "PHYSICAL_INITIATE",
+    "name": "El pes del ferro",
+    "description": "Utilitza 4 vegades armes físiques.",
+    "goal": 4,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponType",
+          "operator": "==",
+          "value": "PHYSICAL"
+        }
+      ]
+    }
+  },
+  {
+    "id": "ARCANE_INITIATE",
+    "name": "El llindar del mana",
+    "description": "Utilitza 4 vegades armes màgiques.",
+    "goal": 4,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponType",
+          "operator": "==",
+          "value": "MAGICAL"
+        }
+      ]
+    }
+  },
+  {
+    "id": "FULL_FORCE",
+    "name": "La càrrega que arriba",
+    "description": "Impacta amb un atac carregat.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "CHARGED_HIT"
+    }
+  },
+  {
+    "id": "EAGLE_EYE",
+    "name": "L’ull que no parpelleja",
+    "description": "Utilitza 4 vegades armes de rang.",
+    "goal": 4,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponType",
+          "operator": "==",
+          "value": "RANGE"
+        }
+      ]
+    }
+  },
+  {
+    "id": "ARCANE_OVERLOAD_RELEASED",
+    "name": "La sang sota el vel",
+    "description": "Utilitza la Sobrecàrrega arcana per primera vegada.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": false,
+      "showDescriptionBeforeComplete": false
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "ARCANE_OVERLOAD_USED"
+    }
+  },
+  {
+    "id": "COLOSSAL_BREAK_RELEASED",
+    "name": "La fractura del colós",
+    "description": "Utilitza el Trencament colossal per primera vegada.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": false,
+      "showDescriptionBeforeComplete": false
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "COLOSSAL_BREAK_USED"
+    }
+  },
+  {
+    "id": "ELVEN_OPENING_RELEASED",
+    "name": "L’escletxa èlfica",
+    "description": "Utilitza el Tret èlfic d’obertura per primera vegada.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": false,
+      "showDescriptionBeforeComplete": false
+    },
+    "objective": {
+      "type": "COUNT_EVENT",
+      "event": "ELVEN_OPENING_SHOT_USED"
+    }
+  },
+  {
+    "id": "THREE_HIDDEN_RUPTURES",
+    "name": "Les tres portes tancades",
+    "description": "Utilitza almenys una vegada les tres ruptures secretes.",
+    "goal": 3,
+    "visibility": {
+      "showNameBeforeComplete": false,
+      "showDescriptionBeforeComplete": false
+    },
+    "objective": {
+      "type": "ALL_UNIQUE_VALUES",
+      "event": "ULTIMATE_USED",
+      "uniqueField": "ultimateId",
+      "requiredValues": [
+        "ARCANE_OVERLOAD",
+        "COLOSSAL_BREAK",
+        "ELVEN_OPENING_SHOT"
+      ]
+    }
   }
 ]

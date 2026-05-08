@@ -26,8 +26,8 @@ import rpgcombat.combat.turnservice.TurnResolver;
 import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.combat.ui.CombatRenderer;
 import rpgcombat.combat.ui.RoundResultPager;
-import rpgcombat.models.effects.impl.MagicalTiredness;
-import rpgcombat.models.effects.impl.SuddenDeathPoisonEffect;
+import rpgcombat.models.effects.impl.menu.MagicalTiredness;
+import rpgcombat.models.effects.impl.elemental.SuddenDeathPoisonEffect;
 import rpgcombat.perks.CombatPerkSystem;
 
 /**
@@ -222,6 +222,8 @@ public class CombatSystem {
 
         applyOrRemoveMagicalTiredness(player1);
         applyOrRemoveMagicalTiredness(player2);
+        player1.onMenuTurnEnd();
+        player2.onMenuTurnEnd();
 
         CombatantStatus p1Final = CombatantStatus.from(player1);
         CombatantStatus p2Final = CombatantStatus.from(player2);
