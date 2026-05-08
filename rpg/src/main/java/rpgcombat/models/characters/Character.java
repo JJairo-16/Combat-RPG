@@ -272,6 +272,10 @@ public class Character {
     public boolean setWeapon(Weapon w) {
         if (w == null)
             return false;
+
+        if (w.getId().equals(weapon.getId()))
+            return true;
+
         if (!w.canEquip(stats))
             return false;
         weapon = w;

@@ -44,6 +44,23 @@ public final class PassiveFactory {
                     getInteger(params, "frozenTurns"),
                     getDouble(params, "frozenOutgoingMultiplier"),
                     getDouble(params, "frozenIncomingMultiplier"));
+            case "firstOathClash" -> Passives.firstOathClash(getDouble(params, "damageBonus"));
+            case "guardCounter" -> Passives.guardCounter(
+                    getDouble(params, "damageBonus"),
+                    getInteger(params, "minGuardStacks"));
+            case "ancestralBell" -> Passives.ancestralBell(
+                    getDouble(params, "damageBonus"),
+                    getDouble(params, "healAmount"),
+                    getInteger(params, "cooldownTurns"));
+            case "tacticalMirror" -> Passives.tacticalMirror(getDouble(params, "damageBonus"));
+            case "retaliationAgainstDefend" -> Passives.retaliationAgainstDefend(getDouble(params, "damageBonus"));
+            case "badOmenCrit" -> Passives.badOmenCrit(
+                    getDouble(params, "bonusPerStack"),
+                    getInteger(params, "maxStacks"));
+            case "chillOnHit" -> Passives.chillOnHit(
+                    getDouble(params, "applyProb"),
+                    getInteger(params, "turns"),
+                    getDouble(params, "outgoingMultiplier"));
             default -> throw new IllegalArgumentException("Passiva desconeguda: " + cfg.type());
         };
     }

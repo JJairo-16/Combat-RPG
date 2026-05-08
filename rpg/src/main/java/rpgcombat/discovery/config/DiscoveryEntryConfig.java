@@ -12,6 +12,8 @@ public record DiscoveryEntryConfig(
         List<String> description,
         String discoveredWhen,
         String hint,
+        String unlockHint,
+        String discoveryHint,
         List<String> tags,
         Boolean hiddenUntilDiscovered,
         Integer sortOrder) {

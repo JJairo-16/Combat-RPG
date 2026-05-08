@@ -157,7 +157,7 @@
         {
           "field": "winnerHpPercent",
           "operator": "<=",
-          "value": 10
+          "value": "10"
         }
       ]
     }
@@ -178,7 +178,7 @@
         {
           "field": "winnerHpPercent",
           "operator": "<=",
-          "value": 5
+          "value": "5"
         }
       ]
     }
@@ -199,7 +199,7 @@
         {
           "field": "hpPercent",
           "operator": "<=",
-          "value": 10
+          "value": "10"
         }
       ]
     }
@@ -220,7 +220,7 @@
         {
           "field": "hpPercent",
           "operator": "<=",
-          "value": 20
+          "value": "20"
         }
       ]
     }
@@ -254,7 +254,7 @@
         {
           "field": "stamina",
           "operator": "<=",
-          "value": 0
+          "value": "0"
         }
       ]
     }
@@ -275,7 +275,7 @@
         {
           "field": "staminaPercent",
           "operator": "<=",
-          "value": 20
+          "value": "20"
         }
       ]
     }
@@ -296,7 +296,7 @@
         {
           "field": "winnerStaminaPercent",
           "operator": "<=",
-          "value": 10
+          "value": "10"
         }
       ]
     }
@@ -330,7 +330,7 @@
         {
           "field": "momentum",
           "operator": ">=",
-          "value": 2
+          "value": "2"
         }
       ]
     }
@@ -350,7 +350,7 @@
         {
           "field": "momentum",
           "operator": ">=",
-          "value": 3
+          "value": "3"
         }
       ]
     }
@@ -398,12 +398,12 @@
         {
           "field": "momentum",
           "operator": ">=",
-          "value": 2
+          "value": "2"
         },
         {
           "field": "staminaPercent",
           "operator": "<=",
-          "value": 20
+          "value": "20"
         }
       ]
     }
@@ -438,7 +438,7 @@
         {
           "field": "incomingDamage",
           "operator": "==",
-          "value": 0
+          "value": "0"
         }
       ]
     }
@@ -509,12 +509,12 @@
         {
           "field": "chargedHit",
           "operator": "==",
-          "value": true
+          "value": "true"
         },
         {
           "field": "damage",
           "operator": ">=",
-          "value": 120
+          "value": "120"
         }
       ]
     }
@@ -627,7 +627,7 @@
         {
           "field": "opponent.hpPercent",
           "operator": "<=",
-          "value": 20
+          "value": "20"
         }
       ]
     }
@@ -650,7 +650,7 @@
     "id": "RELIC_HUNTER",
     "name": "Caçador de relíquies",
     "description": "Utilitza almenys una vegada totes les armes conegudes.",
-    "goal": 11,
+    "goal": 21,
     "visibility": {
       "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": true
@@ -670,7 +670,17 @@
         "EXECUTIONERS_EDGE",
         "CHRONO_WEAVER_STAFF",
         "DIVINE_SPARK",
-        "WASP_HARPOON"
+        "WASP_HARPOON",
+        "ELEMENTAL_DUALITY",
+        "FIRST_OATH_SPEAR",
+        "FIRST_BLOOD_KNIFE",
+        "BROKEN_SHIELD",
+        "ANCESTRAL_BELL",
+        "CHAOS_FRAGMENT",
+        "TACTICAL_MIRROR",
+        "RETALIATION_SHORTBOW",
+        "BAD_OMEN_SLING",
+        "COLD_STRING_CROSSBOW"
       ]
     }
   },
@@ -678,7 +688,7 @@
     "id": "IRON_OATH",
     "name": "Jurament de ferro",
     "description": "Guanya almenys un combat amb cada arma.",
-    "goal": 11,
+    "goal": 21,
     "visibility": {
       "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": true
@@ -698,7 +708,17 @@
         "EXECUTIONERS_EDGE",
         "CHRONO_WEAVER_STAFF",
         "DIVINE_SPARK",
-        "WASP_HARPOON"
+        "WASP_HARPOON",
+        "ELEMENTAL_DUALITY",
+        "FIRST_OATH_SPEAR",
+        "FIRST_BLOOD_KNIFE",
+        "BROKEN_SHIELD",
+        "ANCESTRAL_BELL",
+        "CHAOS_FRAGMENT",
+        "TACTICAL_MIRROR",
+        "RETALIATION_SHORTBOW",
+        "BAD_OMEN_SLING",
+        "COLD_STRING_CROSSBOW"
       ]
     }
   },
@@ -706,7 +726,7 @@
     "id": "CHAOS_ARMOURER",
     "name": "L’armer del caos",
     "description": "Utilitza totes les armes durant combats en mode caòtic.",
-    "goal": 11,
+    "goal": 21,
     "visibility": {
       "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": true
@@ -726,13 +746,23 @@
         "EXECUTIONERS_EDGE",
         "CHRONO_WEAVER_STAFF",
         "DIVINE_SPARK",
-        "WASP_HARPOON"
+        "WASP_HARPOON",
+        "ELEMENTAL_DUALITY",
+        "FIRST_OATH_SPEAR",
+        "FIRST_BLOOD_KNIFE",
+        "BROKEN_SHIELD",
+        "ANCESTRAL_BELL",
+        "CHAOS_FRAGMENT",
+        "TACTICAL_MIRROR",
+        "RETALIATION_SHORTBOW",
+        "BAD_OMEN_SLING",
+        "COLD_STRING_CROSSBOW"
       ],
       "conditions": [
         {
           "field": "chaosMode",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -741,7 +771,7 @@
     "id": "STAINED_HANDS",
     "name": "Les mans tacades",
     "description": "Derrota almenys un enemic amb cada arma.",
-    "goal": 11,
+    "goal": 21,
     "visibility": {
       "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": true
@@ -761,7 +791,17 @@
         "EXECUTIONERS_EDGE",
         "CHRONO_WEAVER_STAFF",
         "DIVINE_SPARK",
-        "WASP_HARPOON"
+        "WASP_HARPOON",
+        "ELEMENTAL_DUALITY",
+        "FIRST_OATH_SPEAR",
+        "FIRST_BLOOD_KNIFE",
+        "BROKEN_SHIELD",
+        "ANCESTRAL_BELL",
+        "CHAOS_FRAGMENT",
+        "TACTICAL_MIRROR",
+        "RETALIATION_SHORTBOW",
+        "BAD_OMEN_SLING",
+        "COLD_STRING_CROSSBOW"
       ]
     }
   },
@@ -814,7 +854,7 @@
         {
           "field": "grimoireMaxMultiplier",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -861,7 +901,7 @@
         {
           "field": "chaosMode",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -915,7 +955,7 @@
         {
           "field": "ballistaProjectiles",
           "operator": ">=",
-          "value": 3
+          "value": "3"
         }
       ]
     }
@@ -941,7 +981,7 @@
         {
           "field": "ballistaProjectiles",
           "operator": ">=",
-          "value": 2
+          "value": "2"
         }
       ]
     }
@@ -988,7 +1028,7 @@
         {
           "field": "chaosMode",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -1066,7 +1106,7 @@
         {
           "field": "lifeStolen",
           "operator": ">",
-          "value": 0
+          "value": "0"
         }
       ]
     }
@@ -1269,7 +1309,7 @@
         {
           "field": "chaosMode",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -1290,7 +1330,7 @@
         {
           "field": "chaosMode",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -1311,7 +1351,7 @@
         {
           "field": "hpPercent",
           "operator": "<=",
-          "value": 20
+          "value": "20"
         }
       ]
     }
@@ -1332,7 +1372,7 @@
         {
           "field": "hpPercent",
           "operator": "<=",
-          "value": 20
+          "value": "20"
         }
       ]
     }
@@ -1437,7 +1477,7 @@
         {
           "field": "hpPercent",
           "operator": "<=",
-          "value": 20
+          "value": "20"
         }
       ]
     }
@@ -1458,7 +1498,7 @@
         {
           "field": "chaosMode",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -1579,7 +1619,7 @@
         {
           "field": "bloodPactUsed",
           "operator": "==",
-          "value": false
+          "value": "false"
         }
       ]
     }
@@ -1671,7 +1711,7 @@
         {
           "field": "chaosMode",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -1692,7 +1732,7 @@
         {
           "field": "chaosMode",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -1713,7 +1753,7 @@
         {
           "field": "chaosMode",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -1762,7 +1802,7 @@
         {
           "field": "chaosMode",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -1797,12 +1837,12 @@
         {
           "field": "chaosMode",
           "operator": "==",
-          "value": true
+          "value": "true"
         },
         {
           "field": "winnerHpPercent",
           "operator": "<=",
-          "value": 10
+          "value": "10"
         }
       ]
     }
@@ -1823,7 +1863,7 @@
         {
           "field": "chaosMode",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -1886,7 +1926,7 @@
         {
           "field": "chaosMode",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -1935,7 +1975,7 @@
         {
           "field": "chaosMode",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -1956,7 +1996,7 @@
         {
           "field": "chaosMode",
           "operator": "==",
-          "value": true
+          "value": "true"
         },
         {
           "field": "weaponId",
@@ -1982,7 +2022,7 @@
         {
           "field": "chaosMode",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -2008,7 +2048,7 @@
         {
           "field": "elementalBurnApplied",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -2034,7 +2074,7 @@
         {
           "field": "elementalFrozenApplied",
           "operator": "==",
-          "value": true
+          "value": "true"
         }
       ]
     }
@@ -2056,6 +2096,403 @@
           "field": "weaponId",
           "operator": "==",
           "value": "ELEMENTAL_DUALITY"
+        }
+      ]
+    }
+  },
+  {
+    "id": "FIRST_OATH_SPEAR_USED",
+    "name": "Jurament llarg",
+    "description": "Utilitza jurament llarg per primera vegada.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "FIRST_OATH_SPEAR"
+        }
+      ]
+    }
+  },
+  {
+    "id": "FIRST_BLOOD_KNIFE_USED",
+    "name": "La sang recorda",
+    "description": "Utilitza la sang recorda per primera vegada.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "FIRST_BLOOD_KNIFE"
+        }
+      ]
+    }
+  },
+  {
+    "id": "BROKEN_SHIELD_USED",
+    "name": "L’escletxa avança",
+    "description": "Utilitza l’escletxa avança per primera vegada.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "BROKEN_SHIELD"
+        }
+      ]
+    }
+  },
+  {
+    "id": "ANCESTRAL_BELL_USED",
+    "name": "Bronze despert",
+    "description": "Utilitza bronze despert per primera vegada.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "ANCESTRAL_BELL"
+        }
+      ]
+    }
+  },
+  {
+    "id": "CHAOS_FRAGMENT_USED",
+    "name": "Esquerda a la mà",
+    "description": "Utilitza esquerda a la mà per primera vegada.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "CHAOS_FRAGMENT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TACTICAL_MIRROR_USED",
+    "name": "Mirall alçat",
+    "description": "Utilitza mirall alçat per primera vegada.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "TACTICAL_MIRROR"
+        }
+      ]
+    }
+  },
+  {
+    "id": "RETALIATION_SHORTBOW_USED",
+    "name": "Corda de resposta",
+    "description": "Utilitza corda de resposta per primera vegada.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "RETALIATION_SHORTBOW"
+        }
+      ]
+    }
+  },
+  {
+    "id": "BAD_OMEN_SLING_USED",
+    "name": "Pedra marcada",
+    "description": "Utilitza pedra marcada per primera vegada.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "BAD_OMEN_SLING"
+        }
+      ]
+    }
+  },
+  {
+    "id": "COLD_STRING_CROSSBOW_USED",
+    "name": "Corda sense tremolor",
+    "description": "Utilitza corda sense tremolor per primera vegada.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "COLD_STRING_CROSSBOW"
+        }
+      ]
+    }
+  },
+  {
+    "id": "FIRST_OATH_CLASH",
+    "name": "Dues puntes alhora",
+    "description": "Activa el bonus de la Llança del primer jurament.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "FIRST_OATH_SPEAR"
+        },
+        {
+          "field": "firstOathClash",
+          "operator": "==",
+          "value": "true"
+        }
+      ]
+    }
+  },
+  {
+    "id": "BROKEN_SHIELD_COUNTER",
+    "name": "La defensa mossega",
+    "description": "Ataca amb Escut partit aprofitant guàrdia acumulada.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "BROKEN_SHIELD"
+        },
+        {
+          "field": "guardCounter",
+          "operator": "==",
+          "value": "true"
+        }
+      ]
+    }
+  },
+  {
+    "id": "ANCESTRAL_BELL_HEAL",
+    "name": "Eco que encara cura",
+    "description": "Cura’t amb la Campana ancestral.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "ANCESTRAL_BELL"
+        },
+        {
+          "field": "ancestralBellHeal",
+          "operator": ">=",
+          "value": "0.01"
+        }
+      ]
+    }
+  },
+  {
+    "id": "CHAOS_FRAGMENT_HIGH_ROLL",
+    "name": "La esquerda somriu",
+    "description": "Obtén la variant positiva del Fragment de caos.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "CHAOS_FRAGMENT"
+        },
+        {
+          "field": "chaosFragmentHigh",
+          "operator": "==",
+          "value": "true"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TACTICAL_MIRROR_READ",
+    "name": "Costum revelat",
+    "description": "Llegeix una acció repetida amb el Mirall tàctic.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "TACTICAL_MIRROR"
+        },
+        {
+          "field": "tacticalMirrorRead",
+          "operator": "==",
+          "value": "true"
+        }
+      ]
+    }
+  },
+  {
+    "id": "RETALIATION_SHORTBOW_PUNISH",
+    "name": "Guàrdia massa quieta",
+    "description": "Castiga una defensa amb l’Arc curt de represàlia.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "RETALIATION_SHORTBOW"
+        },
+        {
+          "field": "retaliationAgainstDefend",
+          "operator": "==",
+          "value": "true"
+        }
+      ]
+    }
+  },
+  {
+    "id": "BAD_OMEN_BUILDS",
+    "name": "Presagi acumulat",
+    "description": "Acumula el presagi crític de la Fona del mal presagi.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "BAD_OMEN_SLING"
+        },
+        {
+          "field": "badOmenStacks",
+          "operator": ">=",
+          "value": "1"
+        }
+      ]
+    }
+  },
+  {
+    "id": "COLD_STRING_CHILL",
+    "name": "Fred que pesa",
+    "description": "Aplica Fred menor amb la Ballesta de corda freda.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "WEAPON_USED",
+      "conditions": [
+        {
+          "field": "weaponId",
+          "operator": "==",
+          "value": "COLD_STRING_CROSSBOW"
+        },
+        {
+          "field": "chilledApplied",
+          "operator": "==",
+          "value": "true"
         }
       ]
     }

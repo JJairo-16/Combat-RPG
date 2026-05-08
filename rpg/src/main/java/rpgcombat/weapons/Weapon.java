@@ -133,10 +133,7 @@ public class Weapon {
 
     public AttackResult attack(Statistics stats, Random rng) {
         if (manaPrice > 0 && !stats.consumeMana(manaPrice)) {
-            stats.consumeMana(manaPrice);
-            return new AttackResult(
-                    WeaponType.PHYSICAL.getBasicDamage(5, stats),
-                    "no li quedava mana, aixi que li dona un cop.");
+            return AttackResult.resourceFail("no té prou mana per utilitzar " + name + ".");
         }
         return attack.execute(this, stats, rng);
     }

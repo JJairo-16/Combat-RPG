@@ -53,8 +53,8 @@ public class GameLoop {
     private final CinematicsOptions cinematicsOptions;
     private final HomeScreenConfig homeScreenConfig;
     private final AchievementSystem achievementSystem;
-    // Cache d'armes (assumim que no canvia durant la partida)
-    private final List<WeaponDefinition> entries = Arsenal.values();
+    // Cache d'armes disponibles (assumim que no canvia durant la partida)
+    private final List<WeaponDefinition> entries;
 
     public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers,
             Map<String, String> information, CinematicsOptions cinematicsOptions, HomeScreenConfig homeScreenConfig,
@@ -71,6 +71,7 @@ public class GameLoop {
         this.cinematicsOptions = cinematicsOptions;
         this.homeScreenConfig = homeScreenConfig;
         this.achievementSystem = achievementSystem;
+        this.entries = Arsenal.availableValues();
 
         Actions.configureAchievementTracking(achievementSystem, combatSystem::roundNumber);
     }

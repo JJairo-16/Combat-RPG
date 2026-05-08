@@ -479,6 +479,68 @@ public final class Skills {
                 "elementalNextModeLabel", nextElementName));
     }
 
+
+    public static AttackResult firstOathStrike(Weapon weapon, Statistics stats, Random rng) {
+        return namedBasic(weapon, stats, rng, "manté el jurament amb una estocada precisa");
+    }
+
+    public static AttackResult firstBloodKnife(Weapon weapon, Statistics stats, Random rng) {
+        return namedBasic(weapon, stats, rng, "busca una obertura amb una fulla petita");
+    }
+
+    public static AttackResult brokenShieldBash(Weapon weapon, Statistics stats, Random rng) {
+        return namedBasic(weapon, stats, rng, "converteix una defensa trencada en ofensiva");
+    }
+
+    public static AttackResult ancestralBellEcho(Weapon weapon, Statistics stats, Random rng) {
+        return namedBasic(weapon, stats, rng, "fa sonar un eco antic");
+    }
+
+    public static AttackResult tacticalMirrorCast(Weapon weapon, Statistics stats, Random rng) {
+        return namedBasic(weapon, stats, rng, "observa el patró del rival a través del mirall");
+    }
+
+    public static AttackResult retaliationShot(Weapon weapon, Statistics stats, Random rng) {
+        return namedBasic(weapon, stats, rng, "tensa l'arc esperant una resposta");
+    }
+
+    public static AttackResult badOmenSling(Weapon weapon, Statistics stats, Random rng) {
+        return namedBasic(weapon, stats, rng, "llença una pedra marcada pel mal presagi");
+    }
+
+    public static AttackResult coldStringShot(Weapon weapon, Statistics stats, Random rng) {
+        return namedBasic(weapon, stats, rng, "dispara amb una corda glaçada");
+    }
+
+    public static AttackResult chaosFragment(Weapon weapon, Statistics stats, Random rng) {
+        double base = weapon.basicAttack(stats, rng);
+        double roll = rng.nextDouble();
+        double multiplier;
+        String label;
+        if (roll < 0.33) {
+            multiplier = 0.92;
+            label = "s'esquerda i perd força";
+        } else if (roll < 0.67) {
+            multiplier = 1.0;
+            label = "manté una forma estable";
+        } else {
+            multiplier = 1.08;
+            label = "s'esquerda a favor del portador";
+        }
+        double finalDamage = round2(base * multiplier);
+        return new AttackResult(finalDamage, "allibera un fragment de caos que " + label + ".", Map.of(
+                "chaosFragment", true,
+                "chaosFragmentMultiplier", multiplier,
+                "chaosFragmentHigh", multiplier > 1.0,
+                "chaosFragmentLow", multiplier < 1.0));
+    }
+
+    private static AttackResult namedBasic(Weapon weapon, Statistics stats, Random rng, String text) {
+        double damage = weapon.basicAttack(stats, rng);
+        String message = weapon.lastWasCritic() ? text + " amb un crític." : text + ".";
+        return new AttackResult(damage, message);
+    }
+
     // -------------------------------------------------------------------------
     // UI / helpers interns
     // -------------------------------------------------------------------------

@@ -15,6 +15,8 @@ public record DiscoveryEntryDefinition(
         List<String> description,
         String discoveredWhen,
         String hint,
+        String unlockHint,
+        String discoveryHint,
         List<String> tags,
         boolean hiddenUntilDiscovered,
         int sortOrder) {
@@ -27,6 +29,8 @@ public record DiscoveryEntryDefinition(
         description = description == null ? List.of() : List.copyOf(description);
         discoveredWhen = discoveredWhen == null ? "" : discoveredWhen;
         hint = hint == null ? "" : hint;
+        unlockHint = unlockHint == null || unlockHint.isBlank() ? hint : unlockHint;
+        discoveryHint = discoveryHint == null || discoveryHint.isBlank() ? hint : discoveryHint;
         tags = tags == null ? List.of() : List.copyOf(tags);
     }
 
@@ -47,6 +51,8 @@ public record DiscoveryEntryDefinition(
                 override.description() == null ? description : override.description(),
                 textOr(override.discoveredWhen(), discoveredWhen),
                 textOr(override.hint(), hint),
+                textOr(override.unlockHint(), unlockHint),
+                textOr(override.discoveryHint(), discoveryHint),
                 override.tags() == null ? tags : override.tags(),
                 override.hiddenUntilDiscovered() == null ? hiddenUntilDiscovered : override.hiddenUntilDiscovered(),
                 override.sortOrder() == null ? sortOrder : override.sortOrder());

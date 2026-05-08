@@ -290,6 +290,381 @@
 			"tags": ["combat", "negatiu", "elemental", "gel", "dany"],
 			"hiddenUntilDiscovered": true,
 			"sortOrder": 75
+		},
+		{
+			"category": "WEAPONS",
+			"id": "FIRST_OATH_SPEAR",
+			"title": "Llança del primer jurament",
+			"lockedTitle": "???",
+			"shortDescription": "Arma desbloquejable de l'arsenal.",
+			"description": [
+				"Una arma desbloquejada per progrés global i pensada com a alternativa tàctica, no com a millora directa."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "El primer triomf deixa una marca prou recta per convertir-se en arma.",
+			"discoveryHint": "Sembla més segura quan dues voluntats xoquen de front.",
+			"tags": ["arma", "desbloquejable"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 220
+		},
+		{
+			"category": "WEAPONS",
+			"id": "FIRST_BLOOD_KNIFE",
+			"title": "Ganivet de la primera sang",
+			"lockedTitle": "???",
+			"shortDescription": "Arma desbloquejable de l'arsenal.",
+			"description": [
+				"Una arma desbloquejada per progrés global i pensada com a alternativa tàctica, no com a millora directa."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "Quan la sort hagi tastat sang, una fulla petita recordarà el camí.",
+			"discoveryHint": "No promet grans ferides, només trobar-les més sovint.",
+			"tags": ["arma", "desbloquejable"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 221
+		},
+		{
+			"category": "WEAPONS",
+			"id": "BROKEN_SHIELD",
+			"title": "Escut partit",
+			"lockedTitle": "???",
+			"shortDescription": "Arma desbloquejable de l'arsenal.",
+			"description": [
+				"Una arma desbloquejada per progrés global i pensada com a alternativa tàctica, no com a millora directa."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "Quan una defensa aguanti prou, fins i tot l’escletxa pot tornar el cop.",
+			"discoveryHint": "Sembla una protecció trencada, però encara sap avançar.",
+			"tags": ["arma", "desbloquejable"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 222
+		},
+		{
+			"category": "WEAPONS",
+			"id": "ANCESTRAL_BELL",
+			"title": "Campana ancestral",
+			"lockedTitle": "???",
+			"shortDescription": "Arma desbloquejable de l'arsenal.",
+			"description": [
+				"Una arma desbloquejada per progrés global i pensada com a alternativa tàctica, no com a millora directa."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "Quan una veu antiga respongui al límit, el bronze recordarà el so.",
+			"discoveryHint": "No sona per començar el combat; espera sentir por abans.",
+			"tags": ["arma", "desbloquejable"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 223
+		},
+		{
+			"category": "WEAPONS",
+			"id": "CHAOS_FRAGMENT",
+			"title": "Fragment de caos",
+			"lockedTitle": "???",
+			"shortDescription": "Arma desbloquejable de l'arsenal.",
+			"description": [
+				"Una arma desbloquejada per progrés global i pensada com a alternativa tàctica, no com a millora directa."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "Quan la realitat cedeixi una vegada, potser en quedarà una esquerda petita.",
+			"discoveryHint": "No sembla trencat; sembla que encara dubta.",
+			"tags": ["arma", "desbloquejable"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 224
+		},
+		{
+			"category": "WEAPONS",
+			"id": "TACTICAL_MIRROR",
+			"title": "Mirall tàctic",
+			"lockedTitle": "???",
+			"shortDescription": "Arma desbloquejable de l'arsenal.",
+			"description": [
+				"Una arma desbloquejada per progrés global i pensada com a alternativa tàctica, no com a millora directa."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "Qui observa prou combats aprèn que molts enemics es repeteixen.",
+			"discoveryHint": "No mostra la teva cara, sinó el costum de l’altre.",
+			"tags": ["arma", "desbloquejable"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 225
+		},
+		{
+			"category": "WEAPONS",
+			"id": "RETALIATION_SHORTBOW",
+			"title": "Arc curt de represàlia",
+			"lockedTitle": "???",
+			"shortDescription": "Arma desbloquejable de l'arsenal.",
+			"description": [
+				"Una arma desbloquejada per progrés global i pensada com a alternativa tàctica, no com a millora directa."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "Quan algú s’amaga massa sovint darrere la guàrdia, una corda aprèn a tensar-se.",
+			"discoveryHint": "No sembla feta per començar el combat, sinó per respondre a qui espera massa.",
+			"tags": ["arma", "desbloquejable"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 226
+		},
+		{
+			"category": "WEAPONS",
+			"id": "BAD_OMEN_SLING",
+			"title": "Fona del mal presagi",
+			"lockedTitle": "???",
+			"shortDescription": "Arma desbloquejable de l'arsenal.",
+			"description": [
+				"Una arma desbloquejada per progrés global i pensada com a alternativa tàctica, no com a millora directa."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "La mala sort repetida també pot acabar convertint-se en senyal.",
+			"discoveryHint": "Sembla poca cosa, però cada error li ensenya on caurà la pedra següent.",
+			"tags": ["arma", "desbloquejable"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 227
+		},
+		{
+			"category": "WEAPONS",
+			"id": "COLD_STRING_CROSSBOW",
+			"title": "Ballesta de corda freda",
+			"lockedTitle": "???",
+			"shortDescription": "Arma desbloquejable de l'arsenal.",
+			"description": [
+				"Una arma desbloquejada per progrés global i pensada com a alternativa tàctica, no com a millora directa."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "Quan el fred hagi frenat un combat, una corda aprendrà a no vibrar.",
+			"discoveryHint": "El seu tret no sembla aturar del tot, però deixa el moviment més pesat.",
+			"tags": ["arma", "desbloquejable"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 228
+		},
+		{
+			"category": "EFFECTS",
+			"id": "CHILLED",
+			"title": "Fred menor",
+			"lockedTitle": "???",
+			"shortDescription": "Redueix lleugerament el dany sortint durant poc temps.",
+			"description": [
+				"El fred menor no immobilitza completament.",
+				"Fa que el següent atac del portador perdi una petita part de força."
+			],
+			"discoveredWhen": "Quan una arma aplica fred menor per primera vegada.",
+			"hint": "Algunes ferides no congelen: només tornen el moviment més feixuc.",
+			"unlockHint": "Algunes ferides no congelen: només tornen el moviment més feixuc.",
+			"discoveryHint": "Algunes ferides no congelen: només tornen el moviment més feixuc.",
+			"tags": ["efecte", "fred", "control"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 145
+		},
+		{
+			"category": "WEAPONS",
+			"id": "EXPLOSIVE_CROSSBOW",
+			"title": "Ballesta explosiva",
+			"lockedTitle": "???",
+			"shortDescription": "Arma de l'arsenal.",
+			"description": [
+				"Una arma de l'arsenal amb un estil propi de combat."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "Un rastre de pólvora marca el camí cap a una arma inestable.",
+			"discoveryHint": "El seu secret no és apuntar millor, sinó acceptar el risc del tret.",
+			"tags": ["arma"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 100
+		},
+		{
+			"category": "WEAPONS",
+			"id": "VAMPIRICS_DAGGERS",
+			"title": "Dagues vampíriques",
+			"lockedTitle": "???",
+			"shortDescription": "Arma de l'arsenal.",
+			"description": [
+				"Una arma de l'arsenal amb un estil propi de combat."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "La sang vessada pot obrir portes que l’acer sol no pot.",
+			"discoveryHint": "Dues ombres petites busquen recuperar el que prenen.",
+			"tags": ["arma"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 101
+		},
+		{
+			"category": "WEAPONS",
+			"id": "ARCANE_DISRUPTION_STAFF",
+			"title": "Bastó de la disrupció arcana",
+			"lockedTitle": "???",
+			"shortDescription": "Arma de l'arsenal.",
+			"description": [
+				"Una arma de l'arsenal amb un estil propi de combat."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "Quan la màgia falla prou vegades, alguna cosa aprèn a trencar-la.",
+			"discoveryHint": "No tota força arcana busca destruir; algunes prefereixen interrompre.",
+			"tags": ["arma"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 102
+		},
+		{
+			"category": "WEAPONS",
+			"id": "SCIMITAR",
+			"title": "Cimitarra",
+			"lockedTitle": "???",
+			"shortDescription": "Arma de l'arsenal.",
+			"description": [
+				"Una arma de l'arsenal amb un estil propi de combat."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "La velocitat i el tall comparteixen una mateixa disciplina.",
+			"discoveryHint": "Una corba senzilla pot amagar una decisió molt directa.",
+			"tags": ["arma"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 103
+		},
+		{
+			"category": "WEAPONS",
+			"id": "BALLISTA",
+			"title": "Ballista",
+			"lockedTitle": "???",
+			"shortDescription": "Arma de l'arsenal.",
+			"description": [
+				"Una arma de l'arsenal amb un estil propi de combat."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "Algunes armes premien la paciència abans que la força.",
+			"discoveryHint": "Quan un sol impacte no és suficient, el destí pot insistir.",
+			"tags": ["arma"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 104
+		},
+		{
+			"category": "WEAPONS",
+			"id": "GRIMORIE",
+			"title": "Grimori del codi",
+			"lockedTitle": "???",
+			"shortDescription": "Arma de l'arsenal.",
+			"description": [
+				"Una arma de l'arsenal amb un estil propi de combat."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "Les paraules oblidades tornen només a qui sap llegir entre símbols.",
+			"discoveryHint": "No colpeja només el cos; també posa a prova la memòria.",
+			"tags": ["arma"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 105
+		},
+		{
+			"category": "WEAPONS",
+			"id": "BLOODPIERCER_THROWING_DAGGER",
+			"title": "Daga Perforasang",
+			"lockedTitle": "???",
+			"shortDescription": "Arma de l'arsenal.",
+			"description": [
+				"Una arma de l'arsenal amb un estil propi de combat."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "Hi ha ferides que no demanen permís a la defensa.",
+			"discoveryHint": "Una punxada petita pot pesar més del que sembla.",
+			"tags": ["arma"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 106
+		},
+		{
+			"category": "WEAPONS",
+			"id": "EXECUTIONERS_EDGE",
+			"title": "Sentència Final",
+			"lockedTitle": "???",
+			"shortDescription": "Arma de l'arsenal.",
+			"description": [
+				"Una arma de l'arsenal amb un estil propi de combat."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "Quan el combat s’allarga massa, una sentència espera el seu moment.",
+			"discoveryHint": "No sempre és forta al principi; de vegades només espera el final.",
+			"tags": ["arma"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 107
+		},
+		{
+			"category": "WEAPONS",
+			"id": "CHRONO_WEAVER_STAFF",
+			"title": "Teixidor del temps",
+			"lockedTitle": "???",
+			"shortDescription": "Arma de l'arsenal.",
+			"description": [
+				"Una arma de l'arsenal amb un estil propi de combat."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "El temps no s’obre a qui corre, sinó a qui observa els seus patrons.",
+			"discoveryHint": "El seu cop sembla decidir-se abans que passi.",
+			"tags": ["arma"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 108
+		},
+		{
+			"category": "WEAPONS",
+			"id": "DIVINE_SPARK",
+			"title": "Resplendor diví",
+			"lockedTitle": "???",
+			"shortDescription": "Arma de l'arsenal.",
+			"description": [
+				"Una arma de l'arsenal amb un estil propi de combat."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "Una llum massa pura pot cremar la mirada.",
+			"discoveryHint": "Brilla prou per guiar... o per confondre.",
+			"tags": ["arma"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 109
+		},
+		{
+			"category": "WEAPONS",
+			"id": "WASP_HARPOON",
+			"title": "Arpó de vespa",
+			"lockedTitle": "???",
+			"shortDescription": "Arma de l'arsenal.",
+			"description": [
+				"Una arma de l'arsenal amb un estil propi de combat."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "El dolor persistent deixa més rastre que el primer impacte.",
+			"discoveryHint": "No necessita acabar ràpid si la ferida continua parlant.",
+			"tags": ["arma"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 110
+		},
+		{
+			"category": "WEAPONS",
+			"id": "ELEMENTAL_DUALITY",
+			"title": "La dualitat elemental",
+			"lockedTitle": "???",
+			"shortDescription": "Arma de l'arsenal.",
+			"description": [
+				"Una arma de l'arsenal amb un estil propi de combat."
+			],
+			"discoveredWhen": "Quan s'equipa per primera vegada.",
+			"hint": "Una arma encara no revelada espera el seu moment.",
+			"unlockHint": "Quan dues marques oposades apareguin al combat, alguna cosa respondrà.",
+			"discoveryHint": "Mai repeteix exactament la mateixa naturalesa dues vegades seguides.",
+			"tags": ["arma"],
+			"hiddenUntilDiscovered": true,
+			"sortOrder": 111
 		}
 	]
 }

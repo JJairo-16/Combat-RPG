@@ -20,6 +20,7 @@ import rpgcombat.game.menu.HomeMenu;
 import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.LoadingIntro;
 import rpgcombat.utils.ui.Prettier;
+import rpgcombat.unlocks.UnlockRuntime;
 
 /** Controla el flux general de l'aplicació. */
 public final class AppController {
@@ -139,6 +140,7 @@ public final class AppController {
         achievementSystem = AchievementSystem.load(AchievementRegistry.all(), config.paths().achievementSaveFile());
         DiscoveryCatalog catalog = DiscoveryCatalog.build(DiscoveryCatalogLoader.load(Path.of(config.paths().discoveryCatalogConfig())));
         discoverySystem = DiscoverySystem.load(catalog, config.paths().discoverySaveFile());
+        UnlockRuntime.configure(achievementSystem, discoverySystem);
     }
 
     /** Indica si cal mostrar la intro de càrrega. */

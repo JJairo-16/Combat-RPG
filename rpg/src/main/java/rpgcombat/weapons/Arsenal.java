@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 import rpgcombat.weapons.config.WeaponDefinition;
+import rpgcombat.unlocks.UnlockEvaluator;
+import rpgcombat.unlocks.UnlockRuntime;
 
 /**
  * Catàleg dinàmic d'armes precarregat des de JSON.
@@ -90,6 +92,17 @@ public final class Arsenal {
         return List.copyOf(SORTED);
     }
 
+    /** Retorna només les armes disponibles segons el progrés global actual. */
+    public static List<WeaponDefinition> availableValues() {
+        ensureLoaded();
+        return SORTED.stream()
+                .filter(definition -> UnlockEvaluator.isUnlocked(
+                        definition.getUnlockRule(),
+                        UnlockRuntime.achievements(),
+                        UnlockRuntime.discoveries()))
+                .toList();
+    }
+
     /** Retorna una definició pel seu id string. */
     public static WeaponDefinition getDefinition(String id) {
         ensureLoaded();
@@ -117,10 +130,18 @@ public final class Arsenal {
         return SORTED.get(idx).create();
     }
 
-    /** Llista ja preparada per al menú. */
+    /** Llista ja preparada per al menú, sense filtrar. */
     public static List<String> getNamesList() {
         ensureLoaded();
         return namesList;
+    }
+
+    /** Llista preparada per al menú filtrada per disponibilitat. */
+    public static List<String> getAvailableNamesList() {
+        ensureLoaded();
+        return availableValues().stream()
+                .map(Arsenal::formatForMenu)
+                .toList();
     }
 
     /** Àlies més explícit per al menú. */

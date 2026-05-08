@@ -7,6 +7,10 @@ import rpgcombat.weapons.attack.Attack;
 import rpgcombat.weapons.attack.AttackRegistry;
 import rpgcombat.weapons.passives.PassiveFactory;
 import rpgcombat.weapons.passives.WeaponPassive;
+import rpgcombat.unlocks.UnlockMode;
+import rpgcombat.unlocks.UnlockRequirement;
+import rpgcombat.unlocks.UnlockRequirementType;
+import rpgcombat.unlocks.UnlockRule;
 
 /**
  * Plantilla immutable d'una arma precarregada en memòria.
@@ -23,6 +27,7 @@ public final class WeaponDefinition {
     private final String attackSkill;
     private final double manaPrice;
     private final List<PassiveConfig> passives;
+    private final UnlockConfig unlock;
 
     public WeaponDefinition(
             String id,
@@ -34,7 +39,8 @@ public final class WeaponDefinition {
             WeaponType type,
             String attackSkill,
             double manaPrice,
-            List<PassiveConfig> passives) {
+            List<PassiveConfig> passives,
+            UnlockConfig unlock) {
         this.id = requireText(id, "id");
         this.name = requireText(name, "name");
         this.description = description == null ? "" : description;
@@ -45,6 +51,7 @@ public final class WeaponDefinition {
         this.attackSkill = requireText(attackSkill, "attackSkill");
         this.manaPrice = manaPrice;
         this.passives = passives == null ? List.of() : List.copyOf(passives);
+        this.unlock = unlock;
     }
 
     public String getId() {
@@ -87,6 +94,28 @@ public final class WeaponDefinition {
         return passives;
     }
 
+    public UnlockConfig getUnlockConfig() {
+        return unlock;
+    }
+
+    public UnlockRule getUnlockRule() {
+        if (unlock == null || unlock.requirements() == null || unlock.requirements().isEmpty()) {
+            return null;
+        }
+
+        UnlockMode mode = parseMode(unlock.mode());
+        List<UnlockRequirement> requirements = unlock.requirements().stream()
+                .filter(req -> req != null && req.type() != null && !req.type().isBlank())
+                .map(req -> new UnlockRequirement(
+                        UnlockRequirementType.valueOf(req.type()),
+                        req.id(),
+                        req.category(),
+                        req.amount()))
+                .toList();
+
+        return new UnlockRule(mode, requirements);
+    }
+
     public Weapon create() {
         Attack attack = AttackRegistry.resolve(attackSkill);
         List<WeaponPassive> builtPassives = passives.stream()
@@ -104,6 +133,13 @@ public final class WeaponDefinition {
                 attack,
                 manaPrice,
                 builtPassives);
+    }
+
+    private static UnlockMode parseMode(String value) {
+        if (value == null || value.isBlank()) {
+            return UnlockMode.ALL;
+        }
+        return UnlockMode.valueOf(value.trim());
     }
 
     private static String requireText(String value, String field) {

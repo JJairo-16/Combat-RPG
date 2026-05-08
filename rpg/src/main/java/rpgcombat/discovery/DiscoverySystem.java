@@ -16,6 +16,7 @@ import rpgcombat.discovery.ui.models.DiscoveryCategoryView;
 import rpgcombat.discovery.ui.models.DiscoveryEntryView;
 import rpgcombat.discovery.ui.models.DiscoveryOverview;
 import rpgcombat.utils.ui.Prettier;
+import rpgcombat.unlocks.UnlockRuntime;
 
 /** Coordina catàleg, progrés i persistència dels descobriments globals. */
 public final class DiscoverySystem {
@@ -115,6 +116,33 @@ public final class DiscoverySystem {
         return List.copyOf(progressByKey.values());
     }
 
+    /** Indica si una entrada concreta ja ha estat descoberta. */
+    public boolean isDiscovered(DiscoveryCategory category, String id) {
+        if (category == null || id == null || id.isBlank()) {
+            return false;
+        }
+        return progressByKey.containsKey(new DiscoveryKey(category, id));
+    }
+
+    /** Nombre total d'entrades descobertes. */
+    public int discoveredCount() {
+        return progressByKey.size();
+    }
+
+    /** Nombre d'entrades descobertes dins una categoria. */
+    public int discoveredCount(DiscoveryCategory category) {
+        if (category == null) {
+            return 0;
+        }
+        int count = 0;
+        for (DiscoveryKey key : progressByKey.keySet()) {
+            if (key.category() == category) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     /** Converteix una definició en model visual d'entrada. */
     private DiscoveryEntryView toEntryView(DiscoveryEntryDefinition definition, DiscoveryProgress progress) {
         boolean discovered = progress != null;
@@ -125,7 +153,7 @@ public final class DiscoverySystem {
                     "",
                     List.of(),
                     "",
-                    definition.hint());
+                    lockedHint(definition));
         }
 
         return new DiscoveryEntryView(
@@ -135,5 +163,19 @@ public final class DiscoverySystem {
                 definition.description(),
                 definition.discoveredWhen(),
                 definition.hint());
+    }
+
+    /** Tria la pista bloquejada segons si una arma ja està disponible per triar-se. */
+    private String lockedHint(DiscoveryEntryDefinition definition) {
+        if (definition.category() != DiscoveryCategory.WEAPONS) {
+            return definition.hint();
+        }
+
+        boolean available = UnlockRuntime.isWeaponAvailable(definition.id());
+        String hint = available ? definition.discoveryHint() : definition.unlockHint();
+        if (hint == null || hint.isBlank()) {
+            return definition.hint();
+        }
+        return hint;
     }
 }

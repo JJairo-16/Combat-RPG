@@ -8,6 +8,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import rpgcombat.achievements.config.AchievementDefinition;
@@ -150,8 +151,30 @@ public final class AchievementSystem {
         return count;
     }
 
+    /** Consulta si un assoliment global ja està completat. */
+    public boolean isCompleted(String achievementId) {
+        if (achievementId == null || achievementId.isBlank()) {
+            return false;
+        }
+        AchievementProgress progress = progressById.get(achievementId);
+        return progress != null && progress.completed();
+    }
+
+    /** Nombre total d'assoliments completats. */
+    public int completedCount() {
+        int count = 0;
+        for (AchievementProgress progress : progressById.values()) {
+            if (progress.completed()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     /** Aplica una actualització i persisteix immediatament qualsevol canvi. */
     private void apply(AchievementUpdate update) {
+        Objects.requireNonNull(update, "La informació de l'event no pot ser nula.");
+
         AchievementUpdate effectiveUpdate = enrichWithMatchMemory(update);
         boolean changed = false;
         int completedNow = 0;

@@ -195,5 +195,302 @@
 				}
 			}
 		]
+	},
+	{
+		"id": "FIRST_OATH_SPEAR",
+		"name": "Llança del primer jurament",
+		"description": "Una llança sòbria que respon quan dues ofensives xoquen de front.",
+		"baseDamage": 72,
+		"criticalProb": 0.11,
+		"criticalDamage": 1.28,
+		"type": "PHYSICAL",
+		"manaPrice": 0,
+		"attackSkill": "firstOathStrike",
+		"passives": [
+			{
+				"type": "firstOathClash",
+				"params": {
+					"damageBonus": 0.08
+				}
+			}
+		],
+		"unlock": {
+			"mode": "ALL",
+			"requirements": [
+				{
+					"type": "ACHIEVEMENT",
+					"id": "FIRST_OATH",
+					"amount": 0
+				}
+			]
+		}
+	},
+	{
+		"id": "FIRST_BLOOD_KNIFE",
+		"name": "Ganivet de la primera sang",
+		"description": "Una fulla petita que busca ferides freqüents en lloc de grans esclats.",
+		"baseDamage": 56,
+		"criticalProb": 0.21,
+		"criticalDamage": 1.23,
+		"type": "PHYSICAL",
+		"manaPrice": 0,
+		"attackSkill": "firstBloodKnife",
+		"passives": [],
+		"unlock": {
+			"mode": "ALL",
+			"requirements": [
+				{
+					"type": "ACHIEVEMENT",
+					"id": "FIRST_BLOOD",
+					"amount": 0
+				}
+			]
+		}
+	},
+	{
+		"id": "BROKEN_SHIELD",
+		"name": "Escut partit",
+		"description": "Una defensa esquerdada convertida en arma de resposta.",
+		"baseDamage": 62,
+		"criticalProb": 0.08,
+		"criticalDamage": 1.26,
+		"type": "PHYSICAL",
+		"manaPrice": 0,
+		"attackSkill": "brokenShieldBash",
+		"passives": [
+			{
+				"type": "guardCounter",
+				"params": {
+					"damageBonus": 0.1,
+					"minGuardStacks": 1
+				}
+			}
+		],
+		"unlock": {
+			"mode": "ALL",
+			"requirements": [
+				{
+					"type": "ACHIEVEMENT",
+					"id": "FLESH_AGAINST_STEEL",
+					"amount": 0
+				},
+				{
+					"type": "DISCOVERY",
+					"category": "ACTIONS",
+					"id": "DEFEND",
+					"amount": 0
+				}
+			]
+		}
+	},
+	{
+		"id": "ANCESTRAL_BELL",
+		"name": "Campana ancestral",
+		"description": "Una campana antiga que ressona quan el portador lluita al límit.",
+		"baseDamage": 74,
+		"criticalProb": 0.09,
+		"criticalDamage": 1.29,
+		"type": "MAGICAL",
+		"manaPrice": 80,
+		"attackSkill": "ancestralBellEcho",
+		"passives": [
+			{
+				"type": "ancestralBell",
+				"params": {
+					"damageBonus": 0.08,
+					"healAmount": 16.0,
+					"cooldownTurns": 3
+				}
+			}
+		],
+		"unlock": {
+			"mode": "ALL",
+			"requirements": [
+				{
+					"type": "ACHIEVEMENT",
+					"id": "SPIRITUAL_CALL",
+					"amount": 0
+				},
+				{
+					"type": "DISCOVERY",
+					"category": "ACTIONS",
+					"id": "SPIRITUAL_CALLING",
+					"amount": 0
+				}
+			]
+		}
+	},
+	{
+		"id": "CHAOS_FRAGMENT",
+		"name": "Fragment de caos",
+		"description": "Un fragment màgic que oscil·la lleument entre pèrdua, estabilitat i avantatge.",
+		"baseDamage": 78,
+		"criticalProb": 0.11,
+		"criticalDamage": 1.3,
+		"type": "MAGICAL",
+		"manaPrice": 95,
+		"attackSkill": "chaosFragment",
+		"passives": [],
+		"unlock": {
+			"mode": "ALL",
+			"requirements": [
+				{
+					"type": "ACHIEVEMENT",
+					"id": "REALITY_YIELDS",
+					"amount": 0
+				},
+				{
+					"type": "DISCOVERY",
+					"category": "EFFECTS",
+					"id": "CHAOS",
+					"amount": 0
+				}
+			]
+		}
+	},
+	{
+		"id": "TACTICAL_MIRROR",
+		"name": "Mirall tàctic",
+		"description": "Un focus màgic que premia llegir patrons repetits del rival.",
+		"baseDamage": 72,
+		"criticalProb": 0.1,
+		"criticalDamage": 1.3,
+		"type": "MAGICAL",
+		"manaPrice": 85,
+		"attackSkill": "tacticalMirrorCast",
+		"passives": [
+			{
+				"type": "tacticalMirror",
+				"params": {
+					"damageBonus": 0.1
+				}
+			}
+		],
+		"unlock": {
+			"mode": "ALL",
+			"requirements": [
+				{
+					"type": "DISCOVERY",
+					"category": "ACTIONS",
+					"id": "ATTACK",
+					"amount": 0
+				},
+				{
+					"type": "DISCOVERY",
+					"category": "ACTIONS",
+					"id": "DEFEND",
+					"amount": 0
+				},
+				{
+					"type": "DISCOVERY",
+					"category": "ACTIONS",
+					"id": "DODGE",
+					"amount": 0
+				},
+				{
+					"type": "DISCOVERY",
+					"category": "ACTIONS",
+					"id": "CHARGE",
+					"amount": 0
+				}
+			]
+		}
+	},
+	{
+		"id": "RETALIATION_SHORTBOW",
+		"name": "Arc curt de represàlia",
+		"description": "Un arc curt que castiga una guàrdia massa previsible.",
+		"baseDamage": 60,
+		"criticalProb": 0.14,
+		"criticalDamage": 1.27,
+		"type": "RANGE",
+		"manaPrice": 0,
+		"attackSkill": "retaliationShot",
+		"passives": [
+			{
+				"type": "retaliationAgainstDefend",
+				"params": {
+					"damageBonus": 0.1
+				}
+			}
+		],
+		"unlock": {
+			"mode": "ALL",
+			"requirements": [
+				{
+					"type": "ACHIEVEMENT",
+					"id": "FLESH_AGAINST_STEEL",
+					"amount": 0
+				},
+				{
+					"type": "DISCOVERY",
+					"category": "ACTIONS",
+					"id": "DEFEND",
+					"amount": 0
+				}
+			]
+		}
+	},
+	{
+		"id": "BAD_OMEN_SLING",
+		"name": "Fona del mal presagi",
+		"description": "Una fona discreta que converteix les errades de sort en pressentiment.",
+		"baseDamage": 50,
+		"criticalProb": 0.19,
+		"criticalDamage": 1.24,
+		"type": "RANGE",
+		"manaPrice": 0,
+		"attackSkill": "badOmenSling",
+		"passives": [
+			{
+				"type": "badOmenCrit",
+				"params": {
+					"bonusPerStack": 0.03,
+					"maxStacks": 3
+				}
+			}
+		],
+		"unlock": {
+			"mode": "ALL",
+			"requirements": [
+				{
+					"type": "ACHIEVEMENT",
+					"id": "FIRST_BLOOD",
+					"amount": 0
+				}
+			]
+		}
+	},
+	{
+		"id": "COLD_STRING_CROSSBOW",
+		"name": "Ballesta de corda freda",
+		"description": "Una ballesta que no atura del tot, però deixa el moviment més pesat.",
+		"baseDamage": 58,
+		"criticalProb": 0.12,
+		"criticalDamage": 1.28,
+		"type": "RANGE",
+		"manaPrice": 0,
+		"attackSkill": "coldStringShot",
+		"passives": [
+			{
+				"type": "chillOnHit",
+				"params": {
+					"applyProb": 0.22,
+					"turns": 1,
+					"outgoingMultiplier": 0.94
+				}
+			}
+		],
+		"unlock": {
+			"mode": "ALL",
+			"requirements": [
+				{
+					"type": "DISCOVERY",
+					"category": "EFFECTS",
+					"id": "EXHAUSTION",
+					"amount": 0
+				}
+			]
+		}
 	}
 ]

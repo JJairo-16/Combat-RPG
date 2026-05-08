@@ -10,6 +10,8 @@ import rpgcombat.models.characters.Statistics;
 import rpgcombat.models.effects.impl.BlindEffect;
 import rpgcombat.models.effects.impl.BurnEffect;
 import rpgcombat.models.effects.impl.FrozenEffect;
+import rpgcombat.models.effects.impl.ChilledEffect;
+import rpgcombat.combat.models.Action;
 import rpgcombat.models.effects.impl.PoisonEffect;
 import rpgcombat.weapons.Weapon;
 
@@ -43,8 +45,7 @@ public final class Passives {
                         MessageColor.GREEN,
                         String.format("%s roba %.1f HP",
                                 ctx.attacker().getName(),
-                                realHealed)
-                );
+                                realHealed));
             }
         };
     }
@@ -70,8 +71,7 @@ public final class Passives {
                         MessageColor.RED,
                         String.format("%s connecta un dany verdader del %.2f%%",
                                 ctx.attacker().getName(),
-                                round2(pct * 100.0))
-                );
+                                round2(pct * 100.0)));
             }
         };
     }
@@ -98,8 +98,7 @@ public final class Passives {
                         MessageColor.YELLOW,
                         String.format("%s prepara una execució (+%d%% de dany)",
                                 ctx.attacker().getName(),
-                                roundPercent(damageBonus))
-                );
+                                roundPercent(damageBonus)));
             }
         };
     }
@@ -124,8 +123,7 @@ public final class Passives {
                 return CombatMessage.of(
                         MessageSymbol.NEGATIVE,
                         MessageColor.RED,
-                        ctx.defender().getName() + " queda encegat temporalment."
-                );
+                        ctx.defender().getName() + " queda encegat temporalment.");
             }
         };
     }
@@ -154,8 +152,7 @@ public final class Passives {
                         MessageColor.GREEN,
                         String.format("El verí amplifica el cop (+%.2f de dany amb %d càrregues).",
                                 bonus,
-                                poison.stacks())
-                );
+                                poison.stacks()));
             }
 
             @Override
@@ -172,8 +169,7 @@ public final class Passives {
                 return CombatMessage.of(
                         MessageSymbol.NEGATIVE,
                         MessageColor.YELLOW,
-                        "La cadena del verí es trenca i el verí s'esvaeix."
-                );
+                        "La cadena del verí es trenca i el verí s'esvaeix.");
             }
 
             @Override
@@ -196,12 +192,10 @@ public final class Passives {
                         MessageColor.GREEN,
                         String.format("%s acumula verí (%d càrregues).",
                                 ctx.defender().getName(),
-                                stacks)
-                );
+                                stacks));
             }
         };
     }
-
 
     /**
      * Dualitat elemental: després d'un impacte real, aplica foc o gel segons el
@@ -251,8 +245,7 @@ public final class Passives {
                             fireMode ? MessageColor.RED : MessageColor.CYAN,
                             fireMode
                                     ? "La flama no arriba a encendre el rival."
-                                    : "El gebre no arriba a fixar-se al rival."
-                    );
+                                    : "El gebre no arriba a fixar-se al rival.");
                 }
 
                 if (fireMode) {
@@ -262,8 +255,7 @@ public final class Passives {
                     return CombatMessage.of(
                             MessageSymbol.NEGATIVE,
                             MessageColor.RED,
-                            ctx.defender().getName() + " queda marcat per una cremada elemental."
-                    );
+                            ctx.defender().getName() + " queda marcat per una cremada elemental.");
                 }
 
                 ctx.defender().addEffect(new FrozenEffect(
@@ -275,14 +267,175 @@ public final class Passives {
                 return CombatMessage.of(
                         MessageSymbol.NEGATIVE,
                         MessageColor.CYAN,
-                        ctx.defender().getName() + " queda congelat per la dualitat elemental."
-                );
+                        ctx.defender().getName() + " queda congelat per la dualitat elemental.");
             }
         };
     }
 
+    /** Bonus moderat si tots dos combatents ataquen alhora. */
+    public static WeaponPassive firstOathClash(double damageBonus) {
+        return new WeaponPassive() {
+            @Override
+            public CombatMessage modifyDamage(Weapon weapon, HitContext ctx, Random rng) {
+                if (ctx.attackerAction() != Action.ATTACK || ctx.defenderAction() != Action.ATTACK) {
+                    return null;
+                }
+                ctx.multiplyDamage(1.0 + damageBonus);
+                ctx.putMeta("firstOathClash", true);
+                return CombatMessage.of(MessageSymbol.POSITIVE, MessageColor.YELLOW,
+                        "El jurament respon quan dues ofensives xoquen.");
+            }
+        };
+    }
+
+    /** Recompensa un atac després d'haver acumulat guàrdia defensiva. */
+    public static WeaponPassive guardCounter(double damageBonus, int minGuardStacks) {
+        return new WeaponPassive() {
+            @Override
+            public CombatMessage modifyDamage(Weapon weapon, HitContext ctx, Random rng) {
+                if (ctx.attacker().getGuardStacks() < minGuardStacks) {
+                    return null;
+                }
+                ctx.multiplyDamage(1.0 + damageBonus);
+                ctx.putMeta("guardCounter", true);
+                return CombatMessage.of(MessageSymbol.POSITIVE, MessageColor.CYAN,
+                        "La guàrdia acumulada torna el cop.");
+            }
+        };
+    }
+
+    /** Ajuda de comeback limitada quan el portador està en estat desesperat. */
+    public static WeaponPassive ancestralBell(double damageBonus, double healAmount, int cooldownTurns) {
+        return new WeaponPassive() {
+            @Override
+            public CombatMessage modifyDamage(Weapon weapon, HitContext ctx, Random rng) {
+                if (!ctx.attacker().isDesperate()) {
+                    return null;
+                }
+                ctx.multiplyDamage(1.0 + damageBonus);
+                ctx.putMeta("ancestralBellDesperate", true);
+                return CombatMessage.of(MessageSymbol.WARNING, MessageColor.CYAN,
+                        "La campana ressona al límit.");
+            }
+
+            @Override
+            public CombatMessage afterHit(Weapon weapon, HitContext ctx, Random rng) {
+                if (ctx.damageDealt() <= 0 || !ctx.attacker().isDesperate()) {
+                    tickCooldown(weapon, "ancestralBell.cooldown");
+                    return null;
+                }
+                int cooldown = weapon.getMeta("ancestralBell.cooldown", Integer.class, 0);
+                if (cooldown > 0) {
+                    tickCooldown(weapon, "ancestralBell.cooldown");
+                    return null;
+                }
+                double healed = ctx.attacker().getStatistics().heal(healAmount);
+                weapon.putMeta("ancestralBell.cooldown", Math.max(1, cooldownTurns));
+                ctx.putMeta("ancestralBellHeal", healed);
+                if (healed <= 0) {
+                    return null;
+                }
+                return CombatMessage.of(MessageSymbol.POSITIVE, MessageColor.GREEN,
+                        ctx.attacker().getName() + " recupera " + round2(healed) + " HP amb l'eco ancestral.");
+            }
+        };
+    }
+
+    /** Castiga patrons repetits del rival. */
+    public static WeaponPassive tacticalMirror(double damageBonus) {
+        return new WeaponPassive() {
+            @Override
+            public CombatMessage modifyDamage(Weapon weapon, HitContext ctx, Random rng) {
+                Action previous = weapon.getMeta("tacticalMirror.lastDefenderAction", Action.class, null);
+                Action current = ctx.defenderAction();
+                weapon.putMeta("tacticalMirror.lastDefenderAction", current);
+                if (previous == null || current == null || previous != current) {
+                    return null;
+                }
+                ctx.multiplyDamage(1.0 + damageBonus);
+                ctx.putMeta("tacticalMirrorRead", true);
+                return CombatMessage.of(MessageSymbol.POSITIVE, MessageColor.MAGENTA,
+                        "El mirall llegeix la repetició del rival.");
+            }
+        };
+    }
+
+    /** Castiga una defensa llegida en el mateix torn. */
+    public static WeaponPassive retaliationAgainstDefend(double damageBonus) {
+        return new WeaponPassive() {
+            @Override
+            public CombatMessage modifyDamage(Weapon weapon, HitContext ctx, Random rng) {
+                if (ctx.defenderAction() != Action.DEFEND) {
+                    return null;
+                }
+                ctx.multiplyDamage(1.0 + damageBonus);
+                ctx.putMeta("retaliationAgainstDefend", true);
+                return CombatMessage.of(MessageSymbol.POSITIVE, MessageColor.YELLOW,
+                        "La corda troba una guàrdia massa quieta.");
+            }
+        };
+    }
+
+    /**
+     * Converteix ratxes sense crític en una petita probabilitat crítica temporal.
+     */
+    public static WeaponPassive badOmenCrit(double bonusPerStack, int maxStacks) {
+        return new WeaponPassive() {
+            @Override
+            public CombatMessage rollCrit(Weapon weapon, HitContext ctx, Random rng) {
+                int stacks = weapon.getMeta("badOmen.stacks", Integer.class, 0);
+                double bonus = Math.clamp(stacks, 0, maxStacks) * bonusPerStack;
+                if (bonus <= 0) {
+                    return null;
+                }
+                ctx.setCriticalChance(ctx.criticalChance() + bonus);
+                ctx.putMeta("badOmenCritBonus", bonus);
+                return CombatMessage.of(MessageSymbol.WARNING, MessageColor.YELLOW,
+                        "El mal presagi fa més probable el cop afortunat.");
+            }
+
+            @Override
+            public CombatMessage endTurn(Weapon weapon, HitContext ctx, Random rng) {
+                if (ctx.wasCritical()) {
+                    weapon.putMeta("badOmen.stacks", 0);
+                    ctx.putMeta("badOmenReset", true);
+                } else {
+                    int stacks = weapon.getMeta("badOmen.stacks", Integer.class, 0);
+                    int next = Math.min(maxStacks, stacks + 1);
+                    weapon.putMeta("badOmen.stacks", next);
+                    ctx.putMeta("badOmenStacks", next);
+                }
+                
+                return null;
+            }
+        };
+    }
+
+    /** Aplica fred menor després d'un impacte real. */
+    public static WeaponPassive chillOnHit(double applyProb, int turns, double outgoingMultiplier) {
+        return new WeaponPassive() {
+            @Override
+            public CombatMessage afterHit(Weapon weapon, HitContext ctx, Random rng) {
+                if (ctx.damageDealt() <= 0 || rng.nextDouble() >= applyProb) {
+                    return null;
+                }
+                ctx.defender().addEffect(new ChilledEffect(turns, outgoingMultiplier));
+                ctx.putMeta("chilledApplied", true);
+                return CombatMessage.of(MessageSymbol.NEGATIVE, MessageColor.CYAN,
+                        ctx.defender().getName() + " queda alentit per un fred menor.");
+            }
+        };
+    }
+
+    private static void tickCooldown(Weapon weapon, String key) {
+        int cooldown = weapon.getMeta(key, Integer.class, 0);
+        if (cooldown > 0) {
+            weapon.putMeta(key, cooldown - 1);
+        }
+    }
+
     private static double round2(double n) {
-        return Math.round(n * 100.0) / 190.0;
+        return Math.round(n * 100.0) / 100.0;
     }
 
     private static int roundPercent(double n) {
