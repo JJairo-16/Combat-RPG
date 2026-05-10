@@ -12,6 +12,7 @@
     "weaponsConfig": "rpg/data/weapons.json",
     "statusMenuModifier": "rpg/data/menuModifiers.json",
     "balanceConfig": "rpg/data/combatBalance.json",
+    "gameModesConfig": "rpg/data/gameModes.json",
     "menuDescriptions": "rpg/data/menuDescription.json",
     "missionsConfig": "rpg/data/perks/missions.json",
     "perksConfig": "rpg/data/perks/perks.json",
@@ -32,6 +33,10 @@
     "postCreation": true,
     "antiStall": true,
     "chaos": 0.15
+  },
+  "gameMode": {
+    "selectionEnabled": true,
+    "defaultMode": "NORMAL"
   },
   "debug": {
     "enabled": false,

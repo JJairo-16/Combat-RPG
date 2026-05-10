@@ -70,6 +70,7 @@ public final class AppConfigLoader {
                 paths,
                 base.ui(),
                 base.cinematic(),
+                base.gameMode(),
                 base.debug(),
                 base.characters(),
                 base.homeScreen());

@@ -7,6 +7,7 @@ import rpgcombat.achievements.AchievementUpdate;
 import rpgcombat.models.characters.Character;
 import rpgcombat.discovery.DiscoveryCategory;
 import rpgcombat.discovery.DiscoveryRuntime;
+import rpgcombat.gamemode.model.GameModeRules;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.balance.CombatBalanceRegistry;
 import rpgcombat.balance.config.AntiStallConfig;
@@ -44,9 +45,10 @@ public class CombatSystem {
     private final AttackResolver attackResolver = new AttackResolver();
     private final EffectPipeline effectPipeline = new EffectPipeline();
     private final RoundRecoveryService recoveryService = new RoundRecoveryService();
-    private final TurnResolver turnResolver = new TurnResolver(attackResolver, effectPipeline, recoveryService);
+    private final TurnResolver turnResolver;
     private final CombatPerkSystem perkSystem;
     private final AchievementSystem achievementSystem;
+    private final GameModeRules rules;
 
     private CombatBalanceConfig balance = CombatBalanceRegistry.get();
     private AntiStallConfig antiStall = balance.antiStall();
@@ -98,11 +100,18 @@ public class CombatSystem {
      */
     public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy, CombatPerkSystem perkSystem,
             AchievementSystem achievementSystem) {
+        this(p1, p2, policy, perkSystem, achievementSystem, GameModeRules.unrestricted());
+    }
+
+    public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy, CombatPerkSystem perkSystem,
+            AchievementSystem achievementSystem, GameModeRules rules) {
         this.player1 = p1;
         this.player2 = p2;
         this.priorityPolicy = policy;
         this.perkSystem = perkSystem;
         this.achievementSystem = achievementSystem;
+        this.rules = rules == null ? GameModeRules.unrestricted() : rules;
+        this.turnResolver = new TurnResolver(attackResolver, effectPipeline, recoveryService, this.rules);
     }
 
     public boolean preAntiStall() {
@@ -135,6 +144,8 @@ public class CombatSystem {
      * @return resultat de la ronda
      */
     public CombatRoundResult playRound(Action a1, Action a2) {
+        a1 = rules.requireAllowed(a1);
+        a2 = rules.requireAllowed(a2);
         roundNumber++;
         applySuddenDeathPoisonIfNeeded();
 

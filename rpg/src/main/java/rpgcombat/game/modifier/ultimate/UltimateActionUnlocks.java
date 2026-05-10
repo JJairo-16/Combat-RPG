@@ -37,7 +37,7 @@ public final class UltimateActionUnlocks {
      * Regla de desbloqueig per a la definitiva física.
      */
     private static final UnlockRule PHYSICAL_RULE = new UnlockRule(UnlockMode.ALL, List.of(
-            achievement("PHYSICAL_INITIATE"),
+            achievement("FULL_FORCE"),
             discovery(DiscoveryCategory.ACTIONS, "CHARGE")));
 
     /**

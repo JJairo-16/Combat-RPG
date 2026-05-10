@@ -23,7 +23,7 @@ public final class UltimateActionEffect implements Effect, MenuTurnEffect {
      * Nombre inicial de torns de cooldown abans que la definitiva estigui
      * disponible.
      */
-    public static final int INITIAL_COOLDOWN_TURNS = 6;
+    public static final int INITIAL_COOLDOWN_TURNS = 5;
 
     /**
      * Cooldown artificialment alt aplicat després d'utilitzar la definitiva per
@@ -150,6 +150,9 @@ public final class UltimateActionEffect implements Effect, MenuTurnEffect {
             return false;
         }
         if (flag.usedThisCombat || flag.usedThisTurn || flag.state.onCooldown()) {
+            return false;
+        }
+        if (!owner.specialActionsEnabled()) {
             return false;
         }
         if (owner.hasSpecialMenuActionUsedThisTurn() || anyUltimateUsedThisCombat(owner)) {

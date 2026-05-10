@@ -12,6 +12,7 @@ import rpgcombat.combat.models.Action;
 import rpgcombat.discovery.DiscoveryCategory;
 import rpgcombat.discovery.DiscoveryRuntime;
 import rpgcombat.combat.turnservice.TurnResult;
+import rpgcombat.gamemode.model.GameModeRules;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.perks.divine.DivineAwakeningView;
@@ -36,6 +37,7 @@ public final class CombatPerkSystem {
     private final Random rng = new Random();
     private final SynergySystem synergySystem = new SynergySystem(SynergyRegistry.all());
     private final AchievementSystem achievementSystem;
+    private final GameModeRules rules;
     private int currentRoundNumber;
 
     /** Assigna l'estat inicial de perks a cada jugador. */
@@ -45,7 +47,14 @@ public final class CombatPerkSystem {
 
     /** Assigna l'estat inicial de perks a cada jugador i connecta descobriments. */
     public CombatPerkSystem(Character player1, Character player2, AchievementSystem achievementSystem) {
+        this(player1, player2, achievementSystem, GameModeRules.unrestricted());
+    }
+
+    /** Assigna l'estat inicial de perks a cada jugador segons les regles del mode. */
+    public CombatPerkSystem(Character player1, Character player2, AchievementSystem achievementSystem,
+            GameModeRules rules) {
         this.achievementSystem = achievementSystem;
+        this.rules = rules == null ? GameModeRules.unrestricted() : rules;
         states.put(player1, initialStateFor(player1));
         states.put(player2, initialStateFor(player2));
         registerInitialDivinePerk(player1);
@@ -55,8 +64,12 @@ public final class CombatPerkSystem {
     /** Crea l'estat inicial d'un jugador. */
     private PlayerPerkState initialStateFor(Character player) {
         MissionDefinition initialMission = MissionRegistry.roll(rng);
-        PlayerPerkState state = new PlayerPerkState(new MissionProgress(initialMission));
-        discoverMission(initialMission);
+        PlayerPerkState state = rules.maxPerks() > 0
+                ? new PlayerPerkState(new MissionProgress(initialMission), rules.maxPerks())
+                : new PlayerPerkState(rules.maxPerks());
+        if (rules.maxPerks() > 0) {
+            discoverMission(initialMission);
+        }
         DivinePerkRegistry.activeFor(player).ifPresent(state::setDivinePerk);
         return state;
     }
@@ -309,7 +322,7 @@ public final class CombatPerkSystem {
         if (achievementSystem != null) {
             achievementSystem.onPerkGained(player, chosen.id(), chosen.name(),
                     chosen.family() == null ? null : chosen.family().name(),
-                    chosen.tags(), state.perkCount(), PlayerPerkState.MAX_PERKS, roundNumber);
+                    chosen.tags(), state.perkCount(), state.maxPerks(), roundNumber);
         }
     }
 

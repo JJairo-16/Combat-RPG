@@ -8,6 +8,7 @@ import menu.model.MenuResult;
 import menu.selector.MenuSelector;
 import rpgcombat.combat.models.Action;
 import rpgcombat.creator.CharacterCreator;
+import rpgcombat.gamemode.model.GameModeRules;
 import rpgcombat.models.characters.Character;
 import rpgcombat.utils.input.Menu;
 
@@ -54,10 +55,22 @@ public final class MenuBuilder {
                         MenuSelector selector,
                         Consumer<Character> changeWeaponHandler,
                         Consumer<Character> showPlayerInfoHandler) {
+                return build(selector, changeWeaponHandler, showPlayerInfoHandler, GameModeRules.unrestricted());
+        }
+
+        /**
+         * Crea el menú amb regles de mode explícites.
+         */
+        public static DynamicMenu<Action, Character> build(
+                        MenuSelector selector,
+                        Consumer<Character> changeWeaponHandler,
+                        Consumer<Character> showPlayerInfoHandler,
+                        GameModeRules rules) {
 
                 Objects.requireNonNull(selector, "selector no pot ser null");
                 Objects.requireNonNull(changeWeaponHandler, "changeWeaponHandler no pot ser null");
                 Objects.requireNonNull(showPlayerInfoHandler, "showPlayerInfoHandler no pot ser null");
+                GameModeRules effectiveRules = rules == null ? GameModeRules.unrestricted() : rules;
 
                 DynamicMenu<Action, Character> menu = new DynamicMenu<>(
                                 "Base Menu Actions",
@@ -71,7 +84,7 @@ public final class MenuBuilder {
                 });
 
                 // Opcions que retornen acció de combat
-                buildActions(menu);
+                buildActions(menu, effectiveRules);
 
                 // Opció: veure informació del jugador
                 menu.addOption(OPTION_PLAYER_INFO, currentPlayer -> {
@@ -85,9 +98,12 @@ public final class MenuBuilder {
                 return menu;
         }
 
-        private static void buildActions(DynamicMenu<Action, Character> menu) {
+        private static void buildActions(DynamicMenu<Action, Character> menu, GameModeRules rules) {
                 Action[] actions = Action.values();
                 for (Action action : actions) {
+                        if (!rules.allowsAction(action)) {
+                                continue;
+                        }
                         menu.addOption(action.label(), currentPlayer -> MenuResult.returnValue(action));
                 }
         }

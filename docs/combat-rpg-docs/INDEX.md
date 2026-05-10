@@ -98,6 +98,9 @@
 - [Funcionament en combat](15-ultis-segona-etapa/03-funcionament-combat.md)
 - [Configuració i proves](15-ultis-segona-etapa/04-configuracio-i-tests.md)
 
+### ▌Modes de joc
+- [Creació de modes](16-modes-joc/01-creacio-modes.md)
+
 ---
 
 ## ▌Com llegir aquesta documentació

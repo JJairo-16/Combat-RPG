@@ -72,6 +72,7 @@ public class Character {
     private boolean adrenalineSurgeUsed = false;
     private double adrenaline = 0.0;
     private boolean specialMenuActionUsedThisTurn = false;
+    private boolean specialActionsEnabled = true;
 
     private double attackModifierThisTurn = 1.0;
     private double defenseModifierThisTurn = 1.0;
@@ -273,7 +274,8 @@ public class Character {
      * Determina si pot activar la crida espiritual.
      */
     public boolean canUseSpiritualCalling() {
-        return hasEffect(SpiritualCallingFlag.INTERNAL_EFFECT_KEY)
+        return specialActionsEnabled
+                && hasEffect(SpiritualCallingFlag.INTERNAL_EFFECT_KEY)
                 && spiritualCallingCooldown <= 0
                 && isAtOrBelowHealthRatio(SPIRITUAL_CALLING_THRESHOLD);
     }
@@ -776,6 +778,16 @@ public class Character {
      */
     public Random rng() {
         return rng;
+    }
+
+    /** Activa o desactiva les accions especials de menú per mode de joc. */
+    public void setSpecialActionsEnabled(boolean enabled) {
+        specialActionsEnabled = enabled;
+    }
+
+    /** Indica si el mode actual permet accions especials de menú. */
+    public boolean specialActionsEnabled() {
+        return specialActionsEnabled;
     }
 
     /** Marca que ja s'ha utilitzat una acció especial de menú durant aquest torn. */

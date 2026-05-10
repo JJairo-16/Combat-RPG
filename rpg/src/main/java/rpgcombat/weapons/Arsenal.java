@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import rpgcombat.weapons.config.WeaponDefinition;
+import rpgcombat.gamemode.model.GameModeRules;
 import rpgcombat.unlocks.UnlockEvaluator;
 import rpgcombat.unlocks.UnlockRuntime;
 
@@ -103,6 +104,19 @@ public final class Arsenal {
                 .toList();
     }
 
+    /** Retorna les armes disponibles segons progrés global i visibilitat del mode. */
+    public static List<WeaponDefinition> availableValues(GameModeRules rules) {
+        ensureLoaded();
+        GameModeRules effectiveRules = rules == null ? GameModeRules.unrestricted() : rules;
+        return SORTED.stream()
+                .filter(definition -> effectiveRules.showUnlockableWeapons() || isOpenByDefault(definition))
+                .filter(definition -> UnlockEvaluator.isUnlocked(
+                        definition.getUnlockRule(),
+                        UnlockRuntime.achievements(),
+                        UnlockRuntime.discoveries()))
+                .toList();
+    }
+
     /** Retorna una definició pel seu id string. */
     public static WeaponDefinition getDefinition(String id) {
         ensureLoaded();
@@ -166,5 +180,11 @@ public final class Arsenal {
                 (w.getManaPrice() > 0) ? String.format(" | Mana: %.0f", w.getManaPrice()) : "");
 
         return w.getName() + " - " + w.getDescription() + " (" + stats + ")";
+    }
+
+    private static boolean isOpenByDefault(WeaponDefinition definition) {
+        return definition == null
+                || definition.getUnlockRule() == null
+                || definition.getUnlockRule().openByDefault();
     }
 }

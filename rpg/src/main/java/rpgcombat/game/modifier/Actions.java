@@ -72,6 +72,11 @@ public final class Actions {
     public static MenuResult<Action> spiritualCalling(Character player) {
         cleaner.clear();
 
+        if (!player.specialActionsEnabled()) {
+            cannotUseSpecialActionsInThisMode();
+            return MenuResult.repeatLoop();
+        }
+
         if (player.hasSpecialMenuActionUsedThisTurn()) {
             cannotCombineSpecialActions();
             return MenuResult.repeatLoop();
@@ -144,6 +149,11 @@ public final class Actions {
     public static MenuResult<Action> bloodPact(Character player) {
         cleaner.clear();
 
+        if (!player.specialActionsEnabled()) {
+            cannotUseSpecialActionsInThisMode();
+            return MenuResult.repeatLoop();
+        }
+
         if (player.hasSpecialMenuActionUsedThisTurn()) {
             cannotCombineSpecialActions();
             return MenuResult.repeatLoop();
@@ -191,6 +201,11 @@ public final class Actions {
     private static MenuResult<Action> useUltimate(Character player, UltimateActionType type) {
         cleaner.clear();
 
+        if (!player.specialActionsEnabled()) {
+            cannotUseSpecialActionsInThisMode();
+            return MenuResult.repeatLoop();
+        }
+
         if (!UltimateActionEffect.canActivate(player, type)) {
             Messages.ULTIMATE.CANNOT_USE.print();
             System.out.println();
@@ -219,6 +234,13 @@ public final class Actions {
     /** Mostra que no es poden encadenar accions especials de menú en el mateix torn. */
     private static void cannotCombineSpecialActions() {
         Messages.ULTIMATE.CANNOT_COMBINE.print();
+        System.out.println();
+        Menu.pause();
+    }
+
+    /** Mostra que el mode actual no permet accions especials. */
+    private static void cannotUseSpecialActionsInThisMode() {
+        System.out.println("Aquest mode de joc no permet accions especials.");
         System.out.println();
         Menu.pause();
     }

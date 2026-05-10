@@ -4,8 +4,8 @@ import java.util.Random;
 
 import rpgcombat.combat.models.Winner;
 import rpgcombat.config.ui.CinematicsOptions;
-import rpgcombat.models.characters.Character;
-import rpgcombat.models.effects.triggers.Chaos;
+import rpgcombat.gamemode.model.MatchContext;
+import rpgcombat.gamemode.cinematics.ModeCinematics;
 import rpgcombat.utils.cinematic.cinematic.TextCinematic;
 import rpgcombat.utils.cinematic.scene.BlockBuilder;
 import rpgcombat.utils.cinematic.scene.Scene;
@@ -19,7 +19,6 @@ import rpgcombat.utils.cinematic.typing.TypingMood;
 public final class CinematicBuilder {
     private static final int ARROW_ANIMATION_DELAY = 140;
     private static final Random RNG = new Random();
-    private static boolean chaosEnabled = false;
 
     private CinematicBuilder() {
     }
@@ -32,17 +31,14 @@ public final class CinematicBuilder {
     }
 
     /**
-     * Reprodueix la cinemàtica inicial i aplica Caos si cal.
+     * Reprodueix la cinemàtica inicial segons el mode i el context de partida.
      */
-    public static void playInit(CinematicsOptions options, Character player1, Character player2) {
+    public static void playInit(CinematicsOptions options, MatchContext context) {
         if (!options.postCreation()) {
-            applyChaos(options, player1, player2);
             return;
         }
 
-        TextCinematic cinematic = applyChaos(options, player1, player2)
-                ? buildChaosMindInit()
-                : buildRandomInit();
+        TextCinematic cinematic = buildModeInit(context);
 
         cinematic.play();
     }
@@ -60,7 +56,12 @@ public final class CinematicBuilder {
      * @param winner resultat del combat
      */
     public static void playEnd(Winner winner) {
-        int key = getKey(winner == Winner.TIE, chaosEnabled);
+        playEnd(winner, new MatchContext(null, false));
+    }
+
+    public static void playEnd(Winner winner, MatchContext context) {
+        boolean chaosActive = context != null && context.chaosActive();
+        int key = getKey(winner == Winner.TIE, chaosActive);
 
         TextCinematic cinematic = switch (key) {
             case 3 -> buildTieEndChaos();
@@ -81,9 +82,14 @@ public final class CinematicBuilder {
         buildCreditsCinematic().play();
     }
 
-    /**
-     * Tria una cinemàtica inicial aleatòria.
-     */
+    /** Tria una cinemàtica inicial segons el mode. */
+    private static TextCinematic buildModeInit(MatchContext context) {
+        ModeCinematics cinematics = context == null ? ModeCinematics.normal() : context.mode().cinematics();
+        String key = cinematics.choosePostCreation(RNG, context != null && context.chaosActive());
+        return buildByKey(key);
+    }
+
+    /** Tria una cinemàtica inicial aleatòria. */
     private static TextCinematic buildRandomInit() {
         return switch (RNG.nextInt(3)) {
             case 0 -> buildStrategyInit();
@@ -92,20 +98,18 @@ public final class CinematicBuilder {
         };
     }
 
-    /**
-     * Aplica l'efecte Caos segons la probabilitat configurada.
-     *
-     * @return {@code true} si s'ha aplicat
-     */
-    private static boolean applyChaos(CinematicsOptions options, Character player1, Character player2) {
-        if (RNG.nextDouble() >= options.chaos()) {
-            return false;
-        }
-
-        player1.addEffect(new Chaos());
-        player2.addEffect(new Chaos());
-        chaosEnabled = true;
-        return true;
+    /** Resol una clau declarativa de cinemàtica. */
+    private static TextCinematic buildByKey(String key) {
+        String normalized = key == null ? ModeCinematics.DEFAULT_RANDOM : key.trim().toUpperCase();
+        return switch (normalized) {
+            case "NORMAL_STRATEGY", "STRATEGY" -> buildStrategyInit();
+            case "NORMAL_LUCK", "LUCK" -> buildLuckInit();
+            case "NORMAL_CHAOS", "CHAOS" -> buildChaosInit();
+            case "CHAOS_MIND" -> buildChaosMindInit();
+            case "BEGINNER_INTRO" -> buildBeginnerInit();
+            case "DEFAULT_RANDOM" -> buildRandomInit();
+            default -> buildRandomInit();
+        };
     }
 
     /**
@@ -248,6 +252,30 @@ public final class CinematicBuilder {
                 <red>Lluiteu. Aguanteu. O no.</red>
 
                 <red>Al final… sempre hi ha alguna cosa que cedeix. Sempre.</red>
+                """)
+                .mood(TypingMood.DRAMATIC)
+                .build();
+
+        return cinema(scene(combatStart));
+    }
+
+    /**
+     * Construeix la introducció del mode principiant.
+     */
+    private static TextCinematic buildBeginnerInit() {
+        TextBlock combatStart = BlockBuilder.text("""
+                <bright_blue>Aurelion:</bright_blue> <blue>Condicions simplificades.</blue>
+
+                <blue>Sense càrregues. Sense rituals laterals. Sense interferència caòtica.</blue>
+
+                <blue>Només lectura bàsica del combat: atacar, defensar, esquivar.</blue>
+
+                <bright_yellow>Lysara:</bright_yellow> <yellow>Menys fils no vol dir menys decisions.</yellow>
+
+                <bright_red>Varkhul:</bright_red> <red>Avui miraré des de fora.</red>
+
+                <gray>El combat comença amb regles més netes.</gray>
+                <gray>Aprèn el ritme abans que el joc obri totes les seves portes.</gray>
                 """)
                 .mood(TypingMood.DRAMATIC)
                 .build();

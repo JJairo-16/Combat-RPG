@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.function.Predicate;
 
 import rpgcombat.balance.CombatBalanceRegistry;
 import rpgcombat.balance.config.ChaosConfig;
@@ -51,6 +52,11 @@ public class Chaos extends Trigger {
      */
     public static Action applyStartTurn(Character owner, Character opponent, Action selectedAction,
             CombatMessageBuffer out) {
+        return applyStartTurn(owner, opponent, selectedAction, out, action -> true);
+    }
+
+    public static Action applyStartTurn(Character owner, Character opponent, Action selectedAction,
+            CombatMessageBuffer out, Predicate<Action> actionAllowed) {
         if (owner == null || selectedAction == null) {
             return selectedAction;
         }
@@ -60,13 +66,15 @@ public class Chaos extends Trigger {
             return selectedAction;
         }
 
-        return chaos.beginTurn(owner, opponent, selectedAction, out);
+        return chaos.beginTurn(owner, opponent, selectedAction, out,
+                actionAllowed == null ? action -> true : actionAllowed);
     }
 
     /**
      * Resol l'activació inicial de Caos.
      */
-    private Action beginTurn(Character owner, Character opponent, Action selectedAction, CombatMessageBuffer out) {
+    private Action beginTurn(Character owner, Character opponent, Action selectedAction, CombatMessageBuffer out,
+            Predicate<Action> actionAllowed) {
         ChaosConfig cfg = cfg();
         if (cfg == null || !cfg.enabled()) {
             pendingOutcome = null;
@@ -75,14 +83,14 @@ public class Chaos extends Trigger {
 
         lastSeed = buildSeed(owner, opponent, selectedAction, cfg);
         Random localRng = new Random(lastSeed);
-        Outcome outcome = rollOutcome(localRng, cfg, owner);
+        Outcome outcome = rollOutcome(localRng, cfg, owner, actionAllowed);
 
         pendingOutcome = outcome;
         lastOutcome = outcome;
         lastWasSevere = outcome.severe;
 
-        Action finalAction = mutateAction(selectedAction, outcome, localRng);
-        applyImmediateOutcome(owner, outcome, localRng, cfg, out);
+        Action finalAction = mutateAction(selectedAction, outcome, localRng, actionAllowed);
+        applyImmediateOutcome(owner, outcome, localRng, cfg, out, actionAllowed.test(Action.CHARGE));
 
         addStartMessage(owner, selectedAction, finalAction, outcome, out);
 
@@ -244,11 +252,11 @@ public class Chaos extends Trigger {
     /**
      * Tria un resultat amb regles antifrustració.
      */
-    private Outcome rollOutcome(Random rng, ChaosConfig cfg, Character owner) {
+    private Outcome rollOutcome(Random rng, ChaosConfig cfg, Character owner, Predicate<Action> actionAllowed) {
         Outcome selected = weightedRoll(rng, cfg.outcomes());
         int maxRerolls = Math.max(0, cfg.antiFrustration().maxRerolls());
 
-        for (int i = 0; i < maxRerolls && shouldReroll(selected, cfg, owner); i++) {
+        for (int i = 0; i < maxRerolls && shouldReroll(selected, cfg, owner, actionAllowed); i++) {
             selected = weightedRoll(rng, cfg.outcomes());
         }
 
@@ -258,7 +266,7 @@ public class Chaos extends Trigger {
     /**
      * Indica si el resultat s'ha de tornar a tirar.
      */
-    private boolean shouldReroll(Outcome selected, ChaosConfig cfg, Character owner) {
+    private boolean shouldReroll(Outcome selected, ChaosConfig cfg, Character owner, Predicate<Action> actionAllowed) {
         if (selected == null) {
             return true;
         }
@@ -272,7 +280,8 @@ public class Chaos extends Trigger {
             return true;
         }
 
-        return selected == Outcome.FREE_CHARGE && owner.hasChargedAttack();
+        return selected == Outcome.FREE_CHARGE
+                && (owner.hasChargedAttack() || !actionAllowed.test(Action.CHARGE));
     }
 
     /**
@@ -310,28 +319,32 @@ public class Chaos extends Trigger {
     /**
      * Canvia l'acció seleccionada si Caos ho requereix.
      */
-    private Action mutateAction(Action selectedAction, Outcome outcome, Random rng) {
+    private Action mutateAction(Action selectedAction, Outcome outcome, Random rng, Predicate<Action> actionAllowed) {
         if (outcome != Outcome.ACTION_SWAP) {
             return selectedAction;
         }
 
-        return switch (selectedAction) {
-            case ATTACK -> rng.nextBoolean() ? Action.DEFEND : Action.CHARGE;
-            case DEFEND -> rng.nextBoolean() ? Action.ATTACK : Action.DODGE;
-            case DODGE -> rng.nextBoolean() ? Action.ATTACK : Action.CHARGE;
-            case CHARGE -> rng.nextBoolean() ? Action.ATTACK : Action.DEFEND;
+        List<Action> candidates = switch (selectedAction) {
+            case ATTACK -> List.of(Action.DEFEND, Action.CHARGE);
+            case DEFEND -> List.of(Action.ATTACK, Action.DODGE);
+            case DODGE -> List.of(Action.ATTACK, Action.CHARGE);
+            case CHARGE -> List.of(Action.ATTACK, Action.DEFEND);
         };
+        List<Action> allowed = candidates.stream().filter(actionAllowed).toList();
+        return allowed.isEmpty() ? selectedAction : allowed.get(rng.nextInt(allowed.size()));
     }
 
     /**
      * Aplica efectes immediats no lligats a l'atac.
      */
     private void applyImmediateOutcome(Character owner, Outcome outcome, Random rng, ChaosConfig cfg,
-            CombatMessageBuffer out) {
+            CombatMessageBuffer out, boolean chargeAllowed) {
         switch (outcome) {
             case PERFECT_CHAOS -> {
                 owner.gainMomentum();
-                owner.prepareChargedAttack();
+                if (chargeAllowed) {
+                    owner.prepareChargedAttack();
+                }
                 double restored = owner.getStatistics().restoreMana(
                         owner.getStatistics().getMaxMana() * cfg.mana().spikeRestoreMaxManaRatio());
                 if (out != null) {
@@ -341,7 +354,11 @@ public class Chaos extends Trigger {
                 }
             }
             case GAIN_MOMENTUM -> owner.gainMomentum();
-            case FREE_CHARGE -> owner.prepareChargedAttack();
+            case FREE_CHARGE -> {
+                if (chargeAllowed) {
+                    owner.prepareChargedAttack();
+                }
+            }
             case BLOOD_RUSH -> {
                 owner.gainMomentum();
                 owner.applyBleed(cfg.status().bleedTurns());

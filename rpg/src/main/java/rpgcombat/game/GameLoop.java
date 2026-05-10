@@ -15,6 +15,8 @@ import rpgcombat.game.menu.EndGameMenu;
 import rpgcombat.game.menu.MenuCenter;
 import rpgcombat.game.modifier.Actions;
 import rpgcombat.game.modifier.StatusMod;
+import rpgcombat.gamemode.model.GameModeRules;
+import rpgcombat.gamemode.model.MatchContext;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
@@ -52,6 +54,8 @@ public class GameLoop {
     private final TextWrapCache wrapCache = new TextWrapCache();
     private final CinematicsOptions cinematicsOptions;
     private final HomeScreenConfig homeScreenConfig;
+    private final MatchContext matchContext;
+    private final GameModeRules rules;
     private final AchievementSystem achievementSystem;
     // Cache d'armes disponibles (assumim que no canvia durant la partida)
     private final List<WeaponDefinition> entries;
@@ -59,19 +63,28 @@ public class GameLoop {
     public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers,
             Map<String, String> information, CinematicsOptions cinematicsOptions, HomeScreenConfig homeScreenConfig,
             AchievementSystem achievementSystem) {
+        this(player1, player2, modifiers, information, cinematicsOptions, homeScreenConfig,
+                new MatchContext(null, false), achievementSystem);
+    }
+
+    public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers,
+            Map<String, String> information, CinematicsOptions cinematicsOptions, HomeScreenConfig homeScreenConfig,
+            MatchContext matchContext, AchievementSystem achievementSystem) {
         this.player1 = player1;
         this.player2 = player2;
-        this.perkSystem = new CombatPerkSystem(player1, player2, achievementSystem);
+        this.matchContext = matchContext == null ? new MatchContext(null, false) : matchContext;
+        this.rules = this.matchContext.rules();
+        this.perkSystem = new CombatPerkSystem(player1, player2, achievementSystem, rules);
         this.combatSystem = new CombatSystem(player1, player2,
-                new rpgcombat.combat.turnservice.DefaultTurnPriorityPolicy(), perkSystem, achievementSystem);
+                new rpgcombat.combat.turnservice.DefaultTurnPriorityPolicy(), perkSystem, achievementSystem, rules);
 
         this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers,
-                information);
+                information, rules);
         this.menu.setMissionTextProvider(perkSystem::missionSummary);
         this.cinematicsOptions = cinematicsOptions;
         this.homeScreenConfig = homeScreenConfig;
         this.achievementSystem = achievementSystem;
-        this.entries = Arsenal.availableValues();
+        this.entries = Arsenal.availableValues(rules);
 
         Actions.configureAchievementTracking(achievementSystem, combatSystem::roundNumber);
     }
@@ -81,7 +94,7 @@ public class GameLoop {
      * empat).
      */
     public EndGameAction init() {
-        CinematicBuilder.playInit(cinematicsOptions, player1, player2);
+        CinematicBuilder.playInit(cinematicsOptions, matchContext);
         registerChaosStartIfNeeded();
         int completedAchievementsLastTurn = achievementSystem.consumePendingCompletedCount();
 
@@ -156,7 +169,7 @@ public class GameLoop {
         System.out.print(sb.toString());
 
         Menu.pause();
-        CinematicBuilder.playEnd(winner);
+        CinematicBuilder.playEnd(winner, matchContext);
 
         return EndGameMenu.ask(homeScreenConfig.allowReturnFromEnd());
     }

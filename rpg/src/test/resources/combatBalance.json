@@ -120,10 +120,10 @@
 		"staggerTurnsOnHit": 1
 	},
 	"antiStall": {
-		"startTurn": 18,
-		"increaseEveryTurns": 1,
-		"initialDamage": 3.0,
-		"damageIncreasePerStep": 1.75
+		"startTurn": 16,
+		"increaseEveryTurns": 2,
+		"initialDamage": 1.0,
+		"damageIncreasePerStep": 1.0
 	},
 	"bloodPact": {
 		"manaThreshold": 0.7,

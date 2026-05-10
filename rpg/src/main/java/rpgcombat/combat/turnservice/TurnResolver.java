@@ -20,6 +20,7 @@ import rpgcombat.combat.ui.messages.CombatMessage;
 import rpgcombat.combat.ui.messages.CombatMessageBuffer;
 import rpgcombat.combat.ui.messages.MessageColor;
 import rpgcombat.combat.ui.messages.MessageSymbol;
+import rpgcombat.gamemode.model.GameModeRules;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Result;
 import rpgcombat.models.characters.Statistics;
@@ -41,6 +42,7 @@ public class TurnResolver {
     private final EffectPipeline effectPipeline;
     private final RoundRecoveryService recoveryService;
     private final CombatRhythmService rhythmService = new CombatRhythmService();
+    private final GameModeRules rules;
 
     private final CombatBalanceConfig balance = CombatBalanceRegistry.get();
     private final MomentumConfig momentumConfig = balance.momentum();
@@ -56,9 +58,18 @@ public class TurnResolver {
             AttackResolver attackResolver,
             EffectPipeline effectPipeline,
             RoundRecoveryService recoveryService) {
+        this(attackResolver, effectPipeline, recoveryService, GameModeRules.unrestricted());
+    }
+
+    public TurnResolver(
+            AttackResolver attackResolver,
+            EffectPipeline effectPipeline,
+            RoundRecoveryService recoveryService,
+            GameModeRules rules) {
         this.attackResolver = attackResolver;
         this.effectPipeline = effectPipeline;
         this.recoveryService = recoveryService;
+        this.rules = rules == null ? GameModeRules.unrestricted() : rules;
     }
 
     /**
@@ -79,8 +90,11 @@ public class TurnResolver {
             EndRoundRegenBonus defenderBonus) {
 
         CombatMessageBuffer startMessages = new CombatMessageBuffer();
+        attackerAction = rules.requireAllowed(attackerAction);
+        defenderAction = rules.requireAllowed(defenderAction);
+
         Action selectedAction = attackerAction;
-        attackerAction = Chaos.applyStartTurn(attacker, defender, attackerAction, startMessages);
+        attackerAction = Chaos.applyStartTurn(attacker, defender, attackerAction, startMessages, rules::allowsAction);
         Map<String, Object> startTurnMeta = chaosStartMeta(attacker, selectedAction, attackerAction);
         rhythmService.onActionStart(attacker, attackerAction);
         attacker.onTurnStart(attackerAction, startMessages);
@@ -165,7 +179,7 @@ public class TurnResolver {
                     attacker.getName() + " aprofita l'impuls del combat.");
         }
 
-        boolean chargedStrike = attacker.consumeChargedAttack();
+        boolean chargedStrike = rules.allowsAction(CHARGE) && attacker.consumeChargedAttack();
         if (chargedStrike) {
             ctx.multiplyDamage(attacker.chargedAttackMultiplier());
             ctx.putMeta("CHARGED_HIT", true);
@@ -290,6 +304,9 @@ public class TurnResolver {
         copyMeta(ctx, merged, Chaos.META_SELF_HIT);
         copyMeta(ctx, merged, Chaos.META_SELF_HIT_MULTIPLIER);
         copyMeta(ctx, merged, Chaos.META_SELF_HIT_CAN_KILL);
+        copyMeta(ctx, merged, "selfDirectedAttack");
+        copyMeta(ctx, merged, "selfDirectedAttackMultiplier");
+        copyMeta(ctx, merged, "selfDirectedAttackCanKill");
         copyMeta(ctx, merged, "chaosSelfHit");
         copyMeta(ctx, merged, "chaosForceCrit");
         copyMeta(ctx, merged, "chaosForbidCrit");

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "NORMAL",
+    "name": "Normal",
+    "description": "Experiència completa amb totes les mecàniques.",
+    "unlock": {
+      "mode": "ALL",
+      "requirements": []
+    },
+    "rules": {
+      "specialActionsEnabled": true,
+      "maxPerks": 4,
+      "divinePerksEnabled": true,
+      "showUnlockableWeapons": true,
+      "chaos": {
+        "activation": "PROBABILITY",
+        "probability": 0.15
+      },
+      "modeEffects": []
+    },
+    "cinematics": {
+      "postCreationPool": ["DEFAULT_RANDOM"],
+      "chaosPostCreation": "CHAOS_MIND"
+    }
+  },
+  {
+    "id": "BEGINNER",
+    "name": "Principiant",
+    "description": "Regles reduïdes: sense càrrega, especials, armes desbloquejables ni Caos.",
+    "unlock": {
+      "mode": "ALL",
+      "requirements": []
+    },
+    "rules": {
+      "allowedActions": ["ATTACK", "DEFEND", "DODGE"],
+      "specialActionsEnabled": false,
+      "maxPerks": 1,
+      "divinePerksEnabled": false,
+      "showUnlockableWeapons": false,
+      "chaos": {
+        "activation": "DISABLED",
+        "probability": 0.0
+      },
+      "modeEffects": []
+    },
+    "cinematics": {
+      "postCreationPool": ["BEGINNER_INTRO"]
+    }
+  }
+]

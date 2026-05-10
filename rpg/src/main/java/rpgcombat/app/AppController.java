@@ -17,6 +17,9 @@ import rpgcombat.game.EndGameAction;
 import rpgcombat.game.GameLoop;
 import rpgcombat.game.cinematics.CinematicBuilder;
 import rpgcombat.game.menu.HomeMenu;
+import rpgcombat.gamemode.model.GameModeDefinition;
+import rpgcombat.gamemode.registry.GameModeRegistry;
+import rpgcombat.gamemode.ui.GameModeSelectionMenu;
 import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.LoadingIntro;
 import rpgcombat.utils.ui.Prettier;
@@ -80,12 +83,23 @@ public final class AppController {
 
     /** Crea i executa una partida. */
     private EndGameAction playOneMatch() {
+        GameModeDefinition gameMode = selectGameMode();
         preloader.preloadNewMatch();
 
         GameBootstrap bootstrap = new GameBootstrap(config, preloader, achievementSystem);
-        GameLoop game = bootstrap.createGame();
+        GameLoop game = bootstrap.createGame(gameMode);
 
         return game.init();
+    }
+
+    /** Selecciona el mode de joc abans de mostrar cap cinemàtica de partida. */
+    private GameModeDefinition selectGameMode() {
+        if (!config.gameMode().selectionEnabled()) {
+            return GameModeRegistry.getOrDefault(config.gameMode().defaultMode());
+        }
+        return GameModeSelectionMenu.show(
+                GameModeRegistry.unlocked(achievementSystem, discoverySystem),
+                config.gameMode().defaultMode());
     }
 
     /** Carrega la configuració o usa la predeterminada. */

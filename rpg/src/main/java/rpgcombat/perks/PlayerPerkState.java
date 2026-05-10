@@ -21,22 +21,40 @@ public final class PlayerPerkState {
     private List<String> activeSynergyIds = List.of();
     private Map<String, String> activeSynergyNamesById = Map.of();
     private DivinePerkDefinition divinePerk;
+    private final int maxPerks;
 
     /** Nombre màxim de perks equipables. */
     public static final int MAX_PERKS = 4;
 
     /** Inicialitza amb una missió activa. */
     public PlayerPerkState(MissionProgress mission) {
+        this(mission, MAX_PERKS);
+    }
+
+    /** Inicialitza amb una missió activa i un límit de perks propi del mode. */
+    public PlayerPerkState(MissionProgress mission, int maxPerks) {
+        this.maxPerks = Math.max(0, maxPerks);
         addMission(mission);
     }
 
     /** Inicialitza buit. */
     public PlayerPerkState() {
+        this(MAX_PERKS);
+    }
+
+    /** Inicialitza buit amb un límit de perks propi del mode. */
+    public PlayerPerkState(int maxPerks) {
+        this.maxPerks = Math.max(0, maxPerks);
     }
 
     /** Indica si el jugador pot obtenir més perks. */
     public boolean canGainMorePerks() {
-        return perks.size() < MAX_PERKS;
+        return perks.size() < maxPerks;
+    }
+
+    /** Retorna el límit de perks d'aquest estat. */
+    public int maxPerks() {
+        return maxPerks;
     }
 
     /** Comprova si el jugador ja té una perk concreta. */

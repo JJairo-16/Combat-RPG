@@ -8,6 +8,7 @@ import java.util.Map;
 import menu.DynamicMenu;
 import menu.editor.MenuEditor;
 import rpgcombat.combat.models.Action;
+import rpgcombat.gamemode.model.GameModeRules;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectState;
@@ -42,6 +43,7 @@ public class MenuStatusModifier {
     private final Character player;
     private final DynamicMenu<Action, Character> menu;
     private final Map<String, List<StatusMod>> modifiers;
+    private final GameModeRules rules;
 
     private long lastHash = 0L;
     private int lastModifiers = 0;
@@ -61,9 +63,18 @@ public class MenuStatusModifier {
             Character player,
             DynamicMenu<Action, Character> menu,
             Map<String, List<StatusMod>> modifiers) {
+        this(player, menu, modifiers, GameModeRules.unrestricted());
+    }
+
+    public MenuStatusModifier(
+            Character player,
+            DynamicMenu<Action, Character> menu,
+            Map<String, List<StatusMod>> modifiers,
+            GameModeRules rules) {
         this.player = player;
         this.menu = menu;
         this.modifiers = modifiers;
+        this.rules = rules == null ? GameModeRules.unrestricted() : rules;
     }
 
     /**
@@ -117,7 +128,8 @@ public class MenuStatusModifier {
     private void collectPendingMods(List<Effect> effects) {
         pending.clear();
 
-        if (effects == null || effects.isEmpty() || modifiers == null || modifiers.isEmpty()) {
+        if (!rules.specialActionsEnabled() || effects == null || effects.isEmpty()
+                || modifiers == null || modifiers.isEmpty()) {
             return;
         }
 
@@ -192,7 +204,7 @@ public class MenuStatusModifier {
      * @param charged {@code true} si el jugador té l'atac carregat
      */
     private void applyChargedStateToBaseMenu(boolean charged) {
-        if (!charged) {
+        if (!charged || !rules.allowsAction(Action.CHARGE)) {
             return;
         }
 

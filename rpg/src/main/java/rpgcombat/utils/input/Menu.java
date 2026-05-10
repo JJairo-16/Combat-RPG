@@ -1,6 +1,7 @@
 package rpgcombat.utils.input;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 import rpgcombat.utils.ui.Cleaner;
@@ -69,6 +70,14 @@ public class Menu {
 
     public static void pause() {
         System.out.print("Prem enter per continuar... ");
-        scanner.nextLine();
+        if (System.console() == null) {
+            System.out.println();
+            return;
+        }
+        try {
+            scanner.nextLine();
+        } catch (IllegalStateException | NoSuchElementException e) {
+            System.out.println();
+        }
     }
 }

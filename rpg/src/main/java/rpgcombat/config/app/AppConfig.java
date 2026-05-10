@@ -2,6 +2,7 @@ package rpgcombat.config.app;
 
 import rpgcombat.config.character.CharactersConfig;
 import rpgcombat.config.debug.DebugOptions;
+import rpgcombat.config.game.GameModeOptions;
 import rpgcombat.config.paths.PathsConfig;
 import rpgcombat.config.ui.CinematicsOptions;
 import rpgcombat.config.ui.HomeScreenConfig;
@@ -12,6 +13,7 @@ public record AppConfig(
         PathsConfig paths,
         UiConfig ui,
         CinematicsOptions cinematic,
+        GameModeOptions gameMode,
         DebugOptions debug,
         CharactersConfig characters,
         HomeScreenConfig homeScreen) {
@@ -27,6 +29,10 @@ public record AppConfig(
 
         if (cinematic == null) {
             cinematic = CinematicsOptions.defaultConfig();
+        }
+
+        if (gameMode == null) {
+            gameMode = GameModeOptions.defaultConfig();
         }
 
         if (debug == null) {

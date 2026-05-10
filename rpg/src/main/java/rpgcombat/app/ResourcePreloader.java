@@ -13,6 +13,8 @@ import rpgcombat.balance.CombatBalanceRegistry;
 import rpgcombat.balance.config.CombatBalanceConfig;
 import rpgcombat.config.app.AppConfig;
 import rpgcombat.config.paths.PathsConfig;
+import rpgcombat.gamemode.io.GameModeLoader;
+import rpgcombat.gamemode.registry.GameModeRegistry;
 import rpgcombat.game.menu.MenuDescriptionsLoader;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.game.modifier.config.StatusModLoader;
@@ -60,6 +62,8 @@ public final class ResourcePreloader {
 
         CombatBalanceConfig balance = CombatBalanceLoader.load(Path.of(paths.balanceConfig()));
         CombatBalanceRegistry.initialize(balance);
+
+        GameModeRegistry.initialize(GameModeLoader.load(Path.of(paths.gameModesConfig())));
 
         menuInformation = MenuDescriptionsLoader.load(Path.of(paths.menuDescriptions()));
 

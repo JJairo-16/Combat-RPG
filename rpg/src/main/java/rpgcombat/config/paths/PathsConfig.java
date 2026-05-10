@@ -5,6 +5,7 @@ public record PathsConfig(
         String weaponsConfig,
         String statusMenuModifier,
         String balanceConfig,
+        String gameModesConfig,
         String menuDescriptions,
         String missionsConfig,
         String perksConfig,
@@ -20,6 +21,7 @@ public record PathsConfig(
     public static final String DEFAULT_WEAPONS_CONFIG = "rpg/data/weapons.json";
     public static final String DEFAULT_STATUS_MENU_MODIFIER = "rpg/data/menuModifiers.json";
     public static final String DEFAULT_BALANCE_CONFIG = "rpg/data/combatBalance.json";
+    public static final String DEFAULT_GAME_MODES_CONFIG = "rpg/data/gameModes.json";
     public static final String DEFAULT_MENU_DESCRIPTIONS = "rpg/data/menuDescription.json";
 
     public static final String DEFAULT_MISSIONS_CONFIG = perks("missions.json");
@@ -36,6 +38,7 @@ public record PathsConfig(
         weaponsConfig = fallback(weaponsConfig, DEFAULT_WEAPONS_CONFIG);
         statusMenuModifier = fallback(statusMenuModifier, DEFAULT_STATUS_MENU_MODIFIER);
         balanceConfig = fallback(balanceConfig, DEFAULT_BALANCE_CONFIG);
+        gameModesConfig = fallback(gameModesConfig, DEFAULT_GAME_MODES_CONFIG);
         menuDescriptions = fallback(menuDescriptions, DEFAULT_MENU_DESCRIPTIONS);
         missionsConfig = fallback(missionsConfig, DEFAULT_MISSIONS_CONFIG);
         perksConfig = fallback(perksConfig, DEFAULT_PERKS_CONFIG);
@@ -52,6 +55,7 @@ public record PathsConfig(
                 DEFAULT_WEAPONS_CONFIG,
                 DEFAULT_STATUS_MENU_MODIFIER,
                 DEFAULT_BALANCE_CONFIG,
+                DEFAULT_GAME_MODES_CONFIG,
                 DEFAULT_MENU_DESCRIPTIONS,
                 DEFAULT_MISSIONS_CONFIG,
                 DEFAULT_PERKS_CONFIG,
