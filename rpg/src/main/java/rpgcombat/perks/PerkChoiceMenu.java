@@ -60,7 +60,10 @@ public final class PerkChoiceMenu {
 
                 while (true) {
                     Action action = reader.readBinding(keyMap);
-                    if (action == null) continue;
+                    if (action == null) {
+                        renderFull(terminal, playerName, ordered, previews, cursor);
+                        continue;
+                    }
 
                     int oldCursor = cursor;
 

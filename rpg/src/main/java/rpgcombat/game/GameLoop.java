@@ -28,8 +28,8 @@ import rpgcombat.utils.input.Menu;
 import rpgcombat.utils.interactive.WeaponMenu;
 import rpgcombat.utils.rng.DivineCharismaAffinity;
 import rpgcombat.utils.ui.Ansi;
-import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.Prettier;
+import rpgcombat.utils.ui.TerminalClear;
 
 import rpgcombat.weapons.Arsenal;
 import rpgcombat.weapons.Weapon;
@@ -50,7 +50,6 @@ public class GameLoop {
 
     private final CombatSystem combatSystem;
     private final CombatPerkSystem perkSystem;
-    private final Cleaner cls = new Cleaner();
     private final TextWrapCache wrapCache = new TextWrapCache();
     private final CinematicsOptions cinematicsOptions;
     private final HomeScreenConfig homeScreenConfig;
@@ -165,7 +164,7 @@ public class GameLoop {
         sb.append('\n');
         sb.append("====================================\n\n");
 
-        cls.clear();
+        TerminalClear.clearShared();
         System.out.print(sb.toString());
 
         Menu.pause();
@@ -175,7 +174,7 @@ public class GameLoop {
     }
 
     private void showPlayerInfoWrapper(Character player) {
-        cls.clear();
+        TerminalClear.clearShared();
         getPlayerInfo(player);
         Menu.pause();
     }
@@ -194,7 +193,7 @@ public class GameLoop {
         filters.setOnlyEquippable(true);
 
         do {
-            cls.clear();
+            TerminalClear.clearShared();
 
             WeaponDefinition selected = WeaponMenu.chooseWeaponEntryWithFilters(
                     entries,

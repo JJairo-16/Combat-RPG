@@ -59,7 +59,11 @@ public final class CharacterCreationEditor {
                         continue;
                     }
                     InputAction input = reader.readBinding(keyMap);
-                    if (consumeResize(terminal, draft) || input == null) {
+                    if (consumeResize(terminal, draft)) {
+                        continue;
+                    }
+                    if (input == null) {
+                        renderAll(terminal, draft);
                         continue;
                     }
                     switch (input) {

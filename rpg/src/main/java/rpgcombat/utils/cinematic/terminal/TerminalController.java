@@ -41,7 +41,7 @@ public class TerminalController {
      */
     public static void clearScreen(Terminal terminal) {
         if (!terminal.puts(Capability.clear_screen)) {
-            terminal.writer().print("\033[H\033[2J\033[3J");
+            terminal.writer().print("\033[H\033[2J");
         }
 
         moveCursor(terminal, 1, 1);

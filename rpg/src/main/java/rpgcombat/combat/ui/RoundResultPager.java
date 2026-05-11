@@ -15,6 +15,7 @@ import rpgcombat.models.characters.Character;
 import rpgcombat.utils.terminal.SharedTerminal;
 import rpgcombat.utils.terminal.TerminalSession;
 import rpgcombat.utils.ui.Ansi;
+import rpgcombat.utils.ui.TerminalClear;
 
 /**
  * Mostra el resultat d'una ronda en dues pàgines.
@@ -97,7 +98,7 @@ public final class RoundResultPager {
     private void render(Terminal terminal, List<Page> pages, int index) {
         Page page = pages.get(index);
         StringBuilder screen = new StringBuilder(page.body().length() + 320);
-        screen.append("\033[H\033[2J\033[3J");
+        TerminalClear.clear(terminal);
         screen.append(BIG_DIV).append('\n');
         screen.append(Ansi.BOLD).append(page.title()).append(Ansi.RESET).append(' ')
                 .append(Ansi.DARK_GRAY).append("Pàgina ").append(index + 1).append('/')

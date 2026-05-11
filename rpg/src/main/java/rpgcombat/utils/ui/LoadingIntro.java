@@ -53,7 +53,7 @@ public class LoadingIntro {
         if (task == null)
             throw new IllegalArgumentException("task no pot ser null");
 
-        new Cleaner().clear();
+        TerminalClear.clearShared();
         hideCursor();
 
         Thread worker = new Thread(task, "loading-intro-task");
@@ -102,16 +102,16 @@ public class LoadingIntro {
         for (int i = 1; i <= madeByText.length(); i++) {
             out.print("\r" + MAGENTA + BOLD + madeByText.substring(0, i) + RESET);
             out.flush();
-            Thread.sleep(60);
+            Thread.sleep(42);
         }
 
-        Thread.sleep(1200);
+        Thread.sleep(750);
 
         for (int i = madeByText.length(); i >= 0; i--) {
             String visible = madeByText.substring(0, i);
             out.print("\r" + MAGENTA + BOLD + padRight(visible, width) + RESET);
             out.flush();
-            Thread.sleep(45);
+            Thread.sleep(32);
         }
     }
 

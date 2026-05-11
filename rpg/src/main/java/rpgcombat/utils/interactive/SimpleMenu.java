@@ -24,12 +24,6 @@ public class SimpleMenu {
     protected static final int CONTROLS_SPACER_ROWS = 1;
     private static final int DEFAULT_LEFT_PADDING = 3;
 
-    /** Activa captura de ratolí. */
-    private static final String ENABLE_MOUSE = "\033[?1000h\033[?1002h\033[?1006h";
-
-    /** Desactiva captura de ratolí. */
-    private static final String DISABLE_MOUSE = "\033[?1006l\033[?1002l\033[?1000l";
-
     protected final int leftPadding;
 
     private volatile boolean resizePending;
@@ -87,8 +81,6 @@ public class SimpleMenu {
                     });
 
             try {
-                enterProtectedMode(terminal);
-
                 renderFull(terminal, title, options, cursor[0]);
 
                 new MenuInputGate(terminal, 80, 20).waitUntilReady();
@@ -104,6 +96,7 @@ public class SimpleMenu {
                     consumeResize(terminal, title, options, cursor[0]);
 
                     if (action == null) {
+                        renderFull(terminal, title, options, cursor[0]);
                         continue;
                     }
 
@@ -129,7 +122,6 @@ public class SimpleMenu {
                     }
                 }
             } finally {
-                exitProtectedMode(terminal);
                 terminal.handle(Terminal.Signal.WINCH, previousWinch);
             }
 
@@ -137,29 +129,6 @@ public class SimpleMenu {
             System.out.println("No s'ha pogut obrir el menú interactiu: " + e.getMessage());
             return 1;
         }
-    }
-
-    /**
-     * Activa el mode protegit del menú.
-     *
-     * Captura events de ratolí perquè la roda no faci scroll extern durant el menú.
-     * No activa pantalla alternativa aquí per evitar flashes entre menús consecutius.
-     *
-     * @param terminal terminal actual
-     */
-    private void enterProtectedMode(Terminal terminal) {
-        terminal.writer().print(ENABLE_MOUSE);
-        terminal.flush();
-    }
-
-    /**
-     * Desactiva el mode protegit del menú.
-     *
-     * @param terminal terminal actual
-     */
-    private void exitProtectedMode(Terminal terminal) {
-        terminal.writer().print(DISABLE_MOUSE);
-        terminal.flush();
     }
 
     /**

@@ -5,7 +5,7 @@ import rpgcombat.utils.cinematic.style.CinematicColor;
 /**
  * Representa una acció que executa el motor d'escriptura.
  */
-class TypingAction {
+public class TypingAction {
     private final ActionType type;
     private final char character;
     private final long delayMillis;

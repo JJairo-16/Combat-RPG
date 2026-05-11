@@ -22,7 +22,7 @@ import rpgcombat.utils.rng.DivineCharismaAffinity;
 import rpgcombat.utils.rng.SpiritualCallingDie;
 import rpgcombat.utils.rng.SpiritualCallingDie.RollResult;
 import rpgcombat.utils.ui.Ansi;
-import rpgcombat.utils.ui.Cleaner;
+import rpgcombat.utils.ui.TerminalClear;
 import static rpgcombat.game.modifier.ui.Format.*;
 
 /**
@@ -32,9 +32,6 @@ import static rpgcombat.game.modifier.ui.Format.*;
  * per executar habilitats com "Spiritual Calling" i "Blood Pact".
  */
 public final class Actions {
-
-    /** Utilitat per netejar la consola abans de mostrar informació */
-    private static final Cleaner cleaner = new Cleaner();
 
     /** Configuració del sistema de Blood Pact extreta del registre de balanç */
     private static final BloodPactConfig bloodPactConfig = CombatBalanceRegistry.get().bloodPact();
@@ -70,7 +67,7 @@ public final class Actions {
      * @return un {@link MenuResult} que indica continuar el bucle del menú
      */
     public static MenuResult<Action> spiritualCalling(Character player) {
-        cleaner.clear();
+        TerminalClear.clearShared();
 
         if (!player.specialActionsEnabled()) {
             cannotUseSpecialActionsInThisMode();
@@ -147,7 +144,7 @@ public final class Actions {
      * @return un {@link MenuResult} que indica continuar el bucle del menú
      */
     public static MenuResult<Action> bloodPact(Character player) {
-        cleaner.clear();
+        TerminalClear.clearShared();
 
         if (!player.specialActionsEnabled()) {
             cannotUseSpecialActionsInThisMode();
@@ -199,7 +196,7 @@ public final class Actions {
 
     /** Executa la lògica comuna d'activació d'una ulti. */
     private static MenuResult<Action> useUltimate(Character player, UltimateActionType type) {
-        cleaner.clear();
+        TerminalClear.clearShared();
 
         if (!player.specialActionsEnabled()) {
             cannotUseSpecialActionsInThisMode();

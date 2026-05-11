@@ -2,6 +2,10 @@ package rpgcombat.app;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 import rpgcombat.achievements.AchievementSystem;
@@ -13,6 +17,7 @@ import rpgcombat.discovery.DiscoveryCategory;
 import rpgcombat.discovery.DiscoveryRuntime;
 import rpgcombat.discovery.DiscoverySystem;
 import rpgcombat.discovery.config.DiscoveryCatalog;
+import rpgcombat.discovery.config.DiscoveryCatalogConfig;
 import rpgcombat.discovery.config.DiscoveryCatalogLoader;
 import rpgcombat.discovery.ui.DiscoveryInteractiveViewer;
 import rpgcombat.game.EndGameAction;
@@ -38,6 +43,7 @@ public final class AppController {
 
     /** Inicia l'aplicació fins que l'usuari surt. */
     public void run() {
+        new Cleaner().clear(0);
         loadConfig();
 
         if (!preloadResources()) {
@@ -60,6 +66,9 @@ public final class AppController {
                 }
 
                 if (action == HomeMenu.Action.DISCOVERIES) {
+                    if (!prepareMatchResources()) {
+                        continue;
+                    }
                     DiscoveryInteractiveViewer.show(discoverySystem.toOverview());
                     continue;
                 }
@@ -89,7 +98,11 @@ public final class AppController {
         if (gameMode == null) {
             return EndGameAction.HOME;
         }
+        if (!prepareMatchResources()) {
+            return EndGameAction.HOME;
+        }
         achievementSystem.onGameModeSelected(gameMode.id());
+        DiscoveryRuntime.discover(DiscoveryCategory.GAME_MODES, gameMode.id());
         preloader.preloadNewMatch();
 
         GameBootstrap bootstrap = new GameBootstrap(config, preloader, achievementSystem);
@@ -110,10 +123,7 @@ public final class AppController {
                     discoverySystem,
                     config.gameMode().defaultMode());
         }
-        if (mode == null) {
-            return null;
-        }
-        DiscoveryRuntime.discover(DiscoveryCategory.GAME_MODES, mode.id());
+        
         return mode;
     }
 
@@ -133,12 +143,12 @@ public final class AppController {
             return preloadNow();
         }
 
-        AtomicReference<IOException> error = new AtomicReference<>();
+        AtomicReference<Exception> error = new AtomicReference<>();
         LoadingIntro intro = new LoadingIntro(config.ui().loadingAuthor());
         intro.start(() -> {
             try {
                 preloadAll();
-            } catch (IOException e) {
+            } catch (IOException | RuntimeException e) {
                 error.set(e);
             }
         });
@@ -156,7 +166,7 @@ public final class AppController {
         try {
             preloadAll();
             return true;
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             Prettier.error("Hi ha hagut un error durant la precàrrega.");
             return false;
         }
@@ -165,11 +175,72 @@ public final class AppController {
     /** Precarrega tots els recursos necessaris. */
     private void preloadAll() throws IOException {
         preloader.preloadApp();
-        preloader.preloadGameStatic(config);
-        achievementSystem = AchievementSystem.load(AchievementRegistry.all(), config.paths().achievementSaveFile());
-        DiscoveryCatalog catalog = DiscoveryCatalog.build(DiscoveryCatalogLoader.load(Path.of(config.paths().discoveryCatalogConfig())));
-        discoverySystem = DiscoverySystem.load(catalog, config.paths().discoverySaveFile());
+        preloader.preloadHomeStatic(config);
+
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            Future<AchievementSystem> achievements = executor.submit(
+                    () -> AchievementSystem.load(AchievementRegistry.all(), config.paths().achievementSaveFile()));
+            Future<DiscoverySystem> discoveries = executor.submit(
+                    () -> DiscoverySystem.load(null, config.paths().discoverySaveFile()));
+            Future<DiscoveryCatalogConfig> catalogConfig = executor.submit(
+                    () -> DiscoveryCatalogLoader.load(Path.of(config.paths().discoveryCatalogConfig())));
+            Future<Void> matchStatic = executor.submit(() -> {
+                preloader.preloadMatchStatic(config);
+                return null;
+            });
+
+            achievementSystem = await(achievements, "progrés d'assoliments");
+            discoverySystem = await(discoveries, "progrés de descobriments");
+            await(matchStatic, "recursos de combat");
+            ensureDiscoveryCatalogLoaded(await(catalogConfig, "catàleg de descobriments"));
+        }
+
         UnlockRuntime.configure(achievementSystem, discoverySystem);
+    }
+
+    /** Carrega els recursos complets abans d'entrar en combat o mostrar descobriments. */
+    private boolean prepareMatchResources() {
+        try {
+            preloader.preloadMatchStatic(config);
+            if (discoverySystem != null && !discoverySystem.hasCatalog()) {
+                ensureDiscoveryCatalogLoaded(DiscoveryCatalogLoader.load(Path.of(config.paths().discoveryCatalogConfig())));
+            }
+            return true;
+        } catch (Exception e) {
+            Prettier.error("Hi ha hagut un error durant la càrrega dels recursos necessaris.");
+            return false;
+        }
+    }
+
+    /** Garanteix que el catàleg complet de descobriments està construït. */
+    private void ensureDiscoveryCatalogLoaded(DiscoveryCatalogConfig config) {
+        if (discoverySystem == null || discoverySystem.hasCatalog()) {
+            return;
+        }
+        DiscoveryCatalog catalog = DiscoveryCatalog.build(config);
+        discoverySystem.setCatalog(catalog);
+    }
+
+    /** Espera una càrrega asíncrona i conserva la causa real si falla. */
+    private static <T> T await(Future<T> future, String resourceName) throws IOException {
+        try {
+            return future.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Càrrega interrompuda: " + resourceName, e);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof IOException io) {
+                throw io;
+            }
+            if (cause instanceof RuntimeException runtime) {
+                throw runtime;
+            }
+            if (cause instanceof Error error) {
+                throw error;
+            }
+            throw new IOException("No s'ha pogut carregar: " + resourceName, cause);
+        }
     }
 
     /** Indica si cal mostrar la intro de càrrega. */

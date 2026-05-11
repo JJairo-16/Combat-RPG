@@ -439,6 +439,7 @@ public final class WeaponMenu {
 
             Action action = ui.readAction();
             if (action == null) {
+                firstRender = true;
                 continue;
             }
 

@@ -1,6 +1,9 @@
 package rpgcombat.game.cinematics;
 
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 import rpgcombat.combat.models.Winner;
 import rpgcombat.config.ui.CinematicsOptions;
@@ -19,15 +22,32 @@ import rpgcombat.utils.cinematic.typing.TypingMood;
 public final class CinematicBuilder {
     private static final int ARROW_ANIMATION_DELAY = 140;
     private static final Random RNG = new Random();
+    private static final Map<String, TextCinematic> CACHE = new ConcurrentHashMap<>();
 
     private CinematicBuilder() {
+    }
+
+    /** Prepara les cinemàtiques estàtiques per evitar càlculs en entrar-hi. */
+    public static void preload() {
+        cached("PRE_CREATION", CinematicBuilder::buildPreCreationCinematic);
+        cached("NORMAL_STRATEGY", CinematicBuilder::buildStrategyInit);
+        cached("NORMAL_LUCK", CinematicBuilder::buildLuckInit);
+        cached("NORMAL_CHAOS", CinematicBuilder::buildChaosInit);
+        cached("BEGINNER_INTRO", CinematicBuilder::buildBeginnerInit);
+        cached("CHAOS_MIND", CinematicBuilder::buildChaosMindInit);
+        cached("ANTI_STALL", CinematicBuilder::buildAntiStallCinematic);
+        cached("TIE_END", CinematicBuilder::buildTieEnd);
+        cached("WIN_END", CinematicBuilder::buildWinEnd);
+        cached("TIE_END_CHAOS", CinematicBuilder::buildTieEndChaos);
+        cached("WIN_END_CHAOS", CinematicBuilder::buildWinEndChaos);
+        cached("CREDITS", CinematicBuilder::buildCreditsCinematic);
     }
 
     /**
      * Reprodueix la cinemàtica prèvia a la creació de personatges.
      */
     public static void playPreCreation() {
-        buildPreCreationCinematic().play();
+        cached("PRE_CREATION", CinematicBuilder::buildPreCreationCinematic).play();
     }
 
     /**
@@ -47,7 +67,7 @@ public final class CinematicBuilder {
      * Reprodueix la cinemàtica contra l'estancament.
      */
     public static void playAntiStall() {
-        buildAntiStallCinematic().play();
+        cached("ANTI_STALL", CinematicBuilder::buildAntiStallCinematic).play();
     }
 
     /**
@@ -64,10 +84,10 @@ public final class CinematicBuilder {
         int key = getKey(winner == Winner.TIE, chaosActive);
 
         TextCinematic cinematic = switch (key) {
-            case 3 -> buildTieEndChaos();
-            case 2 -> buildTieEnd();
-            case 1 -> buildWinEndChaos();
-            case 0 -> buildWinEnd();
+            case 3 -> cached("TIE_END_CHAOS", CinematicBuilder::buildTieEndChaos);
+            case 2 -> cached("TIE_END", CinematicBuilder::buildTieEnd);
+            case 1 -> cached("WIN_END_CHAOS", CinematicBuilder::buildWinEndChaos);
+            case 0 -> cached("WIN_END", CinematicBuilder::buildWinEnd);
             default -> throw new IllegalStateException("Unexpected key: " + key);
         };
 
@@ -79,7 +99,7 @@ public final class CinematicBuilder {
      * Reprodueix la cinemàtica de crèdits.
      */
     public static void playCredits() {
-        buildCreditsCinematic().play();
+        cached("CREDITS", CinematicBuilder::buildCreditsCinematic).play();
     }
 
     /** Tria una cinemàtica inicial segons el mode. */
@@ -92,9 +112,9 @@ public final class CinematicBuilder {
     /** Tria una cinemàtica inicial aleatòria. */
     private static TextCinematic buildRandomInit() {
         return switch (RNG.nextInt(3)) {
-            case 0 -> buildStrategyInit();
-            case 1 -> buildLuckInit();
-            default -> buildChaosInit();
+            case 0 -> cached("NORMAL_STRATEGY", CinematicBuilder::buildStrategyInit);
+            case 1 -> cached("NORMAL_LUCK", CinematicBuilder::buildLuckInit);
+            default -> cached("NORMAL_CHAOS", CinematicBuilder::buildChaosInit);
         };
     }
 
@@ -102,14 +122,18 @@ public final class CinematicBuilder {
     private static TextCinematic buildByKey(String key) {
         String normalized = key == null ? ModeCinematics.DEFAULT_RANDOM : key.trim().toUpperCase();
         return switch (normalized) {
-            case "NORMAL_STRATEGY", "STRATEGY" -> buildStrategyInit();
-            case "NORMAL_LUCK", "LUCK" -> buildLuckInit();
-            case "NORMAL_CHAOS", "CHAOS" -> buildChaosInit();
-            case "CHAOS_MIND" -> buildChaosMindInit();
-            case "BEGINNER_INTRO" -> buildBeginnerInit();
+            case "NORMAL_STRATEGY", "STRATEGY" -> cached("NORMAL_STRATEGY", CinematicBuilder::buildStrategyInit);
+            case "NORMAL_LUCK", "LUCK" -> cached("NORMAL_LUCK", CinematicBuilder::buildLuckInit);
+            case "NORMAL_CHAOS", "CHAOS" -> cached("NORMAL_CHAOS", CinematicBuilder::buildChaosInit);
+            case "CHAOS_MIND" -> cached("CHAOS_MIND", CinematicBuilder::buildChaosMindInit);
+            case "BEGINNER_INTRO" -> cached("BEGINNER_INTRO", CinematicBuilder::buildBeginnerInit);
             case "DEFAULT_RANDOM" -> buildRandomInit();
             default -> buildRandomInit();
         };
+    }
+
+    private static TextCinematic cached(String key, Supplier<TextCinematic> factory) {
+        return CACHE.computeIfAbsent(key, ignored -> factory.get());
     }
 
     /**
@@ -556,7 +580,7 @@ public final class CinematicBuilder {
      */
     private static TextCinematic cinema(Scene scene) {
         return TextCinematic.builder()
-                .clearScreenOnEnd(true)
+                .clearScreenOnEnd(false)
                 .arrowAnimationDelay(ARROW_ANIMATION_DELAY)
                 .scene(scene)
                 .build();
@@ -567,7 +591,7 @@ public final class CinematicBuilder {
      */
     private static TextCinematic cinema(Scene... scenes) {
         return TextCinematic.builder()
-                .clearScreenOnEnd(true)
+                .clearScreenOnEnd(false)
                 .arrowAnimationDelay(ARROW_ANIMATION_DELAY)
                 .scenes(scenes)
                 .build();

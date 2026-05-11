@@ -19,6 +19,7 @@ import rpgcombat.gamemode.model.GameModePresentation;
 import rpgcombat.gamemode.registry.GameModeRegistry;
 import rpgcombat.utils.terminal.SharedTerminal;
 import rpgcombat.utils.terminal.TerminalSession;
+import rpgcombat.utils.ui.TerminalClear;
 
 /** Menú interactiu de cartes per escollir mode de joc abans de crear la partida. */
 public final class GameModeSelectionMenu {
@@ -76,10 +77,8 @@ public final class GameModeSelectionMenu {
         BindingReader reader = new BindingReader(terminal.reader());
         KeyMap<Action> keys = keys(terminal);
 
-        terminal.puts(Capability.enter_ca_mode);
         terminal.puts(Capability.cursor_invisible);
-        clearScreen(terminal);
-        terminal.flush();
+        TerminalClear.clear(terminal);
 
         int selected = initialSelection(modes, achievements, discoveries, defaultModeId);
         int page = 0;
@@ -109,6 +108,8 @@ public final class GameModeSelectionMenu {
 
                 Action action = reader.readBinding(keys);
                 if (action == null) {
+                    paintFrame(terminal, frame, height, true);
+                    terminal.flush();
                     continue;
                 }
 
@@ -141,8 +142,6 @@ public final class GameModeSelectionMenu {
             }
         } finally {
             terminal.writer().print(RESET);
-            terminal.puts(Capability.exit_ca_mode);
-            clearScreen(terminal);
             terminal.puts(Capability.cursor_visible);
             terminal.flush();
         }
@@ -162,10 +161,7 @@ public final class GameModeSelectionMenu {
     }
 
     private static void clearScreen(Terminal terminal) {
-        if (!terminal.puts(Capability.clear_screen)) {
-            terminal.writer().print("\033[H\033[2J");
-        }
-        terminal.writer().print("\033[1;1H");
+        TerminalClear.clear(terminal);
     }
 
     private static KeyMap<Action> keys(Terminal terminal) {

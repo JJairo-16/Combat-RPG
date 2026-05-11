@@ -33,12 +33,18 @@ import rpgcombat.weapons.config.WeaponDefinition;
 public final class DiscoveryCatalog {
     private final Map<DiscoveryCategory, DiscoveryCategoryDefinition> categories;
     private final Map<DiscoveryKey, DiscoveryEntryDefinition> entries;
+    private final List<DiscoveryCategoryDefinition> orderedCategories;
+    private final Map<DiscoveryCategory, List<DiscoveryEntryDefinition>> orderedEntriesByCategory;
 
     /** Crea un catàleg immutable. */
     private DiscoveryCatalog(Map<DiscoveryCategory, DiscoveryCategoryDefinition> categories,
             Map<DiscoveryKey, DiscoveryEntryDefinition> entries) {
         this.categories = Map.copyOf(categories);
         this.entries = Map.copyOf(entries);
+        this.orderedCategories = this.categories.values().stream()
+                .sorted(Comparator.comparingInt(DiscoveryCategoryDefinition::sortOrder))
+                .toList();
+        this.orderedEntriesByCategory = buildOrderedEntriesByCategory(this.entries);
     }
 
     /** Construeix el catàleg final a partir de la configuració carregada. */
@@ -69,19 +75,12 @@ public final class DiscoveryCatalog {
 
     /** Categories ordenades per mostrar. */
     public List<DiscoveryCategoryDefinition> categories() {
-        return categories.values().stream()
-                .sorted(Comparator.comparingInt(DiscoveryCategoryDefinition::sortOrder))
-                .toList();
+        return orderedCategories;
     }
 
     /** Entrades d'una categoria, ordenades per ordre manual i títol. */
     public List<DiscoveryEntryDefinition> entries(DiscoveryCategory category) {
-        return entries.values().stream()
-                .filter(entry -> entry.category() == category)
-                .sorted(Comparator
-                        .comparingInt(DiscoveryEntryDefinition::sortOrder)
-                        .thenComparing(DiscoveryEntryDefinition::title))
-                .toList();
+        return orderedEntriesByCategory.getOrDefault(category, List.of());
     }
 
     /** Total d'entrades del catàleg. */
@@ -98,6 +97,21 @@ public final class DiscoveryCatalog {
             order += 10;
         }
         return result;
+    }
+
+    /** Precalcula les entrades ordenades per categoria per evitar reordenacions en UI. */
+    private static Map<DiscoveryCategory, List<DiscoveryEntryDefinition>> buildOrderedEntriesByCategory(
+            Map<DiscoveryKey, DiscoveryEntryDefinition> entries) {
+        Map<DiscoveryCategory, List<DiscoveryEntryDefinition>> result = new EnumMap<>(DiscoveryCategory.class);
+        for (DiscoveryCategory category : DiscoveryCategory.values()) {
+            result.put(category, entries.values().stream()
+                    .filter(entry -> entry.category() == category)
+                    .sorted(Comparator
+                            .comparingInt(DiscoveryEntryDefinition::sortOrder)
+                            .thenComparing(DiscoveryEntryDefinition::title))
+                    .toList());
+        }
+        return Map.copyOf(result);
     }
 
     /** Aplica canvis JSON sobre les categories. */

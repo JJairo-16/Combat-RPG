@@ -20,7 +20,7 @@ import rpgcombat.unlocks.UnlockRuntime;
 
 /** Coordina catàleg, progrés i persistència dels descobriments globals. */
 public final class DiscoverySystem {
-    private final DiscoveryCatalog catalog;
+    private DiscoveryCatalog catalog;
     private final DiscoveryStore store;
     private final Path savePath;
     private final Map<DiscoveryKey, DiscoveryProgress> progressByKey;
@@ -45,22 +45,36 @@ public final class DiscoverySystem {
         return system;
     }
 
+    /** Indica si el catàleg visual i de validació ja està disponible. */
+    public synchronized boolean hasCatalog() {
+        return catalog != null;
+    }
+
+    /** Assigna el catàleg quan la resta de registres ja han estat carregats. */
+    public synchronized void setCatalog(DiscoveryCatalog catalog) {
+        if (catalog != null) {
+            this.catalog = catalog;
+        }
+    }
+
     /** Registra una entrada descoberta si existeix al catàleg. */
-    public void discover(DiscoveryCategory category, String id) {
+    public synchronized void discover(DiscoveryCategory category, String id) {
         if (category == null || id == null || id.isBlank() || catalog == null) return;
         if (!catalog.contains(category, id)) return;
 
         DiscoveryKey key = new DiscoveryKey(category, id);
         DiscoveryProgress progress = progressByKey.get(key);
-        if (progress == null) {
-            progressByKey.put(key, DiscoveryProgress.newlyDiscovered(key));
+        if (progress != null) {
+            return;
         }
+
+        progressByKey.put(key, DiscoveryProgress.newlyDiscovered(key));
         dirty = true;
         saveIfDirty();
     }
 
     /** Converteix el progrés intern a models visuals per al visor temporal. */
-    public DiscoveryOverview toOverview() {
+    public synchronized DiscoveryOverview toOverview() {
         if (catalog == null) {
             return new DiscoveryOverview(0, 0, List.of());
         }
@@ -101,7 +115,7 @@ public final class DiscoverySystem {
     }
 
     /** Desa el progrés si hi ha canvis pendents. */
-    public void saveIfDirty() {
+    public synchronized void saveIfDirty() {
         if (!dirty) return;
         try {
             store.save(savePath, progressByKey.values());
@@ -112,12 +126,12 @@ public final class DiscoverySystem {
     }
 
     /** Retorna una còpia del progrés actual, útil per proves. */
-    public Collection<DiscoveryProgress> progress() {
+    public synchronized Collection<DiscoveryProgress> progress() {
         return List.copyOf(progressByKey.values());
     }
 
     /** Indica si una entrada concreta ja ha estat descoberta. */
-    public boolean isDiscovered(DiscoveryCategory category, String id) {
+    public synchronized boolean isDiscovered(DiscoveryCategory category, String id) {
         if (category == null || id == null || id.isBlank()) {
             return false;
         }
@@ -125,12 +139,12 @@ public final class DiscoverySystem {
     }
 
     /** Nombre total d'entrades descobertes. */
-    public int discoveredCount() {
+    public synchronized int discoveredCount() {
         return progressByKey.size();
     }
 
     /** Nombre d'entrades descobertes dins una categoria. */
-    public int discoveredCount(DiscoveryCategory category) {
+    public synchronized int discoveredCount(DiscoveryCategory category) {
         if (category == null) {
             return 0;
         }

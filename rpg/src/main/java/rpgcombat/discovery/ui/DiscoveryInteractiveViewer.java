@@ -15,8 +15,8 @@ import rpgcombat.discovery.ui.state.DiscoveryUiState;
 import rpgcombat.utils.input.Menu;
 import rpgcombat.utils.terminal.SharedTerminal;
 import rpgcombat.utils.terminal.TerminalSession;
-import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.Prettier;
+import rpgcombat.utils.ui.TerminalClear;
 
 /**
  * Visor interactiu dels descobriments globals.
@@ -66,7 +66,7 @@ public final class DiscoveryInteractiveViewer {
     /** Mostra el visor o un avís si no hi ha catàleg. */
     public static void show(DiscoveryOverview overview) {
         if (overview == null) {
-            new Cleaner().clear();
+            TerminalClear.clearShared();
             Prettier.warn(NO_CATALOG);
             Menu.pause();
             return;
@@ -82,10 +82,8 @@ public final class DiscoveryInteractiveViewer {
             BindingReader reader = new BindingReader(terminal.reader());
             KeyMap<Action> keys = keys(terminal);
 
-            terminal.puts(Capability.enter_ca_mode);
             terminal.puts(Capability.cursor_invisible);
-            terminal.writer().print("\033[2J\033[H");
-            terminal.flush();
+            TerminalClear.clear(terminal);
 
             while (true) {
                 int width = Math.max(1, terminal.getWidth());
@@ -113,8 +111,6 @@ public final class DiscoveryInteractiveViewer {
                     }
                     case EXIT -> {
                         terminal.writer().print(RESET);
-                        terminal.puts(Capability.exit_ca_mode);
-                        terminal.writer().print("\033[2J\033[H");
                         terminal.puts(Capability.cursor_visible);
                         terminal.flush();
                         return;

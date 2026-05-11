@@ -15,7 +15,7 @@ import rpgcombat.gamemode.registry.GameModeRegistry;
 import rpgcombat.gamemode.model.MatchContext;
 import rpgcombat.gamemode.effects.ModeEffectApplier;
 import rpgcombat.models.characters.Character;
-import rpgcombat.utils.ui.Cleaner;
+import rpgcombat.utils.ui.TerminalClear;
 
 /** Construeix una partida nova amb els recursos ja precarregats. */
 public class GameBootstrap {
@@ -82,7 +82,7 @@ public class GameBootstrap {
     /** Neteja la pantalla entre creacions si cal. */
     private void clearBetweenCharactersIfNeeded() {
         if (config.ui().clearBetweenCharacterCreation()) {
-            new Cleaner().clear();
+            TerminalClear.clearShared();
         }
     }
 
