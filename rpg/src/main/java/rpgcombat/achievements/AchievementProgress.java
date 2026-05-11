@@ -56,9 +56,9 @@ public final class AchievementProgress {
                 }
             });
         }
-        migrateLegacySequenceProgress();
+        migrateLegacyActorProgress();
         recomputeCollectionProgress();
-        recomputeSequenceProgress();
+        recomputeActorProgress();
         this.completed = completed || this.progress >= effectiveTarget();
         this.completedAt = completedAt;
         if (this.completed && this.completedAt == null) this.completedAt = Instant.now();
@@ -99,7 +99,7 @@ public final class AchievementProgress {
         }
 
         recomputeCollectionProgress();
-        recomputeSequenceProgress();
+        recomputeActorProgress();
         if (progress >= effectiveTarget()) complete();
         return before != progress
                 || sequenceBefore != sequenceIndex
@@ -121,13 +121,68 @@ public final class AchievementProgress {
     /** Gestiona esdeveniments consecutius. */
     private void updateConsecutive(AchievementUpdate update, AchievementObjective objective) {
         if (!matches(update, objective)) return;
-        if (update.has(objective.successEvent() == null ? objective.event() : objective.successEvent())) {
+
+        String actorKey = update.actorKey();
+        if (actorKey == null || actorKey.isBlank()) {
+            updateGlobalConsecutive(update, objective);
+            return;
+        }
+
+        AchievementEvent success = objective.successEvent() == null ? objective.event() : objective.successEvent();
+        int current = actorSequenceProgress.getOrDefault(actorKey, 0);
+        if (update.has(success)) {
+            int next = current + 1;
+            actorSequenceProgress.put(actorKey, next);
+            sequenceIndex = maxSequenceIndex();
+            progress = sequenceIndex;
+            if (next >= effectiveTarget()) complete();
+            return;
+        }
+
+        if (shouldResetConsecutive(update, objective, success)) {
+            actorSequenceProgress.put(actorKey, 0);
+            sequenceIndex = maxSequenceIndex();
+            progress = sequenceIndex;
+        }
+    }
+
+    private void updateGlobalConsecutive(AchievementUpdate update, AchievementObjective objective) {
+        AchievementEvent success = objective.successEvent() == null ? objective.event() : objective.successEvent();
+        if (update.has(success)) {
             add(1);
             return;
         }
-        if (objective.resetEvent() == null || update.has(objective.resetEvent())) {
+        if (shouldResetConsecutive(update, objective, success)) {
             progress = 0;
         }
+    }
+
+    private boolean shouldResetConsecutive(AchievementUpdate update, AchievementObjective objective,
+            AchievementEvent success) {
+        if (objective.resetEvent() != null) {
+            return update.has(objective.resetEvent());
+        }
+        return isComparableConsecutiveAttempt(update, success);
+    }
+
+    private boolean isComparableConsecutiveAttempt(AchievementUpdate update, AchievementEvent success) {
+        if (isActionEvent(success)) {
+            return update.has(AchievementEvent.ACTION_ATTACK)
+                    || update.has(AchievementEvent.ACTION_DEFEND)
+                    || update.has(AchievementEvent.ACTION_DODGE)
+                    || update.has(AchievementEvent.ACTION_CHARGE);
+        }
+        if (success == AchievementEvent.LIFE_STEAL || success == AchievementEvent.CRIT) {
+            return update.has(AchievementEvent.ACTION_ATTACK);
+        }
+        return false;
+    }
+
+    private boolean isActionEvent(AchievementEvent event) {
+        return event == AchievementEvent.ACTION_ATTACK
+                || event == AchievementEvent.ACTION_DEFEND
+                || event == AchievementEvent.ACTION_DODGE
+                || event == AchievementEvent.ACTION_CHARGE;
     }
 
     /** Gestiona evitar un esdeveniment durant torns consecutius. */
@@ -198,18 +253,20 @@ public final class AchievementProgress {
         }
     }
 
-    /** Migra desaments antics amb un únic cursor de seqüència. */
-    private void migrateLegacySequenceProgress() {
+    /** Migra desaments antics amb un únic cursor de ratxa o seqüència. */
+    private void migrateLegacyActorProgress() {
         if (definition == null || definition.objective() == null) return;
-        if (definition.objective().type() != AchievementObjectiveType.ACTION_SEQUENCE) return;
+        AchievementObjectiveType type = definition.objective().type();
+        if (type != AchievementObjectiveType.ACTION_SEQUENCE && type != AchievementObjectiveType.CONSECUTIVE_EVENT) return;
         if (!actorSequenceProgress.isEmpty() || sequenceIndex <= 0) return;
         actorSequenceProgress.put("legacy", sequenceIndex);
     }
 
-    /** Recalcula el progrés visible de seqüències per actor. */
-    private void recomputeSequenceProgress() {
+    /** Recalcula el progrés visible de ratxes i seqüències per actor. */
+    private void recomputeActorProgress() {
         if (definition == null || definition.objective() == null) return;
-        if (definition.objective().type() != AchievementObjectiveType.ACTION_SEQUENCE) return;
+        AchievementObjectiveType type = definition.objective().type();
+        if (type != AchievementObjectiveType.ACTION_SEQUENCE && type != AchievementObjectiveType.CONSECUTIVE_EVENT) return;
         sequenceIndex = maxSequenceIndex();
         progress = sequenceIndex;
     }

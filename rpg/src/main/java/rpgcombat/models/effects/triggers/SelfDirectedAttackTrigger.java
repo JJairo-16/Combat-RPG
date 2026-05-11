@@ -7,7 +7,7 @@ import rpgcombat.models.effects.EffectResult;
 import rpgcombat.weapons.passives.HitContext;
 
 /**
- * Trigger de modo que redirige cualquier ataque del portador contra sí mismo.
+ * Trigger de mode que redirigeix qualsevol atac del portador contra si mateix.
  */
 public final class SelfDirectedAttackTrigger extends Trigger {
     public static final String INTERNAL_EFFECT_KEY = "SELF_DIRECTED_ATTACK";

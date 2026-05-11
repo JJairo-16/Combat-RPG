@@ -62,6 +62,7 @@ public record AchievementUpdate(
             boolean chargedKillingBlow = killingBlow && result.chargedHit();
             boolean finalJudgementWin = killingBlow && "EXECUTIONERS_EDGE".equals(result.weaponId());
             boolean grimoireSolved = result.booleanMeta("grimoireCodeSolved") || result.booleanMeta("grimoireCorrect");
+            boolean lifeStealTriggered = result.lifeStolen() > 0 || result.booleanMeta("lifeStealTriggered");
             int ballistaProjectiles = (int) Math.round(result.numericMeta("ballistaProjectiles"));
             boolean grimoireMinMultiplier = result.booleanMeta("grimoireMinMultiplier") || result.booleanMeta("grimoireMultiplierMin");
             boolean grimoireMaxMultiplier = result.booleanMeta("grimoireMaxMultiplier") || result.booleanMeta("grimoireMultiplierMax");
@@ -88,6 +89,7 @@ public record AchievementUpdate(
             fields.put("grimoireMaxMultiplier", grimoireMaxMultiplier);
             fields.put("arcaneDisruptionMiss", arcaneDisruptionMiss);
             fields.put("lifeStolen", result.lifeStolen());
+            fields.put("lifeStealTriggered", lifeStealTriggered);
             fields.put("weaponId", value(result.weaponId(), stringField(fields, "weaponId")));
             fields.put("weaponName", value(result.weaponName(), stringField(fields, "weaponName")));
             fields.put("opponentDefeated", opponentDefeated);
@@ -135,7 +137,7 @@ public record AchievementUpdate(
             if (finalJudgementWin) events.add(AchievementEvent.FINAL_JUDGEMENT_WIN);
             if (finalJudgementWin && result.chargedHit()) events.add(AchievementEvent.CHARGED_FINAL_BLOW_WIN);
             if (result.selfHit()) events.add(AchievementEvent.SELF_HIT);
-            if (result.lifeStolen() > 0) events.add(AchievementEvent.LIFE_STEAL);
+            if (lifeStealTriggered) events.add(AchievementEvent.LIFE_STEAL);
             if (result.grimoireMultiplier() > 0) {
                 events.add(AchievementEvent.GRIMOIRE_USED);
                 events.add(AchievementEvent.GRIMOIRE_MULTIPLIER_ROLLED);

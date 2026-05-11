@@ -1,12 +1,19 @@
 package rpgcombat.gamemode.model;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import rpgcombat.achievements.AchievementSystem;
 import rpgcombat.discovery.DiscoverySystem;
 import rpgcombat.gamemode.cinematics.ModeCinematics;
+import rpgcombat.gamemode.effects.ModeEffectDefinition;
+import rpgcombat.gamemode.effects.ModeEffectTarget;
+import rpgcombat.models.effects.triggers.UniversalLifeStealTrigger;
 import rpgcombat.unlocks.UnlockEvaluator;
 import rpgcombat.unlocks.UnlockMode;
+import rpgcombat.unlocks.UnlockRequirement;
+import rpgcombat.unlocks.UnlockRequirementType;
 import rpgcombat.unlocks.UnlockRule;
 
 /** Definició immutable d'un mode de joc seleccionable. */
@@ -69,6 +76,42 @@ public record GameModeDefinition(
                         "Llindar ocult",
                         List.of("La primera lliçó no demana cap tribut.")),
                 ModeCinematics.beginner());
+    }
+
+    public static GameModeDefinition bloodHunger() {
+        return new GameModeDefinition(
+                "BLOOD_HUNGER",
+                "Fam eterna",
+                "Com el mode normal, però la vida ja no torna sola i cada atac pot reclamar sang.",
+                new UnlockRule(UnlockMode.ALL, List.of(
+                        new UnlockRequirement(UnlockRequirementType.ACHIEVEMENT, "ETERNAL_HUNGER", null, 0),
+                        new UnlockRequirement(UnlockRequirementType.ACHIEVEMENT, "FLESH_BENDS", null, 0))),
+                new GameModeRules(
+                        Set.of(),
+                        true,
+                        GameModeRules.DEFAULT_MAX_PERKS,
+                        true,
+                        true,
+                        null,
+                        List.of(new ModeEffectDefinition(
+                                UniversalLifeStealTrigger.INTERNAL_EFFECT_KEY,
+                                ModeEffectTarget.BOTH,
+                                Map.of(
+                                        "lifeStealPct", UniversalLifeStealTrigger.DEFAULT_LIFE_STEAL_PCT,
+                                        "maxHealPct", UniversalLifeStealTrigger.DEFAULT_MAX_HEAL_PCT,
+                                        "suppressPassiveHealthRegen", 1.0)))),
+                new GameModePresentation(
+                        "La sang no espera el descans.",
+                        List.of(
+                                "El combat conserva totes les formes conegudes",
+                                "La vida no torna sola al final de la ronda",
+                                "Cada ferida retorna un glop mesurat",
+                                "Les armes trobades poden tornar a aparèixer",
+                                "El Caos pot escoltar"),
+                        "???",
+                        "Fam sense nom",
+                        List.of("Quan la gana no s'atura i la carn ja sap doblegar-se, una porta s'obrirà.")),
+                ModeCinematics.normal());
     }
 
     public boolean isUnlocked(AchievementSystem achievements, DiscoverySystem discoveries) {

@@ -341,7 +341,7 @@ class UnlockableWeaponMechanicsTest {
         return Math.round(n * 100.0) / 100.0;
     }
 
-    /** Random determinista que devuelve una secuencia fija para nextDouble(). */
+    /** Random determinista que retorna una seqüència fixa per a nextDouble(). */
     private static final class SequenceRandom extends Random {
         private final double[] values;
         private int index = 0;

@@ -2,7 +2,7 @@ package rpgcombat.gamemode.effects;
 
 import java.util.Map;
 
-/** Definición declarativa de un efecto inicial aplicado por un modo. */
+/** Definició declarativa d'un efecte inicial aplicat per un mode. */
 public record ModeEffectDefinition(
         String id,
         ModeEffectTarget target,
@@ -16,7 +16,7 @@ public record ModeEffectDefinition(
 
     private static String requireText(String value) {
         if (value == null || value.isBlank()) {
-            throw new IllegalArgumentException("El efecto de modo necesita un id.");
+            throw new IllegalArgumentException("L'efecte de mode requereix un id.");
         }
         return value.trim().toUpperCase();
     }

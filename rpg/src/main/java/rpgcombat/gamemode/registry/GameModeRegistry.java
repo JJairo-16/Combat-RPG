@@ -47,7 +47,10 @@ public final class GameModeRegistry {
     }
 
     public static List<GameModeDefinition> defaultModes() {
-        return List.of(GameModeDefinition.normal(), GameModeDefinition.beginner());
+        return List.of(
+                GameModeDefinition.normal(),
+                GameModeDefinition.beginner(),
+                GameModeDefinition.bloodHunger());
     }
 
     public static List<GameModeDefinition> all() {

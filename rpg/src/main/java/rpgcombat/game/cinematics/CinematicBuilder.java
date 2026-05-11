@@ -272,7 +272,10 @@ public final class CinematicBuilder {
 
                 <bright_yellow>Lysara:</bright_yellow> <yellow>Menys fils no vol dir menys decisions.</yellow>
 
-                <bright_red>Varkhul:</bright_red> <red>Avui miraré des de fora.</red>
+                <bright_red>Varkhul:</bright_red> <red>Mm… tan net. Tan sencer.</red>
+                            <red>No m’agrada.</red>
+                            <red>No tocaré res. Encara.</red>
+                            <red>Apreneu el ritme. Després… veurem què aguanta.</red>
 
                 <gray>El combat comença amb regles més netes.</gray>
                 <gray>Aprèn el ritme abans que el joc obri totes les seves portes.</gray>

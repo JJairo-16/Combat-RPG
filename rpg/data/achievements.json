@@ -2103,7 +2103,7 @@
   {
     "id": "ELEMENTAL_PENDULUM",
     "name": "El pèndol impossible",
-    "description": "Utilitza 20 cops La dualitat elemental.",
+    "description": "Utilitza 20 cops la Dualitat elemental.",
     "goal": 20,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -2123,8 +2123,8 @@
   },
   {
     "id": "FIRST_OATH_SPEAR_USED",
-    "name": "Jurament llarg",
-    "description": "Utilitza jurament llarg per primera vegada.",
+    "name": "La primera punta",
+    "description": "Utilitza la Llança del primer jurament per primera vegada.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -2144,8 +2144,8 @@
   },
   {
     "id": "FIRST_BLOOD_KNIFE_USED",
-    "name": "La sang recorda",
-    "description": "Utilitza la sang recorda per primera vegada.",
+    "name": "La primera sang torna",
+    "description": "Utilitza el Ganivet de la primera sang per primera vegada.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -2165,8 +2165,8 @@
   },
   {
     "id": "BROKEN_SHIELD_USED",
-    "name": "L’escletxa avança",
-    "description": "Utilitza l’escletxa avança per primera vegada.",
+    "name": "La defensa trencada",
+    "description": "Utilitza l’Escut partit per primera vegada.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -2186,8 +2186,8 @@
   },
   {
     "id": "ANCESTRAL_BELL_USED",
-    "name": "Bronze despert",
-    "description": "Utilitza bronze despert per primera vegada.",
+    "name": "El bronze respon",
+    "description": "Utilitza la Campana ancestral per primera vegada.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -2207,8 +2207,8 @@
   },
   {
     "id": "CHAOS_FRAGMENT_USED",
-    "name": "Esquerda a la mà",
-    "description": "Utilitza esquerda a la mà per primera vegada.",
+    "name": "L’esquerda a la mà",
+    "description": "Utilitza el Fragment de caos per primera vegada.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -2228,8 +2228,8 @@
   },
   {
     "id": "TACTICAL_MIRROR_USED",
-    "name": "Mirall alçat",
-    "description": "Utilitza mirall alçat per primera vegada.",
+    "name": "El mirall s’alça",
+    "description": "Utilitza el Mirall tàctic per primera vegada.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -2249,8 +2249,8 @@
   },
   {
     "id": "RETALIATION_SHORTBOW_USED",
-    "name": "Corda de resposta",
-    "description": "Utilitza corda de resposta per primera vegada.",
+    "name": "La corda respon",
+    "description": "Utilitza l’Arc curt de represàlia per primera vegada.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -2270,8 +2270,8 @@
   },
   {
     "id": "BAD_OMEN_SLING_USED",
-    "name": "Pedra marcada",
-    "description": "Utilitza pedra marcada per primera vegada.",
+    "name": "El presagi vola",
+    "description": "Utilitza la Fona del mal presagi per primera vegada.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,
@@ -2291,8 +2291,8 @@
   },
   {
     "id": "COLD_STRING_CROSSBOW_USED",
-    "name": "Corda sense tremolor",
-    "description": "Utilitza corda sense tremolor per primera vegada.",
+    "name": "La corda freda",
+    "description": "Utilitza la Ballesta de corda freda per primera vegada.",
     "goal": 1,
     "visibility": {
       "showNameBeforeComplete": true,

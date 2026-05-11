@@ -76,6 +76,16 @@ Quan s'afegeixen armes noves al joc, aquests assoliments s'han d'actualitzar per
 
 ---
 
+## ▌Ratxes i seqüències per actor
+
+Els objectius `CONSECUTIVE_EVENT` i `ACTION_SEQUENCE` mantenen el progrés separat per `actorKey`.
+
+Això evita que una acció fallida d'un combatent trenqui la ratxa d'un altre. El progrés visible mostra el millor cursor actiu entre actors.
+
+Si `CONSECUTIVE_EVENT` no declara `resetEvent`, el motor només reinicia la ratxa quan arriba un intent comparable del mateix actor. Per exemple, un atac sense robavida trenca una ratxa de `LIFE_STEAL`, però el final del combat no.
+
+---
+
 ## ▌Persistència del progrés
 
 `AchievementProgress` desa:
@@ -85,6 +95,6 @@ Quan s'afegeixen armes noves al joc, aquests assoliments s'han d'actualitzar per
 - estat completat
 - data de completat
 - progrés per valor únic
-- progrés de seqüència per actor
+- progrés de ratxa o seqüència per actor
 
-Això permet que objectius de col·lecció i seqüències sobrevisquin entre execucions.
+Això permet que objectius de col·lecció, ratxes i seqüències sobrevisquin entre execucions.

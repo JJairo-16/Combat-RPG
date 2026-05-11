@@ -19,10 +19,16 @@ import menu.model.MenuResult;
 import rpgcombat.achievements.AchievementEvent;
 import rpgcombat.achievements.AchievementProgress;
 import rpgcombat.achievements.AchievementUpdate;
+import rpgcombat.achievements.config.AchievementDefinition;
 import rpgcombat.achievements.config.AchievementLoader;
+import rpgcombat.achievements.config.AchievementObjective;
+import rpgcombat.achievements.config.AchievementObjectiveType;
+import rpgcombat.achievements.config.AchievementVisibility;
 import rpgcombat.combat.CombatSystem;
 import rpgcombat.combat.models.Action;
+import rpgcombat.combat.models.Winner;
 import rpgcombat.combat.turnservice.DefaultTurnPriorityPolicy;
+import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.game.menu.MenuCenter;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.discovery.DiscoveryCategory;
@@ -36,11 +42,13 @@ import rpgcombat.gamemode.effects.ModeEffectApplier;
 import rpgcombat.gamemode.effects.ModeEffectDefinition;
 import rpgcombat.gamemode.effects.ModeEffectTarget;
 import rpgcombat.models.breeds.Breed;
+import rpgcombat.models.breeds.Dwarf;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectState;
 import rpgcombat.models.effects.triggers.BleedEmphasisTrigger;
 import rpgcombat.models.effects.triggers.SelfDirectedAttackTrigger;
+import rpgcombat.models.effects.triggers.UniversalLifeStealTrigger;
 import rpgcombat.unlocks.UnlockMode;
 import rpgcombat.unlocks.UnlockRequirement;
 import rpgcombat.unlocks.UnlockRequirementType;
@@ -99,6 +107,22 @@ class GameModeRulesTest {
     }
 
     @Test
+    void bloodHungerModeLoadsUnlocksEffectsAndNormalCinematics() throws Exception {
+        GameModeDefinition mode = GameModeLoader.load(Path.of("data/gameModes.json")).stream()
+                .filter(gameMode -> gameMode.id().equals("BLOOD_HUNGER"))
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals(List.of("DEFAULT_RANDOM"), mode.cinematics().postCreationPool());
+        assertEquals("CHAOS_MIND", mode.cinematics().chaosPostCreation());
+        assertEquals(List.of("ETERNAL_HUNGER", "FLESH_BENDS"), mode.unlockRule().requirements().stream()
+                .map(UnlockRequirement::id)
+                .toList());
+        assertTrue(mode.rules().modeEffects().stream()
+                .anyMatch(effect -> effect.id().equals(UniversalLifeStealTrigger.INTERNAL_EFFECT_KEY)));
+    }
+
+    @Test
     void discoveryCatalogIncludesGameModeEntries() {
         DiscoveryCatalog catalog = DiscoveryCatalog.build(null);
 
@@ -113,6 +137,9 @@ class GameModeRulesTest {
         assertFalse(beginner.description().stream().anyMatch(line -> line.startsWith("Accions:")));
         assertFalse(beginner.description().stream().anyMatch(line -> line.startsWith("Perks")));
         assertFalse(beginner.description().contains("La càrrega roman segellada"));
+        var bloodHunger = catalog.find(DiscoveryCategory.GAME_MODES, "BLOOD_HUNGER").orElseThrow();
+        assertTrue(bloodHunger.description().contains(
+                "La vida ja no torna per costum; només respon a la ferida oberta."));
     }
 
     @Test
@@ -128,6 +155,104 @@ class GameModeRulesTest {
         assertFalse(progress.update(AchievementUpdate.gameModeSelected("NORMAL")));
         assertFalse(progress.completed());
         assertTrue(progress.update(AchievementUpdate.gameModeSelected("BEGINNER")));
+        assertTrue(progress.completed());
+    }
+
+    @Test
+    void consecutiveAchievementsKeepSeparateStreaksPerActor() {
+        AchievementProgress progress = new AchievementProgress(testAchievement(
+                AchievementObjectiveType.CONSECUTIVE_EVENT,
+                AchievementEvent.LIFE_STEAL,
+                List.of(),
+                2));
+        Character player1 = character("P1");
+        Character player2 = character("P2");
+
+        progress.update(AchievementUpdate.simple(player1, AchievementEvent.LIFE_STEAL));
+        progress.update(AchievementUpdate.simple(player2, AchievementEvent.ACTION_ATTACK));
+
+        assertEquals(1.0, progress.progress());
+
+        progress.update(AchievementUpdate.simple(player1, AchievementEvent.LIFE_STEAL));
+
+        assertTrue(progress.completed());
+    }
+
+    @Test
+    void lifeStealStreakIgnoresNonComparableUpdatesFromSameActor() {
+        AchievementProgress progress = new AchievementProgress(testAchievement(
+                AchievementObjectiveType.CONSECUTIVE_EVENT,
+                AchievementEvent.LIFE_STEAL,
+                List.of(),
+                2));
+        Character player1 = character("P1");
+        Character player2 = character("P2");
+
+        progress.update(AchievementUpdate.simple(player1, AchievementEvent.LIFE_STEAL));
+        progress.update(AchievementUpdate.fromMatchFinished(player1, player2, Winner.PLAYER1, 1));
+
+        assertEquals(1.0, progress.progress());
+
+        progress.update(AchievementUpdate.simple(player1, AchievementEvent.LIFE_STEAL));
+
+        assertTrue(progress.completed());
+    }
+
+    @Test
+    void lifeStealStreakResetsWhenSameActorAttacksWithoutStealing() {
+        AchievementProgress progress = new AchievementProgress(testAchievement(
+                AchievementObjectiveType.CONSECUTIVE_EVENT,
+                AchievementEvent.LIFE_STEAL,
+                List.of(),
+                2));
+        Character player = character("P1");
+
+        progress.update(AchievementUpdate.simple(player, AchievementEvent.LIFE_STEAL));
+        progress.update(AchievementUpdate.simple(player, AchievementEvent.ACTION_ATTACK));
+        progress.update(AchievementUpdate.simple(player, AchievementEvent.LIFE_STEAL));
+
+        assertFalse(progress.completed());
+        assertEquals(1.0, progress.progress());
+    }
+
+    @Test
+    void eternalHungerCompletesFromConcreteLifeStealTurnResults() throws Exception {
+        var definition = AchievementLoader.load(Path.of("data/achievements.json")).stream()
+                .filter(achievement -> achievement.id().equals("ETERNAL_HUNGER"))
+                .findFirst()
+                .orElseThrow();
+        AchievementProgress progress = new AchievementProgress(definition);
+        Character player1 = character("P1");
+        Character player2 = character("P2");
+
+        for (int turn = 1; turn <= 10; turn++) {
+            progress.update(AchievementUpdate.fromTurn(player1, player2, Action.ATTACK, Action.DEFEND,
+                    lifeStealTurnResult(0.0, true), turn));
+            progress.update(AchievementUpdate.fromTurn(player2, player1, Action.ATTACK, Action.DEFEND,
+                    attackTurnResult(), turn));
+        }
+
+        assertTrue(progress.completed());
+        assertEquals(10, progress.viewProgress());
+    }
+
+    @Test
+    void actionSequenceAchievementsKeepSeparateProgressPerActor() {
+        AchievementProgress progress = new AchievementProgress(testAchievement(
+                AchievementObjectiveType.ACTION_SEQUENCE,
+                null,
+                List.of(Action.ATTACK, Action.ATTACK),
+                2));
+        Character player1 = character("P1");
+        Character player2 = character("P2");
+
+        progress.update(AchievementUpdate.fromTurn(player1, player2, Action.ATTACK, Action.DEFEND, null, 1));
+        progress.update(AchievementUpdate.fromTurn(player2, player1, Action.DEFEND, Action.ATTACK, null, 1));
+
+        assertEquals(1.0, progress.progress());
+
+        progress.update(AchievementUpdate.fromTurn(player1, player2, Action.ATTACK, Action.DEFEND, null, 2));
+
         assertTrue(progress.completed());
     }
 
@@ -240,6 +365,38 @@ class GameModeRulesTest {
     }
 
     @Test
+    void universalLifeStealTriggerStealsLimitedLifeAfterAnyHit() {
+        Character attacker = character("Attacker");
+        Character defender = character("Defender");
+        attacker.getStatistics().damage(30.0);
+        Effect effect = new UniversalLifeStealTrigger(0.10, 0.05, true);
+        HitContext ctx = new HitContext(attacker, defender, testWeapon(), new Random(0), Action.ATTACK, Action.DEFEND);
+        ctx.setDamageDealt(100.0);
+        double expectedHeal = Math.min(10.0, attacker.getStatistics().getMaxHealth() * 0.05);
+
+        effect.afterHit(ctx, new Random(0), attacker);
+
+        assertEquals(expectedHeal, ctx.getMeta("LIFE_STOLEN"));
+        assertEquals(Boolean.TRUE, ctx.getMeta("modeLifeSteal"));
+    }
+
+    @Test
+    void universalLifeStealModeSuppressesOnlyPassiveHealthRegeneration() {
+        Character dwarf = new Dwarf("Dwarf", 40, new int[] { 20, 20, 20, 20, 20, 20, 20 });
+        dwarf.getStatistics().damage(30.0);
+        dwarf.getStatistics().consumeMana(20.0);
+        dwarf.addEffect(new UniversalLifeStealTrigger());
+
+        double healthBefore = dwarf.getStatistics().getHealth();
+        double manaBefore = dwarf.getStatistics().getMana();
+
+        dwarf.regen();
+
+        assertEquals(healthBefore, dwarf.getStatistics().getHealth());
+        assertTrue(dwarf.getStatistics().getMana() > manaBefore);
+    }
+
+    @Test
     void selfDirectedAttackModeRedirectsAttackDamageToTheAttacker() {
         Character attacker = character("Attacker");
         Character defender = character("Defender");
@@ -277,8 +434,75 @@ class GameModeRulesTest {
                 ModeCinematics.normal());
     }
 
+    private static AchievementDefinition testAchievement(
+            AchievementObjectiveType type,
+            AchievementEvent event,
+            List<Action> sequence,
+            int target) {
+        return new AchievementDefinition(
+                "TEST_" + type.name(),
+                "Prova",
+                "Prova",
+                target,
+                AchievementVisibility.visible(),
+                new AchievementObjective(
+                        type,
+                        event,
+                        null,
+                        null,
+                        sequence,
+                        target,
+                        0));
+    }
+
     private static Character character(String name) {
         return new Character(name, 30, new int[] { 20, 20, 20, 20, 20, 20, 20 }, Breed.HUMAN);
+    }
+
+    private static TurnResult lifeStealTurnResult(double lifeStolen, boolean triggered) {
+        return new TurnResult(
+                "P1",
+                "ataca.",
+                List.of(),
+                List.of(),
+                "rep el cop.",
+                List.of(),
+                List.of(),
+                10.0,
+                false,
+                false,
+                false,
+                false,
+                null,
+                10.0,
+                0.0,
+                lifeStolen,
+                "TEST_MODE_WEAPON",
+                "Arma de prova",
+                Map.of("lifeStealTriggered", triggered));
+    }
+
+    private static TurnResult attackTurnResult() {
+        return new TurnResult(
+                "P2",
+                "ataca.",
+                List.of(),
+                List.of(),
+                "rep el cop.",
+                List.of(),
+                List.of(),
+                10.0,
+                false,
+                false,
+                false,
+                false,
+                null,
+                10.0,
+                0.0,
+                0.0,
+                "TEST_MODE_WEAPON",
+                "Arma de prova",
+                Map.of());
     }
 
     private static Weapon testWeapon() {

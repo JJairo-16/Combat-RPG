@@ -1,6 +1,6 @@
 package rpgcombat.gamemode.effects;
 
-/** Destino de un efecto inicial declarado por un modo de juego. */
+/** Destí d'un efecte inicial declarat per un mode de joc. */
 public enum ModeEffectTarget {
     BOTH,
     PLAYER1,

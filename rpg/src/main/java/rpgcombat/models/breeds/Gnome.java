@@ -8,9 +8,9 @@ public class Gnome extends Character {
     }
 
     private static final double MANA_BONUS = 1.15;
-    
+
     @Override
     public void regen() {
-        stats.reg(1, MANA_BONUS);
+        stats.reg(1, MANA_BONUS, !suppressesPassiveHealthRegen(), true);
     }
 }

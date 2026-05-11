@@ -4,7 +4,7 @@ import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.gamemode.model.GameModeRules;
 
-/** Aplica a los jugadores los efectos iniciales definidos por un modo. */
+/** Aplica als jugadors els efectes inicials definits per un mode. */
 public final class ModeEffectApplier {
     private ModeEffectApplier() {
     }

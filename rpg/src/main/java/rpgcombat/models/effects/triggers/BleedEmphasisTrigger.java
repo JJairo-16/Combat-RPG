@@ -9,7 +9,7 @@ import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.weapons.passives.HitContext;
 
-/** Trigger de modo que hace que el sangrado pese más dentro del combate. */
+/** Trigger de mode que fa que el sagnat pesi més dins del combat. */
 public final class BleedEmphasisTrigger extends Trigger {
     public static final String INTERNAL_EFFECT_KEY = "BLEED_EMPHASIS";
     public static final double DEFAULT_DAMAGE_MULTIPLIER = 1.12;

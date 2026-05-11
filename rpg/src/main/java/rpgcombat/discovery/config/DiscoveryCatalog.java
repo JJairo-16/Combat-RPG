@@ -15,6 +15,7 @@ import rpgcombat.discovery.DiscoveryKey;
 import rpgcombat.gamemode.model.GameModeDefinition;
 import rpgcombat.gamemode.registry.GameModeRegistry;
 import rpgcombat.models.breeds.Breed;
+import rpgcombat.models.effects.triggers.UniversalLifeStealTrigger;
 import rpgcombat.perks.PerkDefinition;
 import rpgcombat.perks.PerkRegistry;
 import rpgcombat.perks.divine.DivinePerkDefinition;
@@ -367,6 +368,9 @@ public final class DiscoveryCatalog {
         } else {
             details.add("Aquest camí deixa que el combat recordi totes les seves formes.");
         }
+        if (hasModeEffect(mode, UniversalLifeStealTrigger.INTERNAL_EFFECT_KEY)) {
+            details.add("La vida ja no torna per costum; només respon a la ferida oberta.");
+        }
         if (mode.rules().maxPerks() <= 1) {
             details.add("Les benediccions no fan cor: només una pot arrelar.");
         } else {
@@ -387,6 +391,13 @@ public final class DiscoveryCatalog {
             details.add("Les armes que ja han deixat senyal poden tornar a respondre.");
         }
         return List.copyOf(details);
+    }
+
+    private static boolean hasModeEffect(GameModeDefinition mode, String effectId) {
+        return mode != null
+                && mode.rules() != null
+                && effectId != null
+                && mode.rules().modeEffects().stream().anyMatch(effect -> effectId.equals(effect.id()));
     }
 
     /** Desa una entrada pel seu identificador compost. */

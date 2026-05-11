@@ -177,20 +177,34 @@ public class Statistics {
      * Regenera vida i mana base.
      */
     public void reg() {
-        double hp = calculateHealthRegen(constitution);
-        double ma = intelligence * 0.9;
-        health = affectClamp(health, hp, maxHealth, 0);
-        mana = affectClamp(mana, ma, maxMana, 0);
+        reg(1.0, 1.0);
+    }
+
+    /**
+     * Regenera vida i mana base segons els canals habilitats.
+     */
+    public void reg(boolean healthEnabled, boolean manaEnabled) {
+        reg(1.0, 1.0, healthEnabled, manaEnabled);
     }
 
     /**
      * Regenera vida i mana amb bonus.
      */
     public void reg(double hpBonus, double manaBonus) {
-        double hp = calculateHealthRegen(constitution * hpBonus);
-        double ma = (intelligence * manaBonus) * 0.9;
-        health = affectClamp(health, hp, maxHealth, 0);
-        mana = affectClamp(mana, ma, maxMana, 0);
+        reg(hpBonus, manaBonus, true, true);
+    }
+
+    /**
+     * Regenera vida i mana amb bonus segons els canals habilitats.
+     */
+    public void reg(double hpBonus, double manaBonus, boolean healthEnabled, boolean manaEnabled) {
+        double ma = intelligence * 0.9;
+        if (healthEnabled) {
+            health = affectClamp(health, calculateHealthRegen(constitution * hpBonus), maxHealth, 0);
+        }
+        if (manaEnabled) {
+            mana = affectClamp(mana, ma * manaBonus, maxMana, 0);
+        }
     }
 
     /**

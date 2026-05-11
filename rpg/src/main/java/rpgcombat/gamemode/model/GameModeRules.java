@@ -61,7 +61,7 @@ public record GameModeRules(
         return action != null && (!hasActionRestrictions() || allowedActions.contains(action));
     }
 
-    /** Valida una acció o falla ràpid si un caller intenta saltar-se el modo. */
+    /** Valida una acció o falla ràpid si un caller intenta saltar-se el mode. */
     public Action requireAllowed(Action action) {
         if (!allowsAction(action)) {
             String label = action == null ? "null" : action.name();

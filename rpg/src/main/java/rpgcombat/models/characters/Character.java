@@ -25,6 +25,7 @@ import rpgcombat.game.modifier.ultimate.UltimateActionEffect;
 import rpgcombat.game.modifier.ultimate.UltimateActionType;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.effects.Effect;
+import rpgcombat.models.effects.EndRoundRecoveryEffect;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.MenuTurnEffect;
 import rpgcombat.models.effects.StackingRule;
@@ -770,7 +771,21 @@ public class Character {
      * Aplica la regeneració natural del personatge.
      */
     public void regen() {
-        stats.reg();
+        stats.reg(!suppressesPassiveHealthRegen(), true);
+    }
+
+    /** Indica si algun efecte bloqueja la regeneració passiva de vida. */
+    protected boolean suppressesPassiveHealthRegen() {
+        if (effects.isEmpty()) {
+            return false;
+        }
+        for (Effect effect : effects) {
+            if (effect instanceof EndRoundRecoveryEffect recoveryEffect
+                    && recoveryEffect.suppressPassiveHealthRegen(this)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

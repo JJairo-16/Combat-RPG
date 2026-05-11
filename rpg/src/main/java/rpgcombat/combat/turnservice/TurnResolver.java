@@ -280,6 +280,11 @@ public class TurnResolver {
         if (attackMeta != null) merged.putAll(attackMeta);
         if (ctx == null) return merged;
         merged.put("lifeStolen", ctx.getMeta("LIFE_STOLEN", Double.class, 0.0));
+        copyMeta(ctx, merged, "lifeStealTriggered");
+        copyMeta(ctx, merged, "lifeStealPct");
+        copyMeta(ctx, merged, "modeLifeSteal");
+        copyMeta(ctx, merged, "modeLifeStealPct");
+        copyMeta(ctx, merged, "modeLifeStealHeal");
         merged.put("chargedHit", Boolean.TRUE.equals(ctx.getMeta("CHARGED_HIT")));
         merged.put("rawDamage", ctx.getMeta("RAW_DAMAGE"));
         merged.put("originalWeaponCrit", ctx.getMeta("ORIGINAL_WEAPON_CRIT"));

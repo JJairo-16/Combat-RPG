@@ -5,8 +5,9 @@ import java.util.Map;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.triggers.BleedEmphasisTrigger;
 import rpgcombat.models.effects.triggers.SelfDirectedAttackTrigger;
+import rpgcombat.models.effects.triggers.UniversalLifeStealTrigger;
 
-/** Crea efectos iniciales declarados por un modo de juego. */
+/** Crea els efectes inicials declarats per un mode de joc. */
 public final class ModeEffectFactory {
     private ModeEffectFactory() {
     }
@@ -25,7 +26,12 @@ public final class ModeEffectFactory {
             case SelfDirectedAttackTrigger.INTERNAL_EFFECT_KEY -> new SelfDirectedAttackTrigger(
                     number(params, "damageMultiplier", SelfDirectedAttackTrigger.DEFAULT_DAMAGE_MULTIPLIER),
                     bool(params, "canKill", SelfDirectedAttackTrigger.DEFAULT_CAN_KILL));
-            default -> throw new IllegalArgumentException("Efecto de modo desconocido: " + definition.id());
+            case UniversalLifeStealTrigger.INTERNAL_EFFECT_KEY -> new UniversalLifeStealTrigger(
+                    number(params, "lifeStealPct", UniversalLifeStealTrigger.DEFAULT_LIFE_STEAL_PCT),
+                    number(params, "maxHealPct", UniversalLifeStealTrigger.DEFAULT_MAX_HEAL_PCT),
+                    bool(params, "suppressPassiveHealthRegen",
+                            UniversalLifeStealTrigger.DEFAULT_SUPPRESS_PASSIVE_HEALTH_REGEN));
+            default -> throw new IllegalArgumentException("Efecte de mode desconegut: " + definition.id());
         };
     }
 
