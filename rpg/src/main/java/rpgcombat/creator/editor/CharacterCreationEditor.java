@@ -1,5 +1,6 @@
 package rpgcombat.creator.editor;
 
+import rpgcombat.creator.CharacterCreationOptions;
 import rpgcombat.creator.CharacterCreator;
 
 import java.io.IOException;
@@ -17,7 +18,8 @@ import rpgcombat.utils.terminal.TerminalSession;
 
 /** Formulari interactiu de terminal per crear personatges. */
 public final class CharacterCreationEditor {
-    private final CharacterCreationRenderer renderer = new CharacterCreationRenderer();
+    private final CharacterCreationOptions options;
+    private final CharacterCreationRenderer renderer;
 
     private int cursor;
     private EditorAction editing;
@@ -27,6 +29,17 @@ public final class CharacterCreationEditor {
     private volatile boolean resizePending;
     private int terminalWidth;
     private int terminalHeight;
+
+    /** Crea un editor amb totes les opcions activades. */
+    public CharacterCreationEditor() {
+        this(CharacterCreationOptions.defaultOptions());
+    }
+
+    /** Crea un editor amb opcions derivades del mode de joc. */
+    public CharacterCreationEditor(CharacterCreationOptions options) {
+        this.options = options == null ? CharacterCreationOptions.defaultOptions() : options;
+        this.renderer = new CharacterCreationRenderer(this.options);
+    }
 
     /** Edita l'esborrany fins a confirmar-lo. */
     public void edit(CharacterDraft draft) {
@@ -83,6 +96,9 @@ public final class CharacterCreationEditor {
                 renderSelectionState(terminal, draft);
             }
             case EDIT_DIVINE_PERK -> {
+                if (!options.divinePerksEnabled()) {
+                    return false;
+                }
                 message = "La perk divina es canvia amb ←/→ o A/D. Mira'n la descripció a la dreta.";
                 renderSelectionState(terminal, draft);
             }
@@ -145,7 +161,12 @@ public final class CharacterCreationEditor {
         EditorAction action = currentAction();
         switch (action) {
             case EDIT_BREED -> draft.setBreed(nextBreed(draft.breed(), delta));
-            case EDIT_DIVINE_PERK -> draft.setDivinePerk(nextDivinePerk(draft, delta));
+            case EDIT_DIVINE_PERK -> {
+                if (!options.divinePerksEnabled()) {
+                    return;
+                }
+                draft.setDivinePerk(nextDivinePerk(draft, delta));
+            }
             case EDIT_STRENGTH, EDIT_DEXTERITY, EDIT_INTELLIGENCE, EDIT_WISDOM, EDIT_CHARISMA,
                     EDIT_LUCK ->
                 adjustStat(draft, action.statIndex(), delta, CharacterCreator.MIN_STAT);
@@ -580,7 +601,7 @@ public final class CharacterCreationEditor {
 
     /** Retorna els camps navegables. */
     private FormField[] fields() {
-        return FormField.VALUES;
+        return FormField.valuesFor(options.divinePerksEnabled());
     }
 
     /** Insereix caràcters filtrats. */

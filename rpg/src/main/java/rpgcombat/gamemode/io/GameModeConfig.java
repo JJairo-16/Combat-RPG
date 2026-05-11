@@ -8,9 +8,19 @@ record GameModeConfig(
         String id,
         String name,
         String description,
+        GameModePresentationConfig presentation,
         GameModeUnlockConfig unlock,
         GameModeRulesConfig rules,
         ModeCinematicsConfig cinematics) {
+}
+
+/** DTO dels textos que es mostren a la carta del mode. */
+record GameModePresentationConfig(
+        String shortDescription,
+        List<String> details,
+        String lockedTitle,
+        String lockedDescription,
+        List<String> lockedHints) {
 }
 
 /** Configuració declarativa de desbloqueig de mode. */

@@ -16,6 +16,7 @@ public record GameModeDefinition(
         String description,
         UnlockRule unlockRule,
         GameModeRules rules,
+        GameModePresentation presentation,
         ModeCinematics cinematics) {
 
     public GameModeDefinition {
@@ -24,6 +25,7 @@ public record GameModeDefinition(
         description = description == null ? "" : description;
         unlockRule = unlockRule == null ? new UnlockRule(UnlockMode.ALL, List.of()) : unlockRule;
         rules = rules == null ? GameModeRules.unrestricted() : rules;
+        presentation = presentation == null ? GameModePresentation.fallback(description) : presentation;
         cinematics = cinematics == null ? ModeCinematics.normal() : cinematics;
     }
 
@@ -34,6 +36,17 @@ public record GameModeDefinition(
                 "Experiència completa amb totes les mecàniques activades.",
                 new UnlockRule(UnlockMode.ALL, List.of()),
                 GameModeRules.unrestricted(),
+                new GameModePresentation(
+                        "El duel sense concessions.",
+                        List.of(
+                                "El combat conserva totes les formes conegudes",
+                                "Les armes trobades poden tornar a aparèixer",
+                                "Les benediccions encara poden formar una corona ampla",
+                                "Els pactes divins romanen desperts",
+                                "El Caos pot escoltar"),
+                        "???",
+                        "Pacte encara sense nom",
+                        List.of("El primer camí sempre roman obert.")),
                 ModeCinematics.normal());
     }
 
@@ -44,6 +57,17 @@ public record GameModeDefinition(
                 "Combat reduït sense càrrega, accions especials, armes desbloquejables ni Caos.",
                 new UnlockRule(UnlockMode.ALL, List.of()),
                 GameModeRules.beginner(),
+                new GameModePresentation(
+                        "El primer llindar.",
+                        List.of(
+                                "La càrrega roman segellada",
+                                "No acudeixen veus externes",
+                                "Només una benedicció menor pot arrelar",
+                                "Cap pacte diví desperta en aquest llindar",
+                                "El Caos no travessa la porta"),
+                        "???",
+                        "Llindar ocult",
+                        List.of("La primera lliçó no demana cap tribut.")),
                 ModeCinematics.beginner());
     }
 

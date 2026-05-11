@@ -12,6 +12,8 @@ import java.util.Optional;
 import rpgcombat.combat.models.Action;
 import rpgcombat.discovery.DiscoveryCategory;
 import rpgcombat.discovery.DiscoveryKey;
+import rpgcombat.gamemode.model.GameModeDefinition;
+import rpgcombat.gamemode.registry.GameModeRegistry;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.perks.PerkDefinition;
 import rpgcombat.perks.PerkRegistry;
@@ -24,7 +26,9 @@ import rpgcombat.perks.synergy.SynergyRegistry;
 import rpgcombat.weapons.Arsenal;
 import rpgcombat.weapons.config.WeaponDefinition;
 
-/** Catàleg final de descobriments, amb entrades automàtiques i overrides JSON. */
+/**
+ * Catàleg final de descobriments, amb entrades automàtiques i overrides JSON.
+ */
 public final class DiscoveryCatalog {
     private final Map<DiscoveryCategory, DiscoveryCategoryDefinition> categories;
     private final Map<DiscoveryKey, DiscoveryEntryDefinition> entries;
@@ -50,13 +54,15 @@ public final class DiscoveryCatalog {
 
     /** Indica si una entrada existeix i pot ser descoberta. */
     public boolean contains(DiscoveryCategory category, String id) {
-        if (category == null || id == null || id.isBlank()) return false;
+        if (category == null || id == null || id.isBlank())
+            return false;
         return entries.containsKey(new DiscoveryKey(category, id));
     }
 
     /** Retorna una entrada si existeix. */
     public Optional<DiscoveryEntryDefinition> find(DiscoveryCategory category, String id) {
-        if (category == null || id == null || id.isBlank()) return Optional.empty();
+        if (category == null || id == null || id.isBlank())
+            return Optional.empty();
         return Optional.ofNullable(entries.get(new DiscoveryKey(category, id)));
     }
 
@@ -96,10 +102,12 @@ public final class DiscoveryCatalog {
     /** Aplica canvis JSON sobre les categories. */
     private static void applyCategoryOverrides(Map<DiscoveryCategory, DiscoveryCategoryDefinition> categories,
             List<DiscoveryCategoryConfig> overrides) {
-        if (overrides == null) return;
+        if (overrides == null)
+            return;
         for (DiscoveryCategoryConfig override : overrides) {
             DiscoveryCategory id = parseCategory(override == null ? null : override.id());
-            if (id == null) continue;
+            if (id == null)
+                continue;
             DiscoveryCategoryDefinition base = categories.get(id);
             categories.put(id, new DiscoveryCategoryDefinition(
                     id,
@@ -113,6 +121,26 @@ public final class DiscoveryCatalog {
     /** Afegeix les entrades generades des dels registres del joc. */
     private static void addAutomaticEntries(Map<DiscoveryKey, DiscoveryEntryDefinition> entries) {
         int order = 100;
+        for (GameModeDefinition mode : GameModeRegistry.all()) {
+            put(entries, new DiscoveryEntryDefinition(
+                    DiscoveryCategory.GAME_MODES,
+                    mode.id(),
+                    mode.name(),
+                    mode.presentation().lockedTitle(),
+                    firstText(mode.description(), mode.presentation().shortDescription()),
+                    gameModeDetails(mode),
+                    "Es descobreix quan s'escull aquest mode abans d'una partida.",
+                    firstText(mode.presentation().lockedHints().stream().findFirst().orElse(""),
+                            "Tria aquest camí en començar."),
+                    firstText(mode.presentation().lockedHints().stream().findFirst().orElse(""),
+                            "Encara no saps quin pacte obre aquest camí."),
+                    firstText(mode.presentation().shortDescription(), "Aquest camí ja pot ser provat."),
+                    List.of("mode", "regles"),
+                    false,
+                    order++));
+        }
+
+        order = 100;
         for (WeaponDefinition weapon : Arsenal.values()) {
             put(entries, new DiscoveryEntryDefinition(
                     DiscoveryCategory.WEAPONS,
@@ -176,7 +204,8 @@ public final class DiscoveryCatalog {
                     "???",
                     divine.shortDescription(),
                     lines(divine.description(), divine.god().isBlank() ? "" : "Déu: " + divine.god(),
-                            divine.awakeningDescription().isBlank() ? "" : "Despertar: " + divine.awakeningDescription()),
+                            divine.awakeningDescription().isBlank() ? ""
+                                    : "Despertar: " + divine.awakeningDescription()),
                     "Es descobreix quan una perk divina és assignada a un personatge.",
                     "Crea un personatge amb aquesta benedicció divina.",
                     "Crea un personatge amb aquesta benedicció divina.",
@@ -244,11 +273,13 @@ public final class DiscoveryCatalog {
     /** Aplica entrades manuals o modifica les automàtiques. */
     private static void applyManualEntries(Map<DiscoveryKey, DiscoveryEntryDefinition> entries,
             List<DiscoveryEntryConfig> configs) {
-        if (configs == null) return;
+        if (configs == null)
+            return;
         int manualOrder = 10_000;
         for (DiscoveryEntryConfig config : configs) {
             DiscoveryCategory category = parseCategory(config == null ? null : config.category());
-            if (category == null || config.id() == null || config.id().isBlank()) continue;
+            if (category == null || config.id() == null || config.id().isBlank())
+                continue;
             DiscoveryKey key = new DiscoveryKey(category, config.id());
             DiscoveryEntryDefinition base = entries.get(key);
             if (base == null) {
@@ -305,7 +336,8 @@ public final class DiscoveryCatalog {
         if (perk.trigger() != null) {
             details.add("S'activa: " + readablePhase(perk.trigger().name()));
         }
-        // Les etiquetes internes serveixen per calcular sinergies, però són soroll per al visor temporal.
+        // Les etiquetes internes serveixen per calcular sinergies, però són soroll per
+        // al visor temporal.
         return List.copyOf(details);
     }
 
@@ -327,6 +359,36 @@ public final class DiscoveryCatalog {
         return List.copyOf(details);
     }
 
+    /** Genera els detalls visibles d'un mode de joc. */
+    private static List<String> gameModeDetails(GameModeDefinition mode) {
+        List<String> details = new ArrayList<>();
+        if (mode.rules().hasActionRestrictions()) {
+            details.add("Aquest camí estreny el combat fins als gestos essencials.");
+        } else {
+            details.add("Aquest camí deixa que el combat recordi totes les seves formes.");
+        }
+        if (mode.rules().maxPerks() <= 1) {
+            details.add("Les benediccions no fan cor: només una pot arrelar.");
+        } else {
+            details.add("Les benediccions poden ramificar-se sense un límit estrany.");
+        }
+        if (!mode.rules().divinePerksEnabled() && mode.rules().chaos().activation().name().equals("DISABLED")) {
+            details.add("Els pactes divins i el Caos resten fora d'aquest llindar.");
+        } else if (!mode.rules().divinePerksEnabled()) {
+            details.add("Els pactes divins resten adormits en aquest camí.");
+        } else if (mode.rules().chaos().activation().name().equals("DISABLED")) {
+            details.add("El Caos no troba porta per travessar.");
+        } else {
+            details.add("El Caos queda a l'aguait, no com a promesa sinó com a possibilitat.");
+        }
+        if (!mode.rules().showUnlockableWeapons()) {
+            details.add("Les armes revelades esperen fora de la primera lliçó.");
+        } else {
+            details.add("Les armes que ja han deixat senyal poden tornar a respondre.");
+        }
+        return List.copyOf(details);
+    }
+
     /** Desa una entrada pel seu identificador compost. */
     private static void put(Map<DiscoveryKey, DiscoveryEntryDefinition> entries, DiscoveryEntryDefinition entry) {
         entries.put(entry.key(), entry);
@@ -334,7 +396,8 @@ public final class DiscoveryCatalog {
 
     /** Converteix text en una categoria vàlida. */
     private static DiscoveryCategory parseCategory(String id) {
-        if (id == null || id.isBlank()) return null;
+        if (id == null || id.isBlank())
+            return null;
         try {
             return DiscoveryCategory.valueOf(id.trim().toUpperCase());
         } catch (IllegalArgumentException ignored) {
@@ -345,9 +408,11 @@ public final class DiscoveryCatalog {
     /** Retorna només les línies amb text. */
     private static List<String> lines(String... values) {
         List<String> result = new ArrayList<>();
-        if (values == null) return List.of();
+        if (values == null)
+            return List.of();
         for (String value : values) {
-            if (value != null && !value.isBlank()) result.add(value.trim());
+            if (value != null && !value.isBlank())
+                result.add(value.trim());
         }
         return List.copyOf(result);
     }
@@ -357,6 +422,11 @@ public final class DiscoveryCatalog {
         return value == null || value.isBlank() ? fallback : value;
     }
 
+    /** Retorna el primer text no buit. */
+    private static String firstText(String primary, String fallback) {
+        return primary == null || primary.isBlank() ? fallback : primary;
+    }
+
     /** Indica si l'atac especial està buit. */
     private static boolean isEmptyAttackSkill(String attackSkill) {
         return attackSkill == null || attackSkill.isBlank() || "nothing".equalsIgnoreCase(attackSkill.trim());
@@ -364,7 +434,8 @@ public final class DiscoveryCatalog {
 
     /** Fa llegible el nom d'un atac especial. */
     private static String readableAttackSkill(String key) {
-        if (key == null || key.isBlank()) return "";
+        if (key == null || key.isBlank())
+            return "";
         return switch (key.trim()) {
             case "explosiveShot" -> "Tret explosiu";
             case "arcaneDisruption" -> "Disrupció arcana";
@@ -380,7 +451,8 @@ public final class DiscoveryCatalog {
 
     /** Fa llegible una passiva d'arma. */
     private static String readablePassive(rpgcombat.weapons.config.PassiveConfig passive) {
-        if (passive == null || passive.type() == null || passive.type().isBlank()) return "";
+        if (passive == null || passive.type() == null || passive.type().isBlank())
+            return "";
         return switch (passive.type().trim()) {
             case "lifeSteal" -> "Robavida" + passiveParamPercent(passive, "pct");
             case "trueHarm" -> "Dany veritable" + passiveParamPercent(passive, "pct");
@@ -429,21 +501,24 @@ public final class DiscoveryCatalog {
 
     /** Llegeix un paràmetre decimal d'una passiva. */
     private static Optional<Double> passiveDouble(rpgcombat.weapons.config.PassiveConfig passive, String key) {
-        if (passive == null || passive.params() == null || !passive.params().containsKey(key)) return Optional.empty();
+        if (passive == null || passive.params() == null || !passive.params().containsKey(key))
+            return Optional.empty();
         Object value = passive.params().get(key);
         return value instanceof Number number ? Optional.of(number.doubleValue()) : Optional.empty();
     }
 
     /** Llegeix un paràmetre enter d'una passiva. */
     private static Optional<Integer> passiveInteger(rpgcombat.weapons.config.PassiveConfig passive, String key) {
-        if (passive == null || passive.params() == null || !passive.params().containsKey(key)) return Optional.empty();
+        if (passive == null || passive.params() == null || !passive.params().containsKey(key))
+            return Optional.empty();
         Object value = passive.params().get(key);
         return value instanceof Number number ? Optional.of(number.intValue()) : Optional.empty();
     }
 
     /** Fa llegible una fase d'activació. */
     private static String readablePhase(String phase) {
-        if (phase == null) return "";
+        if (phase == null)
+            return "";
         return switch (phase) {
             case "START_TURN" -> "a l'inici del torn";
             case "BEFORE_ATTACK" -> "abans d'atacar";
@@ -459,7 +534,8 @@ public final class DiscoveryCatalog {
 
     /** Fa llegible un tipus de sinergia. */
     private static String readableSynergyType(String type) {
-        if (type == null) return "";
+        if (type == null)
+            return "";
         return switch (type) {
             case "ALTER_MEMBERS" -> "modifica perks compatibles";
             case "BONUS_EXTRA" -> "bonificació addicional";
@@ -484,7 +560,8 @@ public final class DiscoveryCatalog {
 
     /** Converteix un codi tècnic en text llegible. */
     private static String readableCode(String value) {
-        if (value == null || value.isBlank()) return "";
+        if (value == null || value.isBlank())
+            return "";
         String cleaned = value.trim().replace('_', ' ');
         StringBuilder result = new StringBuilder(cleaned.length());
         boolean newWord = true;
@@ -505,7 +582,8 @@ public final class DiscoveryCatalog {
 
     /** Formata un número sense decimals innecessaris. */
     private static String formatNumber(double value) {
-        if (value == Math.rint(value)) return Long.toString(Math.round(value));
+        if (value == Math.rint(value))
+            return Long.toString(Math.round(value));
         return String.format(Locale.ROOT, "%.2f", value);
     }
 }

@@ -10,6 +10,7 @@ import rpgcombat.gamemode.cinematics.ModeCinematics;
 import rpgcombat.gamemode.effects.ModeEffectDefinition;
 import rpgcombat.gamemode.effects.ModeEffectTarget;
 import rpgcombat.gamemode.model.GameModeDefinition;
+import rpgcombat.gamemode.model.GameModePresentation;
 import rpgcombat.gamemode.model.GameModeRules;
 import rpgcombat.unlocks.UnlockMode;
 import rpgcombat.unlocks.UnlockRequirement;
@@ -31,6 +32,7 @@ final class GameModeMapper {
                 config.description(),
                 unlockRule(config.unlock()),
                 rules(config.rules()),
+                presentation(config.presentation(), config.description()),
                 cinematics(config.cinematics()));
     }
 
@@ -88,6 +90,18 @@ final class GameModeMapper {
             return ModeCinematics.normal();
         }
         return new ModeCinematics(config.postCreationPool(), config.chaosPostCreation());
+    }
+
+    private static GameModePresentation presentation(GameModePresentationConfig config, String description) {
+        if (config == null) {
+            return GameModePresentation.fallback(description);
+        }
+        return new GameModePresentation(
+                config.shortDescription(),
+                config.details(),
+                config.lockedTitle(),
+                config.lockedDescription(),
+                config.lockedHints());
     }
 
     private static UnlockRule unlockRule(GameModeUnlockConfig config) {

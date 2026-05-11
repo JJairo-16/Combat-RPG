@@ -240,6 +240,7 @@ public final class AchievementGridViewer {
                     case EXIT -> {
                         terminal.writer().print(RESET);
                         terminal.puts(Capability.exit_ca_mode);
+                        terminal.writer().print("\033[2J\033[H");
                         terminal.puts(Capability.cursor_visible);
                         terminal.flush();
                         return;

@@ -3,6 +3,21 @@
     "id": "NORMAL",
     "name": "Normal",
     "description": "Experiència completa amb totes les mecàniques.",
+    "presentation": {
+      "shortDescription": "El duel sense concessions.",
+      "details": [
+        "El combat conserva totes les formes conegudes",
+        "Les armes trobades poden tornar a aparèixer",
+        "Les benediccions encara poden formar una corona ampla",
+        "Els pactes divins romanen desperts",
+        "El Caos pot escoltar"
+      ],
+      "lockedTitle": "???",
+      "lockedDescription": "Pacte encara sense nom",
+      "lockedHints": [
+        "El primer camí sempre roman obert."
+      ]
+    },
     "unlock": {
       "mode": "ALL",
       "requirements": []
@@ -27,6 +42,21 @@
     "id": "BEGINNER",
     "name": "Principiant",
     "description": "Regles reduïdes: sense càrrega, especials, armes desbloquejables ni Caos.",
+    "presentation": {
+      "shortDescription": "El primer llindar.",
+      "details": [
+        "La càrrega roman segellada",
+        "No acudeixen veus externes",
+        "Només una benedicció menor pot arrelar",
+        "Cap pacte diví desperta en aquest llindar",
+        "El Caos no travessa la porta"
+      ],
+      "lockedTitle": "???",
+      "lockedDescription": "Llindar ocult",
+      "lockedHints": [
+        "La primera lliçó no demana cap tribut."
+      ]
+    },
     "unlock": {
       "mode": "ALL",
       "requirements": []

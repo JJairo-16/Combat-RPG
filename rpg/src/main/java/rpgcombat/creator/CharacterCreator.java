@@ -55,7 +55,7 @@ public class CharacterCreator {
     public static Character createNewCharacter(CharacterCreationOptions options) {
         CharacterCreationOptions effectiveOptions = options == null ? CharacterCreationOptions.defaultOptions() : options;
         CharacterDraft draft = CharacterDraft.from("Aventurer", MIN_AGE, autoGenerate());
-        new CharacterCreationEditor().edit(draft);
+        new CharacterCreationEditor(effectiveOptions).edit(draft);
         String divinePerkId = effectiveOptions.divinePerksEnabled() ? draft.divinePerkId() : null;
         return convert(draft.name(), draft.age(), new Generation(draft.statsCopy(), draft.breed()), divinePerkId,
                 effectiveOptions);

@@ -16,11 +16,17 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import menu.model.MenuResult;
+import rpgcombat.achievements.AchievementEvent;
+import rpgcombat.achievements.AchievementProgress;
+import rpgcombat.achievements.AchievementUpdate;
+import rpgcombat.achievements.config.AchievementLoader;
 import rpgcombat.combat.CombatSystem;
 import rpgcombat.combat.models.Action;
 import rpgcombat.combat.turnservice.DefaultTurnPriorityPolicy;
 import rpgcombat.game.menu.MenuCenter;
 import rpgcombat.game.modifier.StatusMod;
+import rpgcombat.discovery.DiscoveryCategory;
+import rpgcombat.discovery.config.DiscoveryCatalog;
 import rpgcombat.gamemode.chaos.ChaosRules;
 import rpgcombat.gamemode.cinematics.ModeCinematics;
 import rpgcombat.gamemode.model.GameModeDefinition;
@@ -40,7 +46,10 @@ import rpgcombat.unlocks.UnlockRequirement;
 import rpgcombat.unlocks.UnlockRequirementType;
 import rpgcombat.unlocks.UnlockRule;
 import rpgcombat.weapons.Arsenal;
+import rpgcombat.weapons.Weapon;
+import rpgcombat.weapons.attack.AttackResult;
 import rpgcombat.weapons.config.WeaponDefinition;
+import rpgcombat.weapons.config.WeaponType;
 import rpgcombat.weapons.passives.HitContext;
 
 class GameModeRulesTest {
@@ -72,6 +81,54 @@ class GameModeRulesTest {
         for (Action action : Action.values()) {
             assertTrue(normal.rules().allowsAction(action));
         }
+    }
+
+    @Test
+    void gameModeJsonLoadsPresentationCardTexts() throws Exception {
+        GameModeDefinition beginner = GameModeLoader.load(Path.of("data/gameModes.json")).stream()
+                .filter(mode -> mode.id().equals("BEGINNER"))
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals("El primer llindar.", beginner.presentation().shortDescription());
+        assertTrue(beginner.presentation().details().contains("La càrrega roman segellada"));
+        assertTrue(beginner.presentation().details().contains("Cap pacte diví desperta en aquest llindar"));
+        assertTrue(beginner.presentation().details().size() >= 5);
+        assertEquals("???", beginner.presentation().lockedTitle());
+        assertFalse(beginner.presentation().lockedHints().isEmpty());
+    }
+
+    @Test
+    void discoveryCatalogIncludesGameModeEntries() {
+        DiscoveryCatalog catalog = DiscoveryCatalog.build(null);
+
+        assertEquals("Modes de joc", catalog.categories().getFirst().title());
+        assertTrue(catalog.contains(DiscoveryCategory.GAME_MODES, "NORMAL"));
+        assertTrue(catalog.contains(DiscoveryCategory.GAME_MODES, "BEGINNER"));
+        assertFalse(catalog.entries(DiscoveryCategory.GAME_MODES).isEmpty());
+        var beginner = catalog.find(DiscoveryCategory.GAME_MODES, "BEGINNER").orElseThrow();
+        assertTrue(beginner.shortDescription().contains("sense càrrega"));
+        assertTrue(beginner.description().contains("Aquest camí estreny el combat fins als gestos essencials."));
+        assertTrue(beginner.description().contains("Els pactes divins i el Caos resten fora d'aquest llindar."));
+        assertFalse(beginner.description().stream().anyMatch(line -> line.startsWith("Accions:")));
+        assertFalse(beginner.description().stream().anyMatch(line -> line.startsWith("Perks")));
+        assertFalse(beginner.description().contains("La càrrega roman segellada"));
+    }
+
+    @Test
+    void beginnerModeAchievementCompletesFromModeSelectionEvent() throws Exception {
+        var definition = AchievementLoader.load(Path.of("data/achievements.json")).stream()
+                .filter(achievement -> achievement.id().equals("FIRST_THRESHOLD"))
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals(AchievementEvent.GAME_MODE_SELECTED, definition.objective().event());
+        AchievementProgress progress = new AchievementProgress(definition);
+
+        assertFalse(progress.update(AchievementUpdate.gameModeSelected("NORMAL")));
+        assertFalse(progress.completed());
+        assertTrue(progress.update(AchievementUpdate.gameModeSelected("BEGINNER")));
+        assertTrue(progress.completed());
     }
 
     @Test
@@ -199,16 +256,14 @@ class GameModeRulesTest {
                         Map.of("damageMultiplier", 1.0, "canKill", 1.0))));
 
         ModeEffectApplier.apply(rules, attacker, defender);
-        attacker.setWeapon(Arsenal.availableValues().getFirst().create());
-        CombatSystem combat = new CombatSystem(attacker, defender, (p1, a1, p2, a2, rng) -> true, null, null, rules);
+        Effect effect = attacker.getEffect(SelfDirectedAttackTrigger.INTERNAL_EFFECT_KEY);
+        HitContext ctx = new HitContext(attacker, defender, testWeapon(), new Random(0), Action.ATTACK, Action.DEFEND);
 
-        double attackerHp = attacker.getStatistics().getHealth();
-        double defenderHp = defender.getStatistics().getHealth();
+        effect.modifyDamage(ctx, new Random(0), attacker);
 
-        combat.playRound(Action.ATTACK, Action.DEFEND);
-
-        assertTrue(attacker.getStatistics().getHealth() < attackerHp);
-        assertEquals(defenderHp, defender.getStatistics().getHealth());
+        assertEquals(Boolean.TRUE, ctx.getMeta("selfDirectedAttack"));
+        assertEquals(1.0, ctx.getMeta("selfDirectedAttackMultiplier"));
+        assertEquals(Boolean.TRUE, ctx.getMeta("selfDirectedAttackCanKill"));
     }
 
     private static GameModeDefinition newMode(String id, UnlockRule rule) {
@@ -218,11 +273,26 @@ class GameModeRulesTest {
                 "",
                 rule,
                 GameModeRules.unrestricted(),
+                null,
                 ModeCinematics.normal());
     }
 
     private static Character character(String name) {
         return new Character(name, 30, new int[] { 20, 20, 20, 20, 20, 20, 20 }, Breed.HUMAN);
+    }
+
+    private static Weapon testWeapon() {
+        return new Weapon(
+                "TEST_MODE_WEAPON",
+                "Arma de prova",
+                "Arma estable per provar modes de joc.",
+                100,
+                0.0,
+                1.0,
+                WeaponType.PHYSICAL,
+                (weapon, stats, rng) -> new AttackResult(100.0, "colpeja."),
+                0.0,
+                List.of());
     }
 
     private static final class TestEffect implements Effect {

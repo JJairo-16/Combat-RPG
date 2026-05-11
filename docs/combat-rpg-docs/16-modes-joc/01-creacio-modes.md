@@ -11,6 +11,19 @@ El fitxer que es carrega es configura a `paths.gameModesConfig` dins `rpg/data/a
   "id": "NORMAL",
   "name": "Normal",
   "description": "Experiència completa.",
+  "presentation": {
+    "shortDescription": "El duel sense concessions.",
+    "details": [
+      "El combat conserva totes les formes conegudes",
+      "Les armes trobades poden tornar a aparèixer",
+      "El Caos pot escoltar"
+    ],
+    "lockedTitle": "???",
+    "lockedDescription": "Pacte encara sense nom",
+    "lockedHints": [
+      "El primer camí sempre roman obert."
+    ]
+  },
   "unlock": {
     "mode": "ALL",
     "requirements": []
@@ -42,6 +55,18 @@ El fitxer que es carrega es configura a `paths.gameModesConfig` dins `rpg/data/a
 - `showUnlockableWeapons`: si és `false`, el selector d'armes no mostra armes amb regla de desbloqueig.
 - `chaos`: política de Caos del mode, independent de cinemàtiques.
 - `modeEffects`: efectes inicials aplicats als jugadors quan es crea la partida.
+
+## Presentació al menú
+
+`presentation` forma part de cada definició del mode i alimenta el menú interactiu de cartes. El menú no inventa textos: només decideix si mostrar la versió desbloquejada o la bloquejada.
+
+- `shortDescription`: frase curta quan el mode està disponible.
+- `details`: trets visibles quan el mode està disponible.
+- `lockedTitle`: títol mostrat quan el mode encara està bloquejat.
+- `lockedDescription`: frase curta del bloqueig.
+- `lockedHints`: indicis o pistes de desbloqueig.
+
+Els textos han de mantenir un to una mica ambigu, semblant al vocabulari de descobriments i assoliments.
 
 ## Caos per mode
 

@@ -233,6 +233,14 @@ public record AchievementUpdate(
         return new AchievementUpdate(owner, null, null, null, null, Winner.NONE, 0, Set.of(event), safeFields(fields));
     }
 
+    /** Crea una actualització quan s'ha triat un mode de joc per començar partida. */
+    public static AchievementUpdate gameModeSelected(String modeId) {
+        Map<String, Object> fields = baseFields(null, null, null, null, 0);
+        fields.put("modeId", modeId == null ? "" : modeId);
+        return new AchievementUpdate(null, null, null, null, null, Winner.NONE, 0,
+                Set.of(AchievementEvent.GAME_MODE_SELECTED), safeFields(fields));
+    }
+
     /** Crea una actualització de progrés d'una missió de perk encara no completada. */
     public static AchievementUpdate perkMissionProgress(Character owner, String missionId, String perkId,
             double progressBefore, double progressAfter, double target, int activeMissionCount, int roundNumber) {

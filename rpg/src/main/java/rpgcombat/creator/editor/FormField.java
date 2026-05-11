@@ -17,6 +17,20 @@ enum FormField {
     CONFIRM(EditorAction.CONFIRM);
 
     static final FormField[] VALUES = values();
+    private static final FormField[] WITHOUT_DIVINE_PERK = {
+            NAME,
+            AGE,
+            BREED,
+            STRENGTH,
+            DEXTERITY,
+            CONSTITUTION,
+            INTELLIGENCE,
+            WISDOM,
+            CHARISMA,
+            LUCK,
+            RANDOMIZE,
+            CONFIRM
+    };
 
     private final EditorAction action;
 
@@ -28,5 +42,10 @@ enum FormField {
     /** Retorna l'acció associada. */
     EditorAction action() {
         return action;
+    }
+
+    /** Retorna els camps visibles segons les opcions de creació. */
+    static FormField[] valuesFor(boolean divinePerksEnabled) {
+        return divinePerksEnabled ? VALUES : WITHOUT_DIVINE_PERK;
     }
 }

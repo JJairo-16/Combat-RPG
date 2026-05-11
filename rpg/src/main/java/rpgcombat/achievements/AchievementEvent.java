@@ -42,6 +42,7 @@ public enum AchievementEvent {
     HIGH_MOMENTUM,
     LOW_STAMINA,
     SURVIVE_TURN,
+    GAME_MODE_SELECTED,
     MATCH_STARTED,
     MATCH_FINISHED,
     MATCH_WON,

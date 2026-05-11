@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 
 import org.jline.terminal.Terminal;
 
+import rpgcombat.creator.CharacterCreationOptions;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.perks.divine.DivinePerkDefinition;
 import rpgcombat.models.characters.Stat;
@@ -17,7 +18,16 @@ import rpgcombat.utils.ui.Ansi;
 /** Renderitza el formulari de creació. */
 final class CharacterCreationRenderer {
     private final TerminalPainter painter = new TerminalPainter();
+    private final CharacterCreationOptions options;
     private static final Pattern LINE_SPLITTER = Pattern.compile("\\s+");
+
+    CharacterCreationRenderer() {
+        this(CharacterCreationOptions.defaultOptions());
+    }
+
+    CharacterCreationRenderer(CharacterCreationOptions options) {
+        this.options = options == null ? CharacterCreationOptions.defaultOptions() : options;
+    }
 
     /** Dibuixa tot el formulari. */
     void renderAll(Terminal terminal, CharacterDraft draft, EditorAction selected, EditorAction editing,
@@ -50,7 +60,7 @@ final class CharacterCreationRenderer {
         if (action == EditorAction.EDIT_BREED || action == EditorAction.EDIT_DIVINE_PERK) {
             renderField(terminal, draft, action, selected, null, "", 0);
 
-            if (action == EditorAction.EDIT_BREED) {
+            if (action == EditorAction.EDIT_BREED && options.divinePerksEnabled()) {
                 renderField(terminal, draft, EditorAction.EDIT_DIVINE_PERK, selected, null, "", 0);
             }
 
@@ -122,8 +132,11 @@ final class CharacterCreationRenderer {
         renderField(terminal, draft, EditorAction.EDIT_NAME, selected, editing, editValue, editCursor);
         renderField(terminal, draft, EditorAction.EDIT_AGE, selected, editing, editValue, editCursor);
         renderField(terminal, draft, EditorAction.EDIT_BREED, selected, editing, editValue, editCursor);
-        renderField(terminal, draft, EditorAction.EDIT_DIVINE_PERK, selected, editing, editValue, editCursor);
-        painter.boxBottom(terminal, row + 4, EditorLayout.LEFT_COL, EditorLayout.LEFT_BOX_WIDTH);
+        if (options.divinePerksEnabled()) {
+            renderField(terminal, draft, EditorAction.EDIT_DIVINE_PERK, selected, editing, editValue, editCursor);
+        }
+        painter.boxBottom(terminal, row + (options.divinePerksEnabled() ? 4 : 3),
+                EditorLayout.LEFT_COL, EditorLayout.LEFT_BOX_WIDTH);
     }
 
     /** Dibuixa la caixa d'estadístiques. */
@@ -160,18 +173,20 @@ final class CharacterCreationRenderer {
         putRightPanelContent(lines, firstRow, row++, Ansi.BOLD + "Descripció" + Ansi.RESET);
         row = putRightPanelWrappedContent(lines, firstRow, maxRow, row, breed.getDescription());
 
-        row++;
-        DivinePerkDefinition perk = draft.divinePerk();
-        putRightPanelContent(lines, firstRow, row++, Ansi.BOLD + "Perk divina" + Ansi.RESET);
-        if (perk == null) {
-            putRightPanelContent(lines, firstRow, row++,
-                    Ansi.YELLOW + "No hi ha perks divines carregades per a aquesta raça." + Ansi.RESET);
-        } else {
-            putRightPanelContent(lines, firstRow, row++, Ansi.CYAN + perk.displayName() + Ansi.RESET);
-            if (!perk.shortDescription().isBlank()) {
-                putRightPanelContent(lines, firstRow, row++, Ansi.DARK_GRAY + perk.shortDescription() + Ansi.RESET);
+        if (options.divinePerksEnabled()) {
+            row++;
+            DivinePerkDefinition perk = draft.divinePerk();
+            putRightPanelContent(lines, firstRow, row++, Ansi.BOLD + "Perk divina" + Ansi.RESET);
+            if (perk == null) {
+                putRightPanelContent(lines, firstRow, row++,
+                        Ansi.YELLOW + "No hi ha perks divines carregades per a aquesta raça." + Ansi.RESET);
+            } else {
+                putRightPanelContent(lines, firstRow, row++, Ansi.CYAN + perk.displayName() + Ansi.RESET);
+                if (!perk.shortDescription().isBlank()) {
+                    putRightPanelContent(lines, firstRow, row++, Ansi.DARK_GRAY + perk.shortDescription() + Ansi.RESET);
+                }
+                row = putRightPanelWrappedContent(lines, firstRow, maxRow, row, perk.description());
             }
-            row = putRightPanelWrappedContent(lines, firstRow, maxRow, row, perk.description());
         }
 
         int bottom = Math.max(row + 1, EditorLayout.BOX_MIN_BREED_BOTTOM);
@@ -179,7 +194,7 @@ final class CharacterCreationRenderer {
         putRightPanelLine(lines, firstRow, bottom, rightBoxBottom());
 
         int footRow = bottom + EditorLayout.BREED_HINT_GAP;
-        if (footRow < EditorLayout.HELP_ROW) {
+        if (options.divinePerksEnabled() && footRow < EditorLayout.HELP_ROW) {
             putRightPanelLine(lines, firstRow, footRow, Ansi.DARK_GRAY + DESCRIPTION_FOOT + Ansi.RESET);
         }
 

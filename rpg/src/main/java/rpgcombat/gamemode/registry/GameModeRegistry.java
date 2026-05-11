@@ -39,9 +39,7 @@ public final class GameModeRegistry {
             }
         }
 
-        if (!map.containsKey(NORMAL_ID)) {
-            map.put(NORMAL_ID, GameModeDefinition.normal());
-        }
+        map.computeIfAbsent(NORMAL_ID, id -> GameModeDefinition.normal());
 
         BY_ID.clear();
         BY_ID.putAll(map);

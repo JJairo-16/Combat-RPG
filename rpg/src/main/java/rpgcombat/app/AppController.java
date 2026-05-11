@@ -9,6 +9,8 @@ import rpgcombat.achievements.config.AchievementRegistry;
 import rpgcombat.achievements.ui.AchievementGridViewer;
 import rpgcombat.config.app.AppConfig;
 import rpgcombat.config.app.AppConfigLoader;
+import rpgcombat.discovery.DiscoveryCategory;
+import rpgcombat.discovery.DiscoveryRuntime;
 import rpgcombat.discovery.DiscoverySystem;
 import rpgcombat.discovery.config.DiscoveryCatalog;
 import rpgcombat.discovery.config.DiscoveryCatalogLoader;
@@ -84,6 +86,10 @@ public final class AppController {
     /** Crea i executa una partida. */
     private EndGameAction playOneMatch() {
         GameModeDefinition gameMode = selectGameMode();
+        if (gameMode == null) {
+            return EndGameAction.HOME;
+        }
+        achievementSystem.onGameModeSelected(gameMode.id());
         preloader.preloadNewMatch();
 
         GameBootstrap bootstrap = new GameBootstrap(config, preloader, achievementSystem);
@@ -94,12 +100,21 @@ public final class AppController {
 
     /** Selecciona el mode de joc abans de mostrar cap cinemàtica de partida. */
     private GameModeDefinition selectGameMode() {
+        GameModeDefinition mode;
         if (!config.gameMode().selectionEnabled()) {
-            return GameModeRegistry.getOrDefault(config.gameMode().defaultMode());
+            mode = GameModeRegistry.getOrDefault(config.gameMode().defaultMode());
+        } else {
+            mode = GameModeSelectionMenu.show(
+                    GameModeRegistry.all(),
+                    achievementSystem,
+                    discoverySystem,
+                    config.gameMode().defaultMode());
         }
-        return GameModeSelectionMenu.show(
-                GameModeRegistry.unlocked(achievementSystem, discoverySystem),
-                config.gameMode().defaultMode());
+        if (mode == null) {
+            return null;
+        }
+        DiscoveryRuntime.discover(DiscoveryCategory.GAME_MODES, mode.id());
+        return mode;
     }
 
     /** Carrega la configuració o usa la predeterminada. */

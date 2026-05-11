@@ -2,6 +2,8 @@ package rpgcombat.discovery;
 
 /** Categories disponibles dins el grimori de descobriments. */
 public enum DiscoveryCategory {
+    GAME_MODES("Modes de joc"),
+
     BREEDS("Races"),
     WEAPONS("Armes"),
     ACTIONS("Accions"),

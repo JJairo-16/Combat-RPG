@@ -2,6 +2,13 @@
 	"version": 1,
 	"categories": [
 		{
+			"id": "GAME_MODES",
+			"title": "Modes de joc",
+			"description": "Camins de partida i pactes de regles que canvien el combat abans de començar.",
+			"showLockedEntries": true,
+			"sortOrder": 5
+		},
+		{
 			"id": "BREEDS",
 			"title": "Races",
 			"description": "Races que han entrat en joc durant la creació de personatges.",

@@ -14,6 +14,27 @@
     }
   },
   {
+    "id": "FIRST_THRESHOLD",
+    "name": "El primer llindar",
+    "description": "Juga el mode Principiant per primera vegada.",
+    "goal": 1,
+    "visibility": {
+      "showNameBeforeComplete": true,
+      "showDescriptionBeforeComplete": true
+    },
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "GAME_MODE_SELECTED",
+      "conditions": [
+        {
+          "field": "modeId",
+          "operator": "==",
+          "value": "BEGINNER"
+        }
+      ]
+    }
+  },
+  {
     "id": "IMMOBILE_COIN",
     "name": "La moneda immòbil",
     "description": "Empata un combat.",

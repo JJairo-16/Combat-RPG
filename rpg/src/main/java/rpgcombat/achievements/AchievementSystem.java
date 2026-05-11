@@ -58,6 +58,11 @@ public final class AchievementSystem {
         apply(AchievementUpdate.simple(player, AchievementEvent.WEAPON_EQUIPPED));
     }
 
+    /** Registra que s'ha triat un mode de joc per començar partida. */
+    public void onGameModeSelected(String modeId) {
+        apply(AchievementUpdate.gameModeSelected(modeId));
+    }
+
     /** Registra que una missió de perk ha avançat sense completar-se encara. */
     public void onPerkMissionProgress(Character player, String missionId, String perkId, double progressBefore,
             double progressAfter, double target, int activeMissionCount, int roundNumber) {
