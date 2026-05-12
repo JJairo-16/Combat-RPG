@@ -2,6 +2,7 @@ package rpgcombat.app;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -10,6 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import rpgcombat.achievements.AchievementSystem;
 import rpgcombat.achievements.config.AchievementRegistry;
+import rpgcombat.achievements.ui.Achievement;
 import rpgcombat.achievements.ui.AchievementGridViewer;
 import rpgcombat.config.app.AppConfig;
 import rpgcombat.config.app.AppConfigLoader;
@@ -20,6 +22,7 @@ import rpgcombat.discovery.config.DiscoveryCatalog;
 import rpgcombat.discovery.config.DiscoveryCatalogConfig;
 import rpgcombat.discovery.config.DiscoveryCatalogLoader;
 import rpgcombat.discovery.ui.DiscoveryInteractiveViewer;
+import rpgcombat.discovery.ui.models.DiscoveryOverview;
 import rpgcombat.game.EndGameAction;
 import rpgcombat.game.GameLoop;
 import rpgcombat.game.cinematics.CinematicBuilder;
@@ -40,10 +43,11 @@ public final class AppController {
     private AppConfig config;
     private AchievementSystem achievementSystem;
     private DiscoverySystem discoverySystem;
+    private List<Achievement> achievementViewModels = List.of();
+    private DiscoveryOverview discoveryOverview;
 
     /** Inicia l'aplicació fins que l'usuari surt. */
     public void run() {
-        new Cleaner().clear(0);
         loadConfig();
 
         if (!preloadResources()) {
@@ -61,7 +65,7 @@ public final class AppController {
                 }
 
                 if (action == HomeMenu.Action.ACHIEVEMENTS) {
-                    AchievementGridViewer.show(achievementSystem.toViewModels());
+                    AchievementGridViewer.show(achievementViewModels());
                     continue;
                 }
 
@@ -69,7 +73,7 @@ public final class AppController {
                     if (!prepareMatchResources()) {
                         continue;
                     }
-                    DiscoveryInteractiveViewer.show(discoverySystem.toOverview());
+                    DiscoveryInteractiveViewer.show(discoveryOverview());
                     continue;
                 }
 
@@ -108,7 +112,9 @@ public final class AppController {
         GameBootstrap bootstrap = new GameBootstrap(config, preloader, achievementSystem);
         GameLoop game = bootstrap.createGame(gameMode);
 
-        return game.init();
+        EndGameAction action = game.init();
+        refreshHomeViewModels();
+        return action;
     }
 
     /** Selecciona el mode de joc abans de mostrar cap cinemàtica de partida. */
@@ -196,6 +202,7 @@ public final class AppController {
         }
 
         UnlockRuntime.configure(achievementSystem, discoverySystem);
+        refreshHomeViewModels();
     }
 
     /** Carrega els recursos complets abans d'entrar en combat o mostrar descobriments. */
@@ -205,6 +212,7 @@ public final class AppController {
             if (discoverySystem != null && !discoverySystem.hasCatalog()) {
                 ensureDiscoveryCatalogLoaded(DiscoveryCatalogLoader.load(Path.of(config.paths().discoveryCatalogConfig())));
             }
+            refreshHomeViewModels();
             return true;
         } catch (Exception e) {
             Prettier.error("Hi ha hagut un error durant la càrrega dels recursos necessaris.");
@@ -219,6 +227,32 @@ public final class AppController {
         }
         DiscoveryCatalog catalog = DiscoveryCatalog.build(config);
         discoverySystem.setCatalog(catalog);
+    }
+
+    /** Manté preparats els models que obren les pantalles del menú inicial. */
+    private void refreshHomeViewModels() {
+        if (achievementSystem != null) {
+            achievementViewModels = achievementSystem.toViewModels();
+            AchievementGridViewer.preload(achievementViewModels);
+        }
+        if (discoverySystem != null && discoverySystem.hasCatalog()) {
+            discoveryOverview = discoverySystem.toOverview();
+            DiscoveryInteractiveViewer.preload(discoveryOverview);
+        }
+    }
+
+    private List<Achievement> achievementViewModels() {
+        if (achievementViewModels == null || achievementViewModels.isEmpty()) {
+            refreshHomeViewModels();
+        }
+        return achievementViewModels == null ? List.of() : achievementViewModels;
+    }
+
+    private DiscoveryOverview discoveryOverview() {
+        if (discoveryOverview == null) {
+            refreshHomeViewModels();
+        }
+        return discoveryOverview;
     }
 
     /** Espera una càrrega asíncrona i conserva la causa real si falla. */

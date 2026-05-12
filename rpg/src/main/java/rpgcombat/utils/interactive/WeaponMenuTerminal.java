@@ -16,6 +16,7 @@ import rpgcombat.models.characters.Statistics;
 import rpgcombat.utils.cache.TextWrapCache;
 import rpgcombat.utils.interactive.helpers.JLineAnsi;
 import rpgcombat.utils.terminal.SharedTerminal;
+import rpgcombat.utils.terminal.TerminalInput;
 import rpgcombat.utils.terminal.TerminalSession;
 import rpgcombat.weapons.config.WeaponDefinition;
 import rpgcombat.weapons.config.WeaponType;
@@ -106,7 +107,7 @@ final class WeaponMenuTerminal implements AutoCloseable {
      * @return acció associada a la tecla premuda
      */
     WeaponMenu.Action readAction() {
-        return reader.readBinding(keyMap);
+        return TerminalInput.readBindingIgnoringMouse(reader, keyMap, terminal, WeaponMenu.Action.NONE);
     }
 
     /**
@@ -715,6 +716,7 @@ final class WeaponMenuTerminal implements AutoCloseable {
         if (right != null) {
             map.bind(WeaponMenu.Action.RIGHT, right);
         }
+        TerminalInput.bindMouseIgnore(map, terminal, WeaponMenu.Action.NONE);
 
         return map;
     }

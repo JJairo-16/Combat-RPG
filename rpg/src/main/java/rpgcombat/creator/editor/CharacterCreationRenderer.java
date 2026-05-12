@@ -443,6 +443,7 @@ final class CharacterCreationRenderer {
 
     /** Crea la caixa visual d'edició. */
     private String inputBox(String value, int cursor, int width) {
+        boolean cursorVisible = (System.currentTimeMillis() / 530) % 2 == 0;
         int safeWidth = Math.max(1, width);
         String clipped = value == null ? "" : value;
         if (clipped.length() > safeWidth) {
@@ -454,8 +455,11 @@ final class CharacterCreationRenderer {
         String left = padded.substring(0, displayCursor);
         String current = String.valueOf(padded.charAt(displayCursor));
         String right = padded.substring(displayCursor + 1, safeWidth);
-        return Ansi.CYAN + "[" + Ansi.RESET + Ansi.BOLD + left + Ansi.RESET + "\u001b[7m" + current
-                + Ansi.RESET + Ansi.BOLD + right + Ansi.RESET + Ansi.CYAN + "]" + Ansi.RESET;
+        String cursorCell = cursorVisible
+                ? "\u001b[7m" + current + Ansi.RESET
+                : Ansi.BOLD + current + Ansi.RESET;
+        return Ansi.CYAN + "[" + Ansi.RESET + Ansi.BOLD + left + Ansi.RESET + cursorCell
+                + Ansi.BOLD + right + Ansi.RESET + Ansi.CYAN + "]" + Ansi.RESET;
     }
 
     /** Crea la barra d'estadística. */

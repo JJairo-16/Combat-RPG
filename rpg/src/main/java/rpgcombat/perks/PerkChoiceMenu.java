@@ -16,6 +16,7 @@ import org.jline.utils.InfoCmp.Capability;
 import rpgcombat.models.characters.Character;
 import rpgcombat.perks.synergy.SynergyPreview;
 import rpgcombat.utils.terminal.SharedTerminal;
+import rpgcombat.utils.terminal.TerminalInput;
 import rpgcombat.utils.terminal.TerminalSession;
 
 /** Menú visual per triar una perk de recompensa. */
@@ -59,7 +60,7 @@ public final class PerkChoiceMenu {
                 renderFull(terminal, playerName, ordered, previews, cursor);
 
                 while (true) {
-                    Action action = reader.readBinding(keyMap);
+                    Action action = TerminalInput.readBindingIgnoringMouse(reader, keyMap, terminal, Action.IGNORE);
                     if (action == null) {
                         renderFull(terminal, playerName, ordered, previews, cursor);
                         continue;
@@ -74,10 +75,11 @@ public final class PerkChoiceMenu {
                         case SECOND -> cursor = Math.min(1, ordered.size() - 1);
                         case THIRD -> cursor = Math.min(2, ordered.size() - 1);
                         case SELECT -> {
-                            showCursor(terminal);
                             clearScreen(terminal);
                             terminal.flush();
                             return ordered.get(cursor);
+                        }
+                        case IGNORE -> {
                         }
                     }
 
@@ -86,7 +88,6 @@ public final class PerkChoiceMenu {
                     }
                 }
             } finally {
-                showCursor(terminal);
                 terminal.flush();
             }
         } catch (IOException e) {
@@ -95,7 +96,7 @@ public final class PerkChoiceMenu {
         }
     }
 
-    private enum Action { PREVIOUS, NEXT, FIRST, SECOND, THIRD, SELECT }
+    private enum Action { PREVIOUS, NEXT, FIRST, SECOND, THIRD, SELECT, IGNORE }
 
     private static KeyMap<Action> buildKeyMap(Terminal terminal) {
         KeyMap<Action> map = new KeyMap<>();
@@ -115,6 +116,7 @@ public final class PerkChoiceMenu {
         if (up != null) map.bind(Action.PREVIOUS, up);
         if (right != null) map.bind(Action.NEXT, right);
         if (down != null) map.bind(Action.NEXT, down);
+        TerminalInput.bindMouseIgnore(map, terminal, Action.IGNORE);
 
         return map;
     }
@@ -357,5 +359,4 @@ public final class PerkChoiceMenu {
     }
 
     private static void hideCursor(Terminal terminal) { terminal.writer().print("\033[?25l"); }
-    private static void showCursor(Terminal terminal) { terminal.writer().print("\033[?25h"); }
 }

@@ -679,7 +679,7 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
     /** Fixa explícitament el despertar i el registra per als assoliments. */
     private void setAwakening(HitContext ctx, int max, int level) {
         int previous = awakening;
-        awakening = Math.max(awakening, Math.min(level, max));
+        awakening = Math.clamp(level, awakening, max);
         registerAwakeningMeta(ctx, max, awakening > previous);
     }
 

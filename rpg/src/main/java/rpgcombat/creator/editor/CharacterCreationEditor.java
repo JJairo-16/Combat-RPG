@@ -14,10 +14,13 @@ import rpgcombat.models.breeds.Breed;
 import rpgcombat.perks.divine.DivinePerkDefinition;
 import rpgcombat.perks.divine.DivinePerkRegistry;
 import rpgcombat.utils.terminal.SharedTerminal;
+import rpgcombat.utils.terminal.TerminalInput;
 import rpgcombat.utils.terminal.TerminalSession;
 
 /** Formulari interactiu de terminal per crear personatges. */
 public final class CharacterCreationEditor {
+    private static final int TEXT_INPUT_POLL_MS = 80;
+
     private final CharacterCreationOptions options;
     private final CharacterCreationRenderer renderer;
 
@@ -58,7 +61,8 @@ public final class CharacterCreationEditor {
                     if (consumeResize(terminal, draft)) {
                         continue;
                     }
-                    InputAction input = reader.readBinding(keyMap);
+                    InputAction input = TerminalInput.readBindingIgnoringMouse(reader, keyMap, terminal,
+                            InputAction.IGNORE);
                     if (consumeResize(terminal, draft)) {
                         continue;
                     }
@@ -137,6 +141,7 @@ public final class CharacterCreationEditor {
         bindTerminalKey(map, InputAction.DOWN, terminal, Capability.key_down);
         bindTerminalKey(map, InputAction.LEFT, terminal, Capability.key_left);
         bindTerminalKey(map, InputAction.RIGHT, terminal, Capability.key_right);
+        TerminalInput.bindMouseIgnore(map, terminal, InputAction.IGNORE);
         return map;
     }
 
@@ -289,7 +294,10 @@ public final class CharacterCreationEditor {
 
     /** Llegeix una tecla d'un camp. */
     private TextKey readTextInput(Terminal terminal) throws IOException {
-        int ch = terminal.reader().read();
+        int ch = terminal.reader().read(TEXT_INPUT_POLL_MS);
+        if (ch == org.jline.utils.NonBlockingReader.READ_EXPIRED) {
+            return TextKey.NONE;
+        }
         if (ch == KeyCode.ESCAPE) {
             return readEscapeInput(terminal);
         }
@@ -331,6 +339,11 @@ public final class CharacterCreationEditor {
         int second = readPending(terminal);
         if (second < 0) {
             return TextKey.CANCEL;
+        }
+        String mousePrefix = TerminalInput.mousePrefixAfterEscape(first, second);
+        if (mousePrefix != null) {
+            TerminalInput.consumeMouseEvent(terminal, mousePrefix);
+            return TextKey.NONE;
         }
         return switch (second) {
             case KeyCode.ARROW_LEFT -> TextKey.LEFT;

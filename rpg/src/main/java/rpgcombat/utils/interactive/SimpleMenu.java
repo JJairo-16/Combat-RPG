@@ -10,6 +10,7 @@ import org.jline.utils.InfoCmp.Capability;
 
 import rpgcombat.utils.interactive.helpers.MenuInputGate;
 import rpgcombat.utils.terminal.SharedTerminal;
+import rpgcombat.utils.terminal.TerminalInput;
 import rpgcombat.utils.terminal.TerminalSession;
 
 import static rpgcombat.utils.ui.Ansi.*;
@@ -49,7 +50,8 @@ public class SimpleMenu {
         SELECT,
         EXTRA,
         INFO,
-        PROGRESS
+        PROGRESS,
+        IGNORE
     }
 
     /**
@@ -91,7 +93,7 @@ public class SimpleMenu {
                 while (true) {
                     consumeResize(terminal, title, options, cursor[0]);
 
-                    Action action = reader.readBinding(keyMap);
+                    Action action = TerminalInput.readBindingIgnoringMouse(reader, keyMap, terminal, Action.IGNORE);
 
                     consumeResize(terminal, title, options, cursor[0]);
 
@@ -114,6 +116,8 @@ public class SimpleMenu {
                         }
                         case INFO -> handleInfoAction(terminal, title, options, cursor[0]);
                         case PROGRESS -> handleProgressAction(terminal, title, options, cursor[0]);
+                        case IGNORE -> {
+                        }
                     }
 
                     if (oldCursor != cursor[0]) {
@@ -211,6 +215,7 @@ public class SimpleMenu {
         if (down != null) {
             map.bind(Action.DOWN, down);
         }
+        TerminalInput.bindMouseIgnore(map, terminal, Action.IGNORE);
 
         return map;
     }

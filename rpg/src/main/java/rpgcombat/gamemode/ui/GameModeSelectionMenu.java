@@ -18,6 +18,7 @@ import rpgcombat.gamemode.model.GameModeDefinition;
 import rpgcombat.gamemode.model.GameModePresentation;
 import rpgcombat.gamemode.registry.GameModeRegistry;
 import rpgcombat.utils.terminal.SharedTerminal;
+import rpgcombat.utils.terminal.TerminalInput;
 import rpgcombat.utils.terminal.TerminalSession;
 import rpgcombat.utils.ui.TerminalClear;
 
@@ -106,7 +107,7 @@ public final class GameModeSelectionMenu {
                     lastHeight = height;
                 }
 
-                Action action = reader.readBinding(keys);
+                Action action = TerminalInput.readBindingIgnoringMouse(reader, keys, terminal, Action.IGNORE);
                 if (action == null) {
                     paintFrame(terminal, frame, height, true);
                     terminal.flush();
@@ -142,7 +143,6 @@ public final class GameModeSelectionMenu {
             }
         } finally {
             terminal.writer().print(RESET);
-            terminal.puts(Capability.cursor_visible);
             terminal.flush();
         }
     }
@@ -180,6 +180,7 @@ public final class GameModeSelectionMenu {
         bindTerminalKey(map, terminal, Capability.key_right, Action.RIGHT);
         bindTerminalKey(map, terminal, Capability.key_up, Action.UP);
         bindTerminalKey(map, terminal, Capability.key_down, Action.DOWN);
+        TerminalInput.bindMouseIgnore(map, terminal, Action.IGNORE);
 
         return map;
     }

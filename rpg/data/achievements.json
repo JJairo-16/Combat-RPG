@@ -3,13 +3,7 @@
     "id": "FIRST_OATH",
     "name": "El primer jurament",
     "description": "Guanya el teu primer combat.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "MATCH_WON"
     }
   },
@@ -17,18 +11,12 @@
     "id": "FIRST_THRESHOLD",
     "name": "El primer llindar",
     "description": "Juga el mode Principiant per primera vegada.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "GAME_MODE_SELECTED",
       "conditions": [
         {
           "field": "modeId",
-          "operator": "==",
           "value": "BEGINNER"
         }
       ]
@@ -38,13 +26,7 @@
     "id": "IMMOBILE_COIN",
     "name": "La moneda immòbil",
     "description": "Empata un combat.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "MATCH_TIED"
     }
   },
@@ -53,12 +35,7 @@
     "name": "El pes de la guerra",
     "description": "Guanya 10 combats.",
     "goal": 10,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "MATCH_WON"
     }
   },
@@ -67,12 +44,7 @@
     "name": "Els noms dels morts",
     "description": "Guanya 50 combats.",
     "goal": 50,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "MATCH_WON"
     }
   },
@@ -81,12 +53,7 @@
     "name": "Sobre la muntanya d’ossos",
     "description": "Guanya 100 combats.",
     "goal": 100,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "MATCH_WON"
     }
   },
@@ -95,12 +62,7 @@
     "name": "La màquina eterna",
     "description": "Completa 250 combats.",
     "goal": 250,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "MATCH_FINISHED"
     }
   },
@@ -108,13 +70,10 @@
     "id": "VOICE_IN_METAL",
     "name": "La veu dins el metall",
     "description": "Guanya amb la mateixa arma que et va veure començar.",
-    "goal": 1,
     "visibility": {
-      "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "MATCH_WON"
     }
   },
@@ -122,13 +81,7 @@
     "id": "FIRST_BLOOD",
     "name": "Primera sang",
     "description": "Infligeix el teu primer cop crític.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "CRIT"
     }
   },
@@ -137,10 +90,6 @@
     "name": "Ningú torna intacte",
     "description": "Rep 1.000 punts de dany acumulat.",
     "goal": 1000,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "SUM_VALUE",
       "event": "DAMAGE_RECEIVED",
@@ -152,10 +101,6 @@
     "name": "La fam del combat",
     "description": "Infligeix 1.500 punts de dany total.",
     "goal": 1500,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "SUM_VALUE",
       "event": "DAMAGE_DEALT",
@@ -166,11 +111,6 @@
     "id": "RED_THRESHOLD",
     "name": "El llindar vermell",
     "description": "Guanya amb un 10% de vida o menys.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "MATCH_WON",
@@ -187,9 +127,7 @@
     "id": "RAZOR_THREAD",
     "name": "El fil de la navalla",
     "description": "Guanya amb un 5% de vida o menys.",
-    "goal": 1,
     "visibility": {
-      "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
@@ -230,10 +168,6 @@
     "name": "El batec del ferro",
     "description": "Fes 10 crítics amb un 20% de vida o menys.",
     "goal": 10,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "CRIT",
@@ -250,13 +184,7 @@
     "id": "SEPULCHRAL_SILENCE",
     "name": "Silenci sepulcral",
     "description": "Queda’t sense stamina per primera vegada.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "ZERO_STAMINA"
     }
   },
@@ -266,7 +194,6 @@
     "description": "Mantén la stamina a 0 durant 5 torns seguits.",
     "goal": 5,
     "visibility": {
-      "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
@@ -284,11 +211,6 @@
     "id": "BROKEN_BREATH",
     "name": "Respiració trencada",
     "description": "Sobreviu un torn després de quedar-te amb poca stamina.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "SURVIVE_TURN",
@@ -305,11 +227,6 @@
     "id": "WEIGHT_OF_FATIGUE",
     "name": "El pes del cansament",
     "description": "Guanya amb un 10% de stamina o menys.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "MATCH_WON",
@@ -327,12 +244,7 @@
     "name": "El ritual de la fatiga",
     "description": "Arriba a 0 stamina 5 vegades.",
     "goal": 5,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "ZERO_STAMINA"
     }
   },
@@ -341,10 +253,6 @@
     "name": "El ritme de la guerra",
     "description": "Mantén momentum alt durant 5 torns seguits.",
     "goal": 5,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "STATE_MAINTAINED",
       "conditions": [
@@ -361,10 +269,6 @@
     "name": "El temps s’esquerda",
     "description": "Mantén el momentum màxim durant 5 torns seguits.",
     "goal": 5,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "STATE_MAINTAINED",
       "conditions": [
@@ -381,12 +285,7 @@
     "name": "L’espiral",
     "description": "Arriba a momentum alt 10 vegades.",
     "goal": 10,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "HIGH_MOMENTUM"
     }
   },
@@ -395,12 +294,7 @@
     "name": "El vertigen",
     "description": "Passa 10 torns amb momentum alt.",
     "goal": 10,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "HIGH_MOMENTUM"
     }
   },
@@ -409,10 +303,6 @@
     "name": "L’impuls impossible",
     "description": "Mantén momentum alt i stamina baixa durant 3 torns seguits.",
     "goal": 3,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "STATE_MAINTAINED",
       "conditions": [
@@ -434,10 +324,6 @@
     "name": "Dansa de sang",
     "description": "Esquiva 3 cops consecutius.",
     "goal": 3,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONSECUTIVE_EVENT",
       "event": "ACTION_DODGE"
@@ -448,17 +334,12 @@
     "name": "Instint de supervivència",
     "description": "Esquiva 3 cops quan no hi havia dany entrant.",
     "goal": 3,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "ACTION_DODGE",
       "conditions": [
         {
           "field": "incomingDamage",
-          "operator": "==",
           "value": "0"
         }
       ]
@@ -469,10 +350,6 @@
     "name": "Carn contra acer",
     "description": "Defensa 5 cops consecutius.",
     "goal": 5,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONSECUTIVE_EVENT",
       "event": "ACTION_DEFEND"
@@ -483,10 +360,6 @@
     "name": "El cercle perfecte",
     "description": "Executa la seqüència ATAC → ESQUIVA → ATAC.",
     "goal": 3,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "ACTION_SEQUENCE",
       "sequence": [
@@ -501,10 +374,6 @@
     "name": "La fulla espera",
     "description": "Executa la seqüència CÀRREGA → DEFENSA → ATAC.",
     "goal": 3,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "ACTION_SEQUENCE",
       "sequence": [
@@ -518,18 +387,12 @@
     "id": "WEIGHT_OF_SKY",
     "name": "El pes del cel",
     "description": "Fes un cop carregat de gran dany.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "DAMAGE_DEALT",
       "conditions": [
         {
           "field": "chargedHit",
-          "operator": "==",
           "value": "true"
         },
         {
@@ -544,13 +407,7 @@
     "id": "COLOSSUS",
     "name": "El colós",
     "description": "Derrota un enemic amb un atac carregat.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "CHARGED_KILLING_BLOW"
     }
   },
@@ -558,13 +415,7 @@
     "id": "COLOSSUS_AWAKENS",
     "name": "El colós desperta",
     "description": "Guanya amb un cop carregat que decideix el combat.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "CHARGED_MATCH_WINNING_BLOW"
     }
   },
@@ -573,10 +424,6 @@
     "name": "El tro de ferro",
     "description": "Fes 300 punts de dany en un sol cop.",
     "goal": 300,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "MAX_VALUE_REACHED",
       "event": "DAMAGE_DEALT",
@@ -588,17 +435,12 @@
     "name": "La tempesta de metall",
     "description": "Encadena 3 crítics amb armes físiques.",
     "goal": 3,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONSECUTIVE_EVENT",
       "event": "CRIT",
       "conditions": [
         {
           "field": "weaponType",
-          "operator": "==",
           "value": "PHYSICAL"
         }
       ]
@@ -609,12 +451,7 @@
     "name": "La sentència perfecta",
     "description": "Guanya amb Sentència Final.",
     "goal": 3,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "FINAL_JUDGEMENT_WIN"
     }
   },
@@ -622,13 +459,7 @@
     "id": "FINAL_BLOW",
     "name": "El cop final",
     "description": "Guanya amb un cop carregat de Sentència Final.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "CHARGED_FINAL_BLOW_WIN"
     }
   },
@@ -636,11 +467,6 @@
     "id": "EXECUTIONERS_STILLNESS",
     "name": "La quietud del botxí",
     "description": "Carrega un atac mentre l’enemic té poca vida.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "ACTION_CHARGE",
@@ -657,13 +483,7 @@
     "id": "IRON_REMEMBERS",
     "name": "El ferro recorda",
     "description": "Utilitza una arma per primera vegada.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "WEAPON_USED"
     }
   },
@@ -672,10 +492,6 @@
     "name": "Caçador de relíquies",
     "description": "Utilitza almenys una vegada totes les armes conegudes.",
     "goal": 21,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "ALL_UNIQUE_VALUES",
       "event": "WEAPON_USED",
@@ -710,10 +526,6 @@
     "name": "Jurament de ferro",
     "description": "Guanya almenys un combat amb cada arma.",
     "goal": 21,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "ALL_UNIQUE_VALUES",
       "event": "MATCH_WON",
@@ -748,10 +560,6 @@
     "name": "L’armer del caos",
     "description": "Utilitza totes les armes durant combats en mode caòtic.",
     "goal": 21,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "ALL_UNIQUE_VALUES",
       "event": "WEAPON_USED",
@@ -782,7 +590,6 @@
       "conditions": [
         {
           "field": "chaosMode",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -793,10 +600,6 @@
     "name": "Les mans tacades",
     "description": "Derrota almenys un enemic amb cada arma.",
     "goal": 21,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "ALL_UNIQUE_VALUES",
       "event": "KILLING_BLOW",
@@ -830,13 +633,7 @@
     "id": "GRIMOIRE_HUNGER",
     "name": "La fam del grimori",
     "description": "Resol correctament el codi del Grimori i culmina el torn amb un crític.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "GRIMOIRE_CODE_SOLVED_CRIT"
     }
   },
@@ -845,12 +642,7 @@
     "name": "Els noms prohibits",
     "description": "Activa un multiplicador del Grimori igual o superior a 1 cinc vegades.",
     "goal": 5,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "GRIMOIRE_MULTIPLIER_AT_LEAST_ONE"
     }
   },
@@ -858,23 +650,16 @@
     "id": "BOOK_DOES_NOT_LIE",
     "name": "El llibre no menteix",
     "description": "Fes un crític amb el multiplicador màxim del Grimori.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "CRIT",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "GRIMORIE"
         },
         {
           "field": "grimoireMaxMultiplier",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -884,18 +669,12 @@
     "id": "KNOWLEDGE_DEVOURS",
     "name": "El coneixement devora",
     "description": "Guanya amb el Grimori del codi.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "MATCH_WON",
       "conditions": [
         {
           "field": "winnerWeaponId",
-          "operator": "==",
           "value": "GRIMORIE"
         }
       ]
@@ -905,9 +684,7 @@
     "id": "TONGUE_DEAD_GODS",
     "name": "La llengua dels déus morts",
     "description": "Utilitza el Grimori durant un combat en mode caòtic.",
-    "goal": 1,
     "visibility": {
-      "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
@@ -916,12 +693,10 @@
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "GRIMORIE"
         },
         {
           "field": "chaosMode",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -931,13 +706,10 @@
     "id": "GRIMOIRE_MIN_MULTIPLIER",
     "name": "La pàgina més freda",
     "description": "Treu el multiplicador mínim del Grimori.",
-    "goal": 1,
     "visibility": {
-      "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "GRIMOIRE_MIN_MULTIPLIER"
     }
   },
@@ -945,13 +717,7 @@
     "id": "GRIMOIRE_MAX_MULTIPLIER",
     "name": "La pàgina que crema",
     "description": "Treu el multiplicador màxim del Grimori.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "GRIMOIRE_MAX_MULTIPLIER"
     }
   },
@@ -959,18 +725,12 @@
     "id": "BALLISTA_DECIDED",
     "name": "La ballesta ha decidit",
     "description": "Dispara 3 projectils amb la Ballista de la sort en un mateix torn.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "BALLISTA_PROJECTILES",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "BALLISTA"
         },
         {
@@ -985,18 +745,12 @@
     "id": "SENSELESS_RAIN",
     "name": "Pluja insensata",
     "description": "Derrota un enemic amb múltiples projectils.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "KILLING_BLOW",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "BALLISTA"
         },
         {
@@ -1011,9 +765,7 @@
     "id": "ABSURD_TRAJECTORY",
     "name": "La trajectòria absurda",
     "description": "Guanya amb la Ballista després que la sort decideixi intervenir.",
-    "goal": 1,
     "visibility": {
-      "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
@@ -1022,7 +774,6 @@
       "conditions": [
         {
           "field": "winnerWeaponId",
-          "operator": "==",
           "value": "BALLISTA"
         }
       ]
@@ -1032,7 +783,6 @@
     "id": "NO_ONE_KNOWS_HOW",
     "name": "Ningú sap com",
     "description": "Fes un crític amb la Ballista durant un combat en mode caòtic.",
-    "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
       "showDescriptionBeforeComplete": false
@@ -1043,12 +793,10 @@
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "BALLISTA"
         },
         {
           "field": "chaosMode",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -1058,18 +806,12 @@
     "id": "NOISE_OF_WAR",
     "name": "El soroll de la guerra",
     "description": "Guanya amb la Ballista de la sort.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "MATCH_WON",
       "conditions": [
         {
           "field": "winnerWeaponId",
-          "operator": "==",
           "value": "BALLISTA"
         }
       ]
@@ -1080,10 +822,6 @@
     "name": "Carn i acer",
     "description": "Roba un total de 1.000 punts de vida amb les Dagues vampíriques.",
     "goal": 1000,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_SUM",
       "event": "LIFE_STEAL",
@@ -1091,7 +829,6 @@
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "VAMPIRICS_DAGGERS"
         }
       ]
@@ -1102,10 +839,6 @@
     "name": "La gana eterna",
     "description": "Roba vida 10 cops seguits.",
     "goal": 10,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONSECUTIVE_EVENT",
       "event": "LIFE_STEAL"
@@ -1115,11 +848,6 @@
     "id": "FANGS_UNDER_SKIN",
     "name": "Els ullals sota la pell",
     "description": "Derrota un enemic mentre robes vida.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "KILLING_BLOW",
@@ -1137,12 +865,7 @@
     "name": "La màgia s’ha negat",
     "description": "Falla 10 vegades amb el Bastó de la Disrupció Arcana.",
     "goal": 10,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "ARCANE_DISRUPTION_MISS"
     }
   },
@@ -1150,13 +873,7 @@
     "id": "FIRST_PACT",
     "name": "El primer pacte",
     "description": "Obté la teva primera perk.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "PERK_GAINED"
     }
   },
@@ -1164,13 +881,7 @@
     "id": "SECOND_FACE",
     "name": "El segon rostre",
     "description": "Activa una sinergia.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "SYNERGY_ACTIVATED"
     }
   },
@@ -1178,13 +889,7 @@
     "id": "HAND_OF_GODS",
     "name": "La mà dels déus",
     "description": "Rep una perk divina latent en crear el personatge.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "DIVINE_PERK_DORMANT_ASSIGNED"
     }
   },
@@ -1192,18 +897,12 @@
     "id": "FAVOR_OF_ARES",
     "name": "El favor d’Ares",
     "description": "Desperta completament una perk divina d’Ares.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "DIVINE_PERK_AWAKENED",
       "conditions": [
         {
           "field": "god",
-          "operator": "==",
           "value": "ARES"
         }
       ]
@@ -1213,18 +912,12 @@
     "id": "SMILE_OF_MORRIGAN",
     "name": "El somriure de Morrigan",
     "description": "Desperta completament una perk divina de Morrigan.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "DIVINE_PERK_AWAKENED",
       "conditions": [
         {
           "field": "god",
-          "operator": "==",
           "value": "MORRIGAN"
         }
       ]
@@ -1234,18 +927,12 @@
     "id": "FIRE_OF_BRIGID",
     "name": "El foc de Brigid",
     "description": "Desperta completament una perk divina de Brigid.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "DIVINE_PERK_AWAKENED",
       "conditions": [
         {
           "field": "god",
-          "operator": "==",
           "value": "BRIGID"
         }
       ]
@@ -1255,18 +942,12 @@
     "id": "EYES_OF_ARTEMIS",
     "name": "Els ulls d’Artemis",
     "description": "Desperta completament una perk divina d’Artemis.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "DIVINE_PERK_AWAKENED",
       "conditions": [
         {
           "field": "god",
-          "operator": "==",
           "value": "ARTEMIS"
         }
       ]
@@ -1276,18 +957,12 @@
     "id": "AURELION_BOARD",
     "name": "El tauler invisible",
     "description": "Activa una sinergia sota la mirada d’Aurelion.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "SYNERGY_ACTIVATED",
       "conditions": [
         {
           "field": "god",
-          "operator": "==",
           "value": "AURELION"
         }
       ]
@@ -1297,18 +972,12 @@
     "id": "THIRST_OF_MORRIGAN",
     "name": "La set de Morrigan",
     "description": "Fes avançar el despertar d’una perk divina de Morrigan diverses vegades.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "DIVINE_PERK_AWAKENING_PROGRESS",
       "conditions": [
         {
           "field": "god",
-          "operator": "==",
           "value": "MORRIGAN"
         }
       ]
@@ -1318,18 +987,12 @@
     "id": "LYSARA_VEIL",
     "name": "El vel de Lysara",
     "description": "Fes avançar el despertar d’una perk divina en mode caòtic.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "DIVINE_PERK_AWAKENING_PROGRESS",
       "conditions": [
         {
           "field": "chaosMode",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -1339,18 +1002,12 @@
     "id": "EYES_BEHIND_VEIL",
     "name": "Els ulls darrere el vel",
     "description": "Fes avançar el despertar d’una perk divina durant un combat en mode caòtic.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "DIVINE_PERK_AWAKENING_PROGRESS",
       "conditions": [
         {
           "field": "chaosMode",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -1360,11 +1017,6 @@
     "id": "VARKHUL_HEART",
     "name": "El cor de Varkhul",
     "description": "Fes avançar el despertar d’una perk divina amb un 20% de vida o menys.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "DIVINE_PERK_AWAKENING_PROGRESS",
@@ -1381,11 +1033,6 @@
     "id": "HUNGER_OF_GODS",
     "name": "La fam dels déus",
     "description": "Fes avançar el despertar d’una perk divina mentre tens poca vida.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "DIVINE_PERK_AWAKENING_PROGRESS",
@@ -1402,13 +1049,7 @@
     "id": "BODY_CANNOT_BEAR",
     "name": "El cos no aguanta",
     "description": "Arriba al límit de perks.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "PERK_LIMIT_REACHED"
     }
   },
@@ -1417,12 +1058,7 @@
     "name": "El recipient perfecte",
     "description": "Activa 5 sinergies.",
     "goal": 5,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "SYNERGY_ACTIVATED"
     }
   },
@@ -1431,12 +1067,7 @@
     "name": "Els déus observen",
     "description": "Desperta completament diverses perks divines al llarg dels combats.",
     "goal": 5,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "DIVINE_PERK_AWAKENED"
     }
   },
@@ -1444,13 +1075,7 @@
     "id": "RITUAL_CONTINUES",
     "name": "El ritual continua",
     "description": "Completa la teva primera missió de perk.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "PERK_MISSION_COMPLETED"
     }
   },
@@ -1459,12 +1084,7 @@
     "name": "La màquina ritual",
     "description": "Completa 3 missions de perk.",
     "goal": 3,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "PERK_MISSION_COMPLETED"
     }
   },
@@ -1473,12 +1093,7 @@
     "name": "Els gravats antics",
     "description": "Completa 10 missions.",
     "goal": 10,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "PERK_MISSION_COMPLETED"
     }
   },
@@ -1486,11 +1101,6 @@
     "id": "NO_ONE_SURVIVES_CLEAN",
     "name": "Ningú sobreviu net",
     "description": "Completa una missió amb poca vida.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "PERK_MISSION_COMPLETED",
@@ -1507,18 +1117,12 @@
     "id": "PERFECT_SYMBOL",
     "name": "El símbol perfecte",
     "description": "Completa una missió durant un combat en mode caòtic.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "PERK_MISSION_COMPLETED",
       "conditions": [
         {
           "field": "chaosMode",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -1528,13 +1132,7 @@
     "id": "BLOOD_PACT",
     "name": "Pacte de sang",
     "description": "Utilitza el Pacte de Sang per primera vegada quan et falta mana.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "BLOOD_PACT_USED"
     }
   },
@@ -1542,13 +1140,7 @@
     "id": "PACT_WRITTEN_BLOOD",
     "name": "La sang compra paraules",
     "description": "Utilitza el Pacte de Sang amb un 25% de vida o menys.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "BLOOD_PACT_LOW_HEALTH_USED"
     }
   },
@@ -1557,12 +1149,7 @@
     "name": "El preu vermell",
     "description": "Paga vida amb el Pacte de Sang 5 vegades.",
     "goal": 5,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "BLOOD_PACT_LIFE_PAID"
     }
   },
@@ -1570,13 +1157,11 @@
     "id": "BLOOD_PACT_CRITICAL_HEALTH",
     "name": "El tribut impossible",
     "description": "Utilitza el Pacte de Sang amb un 10% de vida o menys.",
-    "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "BLOOD_PACT_CRITICAL_HEALTH_USED"
     }
   },
@@ -1584,13 +1169,7 @@
     "id": "BLOOD_PACT_FULL_RESTORE",
     "name": "Mana amb gust de ferro",
     "description": "Restaura tot el mana que et faltava amb el Pacte de Sang.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "BLOOD_PACT_FULL_RESTORE"
     }
   },
@@ -1599,10 +1178,6 @@
     "name": "L’altar sota la pell",
     "description": "Restaura un total de 1.000 punts de mana amb el Pacte de Sang.",
     "goal": 1000,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "SUM_VALUE",
       "event": "BLOOD_PACT_MANA_RESTORED",
@@ -1614,10 +1189,6 @@
     "name": "El compte del carnisser",
     "description": "Paga un total de 500 punts de vida amb el Pacte de Sang.",
     "goal": 500,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "SUM_VALUE",
       "event": "BLOOD_PACT_LIFE_PAID",
@@ -1628,9 +1199,7 @@
     "id": "SILENCE_OF_PACTS",
     "name": "El silenci dels pactes",
     "description": "Intenta utilitzar el Pacte de Sang sense que el pacte sigui efectiu.",
-    "goal": 1,
     "visibility": {
-      "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
@@ -1639,7 +1208,6 @@
       "conditions": [
         {
           "field": "bloodPactUsed",
-          "operator": "==",
           "value": "false"
         }
       ]
@@ -1649,13 +1217,7 @@
     "id": "SPIRITUAL_CALL",
     "name": "La crida espiritual",
     "description": "Utilitza la Crida Espiritual.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "SPIRITUAL_CALLING_USED"
     }
   },
@@ -1664,10 +1226,6 @@
     "name": "L’alè dels morts",
     "description": "Cura’t amb la Crida Espiritual.",
     "goal": 500,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "SUM_VALUE",
       "event": "SPIRITUAL_CALLING_HEALED",
@@ -1678,13 +1236,7 @@
     "id": "SPIRITUAL_ROLL_20",
     "name": "La crida escoltada",
     "description": "Treu un 20 en la tirada espiritual.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "SPIRITUAL_ROLL_NATURAL_20"
     }
   },
@@ -1692,13 +1244,10 @@
     "id": "SPIRITUAL_ROLL_1",
     "name": "Els déus han rigut",
     "description": "Treu un 1 en la tirada espiritual.",
-    "goal": 1,
     "visibility": {
-      "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "SPIRITUAL_ROLL_NATURAL_1"
     }
   },
@@ -1706,13 +1255,7 @@
     "id": "REALITY_YIELDS",
     "name": "Quan la realitat cedeix",
     "description": "Combat per primera vegada en mode caòtic.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "CHAOS_MATCH_STARTED"
     }
   },
@@ -1720,18 +1263,12 @@
     "id": "LAST_BELL",
     "name": "L’últim campanar",
     "description": "Completa un combat en mode caòtic.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "MATCH_FINISHED",
       "conditions": [
         {
           "field": "chaosMode",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -1741,18 +1278,12 @@
     "id": "WALLS_BREATHE",
     "name": "Les parets respiren",
     "description": "Completa un combat en mode caòtic.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "MATCH_FINISHED",
       "conditions": [
         {
           "field": "chaosMode",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -1773,7 +1304,6 @@
       "conditions": [
         {
           "field": "chaosMode",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -1784,12 +1314,7 @@
     "name": "La tempesta ritual",
     "description": "Combat 5 vegades en mode caòtic.",
     "goal": 5,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "CHAOS_MATCH_STARTED"
     }
   },
@@ -1798,12 +1323,7 @@
     "name": "El món desfet",
     "description": "Sobreviu 8 torns durant combats en mode caòtic.",
     "goal": 8,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "CHAOS_ACTIVE_TURN"
     }
   },
@@ -1811,18 +1331,12 @@
     "id": "FLESH_BENDS",
     "name": "La carn es doblega",
     "description": "Roba vida durant un combat en mode caòtic.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "LIFE_STEAL",
       "conditions": [
         {
           "field": "chaosMode",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -1832,13 +1346,10 @@
     "id": "GOD_UNDER_SKIN",
     "name": "El déu sota la pell",
     "description": "Guanya un combat en mode caòtic.",
-    "goal": 1,
     "visibility": {
-      "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "CHAOS_MATCH_WON"
     }
   },
@@ -1846,7 +1357,6 @@
     "id": "BLEEDING_REALITY",
     "name": "La realitat sagnant",
     "description": "Guanya amb un 10% de vida o menys en mode caòtic.",
-    "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
       "showDescriptionBeforeComplete": false
@@ -1857,7 +1367,6 @@
       "conditions": [
         {
           "field": "chaosMode",
-          "operator": "==",
           "value": "true"
         },
         {
@@ -1872,7 +1381,6 @@
     "id": "NOT_LEGAL",
     "name": "No crec que això fos legal",
     "description": "Activa una perk durant un combat en mode caòtic.",
-    "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
       "showDescriptionBeforeComplete": false
@@ -1883,7 +1391,6 @@
       "conditions": [
         {
           "field": "chaosMode",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -1895,11 +1402,9 @@
     "description": "Falla 5 accions per causes estranyes.",
     "goal": 5,
     "visibility": {
-      "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "ATTACK_FAILED"
     }
   },
@@ -1913,7 +1418,6 @@
       "showDescriptionBeforeComplete": false
     },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "MISS"
     }
   },
@@ -1921,13 +1425,10 @@
     "id": "FRACTURED_WILL",
     "name": "La voluntat partida",
     "description": "El caos canvia l’acció que havies triat.",
-    "goal": 1,
     "visibility": {
-      "showNameBeforeComplete": true,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "CHAOS_ACTION_CHANGED"
     }
   },
@@ -1935,7 +1436,6 @@
     "id": "LAUGHTER_UNDER_STORM",
     "name": "El riure sota la tempesta",
     "description": "Sobreviu a un autogolpe durant un combat en mode caòtic.",
-    "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
       "showDescriptionBeforeComplete": false
@@ -1946,7 +1446,6 @@
       "conditions": [
         {
           "field": "chaosMode",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -1956,13 +1455,11 @@
     "id": "BLACK_DOOR",
     "name": "La porta negra",
     "description": "Descobreix un resultat rar del mode caòtic.",
-    "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "CHAOS_OUTCOME_ROLLED"
     }
   },
@@ -1970,13 +1467,11 @@
     "id": "PERFECT_CHAOS_OUTCOME",
     "name": "La simetria de la bogeria",
     "description": "Obté el caos perfecte.",
-    "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "CHAOS_PERFECT"
     }
   },
@@ -1984,7 +1479,6 @@
     "id": "INVERTED_PRAYER",
     "name": "La pregària invertida",
     "description": "Utilitza el Pacte de Sang durant un combat en mode caòtic.",
-    "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
       "showDescriptionBeforeComplete": false
@@ -1995,7 +1489,6 @@
       "conditions": [
         {
           "field": "chaosMode",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -2005,7 +1498,6 @@
     "id": "FORBIDDEN_RITUAL",
     "name": "El ritual prohibit",
     "description": "Desperta completament una perk divina durant un combat en mode caòtic empunyant el Grimori.",
-    "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
       "showDescriptionBeforeComplete": false
@@ -2016,12 +1508,10 @@
       "conditions": [
         {
           "field": "chaosMode",
-          "operator": "==",
           "value": "true"
         },
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "GRIMORIE"
         }
       ]
@@ -2042,7 +1532,6 @@
       "conditions": [
         {
           "field": "chaosMode",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -2052,23 +1541,16 @@
     "id": "ELEMENTAL_FIRST_SPARK",
     "name": "La primera espurna",
     "description": "Aplica una cremada amb La dualitat elemental.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "ELEMENTAL_DUALITY"
         },
         {
           "field": "elementalBurnApplied",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -2078,23 +1560,16 @@
     "id": "ELEMENTAL_FIRST_FROST",
     "name": "El primer gebre",
     "description": "Congela un rival amb La dualitat elemental.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "ELEMENTAL_DUALITY"
         },
         {
           "field": "elementalFrozenApplied",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -2105,17 +1580,12 @@
     "name": "El pèndol impossible",
     "description": "Utilitza 20 cops la Dualitat elemental.",
     "goal": 20,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "ELEMENTAL_DUALITY"
         }
       ]
@@ -2125,18 +1595,12 @@
     "id": "FIRST_OATH_SPEAR_USED",
     "name": "La primera punta",
     "description": "Utilitza la Llança del primer jurament per primera vegada.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "FIRST_OATH_SPEAR"
         }
       ]
@@ -2146,18 +1610,12 @@
     "id": "FIRST_BLOOD_KNIFE_USED",
     "name": "La primera sang torna",
     "description": "Utilitza el Ganivet de la primera sang per primera vegada.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "FIRST_BLOOD_KNIFE"
         }
       ]
@@ -2167,18 +1625,12 @@
     "id": "BROKEN_SHIELD_USED",
     "name": "La defensa trencada",
     "description": "Utilitza l’Escut partit per primera vegada.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "BROKEN_SHIELD"
         }
       ]
@@ -2188,18 +1640,12 @@
     "id": "ANCESTRAL_BELL_USED",
     "name": "El bronze respon",
     "description": "Utilitza la Campana ancestral per primera vegada.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "ANCESTRAL_BELL"
         }
       ]
@@ -2209,18 +1655,12 @@
     "id": "CHAOS_FRAGMENT_USED",
     "name": "L’esquerda a la mà",
     "description": "Utilitza el Fragment de caos per primera vegada.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "CHAOS_FRAGMENT"
         }
       ]
@@ -2230,18 +1670,12 @@
     "id": "TACTICAL_MIRROR_USED",
     "name": "El mirall s’alça",
     "description": "Utilitza el Mirall tàctic per primera vegada.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "TACTICAL_MIRROR"
         }
       ]
@@ -2251,18 +1685,12 @@
     "id": "RETALIATION_SHORTBOW_USED",
     "name": "La corda respon",
     "description": "Utilitza l’Arc curt de represàlia per primera vegada.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "RETALIATION_SHORTBOW"
         }
       ]
@@ -2272,18 +1700,12 @@
     "id": "BAD_OMEN_SLING_USED",
     "name": "El presagi vola",
     "description": "Utilitza la Fona del mal presagi per primera vegada.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "BAD_OMEN_SLING"
         }
       ]
@@ -2293,18 +1715,12 @@
     "id": "COLD_STRING_CROSSBOW_USED",
     "name": "La corda freda",
     "description": "Utilitza la Ballesta de corda freda per primera vegada.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "COLD_STRING_CROSSBOW"
         }
       ]
@@ -2314,23 +1730,16 @@
     "id": "FIRST_OATH_CLASH",
     "name": "Dues puntes alhora",
     "description": "Activa el bonus de la Llança del primer jurament.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "FIRST_OATH_SPEAR"
         },
         {
           "field": "firstOathClash",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -2340,23 +1749,16 @@
     "id": "BROKEN_SHIELD_COUNTER",
     "name": "La defensa mossega",
     "description": "Ataca amb Escut partit aprofitant guàrdia acumulada.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "BROKEN_SHIELD"
         },
         {
           "field": "guardCounter",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -2366,18 +1768,12 @@
     "id": "ANCESTRAL_BELL_HEAL",
     "name": "Eco que encara cura",
     "description": "Cura’t amb la Campana ancestral.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "ANCESTRAL_BELL"
         },
         {
@@ -2392,23 +1788,16 @@
     "id": "CHAOS_FRAGMENT_HIGH_ROLL",
     "name": "La esquerda somriu",
     "description": "Obtén la variant positiva del Fragment de caos.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "CHAOS_FRAGMENT"
         },
         {
           "field": "chaosFragmentHigh",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -2418,23 +1807,16 @@
     "id": "TACTICAL_MIRROR_READ",
     "name": "Costum revelat",
     "description": "Llegeix una acció repetida amb el Mirall tàctic.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "TACTICAL_MIRROR"
         },
         {
           "field": "tacticalMirrorRead",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -2444,23 +1826,16 @@
     "id": "RETALIATION_SHORTBOW_PUNISH",
     "name": "Guàrdia massa quieta",
     "description": "Castiga una defensa amb l’Arc curt de represàlia.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "RETALIATION_SHORTBOW"
         },
         {
           "field": "retaliationAgainstDefend",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -2470,18 +1845,12 @@
     "id": "BAD_OMEN_BUILDS",
     "name": "Presagi acumulat",
     "description": "Acumula el presagi crític de la Fona del mal presagi.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "BAD_OMEN_SLING"
         },
         {
@@ -2496,23 +1865,16 @@
     "id": "COLD_STRING_CHILL",
     "name": "Fred que pesa",
     "description": "Aplica Fred menor amb la Ballesta de corda freda.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponId",
-          "operator": "==",
           "value": "COLD_STRING_CROSSBOW"
         },
         {
           "field": "chilledApplied",
-          "operator": "==",
           "value": "true"
         }
       ]
@@ -2523,17 +1885,12 @@
     "name": "El pes del ferro",
     "description": "Utilitza 4 vegades armes físiques.",
     "goal": 4,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponType",
-          "operator": "==",
           "value": "PHYSICAL"
         }
       ]
@@ -2544,17 +1901,12 @@
     "name": "El llindar del mana",
     "description": "Utilitza 4 vegades armes màgiques.",
     "goal": 4,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponType",
-          "operator": "==",
           "value": "MAGICAL"
         }
       ]
@@ -2564,13 +1916,7 @@
     "id": "FULL_FORCE",
     "name": "La càrrega que arriba",
     "description": "Impacta amb un atac carregat.",
-    "goal": 1,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "CHARGED_HIT"
     }
   },
@@ -2579,17 +1925,12 @@
     "name": "L’ull que no parpelleja",
     "description": "Utilitza 4 vegades armes de rang.",
     "goal": 4,
-    "visibility": {
-      "showNameBeforeComplete": true,
-      "showDescriptionBeforeComplete": true
-    },
     "objective": {
       "type": "CONDITIONAL_COUNT",
       "event": "WEAPON_USED",
       "conditions": [
         {
           "field": "weaponType",
-          "operator": "==",
           "value": "RANGE"
         }
       ]
@@ -2599,13 +1940,11 @@
     "id": "ARCANE_OVERLOAD_RELEASED",
     "name": "La sang sota el vel",
     "description": "Utilitza la Sobrecàrrega arcana per primera vegada.",
-    "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "ARCANE_OVERLOAD_USED"
     }
   },
@@ -2613,13 +1952,11 @@
     "id": "COLOSSAL_BREAK_RELEASED",
     "name": "La fractura del colós",
     "description": "Utilitza el Trencament colossal per primera vegada.",
-    "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "COLOSSAL_BREAK_USED"
     }
   },
@@ -2627,13 +1964,11 @@
     "id": "ELVEN_OPENING_RELEASED",
     "name": "L’escletxa èlfica",
     "description": "Utilitza el Tret èlfic d’obertura per primera vegada.",
-    "goal": 1,
     "visibility": {
       "showNameBeforeComplete": false,
       "showDescriptionBeforeComplete": false
     },
     "objective": {
-      "type": "COUNT_EVENT",
       "event": "ELVEN_OPENING_SHOT_USED"
     }
   },

@@ -13,6 +13,7 @@ import org.jline.terminal.Terminal;
 import org.jline.utils.InfoCmp.Capability;
 
 import rpgcombat.utils.terminal.SharedTerminal;
+import rpgcombat.utils.terminal.TerminalInput;
 import rpgcombat.utils.terminal.TerminalSession;
 import rpgcombat.utils.ui.TerminalClear;
 
@@ -169,6 +170,15 @@ public final class AchievementGridViewer {
                         false, false)));
     }
 
+    /** Prepara el primer fotograma sense escriure al terminal. */
+    public static void preload(List<Achievement> achievements) {
+        if (achievements == null || achievements.isEmpty()) {
+            return;
+        }
+
+        renderFrame(achievements, achievements, new ViewOptions(), 0, 120, 40);
+    }
+
     /**
      * Mostra el visor interactiu d'assoliments.
      *
@@ -212,7 +222,7 @@ public final class AchievementGridViewer {
                     lastFrame = frame;
                 }
 
-                Action action = reader.readBinding(keys);
+                Action action = TerminalInput.readBindingIgnoringMouse(reader, keys, terminal, Action.IGNORE);
                 if (action == null) {
                     terminal.writer().print("\033[H");
                     terminal.writer().print(frame);
@@ -242,7 +252,6 @@ public final class AchievementGridViewer {
                     case IGNORE -> {}
                     case EXIT -> {
                         terminal.writer().print(RESET);
-                        terminal.puts(Capability.cursor_visible);
                         terminal.flush();
                         return;
                     }
@@ -275,6 +284,7 @@ public final class AchievementGridViewer {
 
         bindTerminalKey(map, terminal, Capability.key_up, Action.IGNORE);
         bindTerminalKey(map, terminal, Capability.key_down, Action.IGNORE);
+        TerminalInput.bindMouseIgnore(map, terminal, Action.IGNORE);
 
         return map;
     }

@@ -14,6 +14,7 @@ import rpgcombat.discovery.ui.render.DiscoveryRenderer;
 import rpgcombat.discovery.ui.state.DiscoveryUiState;
 import rpgcombat.utils.input.Menu;
 import rpgcombat.utils.terminal.SharedTerminal;
+import rpgcombat.utils.terminal.TerminalInput;
 import rpgcombat.utils.terminal.TerminalSession;
 import rpgcombat.utils.ui.Prettier;
 import rpgcombat.utils.ui.TerminalClear;
@@ -75,6 +76,15 @@ public final class DiscoveryInteractiveViewer {
         new DiscoveryInteractiveViewer().run(overview);
     }
 
+    /** Prepara el primer fotograma sense escriure al terminal. */
+    public static void preload(DiscoveryOverview overview) {
+        if (overview == null) {
+            return;
+        }
+
+        new DiscoveryRenderer().render(overview, new DiscoveryUiState(), 120, 40);
+    }
+
     /** Executa el bucle principal del visor. */
     private void run(DiscoveryOverview overview) {
         try (TerminalSession session = SharedTerminal.openSession()) {
@@ -95,7 +105,7 @@ public final class DiscoveryInteractiveViewer {
                 terminal.writer().print(renderer.render(overview, state, width, height));
                 terminal.flush();
 
-                Action action = reader.readBinding(keys);
+                Action action = TerminalInput.readBindingIgnoringMouse(reader, keys, terminal, Action.IGNORE);
                 if (action == null) {
                     continue;
                 }
@@ -111,7 +121,6 @@ public final class DiscoveryInteractiveViewer {
                     }
                     case EXIT -> {
                         terminal.writer().print(RESET);
-                        terminal.puts(Capability.cursor_visible);
                         terminal.flush();
                         return;
                     }
@@ -138,6 +147,7 @@ public final class DiscoveryInteractiveViewer {
         bindTerminalKey(map, terminal, Capability.key_down, Action.DOWN);
         bindTerminalKey(map, terminal, Capability.key_left, Action.LEFT);
         bindTerminalKey(map, terminal, Capability.key_right, Action.RIGHT);
+        TerminalInput.bindMouseIgnore(map, terminal, Action.IGNORE);
 
         return map;
     }

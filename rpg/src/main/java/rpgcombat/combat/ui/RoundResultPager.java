@@ -13,6 +13,7 @@ import rpgcombat.combat.models.Winner;
 import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.models.characters.Character;
 import rpgcombat.utils.terminal.SharedTerminal;
+import rpgcombat.utils.terminal.TerminalInput;
 import rpgcombat.utils.terminal.TerminalSession;
 import rpgcombat.utils.ui.Ansi;
 import rpgcombat.utils.ui.TerminalClear;
@@ -129,8 +130,24 @@ public final class RoundResultPager {
     }
 
     private int readEscapeKey(NonBlockingReader reader) throws IOException {
+        int first = reader.read(ESC_TIMEOUT_MS);
+        if (first == NonBlockingReader.READ_EXPIRED) {
+            return 0;
+        }
+        int second = reader.read(ESC_TIMEOUT_MS);
+        if (second == NonBlockingReader.READ_EXPIRED) {
+            return first == '[' ? 0 : 0;
+        }
+
+        String mousePrefix = TerminalInput.mousePrefixAfterEscape(first, second);
+        if (mousePrefix != null) {
+            drainMouseRemainder(reader, mousePrefix);
+            return 0;
+        }
+
         StringBuilder sequence = new StringBuilder();
-        for (int i = 0; i < 6; i++) {
+        sequence.append((char) first).append((char) second);
+        for (int i = 0; i < 4; i++) {
             int next = reader.read(ESC_TIMEOUT_MS);
             if (next == NonBlockingReader.READ_EXPIRED) {
                 break;
@@ -146,6 +163,21 @@ public final class RoundResultPager {
             return KEY_RIGHT;
         }
         return 0;
+    }
+
+    private void drainMouseRemainder(NonBlockingReader reader, String mousePrefix) throws IOException {
+        if ("\033[M".equals(mousePrefix)) {
+            for (int i = 0; i < 3; i++) {
+                reader.read(ESC_TIMEOUT_MS);
+            }
+            return;
+        }
+        for (int i = 0; i < 32; i++) {
+            int next = reader.read(ESC_TIMEOUT_MS);
+            if (next == NonBlockingReader.READ_EXPIRED || next == 'M' || next == 'm') {
+                return;
+            }
+        }
     }
 
     private void waitForQuiet(NonBlockingReader reader) throws IOException {
