@@ -378,7 +378,8 @@ final class WeaponMenuTerminal implements AutoCloseable {
         int end = Math.min(filtered.size(), start + Math.max(MIN_VISIBLE_ROWS, visibleRows));
 
         for (int i = start; i < end; i++) {
-            lines.add(buildRowAnsi(weapons, filtered.get(i), stats, i == state.cursor));
+            String marker = scrollMarker(i, start, end, state.viewportStart > 0, end < filtered.size());
+            lines.add(withScrollMarker(buildRowAnsi(weapons, filtered.get(i), stats, i == state.cursor), marker));
         }
 
         return lines;
@@ -586,6 +587,27 @@ final class WeaponMenuTerminal implements AutoCloseable {
         int clampedVisibleRows = Math.max(MIN_VISIBLE_ROWS, visibleRows);
         int remaining = filteredSize - viewportStart;
         return Math.clamp(remaining, 1, clampedVisibleRows);
+    }
+
+    /** Retorna el marcador triangular per a una fila extrema visible. */
+    private String scrollMarker(int index, int start, int end, boolean hasAbove, boolean hasBelow) {
+        if (hasAbove && index == start) {
+            return "▲";
+        }
+        if (hasBelow && index == end - 1) {
+            return "▼";
+        }
+        return "";
+    }
+
+    /** Integra el marcador sense afegir files ni canviar el viewport. */
+    private String withScrollMarker(String line, String marker) {
+        if (marker == null || marker.isEmpty()) {
+            return line;
+        }
+        AttributedStringBuilder out = new AttributedStringBuilder(8);
+        JLineAnsi.append(out, JLineAnsi.DARK_GRAY, marker);
+        return line + " " + out.toAnsi(terminal);
     }
 
     /**

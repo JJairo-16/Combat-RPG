@@ -157,14 +157,20 @@ public final class DiscoveryRenderer {
             DiscoveryUiState state) {
 
         List<String> lines = new ArrayList<>(contentRows);
+        int total = categories.size();
+        int start = state.categoryScroll();
+        int end = Math.min(total, start + contentRows);
+        boolean hasAbove = start > 0;
+        boolean hasBelow = end < total;
 
         if (state.categoriesCollapsed()) {
-            int end = Math.min(categories.size(), state.categoryScroll() + contentRows);
-            for (int i = state.categoryScroll(); i < end; i++) {
+            for (int i = start; i < end; i++) {
                 DiscoveryCategoryView category = categories.get(i);
                 boolean selected = i == state.selectedCategory();
+                String marker = scrollMarker(i, start, end, hasAbove, hasBelow);
 
-                String label = centerPlain(compactCategoryLabel(category.title()), width);
+                String label = centerPlain(compactCategoryLabel(category.title()), marker.isEmpty() ? width : width - 2);
+                label = withScrollMarker(label, width, marker);
                 lines.add(selected ? selectedCell(label, width) : cell(label, width, MUTED));
             }
 
@@ -172,11 +178,11 @@ public final class DiscoveryRenderer {
             return lines;
         }
 
-        int end = Math.min(categories.size(), state.categoryScroll() + contentRows);
-        for (int i = state.categoryScroll(); i < end; i++) {
+        for (int i = start; i < end; i++) {
             DiscoveryCategoryView category = categories.get(i);
             boolean selected = state.activePanel() == DiscoveryUiState.Panel.CATEGORIES
                     && i == state.selectedCategory();
+            String marker = scrollMarker(i, start, end, hasAbove, hasBelow);
 
             String cursor = selected ? "▸ " : "  ";
             String progress = category.discovered() + "/" + category.total();
@@ -185,13 +191,14 @@ public final class DiscoveryRenderer {
             int titleWidth = Math.max(
                     1,
                     width - displayWidth(cursor) - displayWidth(" ") - displayWidth(barPlain)
-                            - displayWidth(" ") - displayWidth(progress));
+                            - displayWidth(" ") - displayWidth(progress) - markerReserve(marker));
 
             String title = fitPlain(category.title(), titleWidth);
             String plain = cursor + title + " " + barPlain + " " + progress;
+            String markedPlain = withScrollMarker(plain, width, marker);
 
             if (selected) {
-                lines.add(selectedCell(plain, width));
+                lines.add(selectedCell(markedPlain, width));
             } else {
                 String styled = cursor
                         + WHITE + title + RESET
@@ -200,7 +207,7 @@ public final class DiscoveryRenderer {
                         + " "
                         + MUTED + progress + RESET;
 
-                lines.add(padStyled(styled, plain, width));
+                lines.add(padStyledWithMarker(styled, plain, width, marker));
             }
         }
 
@@ -234,18 +241,26 @@ public final class DiscoveryRenderer {
             return lines;
         }
 
-        int end = Math.min(entries.size(), state.entryScroll() + contentRows);
-        for (int i = state.entryScroll(); i < end; i++) {
+        int total = entries.size();
+        int start = state.entryScroll();
+        int end = Math.min(total, start + contentRows);
+        boolean hasAbove = start > 0;
+        boolean hasBelow = end < total;
+
+        for (int i = start; i < end; i++) {
             DiscoveryEntryView entry = entries.get(i);
             boolean selected = state.activePanel() == DiscoveryUiState.Panel.ENTRIES && i == state.selectedEntry();
+            String marker = scrollMarker(i, start, end, hasAbove, hasBelow);
 
             String cursor = selected ? "▸ " : "  ";
             String icon = entry.discovered() ? "◆ " : "◇ ";
-            String title = fitPlain(entry.title(), Math.max(1, width - displayWidth(cursor) - displayWidth(icon)));
+            String title = fitPlain(entry.title(),
+                    Math.max(1, width - displayWidth(cursor) - displayWidth(icon) - markerReserve(marker)));
             String plain = cursor + icon + title;
+            String markedPlain = withScrollMarker(plain, width, marker);
 
             if (selected) {
-                lines.add(selectedCell(plain, width));
+                lines.add(selectedCell(markedPlain, width));
             } else {
                 String styled = cursor
                         + (entry.discovered() ? GREEN : MUTED)
@@ -255,7 +270,7 @@ public final class DiscoveryRenderer {
                         + title
                         + RESET;
 
-                lines.add(padStyled(styled, plain, width));
+                lines.add(padStyledWithMarker(styled, plain, width, marker));
             }
         }
 
@@ -568,6 +583,42 @@ public final class DiscoveryRenderer {
         }
 
         padEmpty(lines, maxLines, width);
+    }
+
+    /** Retorna el marcador triangular per a una fila extrema visible. */
+    private static String scrollMarker(int index, int start, int end, boolean hasAbove, boolean hasBelow) {
+        if (hasAbove && index == start) {
+            return "▲";
+        }
+        if (hasBelow && index == end - 1) {
+            return "▼";
+        }
+        return "";
+    }
+
+    /** Espai reservat dins una fila per mostrar el marcador sense canviar el layout. */
+    private static int markerReserve(String marker) {
+        return marker == null || marker.isEmpty() ? 0 : 2;
+    }
+
+    /** Integra el marcador al final visible de la fila, sin afegir files. */
+    private static String withScrollMarker(String plain, int width, String marker) {
+        if (marker == null || marker.isEmpty()) {
+            return plain;
+        }
+        int contentWidth = Math.max(1, width - 2);
+        String fitted = fitPlain(plain, contentWidth);
+        int spaces = Math.max(1, width - displayWidth(fitted) - displayWidth(marker));
+        return fitted + " ".repeat(spaces) + marker;
+    }
+
+    /** Emplena una fila amb estil i marcador discret. */
+    private static String padStyledWithMarker(String styled, String plain, int width, String marker) {
+        if (marker == null || marker.isEmpty()) {
+            return padStyled(styled, plain, width);
+        }
+        int spaces = Math.max(1, width - displayWidth(plain) - displayWidth(marker));
+        return styled + " ".repeat(spaces) + MUTED + marker + RESET;
     }
 
     /** Emplena amb línies buides fins a la mida indicada. */
