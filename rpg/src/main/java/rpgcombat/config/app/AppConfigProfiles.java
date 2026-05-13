@@ -3,6 +3,7 @@ package rpgcombat.config.app;
 import rpgcombat.config.character.CharactersConfig;
 import rpgcombat.config.debug.DebugOptions;
 import rpgcombat.config.debug.DebugProfile;
+import rpgcombat.config.game.GameModeOptions;
 import rpgcombat.config.paths.PathsConfig;
 import rpgcombat.config.ui.CinematicsOptions;
 import rpgcombat.config.ui.HomeScreenConfig;
@@ -31,6 +32,7 @@ public final class AppConfigProfiles {
                 PathsConfig.defaultConfig(),
                 UiConfig.defaultConfig(),
                 CinematicsOptions.defaultConfig(),
+                GameModeOptions.defaultConfig(),
                 DebugOptions.getFalse(),
                 CharactersConfig.defaultConfig(),
                 HomeScreenConfig.defaultConfig());
@@ -41,6 +43,7 @@ public final class AppConfigProfiles {
                 PathsConfig.defaultConfig(),
                 UiConfig.debugConfig(),
                 CinematicsOptions.debugConfig(),
+                GameModeOptions.debugConfig(),
                 new DebugOptions(true, false, true),
                 CharactersConfig.debugConfig(),
                 HomeScreenConfig.disabled());
@@ -51,6 +54,7 @@ public final class AppConfigProfiles {
                 PathsConfig.defaultConfig(),
                 UiConfig.debugConfig(),
                 CinematicsOptions.debugConfig(),
+                GameModeOptions.debugConfig(),
                 new DebugOptions(true, true, true),
                 CharactersConfig.debugConfig(),
                 HomeScreenConfig.disabled());
@@ -61,6 +65,7 @@ public final class AppConfigProfiles {
                 PathsConfig.defaultConfig(),
                 UiConfig.debugConfig(),
                 CinematicsOptions.debugConfig(),
+                GameModeOptions.debugConfig(),
                 new DebugOptions(true, true, true),
                 CharactersConfig.debugConfig(),
                 HomeScreenConfig.defaultConfig());

@@ -8,7 +8,26 @@
 
 El sistema de perks afegeix recompenses permanents durant el combat a partir de missions assignades als jugadors.
 
-Cada jugador rep una missió inicial. Quan la completa, el joc obre un menú de selecció i el jugador tria una perk. La perk escollida es converteix en un efecte permanent que s'avalua en fases concretes del combat.
+Cada jugador rep una missió inicial. Quan la completa:
+
+1. es marca el progrés com a complet
+2. es genera una elecció de perks
+3. el jugador tria una perk des del menú
+4. la perk es converteix en un efecte actiu persistent
+
+Els efectes s’avaluen en fases concretes del combat mitjançant triggers.
+
+---
+
+## ▌Flux general
+
+1. assignació de missió
+2. actualització de progrés per esdeveniments
+3. completat de missió
+4. generació d’elecció de perks
+5. selecció del jugador
+6. aplicació d’efectes
+7. execució durant el combat
 
 ---
 
@@ -16,38 +35,24 @@ Cada jugador rep una missió inicial. Quan la completa, el joc obre un menú de 
 
 - `perks/CombatPerkSystem.java`
 - `perks/PlayerPerkState.java`
-- `perks/PerkDefinition.java`
-- `perks/PerkFamily.java`
 - `perks/PerkRegistry.java`
-- `perks/PerkLoader.java`
-- `perks/PerkChoiceMenu.java`
-- `perks/effect/ConfigurablePerkEffect.java`
-- `perks/effect/PerkRuleFactory.java`
-- `perks/mission/MissionProgress.java`
+- `perks/effect/PerkEffectFactory.java`
 - `perks/mission/MissionRegistry.java`
-- `perks/mission/MissionUpdate.java`
 
 ---
 
-## ▌Flux general
+## ▌Responsabilitats
 
-1. `CombatPerkSystem` crea un estat de perks per a cada jugador.
-2. Cada estat rep una `MissionProgress` amb una missió seleccionada per `MissionRegistry`.
-3. Després de cada torn, `afterTurn(...)` converteix el resultat del torn en una `MissionUpdate`.
-4. La missió actualitza el seu progrés segons el tipus d'objectiu.
-5. Quan la missió es completa, `PlayerPerkState` marca una elecció pendent.
-6. `resolvePendingChoices(...)` genera opcions amb `PerkRegistry`.
-7. `PerkChoiceMenu` mostra les opcions i retorna la perk triada.
-8. `PerkEffectFactory` transforma la perk en un `Effect` i l'afegeix al personatge.
+- `CombatPerkSystem`: coordinació global
+- `PlayerPerkState`: estat per jugador
+- `PerkRegistry`: registre de perks disponibles
+- `MissionRegistry`: registre de missions
+- `PerkEffectFactory`: creació d’efectes actius
 
 ---
 
-## ▌Responsabilitat principal
+## ▌Notes
 
-El sistema separa tres conceptes:
-
-- la missió, que decideix quan el jugador ha guanyat una recompensa
-- la perk, que descriu quina recompensa es pot aplicar
-- l'efecte, que executa la recompensa durant el combat
-
-Aquesta separació permet afegir noves perks o noves missions sense tocar el bucle principal del combat.
+- el sistema és totalment data-driven (JSON)
+- perks i missions es poden afegir sense modificar codi
+- els efectes són desacoblats i composables

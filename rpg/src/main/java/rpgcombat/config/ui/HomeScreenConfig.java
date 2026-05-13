@@ -8,15 +8,15 @@ public record HomeScreenConfig(
 
     public HomeScreenConfig {
         if (title == null || title.isBlank()) {
-            title = "RPG Combat";
+            title = "El Llindar Trencat";
         }
     }
 
     public static HomeScreenConfig defaultConfig() {
-        return new HomeScreenConfig(true, true, "RPG Combat");
+        return new HomeScreenConfig(true, true, "El Llindar Trencat");
     }
 
     public static HomeScreenConfig disabled() {
-        return new HomeScreenConfig(false, false, "RPG Combat");
+        return new HomeScreenConfig(false, false, "El Llindar Trencat");
     }
 }

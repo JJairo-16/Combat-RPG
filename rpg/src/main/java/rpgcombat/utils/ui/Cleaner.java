@@ -24,6 +24,10 @@ public class Cleaner {
 
     /** Neteja la consola. En cas d'error, escriu líneas per emular-ho. */
     public void clear(int aux) {
+        if (System.console() == null) {
+            emulate(aux);
+            return;
+        }
         try {
             cls.start().waitFor();
             return;

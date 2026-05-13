@@ -5,6 +5,8 @@ import rpgcombat.creator.CharacterCreator;
 import java.util.Arrays;
 
 import rpgcombat.models.breeds.Breed;
+import rpgcombat.perks.divine.DivinePerkDefinition;
+import rpgcombat.perks.divine.DivinePerkRegistry;
 
 /** Esborrany editable abans de crear el personatge real. */
 public final class CharacterDraft {
@@ -12,6 +14,7 @@ public final class CharacterDraft {
     private int age;
     private Breed breed;
     private int[] stats;
+    private String divinePerkId;
 
     /** Crea un esborrany amb dades inicials. */
     private CharacterDraft(String name, int age, Breed breed, int[] stats) {
@@ -19,6 +22,7 @@ public final class CharacterDraft {
         this.age = age;
         this.breed = breed;
         this.stats = Arrays.copyOf(stats, stats.length);
+        syncDivinePerkWithBreed();
     }
 
     /** Crea un esborrany a partir d'una generació. */
@@ -54,6 +58,35 @@ public final class CharacterDraft {
     /** Actualitza la raça. */
     public void setBreed(Breed breed) {
         this.breed = breed;
+        syncDivinePerkWithBreed();
+    }
+
+    /** Retorna la perk divina seleccionada. */
+    public DivinePerkDefinition divinePerk() {
+        DivinePerkDefinition selected = DivinePerkRegistry.find(divinePerkId).orElse(null);
+        if (selected != null && selected.isAllowedFor(breed)) return selected;
+        return DivinePerkRegistry.defaultFor(breed);
+    }
+
+    /** Retorna l'identificador de la perk divina seleccionada. */
+    public String divinePerkId() {
+        DivinePerkDefinition selected = divinePerk();
+        return selected == null ? null : selected.id();
+    }
+
+    /** Selecciona una perk divina si és vàlida per a la raça actual. */
+    public void setDivinePerk(DivinePerkDefinition perk) {
+        if (perk != null && perk.isAllowedFor(breed)) {
+            divinePerkId = perk.id();
+        }
+    }
+
+    /** Manté una perk divina compatible amb la raça seleccionada. */
+    private void syncDivinePerkWithBreed() {
+        DivinePerkDefinition selected = DivinePerkRegistry.find(divinePerkId).orElse(null);
+        if (selected != null && selected.isAllowedFor(breed)) return;
+        DivinePerkDefinition fallback = DivinePerkRegistry.defaultFor(breed);
+        divinePerkId = fallback == null ? null : fallback.id();
     }
 
     /** Retorna una estadística per índex. */
@@ -70,6 +103,7 @@ public final class CharacterDraft {
     public void replaceGeneration(CharacterCreator.Generation generation) {
         breed = generation.breed();
         stats = Arrays.copyOf(generation.stats(), generation.stats().length);
+        syncDivinePerkWithBreed();
     }
 
     /** Retorna la suma de les estadístiques. */

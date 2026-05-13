@@ -14,63 +14,62 @@
 
 ## ▌`PerkDefinition`
 
-`PerkDefinition` és el model immutable que representa una perk ja carregada i validada.
+`PerkDefinition` és el model immutable que representa una perk carregada i validada.
 
 Conté:
 
 - `id`: identificador únic
 - `name`: nom visible
-- `description`: text descriptiu
-- `family`: família visual i lògica
-- `trigger`: fase de combat que activa la perk
-- `weight`: pes per a selecció aleatòria
-- `conditions`: condicions que s'han de complir
-- `actions`: accions que s'executen si les condicions passen
+- `description`: descripció
+- `family`: agrupació visual/lògica
+- `trigger`: moment d’activació
+- `weight`: pes per randomització
+- `conditions`: condicions d’activació
+- `actions`: accions a executar
 
 ---
 
-## ▌Exemple real
+## ▌Trigger
 
-```java
-public record PerkDefinition(
-        String id,
-        String name,
-        String description,
-        PerkFamily family,
-        Phase trigger,
-        int weight,
-        List<Rule> conditions,
-        List<Rule> actions) {
-}
-```
+Defineix quan s’avalua la perk dins del combat.
+
+Exemples típics:
+
+- inici de torn
+- atac
+- defensa
+- mort d’entitat
 
 ---
 
-## ▌Regles configurables
+## ▌Condicions i accions
 
-Cada condició o acció es representa amb una `Rule`.
+El comportament real no està codificat directament a la perk, sinó en:
 
-```java
-public record Rule(String type, Map<String, Object> params) {}
-```
+- condicions (`PerkCondition`)
+- accions (`PerkAction`)
 
-Això permet que el JSON defineixi comportaments sense crear una classe nova per a cada perk.
+Això permet:
+
+- reutilització
+- configuració flexible
+- extensió sense tocar el model
 
 ---
 
-## ▌Famílies de perks
+## ▌`PerkConfig`
 
-`PerkFamily` agrupa les perks per categoria i defineix la seva presentació visual.
+Representa la versió carregada des de JSON.
 
-Famílies disponibles:
+Responsabilitats:
 
-- `STRATEGY`: perks d'estratègia
-- `LUCK`: perks de sort
-- `CHAOS`: perks de caos
-- `CORRUPTED`: perks corruptes
+- deserialització
+- validació bàsica
+- transformació a `PerkDefinition`
 
-Cada família té:
+---
 
-- etiqueta visible
-- símbol de missatge
-- color de missatge
+## ▌Notes
+
+- el model és immutable per evitar inconsistències
+- la lògica real està externalitzada en factories

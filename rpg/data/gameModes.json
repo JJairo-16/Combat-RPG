@@ -1,0 +1,204 @@
+[
+  {
+    "id": "NORMAL",
+    "name": "Normal",
+    "description": "Experiència completa amb totes les mecàniques.",
+    "presentation": {
+      "shortDescription": "El duel sense concessions.",
+      "details": [
+        "El combat conserva totes les formes conegudes",
+        "Les armes trobades poden tornar a aparèixer",
+        "Les benediccions encara poden formar una corona ampla",
+        "Els pactes divins romanen desperts",
+        "El Caos pot escoltar"
+      ],
+      "lockedTitle": "???",
+      "lockedDescription": "Pacte encara sense nom",
+      "lockedHints": [
+        "El primer camí sempre roman obert."
+      ]
+    },
+    "unlock": {
+      "mode": "ALL",
+      "requirements": []
+    },
+    "rules": {
+      "specialActionsEnabled": true,
+      "maxPerks": 4,
+      "divinePerksEnabled": true,
+      "showUnlockableWeapons": true,
+      "chaos": {
+        "activation": "PROBABILITY",
+        "probability": 0.15
+      },
+      "modeEffects": []
+    },
+    "cinematics": {
+      "postCreationPool": ["DEFAULT_RANDOM"],
+      "chaosPostCreation": "CHAOS_MIND"
+    }
+  },
+  {
+    "id": "BEGINNER",
+    "name": "Principiant",
+    "description": "Regles reduïdes: sense càrrega, especials, armes desbloquejables ni Caos.",
+    "presentation": {
+      "shortDescription": "El primer llindar.",
+      "details": [
+        "La càrrega roman segellada",
+        "No acudeixen veus externes",
+        "Només una benedicció menor pot arrelar",
+        "Cap pacte diví desperta en aquest llindar",
+        "El Caos no travessa la porta"
+      ],
+      "lockedTitle": "???",
+      "lockedDescription": "Llindar ocult",
+      "lockedHints": [
+        "La primera lliçó no demana cap tribut."
+      ]
+    },
+    "unlock": {
+      "mode": "ALL",
+      "requirements": []
+    },
+    "rules": {
+      "allowedActions": ["ATTACK", "DEFEND", "DODGE"],
+      "specialActionsEnabled": false,
+      "maxPerks": 1,
+      "divinePerksEnabled": false,
+      "showUnlockableWeapons": false,
+      "chaos": {
+        "activation": "DISABLED",
+        "probability": 0.0
+      },
+      "modeEffects": []
+    },
+    "cinematics": {
+      "postCreationPool": ["BEGINNER_INTRO"]
+    }
+  },
+  {
+    "id": "FRAGMENTED_FACE",
+    "name": "El rostre fragmentat",
+    "description": "Variant del mode normal sense Caos: cada ronda desperta una faceta favorable i una esquerda adversa.",
+    "presentation": {
+      "shortDescription": "La ronda mai arriba sencera.",
+      "details": [
+        "El combat conserva totes les formes conegudes",
+        "Les armes trobades poden tornar a aparèixer",
+        "Les benediccions encara poden formar una corona ampla",
+        "Els pactes divins romanen desperts",
+        "El Caos no travessa la porta",
+        "Cada ronda mostra una cara i una esquerda"
+      ],
+      "lockedTitle": "???",
+      "lockedDescription": "Rostre sense nom",
+      "lockedHints": [
+        "Quan una partida ja coneguda es miri massa temps al mirall, potser apareixerà una esquerda."
+      ]
+    },
+    "unlock": {
+      "mode": "ALL",
+      "requirements": [
+        {
+          "type": "ACHIEVEMENT",
+          "id": "LAST_BELL"
+        },
+        {
+          "type": "DISCOVERY",
+          "category": "EFFECTS",
+          "id": "CHAOS"
+        },
+        {
+          "type": "TAGGED_DISCOVERIES",
+          "category": "EFFECTS",
+          "id": "negatiu",
+          "amount": 2
+        },
+        {
+          "type": "TAGGED_DISCOVERIES",
+          "category": "EFFECTS",
+          "id": "positiu",
+          "amount": 2
+        }
+      ]
+    },
+    "rules": {
+      "specialActionsEnabled": true,
+      "maxPerks": 4,
+      "divinePerksEnabled": true,
+      "showUnlockableWeapons": true,
+      "chaos": {
+        "activation": "DISABLED",
+        "probability": 0.0
+      },
+      "modeEffects": [
+        {
+          "id": "FRAGMENTED_FACE",
+          "target": "BOTH"
+        }
+      ]
+    },
+    "cinematics": {
+      "postCreationPool": ["DEFAULT_RANDOM"]
+    }
+  },
+  {
+    "id": "BLOOD_HUNGER",
+    "name": "Fam eterna",
+    "description": "Com el mode normal, però la vida ja no torna sola i cada atac pot reclamar sang.",
+    "presentation": {
+      "shortDescription": "La sang no espera el descans.",
+      "details": [
+        "El combat conserva totes les formes conegudes",
+        "La vida no torna sola al final de la ronda",
+        "Cada ferida retorna un glop mesurat",
+        "Les armes trobades poden tornar a aparèixer",
+        "El Caos pot escoltar"
+      ],
+      "lockedTitle": "???",
+      "lockedDescription": "Fam sense nom",
+      "lockedHints": [
+        "Quan la gana no s'atura i la carn ja sap doblegar-se, una porta s'obrirà."
+      ]
+    },
+    "unlock": {
+      "mode": "ALL",
+      "requirements": [
+        {
+          "type": "ACHIEVEMENT",
+          "id": "ETERNAL_HUNGER"
+        },
+        {
+          "type": "ACHIEVEMENT",
+          "id": "FLESH_BENDS"
+        }
+      ]
+    },
+    "rules": {
+      "specialActionsEnabled": true,
+      "maxPerks": 4,
+      "divinePerksEnabled": true,
+      "showUnlockableWeapons": true,
+      "chaos": {
+        "activation": "PROBABILITY",
+        "probability": 0.15
+      },
+      "modeEffects": [
+        {
+          "id": "UNIVERSAL_LIFE_STEAL",
+          "target": "BOTH",
+          "parameters": {
+            "lifeStealPct": 0.08,
+            "maxHealPct": 0.08,
+            "suppressPassiveHealthRegen": 1.0
+          }
+        }
+      ]
+    },
+    "cinematics": {
+      "postCreationPool": ["DEFAULT_RANDOM"],
+      "chaosPostCreation": "CHAOS_MIND"
+    }
+  }
+]

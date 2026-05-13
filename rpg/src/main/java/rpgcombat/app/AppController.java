@@ -2,16 +2,38 @@ package rpgcombat.app;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
+import rpgcombat.achievements.AchievementSystem;
+import rpgcombat.achievements.config.AchievementRegistry;
+import rpgcombat.achievements.ui.Achievement;
+import rpgcombat.achievements.ui.AchievementGridViewer;
 import rpgcombat.config.app.AppConfig;
 import rpgcombat.config.app.AppConfigLoader;
+import rpgcombat.discovery.DiscoveryCategory;
+import rpgcombat.discovery.DiscoveryRuntime;
+import rpgcombat.discovery.DiscoverySystem;
+import rpgcombat.discovery.config.DiscoveryCatalog;
+import rpgcombat.discovery.config.DiscoveryCatalogConfig;
+import rpgcombat.discovery.config.DiscoveryCatalogLoader;
+import rpgcombat.discovery.ui.DiscoveryInteractiveViewer;
+import rpgcombat.discovery.ui.models.DiscoveryOverview;
 import rpgcombat.game.EndGameAction;
 import rpgcombat.game.GameLoop;
 import rpgcombat.game.cinematics.CinematicBuilder;
 import rpgcombat.game.menu.HomeMenu;
+import rpgcombat.gamemode.model.GameModeDefinition;
+import rpgcombat.gamemode.registry.GameModeRegistry;
+import rpgcombat.gamemode.ui.GameModeSelectionMenu;
+import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.LoadingIntro;
 import rpgcombat.utils.ui.Prettier;
+import rpgcombat.unlocks.UnlockRuntime;
 
 /** Controla el flux general de l'aplicació. */
 public final class AppController {
@@ -19,6 +41,10 @@ public final class AppController {
 
     private final ResourcePreloader preloader = new ResourcePreloader();
     private AppConfig config;
+    private AchievementSystem achievementSystem;
+    private DiscoverySystem discoverySystem;
+    private List<Achievement> achievementViewModels = List.of();
+    private DiscoveryOverview discoveryOverview;
 
     /** Inicia l'aplicació fins que l'usuari surt. */
     public void run() {
@@ -38,6 +64,19 @@ public final class AppController {
                     return;
                 }
 
+                if (action == HomeMenu.Action.ACHIEVEMENTS) {
+                    AchievementGridViewer.show(achievementViewModels());
+                    continue;
+                }
+
+                if (action == HomeMenu.Action.DISCOVERIES) {
+                    if (!prepareMatchResources()) {
+                        continue;
+                    }
+                    DiscoveryInteractiveViewer.show(discoveryOverview());
+                    continue;
+                }
+
                 if (action == HomeMenu.Action.CREDITS) {
                     CinematicBuilder.playCredits();
                     continue;
@@ -50,6 +89,7 @@ public final class AppController {
                 case PLAY_AGAIN -> goHome = false;
                 case HOME -> goHome = config.homeScreen().enabled();
                 case EXIT -> {
+                    new Cleaner().clear();
                     return;
                 }
             }
@@ -58,12 +98,39 @@ public final class AppController {
 
     /** Crea i executa una partida. */
     private EndGameAction playOneMatch() {
+        GameModeDefinition gameMode = selectGameMode();
+        if (gameMode == null) {
+            return EndGameAction.HOME;
+        }
+        if (!prepareMatchResources()) {
+            return EndGameAction.HOME;
+        }
+        achievementSystem.onGameModeSelected(gameMode.id());
+        DiscoveryRuntime.discover(DiscoveryCategory.GAME_MODES, gameMode.id());
         preloader.preloadNewMatch();
 
-        GameBootstrap bootstrap = new GameBootstrap(config, preloader);
-        GameLoop game = bootstrap.createGame();
+        GameBootstrap bootstrap = new GameBootstrap(config, preloader, achievementSystem);
+        GameLoop game = bootstrap.createGame(gameMode);
 
-        return game.init();
+        EndGameAction action = game.init();
+        refreshHomeViewModels();
+        return action;
+    }
+
+    /** Selecciona el mode de joc abans de mostrar cap cinemàtica de partida. */
+    private GameModeDefinition selectGameMode() {
+        GameModeDefinition mode;
+        if (!config.gameMode().selectionEnabled()) {
+            mode = GameModeRegistry.getOrDefault(config.gameMode().defaultMode());
+        } else {
+            mode = GameModeSelectionMenu.show(
+                    GameModeRegistry.all(),
+                    achievementSystem,
+                    discoverySystem,
+                    config.gameMode().defaultMode());
+        }
+        
+        return mode;
     }
 
     /** Carrega la configuració o usa la predeterminada. */
@@ -82,12 +149,12 @@ public final class AppController {
             return preloadNow();
         }
 
-        AtomicReference<IOException> error = new AtomicReference<>();
+        AtomicReference<Exception> error = new AtomicReference<>();
         LoadingIntro intro = new LoadingIntro(config.ui().loadingAuthor());
         intro.start(() -> {
             try {
                 preloadAll();
-            } catch (IOException e) {
+            } catch (IOException | RuntimeException e) {
                 error.set(e);
             }
         });
@@ -105,7 +172,7 @@ public final class AppController {
         try {
             preloadAll();
             return true;
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             Prettier.error("Hi ha hagut un error durant la precàrrega.");
             return false;
         }
@@ -114,7 +181,100 @@ public final class AppController {
     /** Precarrega tots els recursos necessaris. */
     private void preloadAll() throws IOException {
         preloader.preloadApp();
-        preloader.preloadGameStatic(config);
+        preloader.preloadHomeStatic(config);
+
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            Future<AchievementSystem> achievements = executor.submit(
+                    () -> AchievementSystem.load(AchievementRegistry.all(), config.paths().achievementSaveFile()));
+            Future<DiscoverySystem> discoveries = executor.submit(
+                    () -> DiscoverySystem.load(null, config.paths().discoverySaveFile()));
+            Future<DiscoveryCatalogConfig> catalogConfig = executor.submit(
+                    () -> DiscoveryCatalogLoader.load(Path.of(config.paths().discoveryCatalogConfig())));
+            Future<Void> matchStatic = executor.submit(() -> {
+                preloader.preloadMatchStatic(config);
+                return null;
+            });
+
+            achievementSystem = await(achievements, "progrés d'assoliments");
+            discoverySystem = await(discoveries, "progrés de descobriments");
+            await(matchStatic, "recursos de combat");
+            ensureDiscoveryCatalogLoaded(await(catalogConfig, "catàleg de descobriments"));
+        }
+
+        UnlockRuntime.configure(achievementSystem, discoverySystem);
+        refreshHomeViewModels();
+    }
+
+    /** Carrega els recursos complets abans d'entrar en combat o mostrar descobriments. */
+    private boolean prepareMatchResources() {
+        try {
+            preloader.preloadMatchStatic(config);
+            if (discoverySystem != null && !discoverySystem.hasCatalog()) {
+                ensureDiscoveryCatalogLoaded(DiscoveryCatalogLoader.load(Path.of(config.paths().discoveryCatalogConfig())));
+            }
+            refreshHomeViewModels();
+            return true;
+        } catch (Exception e) {
+            Prettier.error("Hi ha hagut un error durant la càrrega dels recursos necessaris.");
+            return false;
+        }
+    }
+
+    /** Garanteix que el catàleg complet de descobriments està construït. */
+    private void ensureDiscoveryCatalogLoaded(DiscoveryCatalogConfig config) {
+        if (discoverySystem == null || discoverySystem.hasCatalog()) {
+            return;
+        }
+        DiscoveryCatalog catalog = DiscoveryCatalog.build(config);
+        discoverySystem.setCatalog(catalog);
+    }
+
+    /** Manté preparats els models que obren les pantalles del menú inicial. */
+    private void refreshHomeViewModels() {
+        if (achievementSystem != null) {
+            achievementViewModels = achievementSystem.toViewModels();
+            AchievementGridViewer.preload(achievementViewModels);
+        }
+        if (discoverySystem != null && discoverySystem.hasCatalog()) {
+            discoveryOverview = discoverySystem.toOverview();
+            DiscoveryInteractiveViewer.preload(discoveryOverview);
+        }
+    }
+
+    private List<Achievement> achievementViewModels() {
+        if (achievementViewModels == null || achievementViewModels.isEmpty()) {
+            refreshHomeViewModels();
+        }
+        return achievementViewModels == null ? List.of() : achievementViewModels;
+    }
+
+    private DiscoveryOverview discoveryOverview() {
+        if (discoveryOverview == null) {
+            refreshHomeViewModels();
+        }
+        return discoveryOverview;
+    }
+
+    /** Espera una càrrega asíncrona i conserva la causa real si falla. */
+    private static <T> T await(Future<T> future, String resourceName) throws IOException {
+        try {
+            return future.get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Càrrega interrompuda: " + resourceName, e);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof IOException io) {
+                throw io;
+            }
+            if (cause instanceof RuntimeException runtime) {
+                throw runtime;
+            }
+            if (cause instanceof Error error) {
+                throw error;
+            }
+            throw new IOException("No s'ha pogut carregar: " + resourceName, cause);
+        }
     }
 
     /** Indica si cal mostrar la intro de càrrega. */

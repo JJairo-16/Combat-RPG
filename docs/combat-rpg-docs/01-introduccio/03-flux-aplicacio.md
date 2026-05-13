@@ -28,7 +28,7 @@ public void run() {
     if (endIfCrashed(bootstrapReport))
         return;
 
-    ExecutionReport report = executor.run("RPG Combat", () -> game.init());
+    ExecutionReport report = executor.run("El Llindar Trencat", () -> game.init());
     endIfCrashed(report);
 }
 ```

@@ -1,4 +1,4 @@
-# Combat RPG - [Jairo Linares](https://github.com/JJairo-16)
+# El Llindar Trencat - [Jairo Linares](https://github.com/JJairo-16)
 
 ![Java Version](https://img.shields.io/badge/Java-21%2B-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
@@ -7,7 +7,7 @@
 
 ## ▌Què és?
 
-**Combat RPG** és un joc de rol per torns (1vs1) on dos jugadors creen els seus personatges i s'enfronten en un combat d'estratègia i sort on domina el caos.
+**El Llindar Trencat** és un joc de rol per torns (1vs1) on dos jugadors creen els seus personatges i s'enfronten en un combat d'estratègia i sort on domina el caos.
 
 Aquest projecte es pot considerar un **remake/rework** de la seva primera versió, amb millores en l’arquitectura, el sistema de combat i una major flexibilitat en la personalització dels personatges.
 
@@ -27,6 +27,8 @@ Cada personatge té:
 - Arma equipada
 - 7 estadístiques principals
 - Estadístiques ocultes
+- Perk divina
+  > Segons el mode
 
 ### ▌Estadístiques (7)
 
@@ -105,14 +107,13 @@ La partida finalitza quan un personatge arriba a 0 de vida.
 
 ## ▌Mecàniques Destacades
 
-- Sistema d’esquiva basat en Destresa
-- Sistema de crítics influenciat per la Sort
-- Regeneració de vida i manà per torn
 - Diferenciació entre armes físiques, màgiques i de rang
 - Escalat de dany segons estadístiques
 - Afinitat divina per carisma
-- Menú interactiu d'elecció d'arma
+- Pantalles interactives
 - Combat caotic
+- Modes de joc únics
+- Sistema d'assoliments i descubriments
 
 ### ▌Crida espiritual
 

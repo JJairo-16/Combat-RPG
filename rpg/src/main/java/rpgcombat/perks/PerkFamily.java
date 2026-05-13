@@ -10,7 +10,8 @@ public enum PerkFamily {
     STRATEGY("Estratègia", MessageSymbol.STRATEGY, MessageColor.BRIGHT_BLUE),
     LUCK("Sort", MessageSymbol.LUCK, MessageColor.YELLOW),
     CHAOS("Caos", MessageSymbol.CHAOTIC, MessageColor.BRIGHT_RED),
-    CORRUPTED("Corrupte", MessageSymbol.CORRUPTED, MessageColor.MAGENTA);
+    CORRUPTED("Corrupte", MessageSymbol.CORRUPTED, MessageColor.MAGENTA),
+    DIVINE("Diví", MessageSymbol.INFO, MessageColor.CYAN);
 
     private final String label;
     private final MessageSymbol symbol;

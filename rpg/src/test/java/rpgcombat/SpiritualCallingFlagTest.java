@@ -18,7 +18,7 @@ import rpgcombat.game.modifier.Actions;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
-import rpgcombat.models.effects.impl.SpiritualCallingFlag;
+import rpgcombat.models.effects.impl.menu.SpiritualCallingFlag;
 import rpgcombat.utils.rng.DivineCharismaAffinity;
 
 /**

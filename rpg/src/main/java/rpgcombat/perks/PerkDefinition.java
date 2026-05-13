@@ -16,6 +16,7 @@ import rpgcombat.weapons.passives.HitContext.Phase;
  * @param weight pes o probabilitat d'aparició
  * @param conditions condicions requerides
  * @param actions accions executades
+ * @param tags etiquetes opcionals per detectar sinergies
  */
 public record PerkDefinition(
         String id,
@@ -25,7 +26,19 @@ public record PerkDefinition(
         Phase trigger,
         int weight,
         List<Rule> conditions,
-        List<Rule> actions) {
+        List<Rule> actions,
+        List<String> tags) {
+
+    public PerkDefinition {
+        conditions = conditions == null ? List.of() : List.copyOf(conditions);
+        actions = actions == null ? List.of() : List.copyOf(actions);
+        tags = tags == null ? List.of() : tags.stream()
+                .filter(tag -> tag != null && !tag.isBlank())
+                .map(String::trim)
+                .map(String::toUpperCase)
+                .distinct()
+                .toList();
+    }
 
     /**
      * Bloc configurable de condició o acció.

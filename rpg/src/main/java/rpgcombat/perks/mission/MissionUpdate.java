@@ -32,7 +32,19 @@ public record MissionUpdate(
         if (ownerAction == Action.CHARGE) events.add(MissionEvent.ACTION_CHARGE);
 
         if (result != null) {
-            if (result.damageDealt() > 0) {
+            boolean dealted = result.damageDealt() > 0;
+            boolean successfulAttack = ownerAction == Action.ATTACK
+                    && dealted
+                    && !result.selfHit();
+            boolean successfulDodge = ownerAction == Action.DODGE
+                    && opponentAction == Action.ATTACK
+                    && !dealted
+                    && !result.selfHit();
+
+            if (successfulAttack) events.add(MissionEvent.ACTION_SUCCESSFUL_ATTACK);
+            if (successfulDodge) events.add(MissionEvent.ACTION_SUCCESSFUL_DODGE);
+
+            if (dealted) {
                 events.add(MissionEvent.HIT);
                 events.add(MissionEvent.DAMAGE_DEALT);
             }

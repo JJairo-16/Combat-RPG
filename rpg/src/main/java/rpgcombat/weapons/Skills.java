@@ -3,6 +3,7 @@ package rpgcombat.weapons;
 import static rpgcombat.utils.ui.Ansi.*;
 import static rpgcombat.weapons.attack.Target.SELF;
 
+import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.function.UnaryOperator;
@@ -145,8 +146,13 @@ public final class Skills {
         failChance = Math.clamp(failChance, 0.22, 0.30);
 
         if (rng.nextDouble() < failChance) {
-            return AttackResult.skillFail(
-                    "llença la disrupció arcana falla i la màgia es dissipa en el no-res. (molt útil ._.)");
+            return new AttackResult(0,
+                    "llença la disrupció arcana falla i la màgia es dissipa en el no-res. (molt útil ._.)",
+                    Target.ENEMY, AttackResult.FAIL_KIND_SKILL, Map.of(
+                            "arcaneDisruptionMiss", true,
+                            "arcaneDisruptionFailChance", failChance,
+                            "weaponId", weapon.getId(),
+                            "weaponName", weapon.getName()));
         }
 
         double damage = weapon.basicAttack(stats, rng);
@@ -231,7 +237,11 @@ public final class Skills {
             message += " (" + crits + " crític" + (crits > 1 ? "s" : "") + ")";
         }
 
-        return new AttackResult(totalDamage, message);
+        return new AttackResult(totalDamage, message, Map.of(
+                "ballistaProjectiles", shots,
+                "projectiles", shots,
+                "ballistaCriticalProjectiles", crits,
+                "projectileCriticalCount", crits));
     }
 
     /**
@@ -307,7 +317,18 @@ public final class Skills {
         }
 
         finalDamage = round2(finalDamage);
-        return new AttackResult(finalDamage, msg);
+        boolean minMultiplier = Math.abs(multiplier - 0.55) < 0.0001;
+        boolean maxMultiplier = Math.abs(multiplier - 1.25) < 0.0001;
+        return new AttackResult(finalDamage, msg, Map.of(
+                "grimoireCodeSolved", correct,
+                "grimoireCorrect", correct,
+                "grimoireSeconds", round2(seconds),
+                "grimoireMultiplier", multiplier,
+                "grimoireMinMultiplier", minMultiplier,
+                "grimoireMaxMultiplier", maxMultiplier,
+                "grimoireMinimumMultiplier", 0.55,
+                "grimoireMaximumMultiplier", 1.25,
+                "grimoireCritical", crit));
     }
 
     /**
@@ -416,6 +437,108 @@ public final class Skills {
         }
 
         return new AttackResult(finalDamage, message);
+    }
+
+
+    /**
+     * Atac elemental dual: alterna entre mode de foc i mode de gel a cada atac.
+     *
+     * <p>
+     * L'estat persistent de l'arma no es guarda en camps específics, sinó dins la
+     * metadada genèrica de la instància de {@link Weapon}. La passiva
+     * elementalDuality llegeix el mode resolt en el {@link AttackResult} i aplica
+     * l'efecte corresponent només si el cop impacta realment.
+     * </p>
+     */
+    public static AttackResult elementalDuality(Weapon weapon, Statistics stats, Random rng) {
+        final String fire = "FIRE";
+        final String frost = "FROST";
+        final String key = "elementalDuality.nextMode";
+
+        String mode = weapon.getMeta(key, String.class, fire);
+        if (!fire.equals(mode) && !frost.equals(mode)) {
+            mode = fire;
+        }
+
+        String nextMode = fire.equals(mode) ? frost : fire;
+        weapon.putMeta(key, nextMode);
+
+        double damage = weapon.basicAttack(stats, rng);
+        String elementName = fire.equals(mode) ? "foc" : "gel";
+        String nextElementName = fire.equals(nextMode) ? "foc" : "gel";
+
+        String msg = weapon.lastWasCritic()
+                ? "allibera la dualitat de " + elementName + " amb un cop crític."
+                : "allibera la dualitat de " + elementName + ".";
+
+        return new AttackResult(damage, msg, Map.of(
+                "elementalDuality", true,
+                "elementalMode", mode,
+                "elementalNextMode", nextMode,
+                "elementalModeLabel", elementName,
+                "elementalNextModeLabel", nextElementName));
+    }
+
+
+    public static AttackResult firstOathStrike(Weapon weapon, Statistics stats, Random rng) {
+        return namedBasic(weapon, stats, rng, "manté el jurament amb una estocada precisa");
+    }
+
+    public static AttackResult firstBloodKnife(Weapon weapon, Statistics stats, Random rng) {
+        return namedBasic(weapon, stats, rng, "busca una obertura amb una fulla petita");
+    }
+
+    public static AttackResult brokenShieldBash(Weapon weapon, Statistics stats, Random rng) {
+        return namedBasic(weapon, stats, rng, "converteix una defensa trencada en ofensiva");
+    }
+
+    public static AttackResult ancestralBellEcho(Weapon weapon, Statistics stats, Random rng) {
+        return namedBasic(weapon, stats, rng, "fa sonar un eco antic");
+    }
+
+    public static AttackResult tacticalMirrorCast(Weapon weapon, Statistics stats, Random rng) {
+        return namedBasic(weapon, stats, rng, "observa el patró del rival a través del mirall");
+    }
+
+    public static AttackResult retaliationShot(Weapon weapon, Statistics stats, Random rng) {
+        return namedBasic(weapon, stats, rng, "tensa l'arc esperant una resposta");
+    }
+
+    public static AttackResult badOmenSling(Weapon weapon, Statistics stats, Random rng) {
+        return namedBasic(weapon, stats, rng, "llença una pedra marcada pel mal presagi");
+    }
+
+    public static AttackResult coldStringShot(Weapon weapon, Statistics stats, Random rng) {
+        return namedBasic(weapon, stats, rng, "dispara amb una corda glaçada");
+    }
+
+    public static AttackResult chaosFragment(Weapon weapon, Statistics stats, Random rng) {
+        double base = weapon.basicAttack(stats, rng);
+        double roll = rng.nextDouble();
+        double multiplier;
+        String label;
+        if (roll < 0.33) {
+            multiplier = 0.92;
+            label = "s'esquerda i perd força";
+        } else if (roll < 0.67) {
+            multiplier = 1.0;
+            label = "manté una forma estable";
+        } else {
+            multiplier = 1.08;
+            label = "s'esquerda a favor del portador";
+        }
+        double finalDamage = round2(base * multiplier);
+        return new AttackResult(finalDamage, "allibera un fragment de caos que " + label + ".", Map.of(
+                "chaosFragment", true,
+                "chaosFragmentMultiplier", multiplier,
+                "chaosFragmentHigh", multiplier > 1.0,
+                "chaosFragmentLow", multiplier < 1.0));
+    }
+
+    private static AttackResult namedBasic(Weapon weapon, Statistics stats, Random rng, String text) {
+        double damage = weapon.basicAttack(stats, rng);
+        String message = weapon.lastWasCritic() ? text + " amb un crític." : text + ".";
+        return new AttackResult(damage, message);
     }
 
     // -------------------------------------------------------------------------

@@ -11,6 +11,6 @@ public class Dwarf extends Character {
 
     @Override
     public void regen() {
-        stats.reg(HP_BONUS, 1);
+        stats.reg(HP_BONUS, 1, !suppressesPassiveHealthRegen(), true);
     }
 }

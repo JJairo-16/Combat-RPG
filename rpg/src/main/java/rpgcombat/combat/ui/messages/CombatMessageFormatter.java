@@ -41,7 +41,7 @@ public final class CombatMessageFormatter {
 
         for (CombatMessage message : messages) {
             if (message != null && !isBlank(message.text())) {
-                lines.add(render(message));
+                lines.addAll(renderLines(message));
             }
         }
         return lines;
@@ -63,6 +63,32 @@ public final class CombatMessageFormatter {
                 ? message.symbol().glyph()
                 : ansi + message.symbol().glyph() + Ansi.RESET;
         return "  " + prefix + " " + clean(message.text());
+    }
+
+    private List<String> renderLines(CombatMessage message) {
+        String text = message.text();
+        if (text == null || !text.contains("\n")) {
+            return List.of(render(message));
+        }
+
+        List<String> lines = new ArrayList<>();
+        for (String rawLine : text.split("\\R")) {
+            if (isBlank(rawLine)) {
+                continue;
+            }
+            CombatMessage lineMessage = semanticLine(rawLine, message);
+            lines.add(render(lineMessage));
+        }
+        return lines;
+    }
+
+    private CombatMessage semanticLine(String line, CombatMessage fallback) {
+        String clean = clean(line);
+        if (clean.startsWith("+ ") || clean.startsWith("- ") || clean.startsWith("! ")
+                || clean.startsWith("? ") || clean.startsWith("→ ")) {
+            return CombatMessage.legacy(clean);
+        }
+        return CombatMessage.of(fallback.symbol(), fallback.color(), clean);
     }
 
     private String clean(String text) {

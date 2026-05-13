@@ -12,6 +12,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 
 import rpgcombat.config.debug.DebugProfile;
+import rpgcombat.config.paths.PathsConfig;
 
 /** Carrega la configuració de l'aplicació des d'un fitxer JSON. */
 public final class AppConfigLoader {
@@ -44,7 +45,10 @@ public final class AppConfigLoader {
             boolean useProfile = getBoolean(json, "useProfile", false);
 
             if (useProfile) {
-                return AppConfigProfiles.from(getProfile(json));
+                AppConfig profileConfig = AppConfigProfiles.from(getProfile(json));
+                boolean override = getBoolean(json, "override", false);
+
+                return override ? applyPathOverrides(profileConfig, json) : profileConfig;
             }
 
             AppConfig config = GSON.fromJson(json, AppConfig.class);
@@ -53,6 +57,23 @@ public final class AppConfigLoader {
         } catch (JsonParseException e) {
             throw new IOException("Error en analitzar la configuració a " + path, e);
         }
+    }
+
+    /** Aplica les rutes declarades a appConfig encara que s'usi un perfil tancat. */
+    private static AppConfig applyPathOverrides(AppConfig base, JsonObject json) {
+        if (base == null || !json.has("paths") || json.get("paths").isJsonNull()) {
+            return base;
+        }
+
+        PathsConfig paths = GSON.fromJson(json.get("paths"), PathsConfig.class);
+        return new AppConfig(
+                paths,
+                base.ui(),
+                base.cinematic(),
+                base.gameMode(),
+                base.debug(),
+                base.characters(),
+                base.homeScreen());
     }
 
     /** Retorna la configuració per defecte. */

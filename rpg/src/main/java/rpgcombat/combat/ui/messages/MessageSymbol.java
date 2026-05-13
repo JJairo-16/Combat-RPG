@@ -16,7 +16,11 @@ public enum MessageSymbol {
     STRATEGY("◆", MessageColor.BLUE),
     LUCK("✦", MessageColor.YELLOW),
     CHAOTIC("✹", MessageColor.RED),
-    CORRUPTED("☠", MessageColor.MAGENTA);
+    CORRUPTED("☠ ", MessageColor.MAGENTA),
+
+    // --- DIVINE STATE ---
+    DIVINE_DORMANT("✧", MessageColor.YELLOW),
+    DIVINE_AWAKENED("✦", MessageColor.CYAN),;
 
     private final String glyph;
     private final MessageColor defaultColor;

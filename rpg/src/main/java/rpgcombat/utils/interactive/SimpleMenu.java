@@ -10,6 +10,7 @@ import org.jline.utils.InfoCmp.Capability;
 
 import rpgcombat.utils.interactive.helpers.MenuInputGate;
 import rpgcombat.utils.terminal.SharedTerminal;
+import rpgcombat.utils.terminal.TerminalInput;
 import rpgcombat.utils.terminal.TerminalSession;
 
 import static rpgcombat.utils.ui.Ansi.*;
@@ -47,7 +48,10 @@ public class SimpleMenu {
         UP,
         DOWN,
         SELECT,
-        EXTRA
+        EXTRA,
+        INFO,
+        PROGRESS,
+        IGNORE
     }
 
     /**
@@ -83,19 +87,18 @@ public class SimpleMenu {
 
                 new MenuInputGate(terminal, 80, 20).waitUntilReady();
 
-                renderFull(terminal, title, options, cursor[0]);
-
                 BindingReader reader = new BindingReader(terminal.reader());
                 KeyMap<Action> keyMap = buildKeyMap(terminal);
 
                 while (true) {
                     consumeResize(terminal, title, options, cursor[0]);
 
-                    Action action = reader.readBinding(keyMap);
+                    Action action = TerminalInput.readBindingIgnoringMouse(reader, keyMap, terminal, Action.IGNORE);
 
                     consumeResize(terminal, title, options, cursor[0]);
 
                     if (action == null) {
+                        renderFull(terminal, title, options, cursor[0]);
                         continue;
                     }
 
@@ -110,6 +113,10 @@ public class SimpleMenu {
                         case EXTRA -> {
                             handleExtraAction(terminal, title, options, cursor[0]);
                             renderFull(terminal, title, options, cursor[0]);
+                        }
+                        case INFO -> handleInfoAction(terminal, title, options, cursor[0]);
+                        case PROGRESS -> handleProgressAction(terminal, title, options, cursor[0]);
+                        case IGNORE -> {
                         }
                     }
 
@@ -166,6 +173,14 @@ public class SimpleMenu {
     protected void handleExtraAction(Terminal terminal, String title, List<String> options, int cursor) {
     }
 
+    protected void handleInfoAction(Terminal terminal, String title, List<String> options, int cursor) {
+        handleExtraAction(terminal, title, options, cursor);
+    }
+
+    protected void handleProgressAction(Terminal terminal, String title, List<String> options, int cursor) {
+        handleExtraAction(terminal, title, options, cursor);
+    }
+
     /**
      * S'executa quan canvia la selecció.
      *
@@ -200,6 +215,7 @@ public class SimpleMenu {
         if (down != null) {
             map.bind(Action.DOWN, down);
         }
+        TerminalInput.bindMouseIgnore(map, terminal, Action.IGNORE);
 
         return map;
     }
@@ -332,7 +348,7 @@ public class SimpleMenu {
      * @param text text original
      * @return text segur
      */
-    protected String safe(String text) {
+    protected static String safe(String text) {
         return text == null ? "" : text;
     }
 }

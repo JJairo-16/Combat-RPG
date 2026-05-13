@@ -2,7 +2,12 @@ package rpgcombat.combat;
 
 import java.util.Random;
 
+import rpgcombat.achievements.AchievementSystem;
+import rpgcombat.achievements.AchievementUpdate;
 import rpgcombat.models.characters.Character;
+import rpgcombat.discovery.DiscoveryCategory;
+import rpgcombat.discovery.DiscoveryRuntime;
+import rpgcombat.gamemode.model.GameModeRules;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.balance.CombatBalanceRegistry;
 import rpgcombat.balance.config.AntiStallConfig;
@@ -22,8 +27,8 @@ import rpgcombat.combat.turnservice.TurnResolver;
 import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.combat.ui.CombatRenderer;
 import rpgcombat.combat.ui.RoundResultPager;
-import rpgcombat.models.effects.impl.MagicalTiredness;
-import rpgcombat.models.effects.impl.SuddenDeathPoisonEffect;
+import rpgcombat.models.effects.impl.menu.MagicalTiredness;
+import rpgcombat.models.effects.impl.elemental.SuddenDeathPoisonEffect;
 import rpgcombat.perks.CombatPerkSystem;
 
 /**
@@ -40,8 +45,10 @@ public class CombatSystem {
     private final AttackResolver attackResolver = new AttackResolver();
     private final EffectPipeline effectPipeline = new EffectPipeline();
     private final RoundRecoveryService recoveryService = new RoundRecoveryService();
-    private final TurnResolver turnResolver = new TurnResolver(attackResolver, effectPipeline, recoveryService);
+    private final TurnResolver turnResolver;
     private final CombatPerkSystem perkSystem;
+    private final AchievementSystem achievementSystem;
+    private final GameModeRules rules;
 
     private CombatBalanceConfig balance = CombatBalanceRegistry.get();
     private AntiStallConfig antiStall = balance.antiStall();
@@ -67,26 +74,53 @@ public class CombatSystem {
      * @param policy política de prioritat
      */
     public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy) {
-        this(p1, p2, policy, null);
+        this(p1, p2, policy, null, null);
     }
 
     /**
      * Crea el sistema amb progressió de missions i perks.
      *
+     * @param p1         primer personatge
+     * @param p2         segon personatge
+     * @param policy     política de prioritat
+     * @param perkSystem sistema de perks
+     */
+    public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy, CombatPerkSystem perkSystem) {
+        this(p1, p2, policy, perkSystem, null);
+    }
+
+    /**
+     * Crea el sistema amb progressió de missions, perks i assoliments globals.
+     *
      * @param p1 primer personatge
      * @param p2 segon personatge
      * @param policy política de prioritat
      * @param perkSystem sistema de perks
+     * @param achievementSystem sistema d'assoliments globals
      */
-    public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy, CombatPerkSystem perkSystem) {
+    public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy, CombatPerkSystem perkSystem,
+            AchievementSystem achievementSystem) {
+        this(p1, p2, policy, perkSystem, achievementSystem, GameModeRules.unrestricted());
+    }
+
+    public CombatSystem(Character p1, Character p2, TurnPriorityPolicy policy, CombatPerkSystem perkSystem,
+            AchievementSystem achievementSystem, GameModeRules rules) {
         this.player1 = p1;
         this.player2 = p2;
         this.priorityPolicy = policy;
         this.perkSystem = perkSystem;
+        this.achievementSystem = achievementSystem;
+        this.rules = rules == null ? GameModeRules.unrestricted() : rules;
+        this.turnResolver = new TurnResolver(attackResolver, effectPipeline, recoveryService, this.rules);
     }
 
     public boolean preAntiStall() {
         return roundNumber + 1 == antiStall.startTurn();
+    }
+
+    /** @return número de ronda actual. */
+    public int roundNumber() {
+        return roundNumber;
     }
 
     /**
@@ -110,8 +144,12 @@ public class CombatSystem {
      * @return resultat de la ronda
      */
     public CombatRoundResult playRound(Action a1, Action a2) {
+        a1 = rules.requireAllowed(a1);
+        a2 = rules.requireAllowed(a2);
         roundNumber++;
         applySuddenDeathPoisonIfNeeded();
+        player1.onCombatRoundStart(roundNumber, combatRng, null);
+        player2.onCombatRoundStart(roundNumber, combatRng, null);
 
         Statistics p1Stats = player1.getStatistics();
         Statistics p2Stats = player2.getStatistics();
@@ -156,6 +194,7 @@ public class CombatSystem {
 
         Winner winner = resolveWinner(player1, player2);
         if (winner != Winner.NONE) {
+            clearRoundScopedEffects();
             return new CombatRoundResult(
                     firstTurn,
                     secondTurn,
@@ -197,9 +236,12 @@ public class CombatSystem {
 
         applyOrRemoveMagicalTiredness(player1);
         applyOrRemoveMagicalTiredness(player2);
+        player1.onMenuTurnEnd();
+        player2.onMenuTurnEnd();
 
         CombatantStatus p1Final = CombatantStatus.from(player1);
         CombatantStatus p2Final = CombatantStatus.from(player2);
+        clearRoundScopedEffects();
 
         return new CombatRoundResult(
                 firstTurn,
@@ -217,14 +259,38 @@ public class CombatSystem {
                 p2Final);
     }
 
+    /** Neteja efectes transitoris que només duren la ronda actual. */
+    private void clearRoundScopedEffects() {
+        player1.onCombatRoundEnd();
+        player2.onCombatRoundEnd();
+    }
 
     /**
-     * Actualitza la missió del personatge si el sistema està actiu.
+     * Actualitza missions i assoliments si els sistemes estan actius.
      */
     private void updateMissionProgress(Character actor, Character opponent, Action actorAction, Action opponentAction,
             TurnResult result) {
+        if (actorAction != null) {
+            DiscoveryRuntime.discover(DiscoveryCategory.ACTIONS, actorAction.name());
+        }
+
         if (perkSystem != null) {
             perkSystem.afterTurn(actor, opponent, actorAction, opponentAction, result, roundNumber);
+        }
+
+        if (achievementSystem != null) {
+            achievementSystem.onTurn(AchievementUpdate.fromTurn(actor, opponent, actorAction, opponentAction, result,
+                    roundNumber));
+        }
+
+        if (actorAction == Action.ATTACK && opponentAction == Action.DODGE) {
+            if (perkSystem != null) {
+                perkSystem.afterTurn(opponent, actor, opponentAction, actorAction, result, roundNumber);
+            }
+            if (achievementSystem != null) {
+                achievementSystem.onTurn(AchievementUpdate.fromTurn(opponent, actor, opponentAction, actorAction, result,
+                        roundNumber));
+            }
         }
     }
 
