@@ -229,7 +229,9 @@ App.java
 
 ## ▌Documentació interna
 
-La documentació interna del projecte es troba a [docs](./docs), principalment a [combat-rpg-docs](docs/combat-rpg-docs).
+La documentació interna del projecte es troba a [docs](./docs), principalment a [the-broken-threshold-docs](docs/the-broken-threshold-docs/).
+
+La guia d'usuari per a jugadors es troba a [docs/user-guide](docs/user-guide/INDEX.md).
 
 ---
 
