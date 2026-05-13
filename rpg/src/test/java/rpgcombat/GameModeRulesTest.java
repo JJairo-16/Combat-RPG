@@ -1,6 +1,7 @@
 package rpgcombat;
 
 import static org.junit.Assert.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -47,8 +48,9 @@ import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectState;
 import rpgcombat.models.effects.triggers.BleedEmphasisTrigger;
-import rpgcombat.models.effects.triggers.SelfDirectedAttackTrigger;
-import rpgcombat.models.effects.triggers.UniversalLifeStealTrigger;
+import rpgcombat.models.effects.triggers.gamemode.FragmentedFaceTrigger;
+import rpgcombat.models.effects.triggers.gamemode.SelfDirectedAttackTrigger;
+import rpgcombat.models.effects.triggers.gamemode.UniversalLifeStealTrigger;
 import rpgcombat.unlocks.UnlockMode;
 import rpgcombat.unlocks.UnlockRequirement;
 import rpgcombat.unlocks.UnlockRequirementType;
@@ -397,6 +399,52 @@ class GameModeRulesTest {
     }
 
     @Test
+    void fragmentedFaceNonLethalDamageDoesNotCrashBelowOneHealth() {
+        Character player = character("Player");
+        player.getStatistics().damage(player.getStatistics().getHealth() - 0.5);
+        FragmentedFaceTrigger trigger = new FragmentedFaceTrigger();
+
+        assertDoesNotThrow(() -> trigger.onRoundStart(player, 1, new FixedIntRandom(
+                FragmentedFaceTrigger.Buff.EDGE_OF_GLASS.ordinal(),
+                FragmentedFaceTrigger.Debuff.COLD_PULSE.ordinal()), null));
+        assertEquals(0.5, player.getStatistics().getHealth(), 0.001);
+    }
+
+    @Test
+    void fragmentedFaceRestoresClearedRoundOnlyBleed() {
+        Character player = character("Player");
+        player.applyBleed(2);
+        FragmentedFaceTrigger trigger = new FragmentedFaceTrigger();
+
+        trigger.onRoundStart(player, 1, new FixedIntRandom(
+                FragmentedFaceTrigger.Buff.SUTURED_MARK.ordinal(),
+                FragmentedFaceTrigger.Debuff.DULLED_EDGE.ordinal()), null);
+
+        assertFalse(player.isBleeding());
+
+        trigger.onRoundEnd(player);
+
+        assertTrue(player.isBleeding());
+        assertEquals(2, player.bleedTurnsRemaining());
+    }
+
+    @Test
+    void fragmentedFaceRemovesItsOwnRoundOnlyBleed() {
+        Character player = character("Player");
+        FragmentedFaceTrigger trigger = new FragmentedFaceTrigger();
+
+        trigger.onRoundStart(player, 1, new FixedIntRandom(
+                FragmentedFaceTrigger.Buff.EDGE_OF_GLASS.ordinal(),
+                FragmentedFaceTrigger.Debuff.OPEN_MARK.ordinal()), null);
+
+        assertTrue(player.isBleeding());
+
+        trigger.onRoundEnd(player);
+
+        assertFalse(player.isBleeding());
+    }
+
+    @Test
     void selfDirectedAttackModeRedirectsAttackDamageToTheAttacker() {
         Character attacker = character("Attacker");
         Character defender = character("Defender");
@@ -536,6 +584,22 @@ class GameModeRulesTest {
         @Override
         public EffectState state() {
             return state;
+        }
+    }
+
+    private static final class FixedIntRandom extends Random {
+        private final int[] values;
+        private int index;
+
+        FixedIntRandom(int... values) {
+            this.values = values == null || values.length == 0 ? new int[] { 0 } : values.clone();
+        }
+
+        @Override
+        public int nextInt(int bound) {
+            int value = values[Math.min(index, values.length - 1)];
+            index++;
+            return Math.floorMod(value, bound);
         }
     }
 }

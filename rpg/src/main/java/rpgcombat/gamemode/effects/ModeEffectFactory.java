@@ -4,9 +4,9 @@ import java.util.Map;
 
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.triggers.BleedEmphasisTrigger;
-import rpgcombat.models.effects.triggers.FragmentedFaceTrigger;
-import rpgcombat.models.effects.triggers.SelfDirectedAttackTrigger;
-import rpgcombat.models.effects.triggers.UniversalLifeStealTrigger;
+import rpgcombat.models.effects.triggers.gamemode.FragmentedFaceTrigger;
+import rpgcombat.models.effects.triggers.gamemode.SelfDirectedAttackTrigger;
+import rpgcombat.models.effects.triggers.gamemode.UniversalLifeStealTrigger;
 
 /** Crea els efectes inicials declarats per un mode de joc. */
 public final class ModeEffectFactory {

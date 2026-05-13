@@ -1,6 +1,6 @@
-# ▌Documentació Combat RPG
+# ▌Documentació El Llindar Trencat
 
-> Guia d'integració i desenvolupament del projecte **Combat RPG**.  
+> Guia d'integració i desenvolupament del projecte **El Llindar Trencat**.  
 > Aquesta documentació segueix l'estil del README original i està organitzada per temes per facilitar l'onboarding i l'extensió del codi.
 
 ---

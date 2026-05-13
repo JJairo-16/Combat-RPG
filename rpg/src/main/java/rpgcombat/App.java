@@ -14,7 +14,7 @@ public class App {
     private final SafeExecutor executor = SafeExecutor.withAutomaticCrashReports(Path.of("rpg/crash-reports"));
 
     public void run() {
-        ExecutionReport report = executor.run("RPG Combat", () -> new AppController().run());
+        ExecutionReport report = executor.run("El Llindar Trencat", () -> new AppController().run());
         endIfCrashed(report);
     }
 

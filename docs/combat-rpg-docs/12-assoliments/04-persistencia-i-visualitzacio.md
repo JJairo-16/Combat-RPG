@@ -12,6 +12,14 @@ La ruta de desament es defineix a `appConfig.json`:
 
 `AchievementStore` resol aquesta ruta dins l'espai persistent de l'aplicació i carrega o desa el progrés global.
 
+Si la ruta és relativa, es desa dins el directori d'aplicació resolt per `AppDataPaths`:
+
+- Windows: `%APPDATA%/The Broken Threshold`
+- Linux amb `XDG_DATA_HOME`: `$XDG_DATA_HOME/the-broken-threshold`
+- Fallback: `~/.the-broken-threshold`
+
+Durant la càrrega, si el fitxer nou encara no existeix, es pot llegir l'antiga ubicació (`RPGCombat`, `rpgcombat` o `.rpgcombat`) per conservar progrés anterior al canvi de nom. Les noves escriptures van a la ubicació actual.
+
 ---
 
 ## ▌Què es desa

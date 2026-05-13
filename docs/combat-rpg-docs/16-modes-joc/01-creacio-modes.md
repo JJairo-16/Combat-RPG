@@ -94,6 +94,21 @@ La decisió es fa a `ChaosPolicy` i s'aplica als personatges abans de crear el `
 
 `mode` pot combinar requisits segons el valor de `UnlockMode`. Un mode sense requisits queda disponible des de l'inici.
 
+Tipus de requisit útils en modes:
+
+- `ACHIEVEMENT`: requereix un assoliment completat.
+- `DISCOVERY`: requereix una entrada concreta del catàleg de descobriments.
+- `TOTAL_ACHIEVEMENTS`: requereix un nombre total d'assoliments completats.
+- `TOTAL_DISCOVERIES`: requereix un nombre total de descobriments.
+- `CATEGORY_DISCOVERIES`: requereix un nombre de descobriments dins una categoria.
+- `TAGGED_DISCOVERIES`: requereix un nombre de descobriments dins una categoria que tinguin una etiqueta concreta. L'etiqueta es declara a `id`.
+
+Exemple amb descobriments etiquetats:
+
+```json
+{ "type": "TAGGED_DISCOVERIES", "category": "EFFECTS", "id": "positiu", "amount": 2 }
+```
+
 ## Efectes de mode
 
 Els efectes de mode són triggers inicials declarats a `modeEffects`. Són útils per crear variants més flexibles que simples multiplicadors.
@@ -117,6 +132,8 @@ Els efectes de mode són triggers inicials declarats a `modeEffects`. Són útil
 Efectes disponibles:
 
 - `BLEED_EMPHASIS`: dona més pes al sagnat.
+- `FRAGMENTED_FACE`: tria un fragment favorable i un d'advers al principi de cada ronda. Els fragments són d'abast de ronda: si alteren recursos, estats o càrregues, el trigger ha de desfer només la part que ell mateix ha introduït quan la ronda acaba.
+- `UNIVERSAL_LIFE_STEAL`: aplica robavida global i pot bloquejar només la regeneració passiva de vida.
 - `SELF_DIRECTED_ATTACK`: redirigeix atacs del portador contra si mateix. Està pensat per proves o modes experimentals; no s'ha de deixar en `gameModes.json` si no es vol exposar al menú normal.
 
 Per afegir un efecte nou:
@@ -125,6 +142,8 @@ Per afegir un efecte nou:
 2. Registrar-la a `ModeEffectFactory`.
 3. Afegir-ne un test a `GameModeRulesTest` o a una prova específica del comportament.
 4. Declarar-la a `modeEffects` només en els modes que l'hagin d'usar.
+
+Si l'efecte només ha de durar una ronda, ha d'implementar `RoundScopedEffect` i restaurar el seu estat a `onRoundEnd(...)` sense revertir canvis legítims causats per altres sistemes durant aquella ronda.
 
 ## Cinemàtiques de mode
 

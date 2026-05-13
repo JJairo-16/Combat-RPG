@@ -194,8 +194,16 @@ public class Character {
         return bleedTurns > 0;
     }
 
+    public int bleedTurnsRemaining() {
+        return bleedTurns;
+    }
+
     public boolean isStaggered() {
         return staggerTurns > 0;
+    }
+
+    public int staggerTurnsRemaining() {
+        return staggerTurns;
     }
 
     public int getMomentumStacks() {
@@ -529,6 +537,13 @@ public class Character {
             chargedAttack = false;
         }
         return wasCharged;
+    }
+
+    /**
+     * Elimina qualsevol càrrega preparada sense aplicar-ne el multiplicador.
+     */
+    public void clearChargedAttack() {
+        chargedAttack = false;
     }
 
     /**

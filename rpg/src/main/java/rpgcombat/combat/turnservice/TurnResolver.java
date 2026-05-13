@@ -25,7 +25,7 @@ import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Result;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.models.effects.impl.elemental.PoisonEffect;
-import rpgcombat.models.effects.triggers.Chaos;
+import rpgcombat.models.effects.triggers.gamemode.Chaos;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;
 import rpgcombat.weapons.passives.HitContext;
@@ -206,7 +206,7 @@ public class TurnResolver {
             boolean canKill = ctx.getMeta(Chaos.META_SELF_HIT_CAN_KILL, Boolean.class, false);
             double selfDamage = round2(Math.max(0.0, damageToResolve * selfMultiplier));
             if (!canKill)
-                selfDamage = Math.clamp(0.0, selfDamage, attacker.getStatistics().getHealth() - 1.0);
+                selfDamage = capNonLethalDamage(selfDamage, attacker.getStatistics().getHealth());
 
             Result selfResult = selfDamage > 0
                     ? attacker.getDamage(selfDamage)
@@ -686,6 +686,11 @@ public class TurnResolver {
      */
     private static double round2(double n) {
         return Math.round(n * 100.0) / 100.0;
+    }
+
+    private static double capNonLethalDamage(double amount, double currentHealth) {
+        double maxSafeDamage = Math.max(0.0, currentHealth - 1.0);
+        return Math.min(Math.max(0.0, amount), maxSafeDamage);
     }
 
     private static String getWeaponId(Weapon weapon) {

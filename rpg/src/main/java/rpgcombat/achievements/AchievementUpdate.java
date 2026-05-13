@@ -12,8 +12,8 @@ import rpgcombat.combat.models.Winner;
 import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
+import rpgcombat.models.effects.triggers.gamemode.Chaos;
 import rpgcombat.weapons.Weapon;
-import rpgcombat.models.effects.triggers.Chaos;
 import rpgcombat.achievements.config.AchievementObjective;
 
 /** Informació global d'un esdeveniment que pot fer avançar assoliments. */

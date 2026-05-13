@@ -1,4 +1,4 @@
-package rpgcombat.models.effects.triggers;
+package rpgcombat.models.effects.triggers.gamemode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,14 +13,17 @@ import rpgcombat.discovery.DiscoveryCategory;
 import rpgcombat.discovery.DiscoveryRuntime;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
+import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.impl.BlindEffect;
+import rpgcombat.models.effects.triggers.Trigger;
 import rpgcombat.models.effects.types.RoundScopedEffect;
 import rpgcombat.weapons.passives.HitContext;
 
 /** Trigger de mode que assigna un reflex positiu i un de negatiu a cada ronda. */
 public final class FragmentedFaceTrigger extends Trigger implements RoundScopedEffect {
     public static final String INTERNAL_EFFECT_KEY = "FRAGMENTED_FACE";
+    private static final String BLIND_KEY = "BLIND";
 
     private static final double OUTGOING_UP = 1.16;
     private static final double OUTGOING_DOWN = 0.86;
@@ -45,6 +48,7 @@ public final class FragmentedFaceTrigger extends Trigger implements RoundScopedE
     private Debuff activeDebuff;
     private int activeRound;
     private boolean startMessageShown;
+    private RoundSnapshot roundSnapshot;
 
     public FragmentedFaceTrigger() {
         super(INTERNAL_EFFECT_KEY);
@@ -57,11 +61,13 @@ public final class FragmentedFaceTrigger extends Trigger implements RoundScopedE
 
     @Override
     public void onRoundEnd(Character owner) {
+        revertRound(owner);
         clearRound();
     }
 
     private void beginRound(Character owner, int round, Random rng) {
         clearRound();
+        roundSnapshot = RoundSnapshot.capture(owner);
         activeRound = round;
         activeBuff = Buff.values()[rng.nextInt(Buff.values().length)];
         activeDebuff = rollDebuff(rng, activeBuff);
@@ -104,6 +110,7 @@ public final class FragmentedFaceTrigger extends Trigger implements RoundScopedE
         activeDebuff = null;
         activeRound = 0;
         startMessageShown = false;
+        roundSnapshot = null;
     }
 
     @Override
@@ -248,15 +255,37 @@ public final class FragmentedFaceTrigger extends Trigger implements RoundScopedE
 
     private void applyImmediateBuff(Character owner, Buff buff) {
         Statistics stats = owner.getStatistics();
+        RoundSnapshot snapshot = roundSnapshot;
         switch (buff) {
-            case DEEP_BREATH -> stats.restoreStamina(stats.getMaxStamina() * ROUND_RESOURCE_RATIO);
-            case CLEAR_VEIN -> stats.restoreMana(stats.getMaxMana() * ROUND_RESOURCE_RATIO);
-            case WARM_PULSE -> stats.heal(stats.getMaxHealth() * ROUND_HEALTH_RATIO);
-            case SUTURED_MARK -> owner.clearBleed();
-            case STEADY_AXIS -> owner.clearStagger();
-            case CLEAR_GAZE -> owner.removeEffect("BLIND");
-            case GATHERED_RHYTHM -> owner.gainMomentum();
-            case HELD_CHARGE -> owner.prepareChargedAttack();
+            case DEEP_BREATH -> snapshot.restoredStamina = stats.restoreStamina(stats.getMaxStamina() * ROUND_RESOURCE_RATIO);
+            case CLEAR_VEIN -> snapshot.restoredMana = stats.restoreMana(stats.getMaxMana() * ROUND_RESOURCE_RATIO);
+            case WARM_PULSE -> snapshot.restoredHealth = stats.heal(stats.getMaxHealth() * ROUND_HEALTH_RATIO);
+            case SUTURED_MARK -> {
+                if (owner.isBleeding()) {
+                    snapshot.clearedBleed = true;
+                    owner.clearBleed();
+                }
+            }
+            case STEADY_AXIS -> {
+                if (owner.isStaggered()) {
+                    snapshot.clearedStagger = true;
+                    owner.clearStagger();
+                }
+            }
+            case CLEAR_GAZE -> {
+                if (owner.hasEffect(BLIND_KEY)) {
+                    snapshot.clearedBlind = true;
+                    owner.removeEffect(BLIND_KEY);
+                }
+            }
+            case GATHERED_RHYTHM -> {
+                snapshot.addedMomentum = true;
+                owner.gainMomentum();
+            }
+            case HELD_CHARGE -> {
+                snapshot.addedCharge = !owner.hasChargedAttack();
+                owner.prepareChargedAttack();
+            }
             default -> {
             }
         }
@@ -264,21 +293,84 @@ public final class FragmentedFaceTrigger extends Trigger implements RoundScopedE
 
     private void applyImmediateDebuff(Character owner, Debuff debuff) {
         Statistics stats = owner.getStatistics();
+        RoundSnapshot snapshot = roundSnapshot;
         switch (debuff) {
-            case SHALLOW_BREATH -> stats.consumeStamina(stats.getMaxStamina() * ROUND_RESOURCE_RATIO);
-            case THIRSTING_VEIN -> consumeMana(owner, stats.getMaxMana() * ROUND_RESOURCE_RATIO);
-            case COLD_PULSE -> nonLethalDamage(owner, stats.getMaxHealth() * ROUND_HEALTH_RATIO);
-            case OPEN_MARK -> owner.applyBleed(1);
-            case CROOKED_AXIS -> owner.applyStagger(1);
-            case VEILED_GAZE -> owner.addEffect(new BlindEffect(1, 0.18));
-            case LOST_RHYTHM -> owner.loseMomentum();
+            case SHALLOW_BREATH -> snapshot.consumedStamina = stats.consumeStamina(stats.getMaxStamina() * ROUND_RESOURCE_RATIO);
+            case THIRSTING_VEIN -> snapshot.consumedMana = consumeMana(owner, stats.getMaxMana() * ROUND_RESOURCE_RATIO);
+            case COLD_PULSE -> snapshot.consumedHealth = nonLethalDamage(owner, stats.getMaxHealth() * ROUND_HEALTH_RATIO);
+            case OPEN_MARK -> {
+                snapshot.addedBleed = !owner.isBleeding();
+                owner.applyBleed(1);
+            }
+            case CROOKED_AXIS -> {
+                snapshot.addedStagger = !owner.isStaggered();
+                owner.applyStagger(1);
+            }
+            case VEILED_GAZE -> {
+                BlindEffect blind = new BlindEffect(1, 0.18);
+                snapshot.addedBlind = !owner.hasEffect(BLIND_KEY);
+                snapshot.fragmentBlind = blind;
+                owner.addEffect(blind);
+            }
+            case LOST_RHYTHM -> {
+                snapshot.removedMomentum = owner.getMomentumStacks() > 0;
+                owner.loseMomentum();
+            }
             case SCATTERED_CHARGE -> {
                 if (owner.hasChargedAttack()) {
+                    snapshot.removedCharge = true;
                     owner.consumeChargedAttack();
                 }
             }
             default -> {
             }
+        }
+    }
+
+    private void revertRound(Character owner) {
+        RoundSnapshot snapshot = roundSnapshot;
+        if (owner == null || snapshot == null) {
+            return;
+        }
+
+        Statistics stats = owner.getStatistics();
+        removeTemporaryGain(stats.getStamina(), snapshot.stamina, snapshot.restoredStamina, stats::consumeStamina);
+        removeTemporaryGain(stats.getMana(), snapshot.mana, snapshot.restoredMana, FragmentedFaceTrigger.manaConsumer(stats));
+        removeTemporaryHealthGain(owner, snapshot);
+
+        restoreTemporaryLoss(stats.getStamina(), snapshot.stamina, snapshot.consumedStamina, stats::restoreStamina);
+        restoreTemporaryLoss(stats.getMana(), snapshot.mana, snapshot.consumedMana, stats::restoreMana);
+        restoreTemporaryHealthLoss(owner, snapshot);
+
+        if (snapshot.clearedBleed && !owner.isBleeding()) {
+            owner.applyBleed(snapshot.bleedTurns);
+        }
+        if (snapshot.addedBleed && owner.bleedTurnsRemaining() <= 1) {
+            owner.clearBleed();
+        }
+        if (snapshot.clearedStagger && !owner.isStaggered()) {
+            owner.applyStagger(snapshot.staggerTurns);
+        }
+        if (snapshot.addedStagger && owner.staggerTurnsRemaining() <= 1) {
+            owner.clearStagger();
+        }
+        if (snapshot.clearedBlind && !owner.hasEffect(BLIND_KEY) && snapshot.blindEffect != null) {
+            owner.addInternalEffect(snapshot.blindEffect);
+        }
+        if (snapshot.addedBlind && owner.getEffect(BLIND_KEY) == snapshot.fragmentBlind) {
+            owner.removeEffect(BLIND_KEY);
+        }
+        if (snapshot.addedMomentum && owner.getMomentumStacks() > snapshot.momentumStacks) {
+            owner.loseMomentum();
+        }
+        if (snapshot.removedMomentum && owner.getMomentumStacks() < snapshot.momentumStacks) {
+            owner.gainMomentum();
+        }
+        if (snapshot.addedCharge && !snapshot.chargedAttack && owner.hasChargedAttack()) {
+            owner.clearChargedAttack();
+        }
+        if (snapshot.removedCharge && snapshot.chargedAttack && !owner.hasChargedAttack()) {
+            owner.prepareChargedAttack();
         }
     }
 
@@ -320,11 +412,45 @@ public final class FragmentedFaceTrigger extends Trigger implements RoundScopedE
             return 0.0;
         }
         double health = owner.getStatistics().getHealth();
-        double applied = Math.clamp(amount, 0.0, health - 1.0);
+        double applied = Math.min(amount, Math.max(0.0, health - 1.0));
         if (applied > 0) {
             owner.getStatistics().damage(applied);
         }
         return applied;
+    }
+
+    private static void removeTemporaryGain(double current, double baseline, double amount, AmountConsumer consumer) {
+        if (amount <= 0 || current <= baseline) {
+            return;
+        }
+        consumer.accept(Math.min(amount, current - baseline));
+    }
+
+    private static void restoreTemporaryLoss(double current, double baseline, double amount, AmountConsumer restorer) {
+        if (amount <= 0 || current >= baseline) {
+            return;
+        }
+        restorer.accept(Math.min(amount, baseline - current));
+    }
+
+    private static void removeTemporaryHealthGain(Character owner, RoundSnapshot snapshot) {
+        double health = owner.getStatistics().getHealth();
+        if (snapshot.restoredHealth <= 0 || health <= snapshot.health) {
+            return;
+        }
+        nonLethalDamage(owner, Math.min(snapshot.restoredHealth, health - snapshot.health));
+    }
+
+    private static void restoreTemporaryHealthLoss(Character owner, RoundSnapshot snapshot) {
+        double health = owner.getStatistics().getHealth();
+        if (snapshot.consumedHealth <= 0 || health >= snapshot.health || !owner.isAlive()) {
+            return;
+        }
+        owner.getStatistics().heal(Math.min(snapshot.consumedHealth, snapshot.health - health));
+    }
+
+    private static AmountConsumer manaConsumer(Statistics stats) {
+        return stats::consumeMana;
     }
 
     private static EffectResult result(MessageSymbol symbol, String text) {
@@ -333,6 +459,56 @@ public final class FragmentedFaceTrigger extends Trigger implements RoundScopedE
 
     private static double round2(double value) {
         return Math.round(value * 100.0) / 100.0;
+    }
+
+    @FunctionalInterface
+    private interface AmountConsumer {
+        void accept(double amount);
+    }
+
+    private static final class RoundSnapshot {
+        private final double health;
+        private final double mana;
+        private final double stamina;
+        private final int bleedTurns;
+        private final int staggerTurns;
+        private final Effect blindEffect;
+        private final boolean chargedAttack;
+        private final int momentumStacks;
+
+        private double restoredHealth;
+        private double restoredMana;
+        private double restoredStamina;
+        private double consumedHealth;
+        private double consumedMana;
+        private double consumedStamina;
+        private boolean clearedBleed;
+        private boolean addedBleed;
+        private boolean clearedStagger;
+        private boolean addedStagger;
+        private boolean clearedBlind;
+        private boolean addedBlind;
+        private Effect fragmentBlind;
+        private boolean addedMomentum;
+        private boolean removedMomentum;
+        private boolean addedCharge;
+        private boolean removedCharge;
+
+        private RoundSnapshot(Character owner) {
+            Statistics stats = owner.getStatistics();
+            health = stats.getHealth();
+            mana = stats.getMana();
+            stamina = stats.getStamina();
+            bleedTurns = owner.bleedTurnsRemaining();
+            staggerTurns = owner.staggerTurnsRemaining();
+            blindEffect = owner.getEffect(BLIND_KEY);
+            chargedAttack = owner.hasChargedAttack();
+            momentumStacks = owner.getMomentumStacks();
+        }
+
+        private static RoundSnapshot capture(Character owner) {
+            return new RoundSnapshot(owner);
+        }
     }
 
     /** Resultats positius possibles. */

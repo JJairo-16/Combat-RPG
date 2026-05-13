@@ -1,4 +1,4 @@
-package rpgcombat.models.effects.triggers;
+package rpgcombat.models.effects.triggers.gamemode;
 
 import java.util.Random;
 
@@ -6,6 +6,7 @@ import rpgcombat.combat.ui.messages.MessageColor;
 import rpgcombat.combat.ui.messages.MessageSymbol;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.EffectResult;
+import rpgcombat.models.effects.triggers.Trigger;
 import rpgcombat.models.effects.types.EndRoundRecoveryEffect;
 import rpgcombat.weapons.passives.HitContext;
 

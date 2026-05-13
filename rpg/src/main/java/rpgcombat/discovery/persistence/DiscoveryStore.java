@@ -19,6 +19,7 @@ import com.google.gson.GsonBuilder;
 import rpgcombat.discovery.DiscoveryCategory;
 import rpgcombat.discovery.DiscoveryKey;
 import rpgcombat.discovery.DiscoveryProgress;
+import rpgcombat.persistence.AppDataPaths;
 
 /** Llegeix i desa el progrés global de descobriments a l'AppData del dispositiu. */
 public final class DiscoveryStore {
@@ -27,10 +28,7 @@ public final class DiscoveryStore {
 
     /** Resol la ruta real de desament dins AppData quan és relativa. */
     public Path resolveAppDataPath(String configuredPath) {
-        String file = configuredPath == null || configuredPath.isBlank() ? "discoveries.json" : configuredPath;
-        Path path = Path.of(file);
-        if (path.isAbsolute()) return path;
-        return appDataDirectory().resolve(path).normalize();
+        return AppDataPaths.resolve(configuredPath, "discoveries.json");
     }
 
     /** Carrega el progrés desat, ignorant entrades desconegudes o obsoletes. */
@@ -76,12 +74,21 @@ public final class DiscoveryStore {
 
     /** Llegeix el fitxer de desament si existeix. */
     private DiscoverySaveData readSave(Path path) {
-        if (path == null || !Files.exists(path)) return null;
-        try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+        Path actualPath = readablePath(path);
+        if (actualPath == null) return null;
+        try (Reader reader = Files.newBufferedReader(actualPath, StandardCharsets.UTF_8)) {
             return GSON.fromJson(reader, DiscoverySaveData.class);
         } catch (Exception ignored) {
             return null;
         }
+    }
+
+    /** Tria la ruta nova o, si encara no existeix, l'equivalent anterior. */
+    private Path readablePath(Path path) {
+        if (path == null) return null;
+        if (Files.exists(path)) return path;
+        Path legacy = AppDataPaths.legacyEquivalent(path);
+        return legacy != null && Files.exists(legacy) ? legacy : null;
     }
 
     /** Converteix un text ISO-8601 en instant. */
@@ -104,18 +111,4 @@ public final class DiscoveryStore {
         }
     }
 
-    /** Retorna el directori AppData adequat per al sistema operatiu. */
-    private Path appDataDirectory() {
-        String appData = System.getenv("APPDATA");
-        if (appData != null && !appData.isBlank()) {
-            return Path.of(appData, "RPGCombat");
-        }
-
-        String xdg = System.getenv("XDG_DATA_HOME");
-        if (xdg != null && !xdg.isBlank()) {
-            return Path.of(xdg, "rpgcombat");
-        }
-
-        return Path.of(System.getProperty("user.home", "."), ".rpgcombat");
-    }
 }

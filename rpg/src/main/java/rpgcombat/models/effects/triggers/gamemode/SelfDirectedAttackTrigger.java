@@ -1,9 +1,10 @@
-package rpgcombat.models.effects.triggers;
+package rpgcombat.models.effects.triggers.gamemode;
 
 import java.util.Random;
 
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.EffectResult;
+import rpgcombat.models.effects.triggers.Trigger;
 import rpgcombat.weapons.passives.HitContext;
 
 /**

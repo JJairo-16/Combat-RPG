@@ -1,4 +1,4 @@
-package rpgcombat.models.effects.triggers;
+package rpgcombat.models.effects.triggers.gamemode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +18,7 @@ import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.impl.BlindEffect;
 import rpgcombat.models.effects.impl.Fatigue;
+import rpgcombat.models.effects.triggers.Trigger;
 import rpgcombat.weapons.passives.HitContext;
 
 /**

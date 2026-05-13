@@ -20,7 +20,7 @@ import rpgcombat.gamemode.model.MatchContext;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
-import rpgcombat.models.effects.triggers.Chaos;
+import rpgcombat.models.effects.triggers.gamemode.Chaos;
 import rpgcombat.perks.CombatPerkSystem;
 
 import rpgcombat.utils.cache.TextWrapCache;

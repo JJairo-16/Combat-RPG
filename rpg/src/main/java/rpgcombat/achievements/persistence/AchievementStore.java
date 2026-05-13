@@ -17,6 +17,7 @@ import com.google.gson.GsonBuilder;
 
 import rpgcombat.achievements.AchievementProgress;
 import rpgcombat.achievements.config.AchievementDefinition;
+import rpgcombat.persistence.AppDataPaths;
 
 /** Llegeix i desa el progrés global d'assoliments a l'AppData del dispositiu. */
 public final class AchievementStore {
@@ -28,10 +29,7 @@ public final class AchievementStore {
      * l'AppData del sistema, no dins del projecte.
      */
     public Path resolveAppDataPath(String configuredPath) {
-        String file = configuredPath == null || configuredPath.isBlank() ? "achievements.json" : configuredPath;
-        Path path = Path.of(file);
-        if (path.isAbsolute()) return path;
-        return appDataDirectory().resolve(path).normalize();
+        return AppDataPaths.resolve(configuredPath, "achievements.json");
     }
 
     /** Carrega el progrés, creant entrades buides per als assoliments nous. */
@@ -95,12 +93,21 @@ public final class AchievementStore {
 
     /** Llegeix el fitxer si existeix. */
     private AchievementSaveData readSave(Path path) {
-        if (path == null || !Files.exists(path)) return null;
-        try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+        Path actualPath = readablePath(path);
+        if (actualPath == null) return null;
+        try (Reader reader = Files.newBufferedReader(actualPath, StandardCharsets.UTF_8)) {
             return GSON.fromJson(reader, AchievementSaveData.class);
         } catch (Exception ignored) {
             return null;
         }
+    }
+
+    /** Tria la ruta nova o, si encara no existeix, l'equivalent anterior. */
+    private Path readablePath(Path path) {
+        if (path == null) return null;
+        if (Files.exists(path)) return path;
+        Path legacy = AppDataPaths.legacyEquivalent(path);
+        return legacy != null && Files.exists(legacy) ? legacy : null;
     }
 
     /** Converteix una data ISO a Instant. */
@@ -113,18 +120,4 @@ public final class AchievementStore {
         }
     }
 
-    /** Retorna el directori AppData adequat per al sistema operatiu. */
-    private Path appDataDirectory() {
-        String appData = System.getenv("APPDATA");
-        if (appData != null && !appData.isBlank()) {
-            return Path.of(appData, "RPGCombat");
-        }
-
-        String xdg = System.getenv("XDG_DATA_HOME");
-        if (xdg != null && !xdg.isBlank()) {
-            return Path.of(xdg, "rpgcombat");
-        }
-
-        return Path.of(System.getProperty("user.home", "."), ".rpgcombat");
-    }
 }

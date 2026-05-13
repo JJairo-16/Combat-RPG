@@ -6,7 +6,7 @@
 
 ## ▌Què és aquest projecte?
 
-**Combat RPG** és un joc de combat per torns 1vs1 amb creació de personatges, estadístiques, armes, habilitats, efectes i sistemes de balance configurables.
+**El Llindar Trencat** és un joc de combat per torns 1vs1 amb creació de personatges, estadístiques, armes, habilitats, efectes i sistemes de balance configurables.
 
 El projecte no està pensat com un simple script lineal. Té una separació clara entre:
 

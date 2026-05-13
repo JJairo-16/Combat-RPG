@@ -49,6 +49,7 @@ Els triggers funcionen mitjançant *hooks* invocats pel sistema de combat.
 Exemples habituals:
 - `afterHit(...)`
 - (altres segons el sistema)
+- `onRoundStart(...)` i `onRoundEnd(...)` quan el trigger implementa `RoundScopedEffect`
 
 Cada hook:
 1. Rep el context (ex: `HitContext`)
@@ -94,6 +95,23 @@ minRate + (maxRate - minRate) / (1 + Math.pow(con / (double) C, n))
 - `con`: constitució
 - `C`, `n`: control de la corba
 - Més constitució ⇒ menys probabilitat
+
+---
+
+## ▌Triggers limitats a ronda
+
+Alguns triggers de mode necessiten preparar estat al principi de la ronda i retirar-lo quan acaba. Aquests triggers implementen `RoundScopedEffect`.
+
+Contracte recomanat:
+
+1. Capturar només l'estat que el trigger pot tocar.
+2. Aplicar el canvi al principi de ronda.
+3. Retornar missatges mitjançant el pipeline normal d'efectes, no des del sistema de combat.
+4. A `onRoundEnd(...)`, desfer només la contribució pròpia que encara continua present.
+
+Això evita que un efecte de ronda es converteixi accidentalment en un canvi permanent. Per exemple, un fragment que dona una càrrega preparada ha de retirar-la al final si encara és la mateixa càrrega, però no ha d'esborrar altres canvis legítims que hagin passat durant la ronda.
+
+`FRAGMENTED_FACE` segueix aquest patró: cada ronda escull un fragment favorable i un d'advers, registra els resultats descoberts i exposa el text del fragment com a missatge d'efecte a `START_TURN`.
 
 ---
 

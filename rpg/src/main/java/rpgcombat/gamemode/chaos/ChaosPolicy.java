@@ -5,7 +5,7 @@ import java.util.Random;
 import rpgcombat.gamemode.model.GameModeDefinition;
 import rpgcombat.gamemode.model.GameModeRules;
 import rpgcombat.models.characters.Character;
-import rpgcombat.models.effects.triggers.Chaos;
+import rpgcombat.models.effects.triggers.gamemode.Chaos;
 
 /** Aplica la política de Caos definida pel mode de joc, fora del motor cinematogràfic. */
 public final class ChaosPolicy {
