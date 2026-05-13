@@ -6,9 +6,11 @@ import java.util.Set;
 
 import rpgcombat.achievements.AchievementSystem;
 import rpgcombat.discovery.DiscoverySystem;
+import rpgcombat.gamemode.chaos.ChaosRules;
 import rpgcombat.gamemode.cinematics.ModeCinematics;
 import rpgcombat.gamemode.effects.ModeEffectDefinition;
 import rpgcombat.gamemode.effects.ModeEffectTarget;
+import rpgcombat.models.effects.triggers.FragmentedFaceTrigger;
 import rpgcombat.models.effects.triggers.UniversalLifeStealTrigger;
 import rpgcombat.unlocks.UnlockEvaluator;
 import rpgcombat.unlocks.UnlockMode;
@@ -112,6 +114,42 @@ public record GameModeDefinition(
                         "Fam sense nom",
                         List.of("Quan la gana no s'atura i la carn ja sap doblegar-se, una porta s'obrirà.")),
                 ModeCinematics.normal());
+    }
+
+    public static GameModeDefinition fragmentedFace() {
+        return new GameModeDefinition(
+                "FRAGMENTED_FACE",
+                "El rostre fragmentat",
+                "Variant del mode normal sense Caos: cada ronda desperta una faceta favorable i una esquerda adversa.",
+                new UnlockRule(UnlockMode.ALL, List.of(
+                        new UnlockRequirement(UnlockRequirementType.ACHIEVEMENT, "LAST_BELL", null, 0),
+                        new UnlockRequirement(UnlockRequirementType.DISCOVERY, "CHAOS", "EFFECTS", 0),
+                        new UnlockRequirement(UnlockRequirementType.TAGGED_DISCOVERIES, "negatiu", "EFFECTS", 2),
+                        new UnlockRequirement(UnlockRequirementType.TAGGED_DISCOVERIES, "positiu", "EFFECTS", 2))),
+                new GameModeRules(
+                        Set.of(),
+                        true,
+                        GameModeRules.DEFAULT_MAX_PERKS,
+                        true,
+                        true,
+                        ChaosRules.disabled(),
+                        List.of(new ModeEffectDefinition(
+                                FragmentedFaceTrigger.INTERNAL_EFFECT_KEY,
+                                ModeEffectTarget.BOTH,
+                                Map.of()))),
+                new GameModePresentation(
+                        "La ronda mai arriba sencera.",
+                        List.of(
+                                "El combat conserva totes les formes conegudes",
+                                "Les armes trobades poden tornar a aparèixer",
+                                "Les benediccions encara poden formar una corona ampla",
+                                "Els pactes divins romanen desperts",
+                                "El Caos no travessa la porta",
+                                "Cada ronda mostra una cara i una esquerda"),
+                        "???",
+                        "Rostre sense nom",
+                        List.of("Quan una partida ja coneguda es miri massa temps al mirall, potser apareixerà una esquerda.")),
+                new ModeCinematics(List.of(ModeCinematics.DEFAULT_RANDOM), null));
     }
 
     public boolean isUnlocked(AchievementSystem achievements, DiscoverySystem discoveries) {

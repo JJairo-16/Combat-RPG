@@ -5,8 +5,8 @@ import java.util.Random;
 import rpgcombat.combat.ui.messages.MessageColor;
 import rpgcombat.combat.ui.messages.MessageSymbol;
 import rpgcombat.models.characters.Character;
-import rpgcombat.models.effects.EndRoundRecoveryEffect;
 import rpgcombat.models.effects.EffectResult;
+import rpgcombat.models.effects.types.EndRoundRecoveryEffect;
 import rpgcombat.weapons.passives.HitContext;
 
 /** Trigger de mode que apaga la cura passiva i converteix cada impacte en robavida. */

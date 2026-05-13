@@ -27,7 +27,7 @@ public final class DiscoveryUiStyle {
     public static final int COLLAPSED_CATEGORY_WIDTH = 6;
     public static final int CATEGORY_WIDTH_RATIO = 4;
     public static final int CATEGORY_MIN_WIDTH = 20;
-    public static final int CATEGORY_MAX_WIDTH = 30;
+    public static final int CATEGORY_MAX_WIDTH = 35;
 
     public static final int ENTRY_WIDTH_RATIO = 3;
     public static final int ENTRY_MIN_WIDTH = 24;

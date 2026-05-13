@@ -1,4 +1,4 @@
-package rpgcombat.models.effects;
+package rpgcombat.models.effects.types;
 
 import rpgcombat.models.characters.Character;
 

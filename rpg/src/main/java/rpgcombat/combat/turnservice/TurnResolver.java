@@ -360,6 +360,15 @@ public class TurnResolver {
             Map<String, Object> startTurnMeta) {
 
         CombatMessageBuffer endTurnMessages = new CombatMessageBuffer();
+        Random attackerRng = attacker.rng();
+        HitContext ctx = new HitContext(
+                attacker,
+                defender,
+                attacker.getWeapon(),
+                attackerRng,
+                attackerAction,
+                defenderAction);
+        effectPipeline.runAttackerOnly(ctx, Phase.START_TURN, attacker, attackerRng, startMessages);
 
         if (attackerAction == CHARGE) {
             if (attacker.hasChargedAttack()) {
@@ -380,15 +389,6 @@ public class TurnResolver {
 
         Result defenderResult = attackResolver.resolveAttack(0, defender, defenderAction);
         String defenseMessage = defenderResult.message();
-
-        Random attackerRng = attacker.rng();
-        HitContext ctx = new HitContext(
-                attacker,
-                defender,
-                attacker.getWeapon(),
-                attackerRng,
-                attackerAction,
-                defenderAction);
 
         effectPipeline.runAttackerOnly(ctx, Phase.END_TURN, attacker, attackerRng, endTurnMessages);
         Weapon weapon = attacker.getWeapon();

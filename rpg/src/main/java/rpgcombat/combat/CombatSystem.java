@@ -148,6 +148,8 @@ public class CombatSystem {
         a2 = rules.requireAllowed(a2);
         roundNumber++;
         applySuddenDeathPoisonIfNeeded();
+        player1.onCombatRoundStart(roundNumber, combatRng, null);
+        player2.onCombatRoundStart(roundNumber, combatRng, null);
 
         Statistics p1Stats = player1.getStatistics();
         Statistics p2Stats = player2.getStatistics();
@@ -192,6 +194,7 @@ public class CombatSystem {
 
         Winner winner = resolveWinner(player1, player2);
         if (winner != Winner.NONE) {
+            clearRoundScopedEffects();
             return new CombatRoundResult(
                     firstTurn,
                     secondTurn,
@@ -238,6 +241,7 @@ public class CombatSystem {
 
         CombatantStatus p1Final = CombatantStatus.from(player1);
         CombatantStatus p2Final = CombatantStatus.from(player2);
+        clearRoundScopedEffects();
 
         return new CombatRoundResult(
                 firstTurn,
@@ -253,6 +257,12 @@ public class CombatSystem {
                 p2AfterDamage,
                 p1Final,
                 p2Final);
+    }
+
+    /** Neteja efectes transitoris que només duren la ronda actual. */
+    private void clearRoundScopedEffects() {
+        player1.onCombatRoundEnd();
+        player2.onCombatRoundEnd();
     }
 
     /**

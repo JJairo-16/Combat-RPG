@@ -8,6 +8,7 @@ public enum DiscoveryCategory {
     WEAPONS("Armes"),
     ACTIONS("Accions"),
     EFFECTS("Efectes"),
+    FRAGMENT_RESULTS("Fragments perduts"),
 
     MISSIONS("Missions"),
     PERKS("Perks"),

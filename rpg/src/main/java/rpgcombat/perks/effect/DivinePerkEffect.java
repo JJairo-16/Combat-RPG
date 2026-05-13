@@ -142,9 +142,8 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
     private EffectResult cernunnos(HitContext ctx, Phase phase, Character owner) {
         if (phase == Phase.START_TURN && ctx.attacker() == owner) {
             state.addStacks(1, Integer.MAX_VALUE);
-            boolean awakened = awaken(ctx, 4);
             String stance = state.stacks() % 2 == 0 ? "forma feral" : "forma guardiana";
-            return msg("adopta la " + stance + awakeningText(awakened, 4) + ".");
+            return msg("adopta la " + stance + ".");
         }
         boolean even = state.stacks() % 2 == 0;
         double p = power(4);

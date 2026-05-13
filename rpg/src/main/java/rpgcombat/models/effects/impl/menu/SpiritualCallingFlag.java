@@ -3,7 +3,7 @@ package rpgcombat.models.effects.impl.menu;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectState;
-import rpgcombat.models.effects.MenuTurnEffect;
+import rpgcombat.models.effects.types.MenuTurnEffect;
 
 public class SpiritualCallingFlag implements Effect, MenuTurnEffect {
     public static final String INTERNAL_EFFECT_KEY = "CAN_CALL_SPIRITS";

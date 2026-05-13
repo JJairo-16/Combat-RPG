@@ -5,7 +5,7 @@ import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectState;
-import rpgcombat.models.effects.MenuTurnEffect;
+import rpgcombat.models.effects.types.MenuTurnEffect;
 import rpgcombat.weapons.Weapon;
 
 /**

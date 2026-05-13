@@ -25,13 +25,14 @@ import rpgcombat.game.modifier.ultimate.UltimateActionEffect;
 import rpgcombat.game.modifier.ultimate.UltimateActionType;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.effects.Effect;
-import rpgcombat.models.effects.EndRoundRecoveryEffect;
 import rpgcombat.models.effects.EffectResult;
-import rpgcombat.models.effects.MenuTurnEffect;
 import rpgcombat.models.effects.StackingRule;
 import rpgcombat.models.effects.impl.Exhaustion;
 import rpgcombat.models.effects.impl.menu.SpiritualCallingFlag;
 import rpgcombat.models.effects.triggers.InternalConflict;
+import rpgcombat.models.effects.types.EndRoundRecoveryEffect;
+import rpgcombat.models.effects.types.MenuTurnEffect;
+import rpgcombat.models.effects.types.RoundScopedEffect;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;
 import rpgcombat.weapons.passives.HitContext;
@@ -832,6 +833,34 @@ public class Character {
             cleanupExpiredEffects();
         }
         clearSpecialMenuActionUsedThisTurn();
+    }
+
+    /** Executa els efectes que preparen estat de ronda abans de decidir prioritats. */
+    public void onCombatRoundStart(int roundNumber, Random rng, CombatMessageBuffer out) {
+        if (effects.isEmpty()) {
+            return;
+        }
+        List<Effect> snapshot = List.copyOf(effects);
+        for (Effect effect : snapshot) {
+            if (effect instanceof RoundScopedEffect roundEffect) {
+                roundEffect.onRoundStart(this, roundNumber, rng == null ? this.rng : rng, out);
+            }
+        }
+        cleanupExpiredEffects();
+    }
+
+    /** Neteja l'estat transitori d'efectes de ronda. */
+    public void onCombatRoundEnd() {
+        if (effects.isEmpty()) {
+            return;
+        }
+        List<Effect> snapshot = List.copyOf(effects);
+        for (Effect effect : snapshot) {
+            if (effect instanceof RoundScopedEffect roundEffect) {
+                roundEffect.onRoundEnd(this);
+            }
+        }
+        cleanupExpiredEffects();
     }
 
     /** Afegeix un efecte intern sense registrar-lo al catàleg de descobriments. */

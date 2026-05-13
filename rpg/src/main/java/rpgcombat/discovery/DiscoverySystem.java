@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import rpgcombat.discovery.config.DiscoveryCatalog;
@@ -103,6 +104,11 @@ public final class DiscoverySystem {
 
             total += categoryTotal;
             discovered += categoryDiscovered;
+
+            if (category.hiddenUntilDiscovered() && categoryDiscovered <= 0) {
+                continue;
+            }
+
             categories.add(new DiscoveryCategoryView(
                     category.title(),
                     category.description(),
@@ -157,6 +163,32 @@ public final class DiscoverySystem {
         return count;
     }
 
+    /** Nombre d'entrades descobertes dins una categoria que tenen una etiqueta concreta. */
+    public synchronized int discoveredCount(DiscoveryCategory category, String tag) {
+        if (category == null || tag == null || tag.isBlank() || catalog == null) {
+            return 0;
+        }
+
+        String expected = normalizeTag(tag);
+        int count = 0;
+        for (DiscoveryKey key : progressByKey.keySet()) {
+            if (key.category() != category) {
+                continue;
+            }
+            DiscoveryEntryDefinition definition = catalog.find(key.category(), key.id()).orElse(null);
+            if (definition == null) {
+                continue;
+            }
+            boolean hasTag = definition.tags().stream()
+                    .map(DiscoverySystem::normalizeTag)
+                    .anyMatch(expected::equals);
+            if (hasTag) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     /** Converteix una definició en model visual d'entrada. */
     private DiscoveryEntryView toEntryView(DiscoveryEntryDefinition definition, DiscoveryProgress progress) {
         boolean discovered = progress != null;
@@ -191,5 +223,10 @@ public final class DiscoverySystem {
             return definition.hint();
         }
         return hint;
+    }
+
+    /** Normalitza etiquetes declaratives de catàleg per poder comparar-les. */
+    private static String normalizeTag(String value) {
+        return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
     }
 }

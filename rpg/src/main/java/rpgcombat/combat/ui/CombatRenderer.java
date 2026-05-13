@@ -15,7 +15,7 @@ import rpgcombat.utils.ui.ColorGradient;
  */
 public class CombatRenderer {
     public static final int BAR_SIZE = 20;
-    public static final int DIV_WIDTH = 84;
+    public static final int DIV_WIDTH = 94;
 
     private static final String DIV = Ansi.DARK_GRAY + "─".repeat(DIV_WIDTH) + Ansi.RESET;
     private static final String BIG_DIV = Ansi.DARK_GRAY + "═".repeat(DIV_WIDTH) + Ansi.RESET;
@@ -58,7 +58,11 @@ public class CombatRenderer {
             return;
         }
 
-        appendLine(sb, messageFormatter.attacker(result.attackerMessage()));
+        String actorLine = messageFormatter.attacker(result.attackerMessage());
+        if (actorLine == null && hasAnyEffectMessage(result)) {
+            actorLine = messageFormatter.attacker(result.actorName());
+        }
+        appendLine(sb, actorLine);
         appendLines(sb, messageFormatter.effects(result.startMessages()));
         appendLines(sb, messageFormatter.effects(result.preDefenseMessages()));
         appendLine(sb, messageFormatter.defense(result.defenseMessage()));
@@ -187,5 +191,16 @@ public class CombatRenderer {
         for (String line : lines) {
             appendLine(sb, line);
         }
+    }
+
+    private boolean hasAnyEffectMessage(TurnResult result) {
+        return hasMessages(result.startMessages())
+                || hasMessages(result.preDefenseMessages())
+                || hasMessages(result.postDefenseMessages())
+                || hasMessages(result.endTurnMessages());
+    }
+
+    private boolean hasMessages(List<?> messages) {
+        return messages != null && !messages.isEmpty();
     }
 }

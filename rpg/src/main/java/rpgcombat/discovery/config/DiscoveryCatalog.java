@@ -15,6 +15,7 @@ import rpgcombat.discovery.DiscoveryKey;
 import rpgcombat.gamemode.model.GameModeDefinition;
 import rpgcombat.gamemode.registry.GameModeRegistry;
 import rpgcombat.models.breeds.Breed;
+import rpgcombat.models.effects.triggers.FragmentedFaceTrigger;
 import rpgcombat.models.effects.triggers.UniversalLifeStealTrigger;
 import rpgcombat.perks.PerkDefinition;
 import rpgcombat.perks.PerkRegistry;
@@ -93,7 +94,7 @@ public final class DiscoveryCatalog {
         Map<DiscoveryCategory, DiscoveryCategoryDefinition> result = new EnumMap<>(DiscoveryCategory.class);
         int order = 10;
         for (DiscoveryCategory category : DiscoveryCategory.values()) {
-            result.put(category, new DiscoveryCategoryDefinition(category, category.defaultTitle(), "", true, order));
+            result.put(category, new DiscoveryCategoryDefinition(category, category.defaultTitle(), "", true, false, order));
             order += 10;
         }
         return result;
@@ -129,6 +130,9 @@ public final class DiscoveryCatalog {
                     textOr(override.title(), base.title()),
                     textOr(override.description(), base.description()),
                     override.showLockedEntries() == null ? base.showLockedEntries() : override.showLockedEntries(),
+                    override.hiddenUntilDiscovered() == null
+                            ? base.hiddenUntilDiscovered()
+                            : override.hiddenUntilDiscovered(),
                     override.sortOrder() == null ? base.sortOrder() : override.sortOrder()));
         }
     }
@@ -283,6 +287,47 @@ public final class DiscoveryCatalog {
                     true,
                     order++));
         }
+
+        order = 100;
+        FragmentedFaceTrigger.Buff[] buffs = FragmentedFaceTrigger.Buff.values();
+        FragmentedFaceTrigger.Debuff[] debuffs = FragmentedFaceTrigger.Debuff.values();
+        int pairCount = Math.max(buffs.length, debuffs.length);
+        for (int i = 0; i < pairCount; i++) {
+            if (i < buffs.length) {
+                FragmentedFaceTrigger.Buff buff = buffs[i];
+                put(entries, new DiscoveryEntryDefinition(
+                        DiscoveryCategory.FRAGMENT_RESULTS,
+                        buff.id(),
+                        buff.title(),
+                        "???",
+                        "Reflex favorable del rostre fragmentat.",
+                        lines(buff.description()),
+                        "Es descobreix quan el rostre fragmentat mostra aquest reflex al començar una ronda.",
+                        "Fragment favorable: " + buff.hint(),
+                        "Fragment favorable: " + buff.hint(),
+                        "Fragment favorable: " + buff.hint(),
+                        List.of("rostre", "buff"),
+                        true,
+                        order++));
+            }
+            if (i < debuffs.length) {
+                FragmentedFaceTrigger.Debuff debuff = debuffs[i];
+                put(entries, new DiscoveryEntryDefinition(
+                        DiscoveryCategory.FRAGMENT_RESULTS,
+                        debuff.id(),
+                        debuff.title(),
+                        "???",
+                        "Reflex advers del rostre fragmentat.",
+                        lines(debuff.description()),
+                        "Es descobreix quan el rostre fragmentat mostra aquest reflex al començar una ronda.",
+                        "Fragment advers: " + debuff.hint(),
+                        "Fragment advers: " + debuff.hint(),
+                        "Fragment advers: " + debuff.hint(),
+                        List.of("rostre", "debuff"),
+                        true,
+                        order++));
+            }
+        }
     }
 
     /** Aplica entrades manuals o modifica les automàtiques. */
@@ -384,6 +429,9 @@ public final class DiscoveryCatalog {
         }
         if (hasModeEffect(mode, UniversalLifeStealTrigger.INTERNAL_EFFECT_KEY)) {
             details.add("La vida ja no torna per costum; només respon a la ferida oberta.");
+        }
+        if (hasModeEffect(mode, FragmentedFaceTrigger.INTERNAL_EFFECT_KEY)) {
+            details.add("Cada ronda porta una cara propícia i una esquerda adversa.");
         }
         if (mode.rules().maxPerks() <= 1) {
             details.add("Les benediccions no fan cor: només una pot arrelar.");

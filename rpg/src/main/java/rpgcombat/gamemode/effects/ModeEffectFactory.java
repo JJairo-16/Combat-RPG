@@ -4,6 +4,7 @@ import java.util.Map;
 
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.triggers.BleedEmphasisTrigger;
+import rpgcombat.models.effects.triggers.FragmentedFaceTrigger;
 import rpgcombat.models.effects.triggers.SelfDirectedAttackTrigger;
 import rpgcombat.models.effects.triggers.UniversalLifeStealTrigger;
 
@@ -23,6 +24,7 @@ public final class ModeEffectFactory {
                     number(params, "damageMultiplier", BleedEmphasisTrigger.DEFAULT_DAMAGE_MULTIPLIER),
                     integer(params, "criticalBleedTurns", BleedEmphasisTrigger.DEFAULT_CRITICAL_BLEED_TURNS),
                     integer(params, "deepCutBleedTurns", BleedEmphasisTrigger.DEFAULT_DEEP_CUT_BLEED_TURNS));
+            case FragmentedFaceTrigger.INTERNAL_EFFECT_KEY -> new FragmentedFaceTrigger();
             case SelfDirectedAttackTrigger.INTERNAL_EFFECT_KEY -> new SelfDirectedAttackTrigger(
                     number(params, "damageMultiplier", SelfDirectedAttackTrigger.DEFAULT_DAMAGE_MULTIPLIER),
                     bool(params, "canKill", SelfDirectedAttackTrigger.DEFAULT_CAN_KILL));

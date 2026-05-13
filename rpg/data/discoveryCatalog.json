@@ -32,6 +32,14 @@
       "sortOrder": 40
     },
     {
+      "id": "FRAGMENT_RESULTS",
+      "title": "Fragments perduts",
+      "description": "Reflexos favorables i adversos manifestats pel rostre fragmentat.",
+      "showLockedEntries": true,
+      "hiddenUntilDiscovered": true,
+      "sortOrder": 45
+    },
+    {
       "id": "MISSIONS",
       "title": "Missions",
       "description": "Objectius assignats al jugador durant el combat.",
@@ -276,6 +284,42 @@
     },
     {
       "category": "EFFECTS",
+      "id": "CAN_CALL_SPIRITS",
+      "title": "Crida espiritual latent",
+      "shortDescription": "Efecte favorable que permet invocar suport espiritual.",
+      "description": [
+        "La crida espiritual deixa una porta oberta perquè els esperits responguin durant el combat.",
+        "No és una ferida ni una feblesa: és una possibilitat favorable que acompanya el combatent."
+      ],
+      "discoveredWhen": "Quan un combatent entra en combat amb la crida espiritual disponible.",
+      "hint": "Algunes preparacions no ataquen directament, però deixen companyia al llindar.",
+      "tags": [
+        "combat",
+        "positiu",
+        "suport"
+      ],
+      "sortOrder": 75
+    },
+    {
+      "category": "EFFECTS",
+      "id": "UNIVERSAL_LIFE_STEAL",
+      "title": "Fam compartida",
+      "shortDescription": "Efecte favorable que converteix part del dany en vida.",
+      "description": [
+        "La fam compartida fa que la ferida oberta retorni una part mesurada de vida al combatent.",
+        "Quan aquest efecte governa la partida, atacar també pot ser una manera de resistir."
+      ],
+      "discoveredWhen": "Quan una partida comença amb el robavida universal actiu.",
+      "hint": "Algunes regles fan que la sang torni només quan hi ha ferida.",
+      "tags": [
+        "combat",
+        "positiu",
+        "curació"
+      ],
+      "sortOrder": 76
+    },
+    {
+      "category": "EFFECTS",
       "id": "CHAOS",
       "title": "Caos",
       "shortDescription": "Trigger que altera el combat amb efectes imprevisibles.",
@@ -291,6 +335,24 @@
         "caos"
       ],
       "sortOrder": 80
+    },
+    {
+      "category": "EFFECTS",
+      "id": "FRAGMENTED_FACE",
+      "title": "El rostre fragmentat",
+      "shortDescription": "Trigger que parteix cada ronda en una ajuda i una fractura.",
+      "description": [
+        "El rostre fragmentat observa la ronda abans que els combatents es moguin.",
+        "Quan una faceta apareix, mai arriba sola."
+      ],
+      "discoveredWhen": "Quan una partida comença amb el mode del rostre fragmentat.",
+      "hint": "Alguns modes no criden el Caos, però tampoc deixen la ronda sencera.",
+      "tags": [
+        "combat",
+        "trigger",
+        "rostre"
+      ],
+      "sortOrder": 85
     },
     {
       "category": "EFFECTS",

@@ -52,6 +52,8 @@ public final class UnlockEvaluator {
             case DISCOVERY -> discoveries != null && discoveries.isDiscovered(parseCategory(req.category()), req.id());
             case TOTAL_DISCOVERIES -> discoveries != null && discoveries.discoveredCount() >= req.amount();
             case CATEGORY_DISCOVERIES -> discoveries != null && discoveries.discoveredCount(parseCategory(req.category())) >= req.amount();
+            case TAGGED_DISCOVERIES -> discoveries != null
+                    && discoveries.discoveredCount(parseCategory(req.category()), req.id()) >= req.amount();
         };
     }
 

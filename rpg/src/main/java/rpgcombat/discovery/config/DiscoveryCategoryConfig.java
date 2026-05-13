@@ -6,5 +6,6 @@ public record DiscoveryCategoryConfig(
         String title,
         String description,
         Boolean showLockedEntries,
+        Boolean hiddenUntilDiscovered,
         Integer sortOrder) {
 }

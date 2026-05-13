@@ -647,6 +647,7 @@ public final class DiscoveryRenderer {
             case "Missions" -> "MI";
             case "Accions" -> "AC";
             case "Efectes" -> "EF";
+            case "Fragments perduts" -> "FP";
             case "Sinergies" -> "SI";
             default -> title.length() <= 2 ? title.toUpperCase() : title.substring(0, 2).toUpperCase();
         };

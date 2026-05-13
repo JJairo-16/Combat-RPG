@@ -3,7 +3,7 @@ package rpgcombat.models.effects.impl.menu;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectState;
-import rpgcombat.models.effects.MenuTurnEffect;
+import rpgcombat.models.effects.types.MenuTurnEffect;
 
 public class MagicalTiredness implements Effect, MenuTurnEffect {
     public static final String INTERNAL_EFFECT_KEY = "MAGIAL_TIREDNESS";

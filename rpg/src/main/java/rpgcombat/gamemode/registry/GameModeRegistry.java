@@ -50,6 +50,7 @@ public final class GameModeRegistry {
         return List.of(
                 GameModeDefinition.normal(),
                 GameModeDefinition.beginner(),
+                GameModeDefinition.fragmentedFace(),
                 GameModeDefinition.bloodHunger());
     }
 

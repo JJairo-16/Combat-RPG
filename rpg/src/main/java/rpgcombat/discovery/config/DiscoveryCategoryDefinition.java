@@ -8,5 +8,6 @@ public record DiscoveryCategoryDefinition(
         String title,
         String description,
         boolean showLockedEntries,
+        boolean hiddenUntilDiscovered,
         int sortOrder) {
 }

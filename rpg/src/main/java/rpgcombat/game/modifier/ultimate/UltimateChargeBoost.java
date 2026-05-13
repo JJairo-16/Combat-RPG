@@ -8,7 +8,7 @@ import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.EffectState;
-import rpgcombat.models.effects.MenuTurnEffect;
+import rpgcombat.models.effects.types.MenuTurnEffect;
 import rpgcombat.weapons.passives.HitContext;
 
 /** Boost d'un sol cop creat quan s'activa una ulti de segona etapa. */
