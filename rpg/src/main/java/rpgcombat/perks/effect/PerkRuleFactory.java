@@ -30,6 +30,8 @@ final class PerkRuleFactory {
             case "CHANCE" -> ctx -> ctx.rng().nextDouble() < num(rule.params(), "value", 0.0);
             case "OWNER_HEALTH_BELOW" -> ctx -> ctx.owner().healthRatio() <= num(rule.params(), "ratio", 1.0);
             case "TARGET_HEALTH_BELOW" -> ctx -> ctx.hit().defender().healthRatio() <= num(rule.params(), "ratio", 1.0);
+            case "OWNER_HEALTH_ABOVE_MAX" -> ctx -> ctx.owner().getStatistics().getHealth() > ctx.owner().getStatistics().getMaxHealth();
+            case "OWNER_HEALTH_AT_OR_ABOVE_MAX" -> ctx -> ctx.owner().getStatistics().getHealth() >= ctx.owner().getStatistics().getMaxHealth();
             case "HAS_MOMENTUM" -> ctx -> ctx.owner().getMomentumStacks() >= (int) num(rule.params(), "min", 1);
             case "OWNER_ACTION_IS" -> ctx -> ownerAction(ctx) == action(rule.params(), "action");
             case "TARGET_ACTION_IS" -> ctx -> opponentAction(ctx) == action(rule.params(), "action");
@@ -38,6 +40,13 @@ final class PerkRuleFactory {
             case "META_TRUE" -> ctx -> Boolean.TRUE.equals(ctx.hit().getMeta(str(rule.params(), "key", "")));
             case "OWNER_IS_ATTACKER" -> ctx -> ctx.owner() == ctx.hit().attacker();
             case "OWNER_IS_DEFENDER" -> ctx -> ctx.owner() == ctx.hit().defender();
+            case "OWNER_BREED_IS" -> ctx -> ctx.owner().getBreed().name().equals(str(rule.params(), "breed", ""));
+            case "OWNER_ACTION_IN" -> ctx -> listContains(rule.params().get("actions"), ownerAction(ctx).name());
+            case "OPPONENT_ACTION_IN" -> ctx -> listContains(rule.params().get("actions"), opponentAction(ctx).name());
+            case "STATE_STACKS_AT_LEAST" -> ctx -> ctx.state().stacks() >= (int) num(rule.params(), "min", 1);
+            case "STATE_STACKS_EQUALS" -> ctx -> ctx.state().stacks() == (int) num(rule.params(), "value", 0);
+            case "STATE_STACK_PARITY" -> ctx -> (ctx.state().stacks() % 2 == 0) == "EVEN".equals(str(rule.params(), "parity", "EVEN"));
+            case "COOLDOWN_READY" -> ctx -> ctx.state().cooldownTurns() <= 0;
             default -> ctx -> false;
         };
     }
@@ -95,6 +104,17 @@ final class PerkRuleFactory {
                     return EffectResult.positive(ctx.owner().getName() + " intenta robar vida, però ja està al màxim.");
                 return EffectResult.positive(ctx.owner().getName() + " roba " + round2(healed) + " de vida.");
             };
+            case "OVERLOAD_HEAL_OWNER" -> ctx -> {
+                double amount = num(rule.params(), "amount", 0.0)
+                        + ctx.hit().damageDealt() * num(rule.params(), "ratioOfDamage", 0.0);
+                amount = round2(amount);
+                if (amount <= 0)
+                    return EffectResult.none();
+                double healed = ctx.owner().getStatistics().overloadHeal(amount);
+                if (healed <= 0)
+                    return EffectResult.none();
+                return EffectResult.positive(ctx.owner().getName() + " sobrecàrrega " + round2(healed) + " de vida.");
+            };
             case "RESTORE_MANA" -> ctx -> {
                 double restored = ctx.owner().getStatistics().restoreMana(num(rule.params(), "amount", 0.0));
                 if (restored <= 0)
@@ -131,7 +151,7 @@ final class PerkRuleFactory {
                         return EffectResult.none();
                     }
                 }
-                return EffectResult.warning(target.getName() + " rep " + status.toLowerCase() + ".");
+                return EffectResult.warning(target.getName() + " rep " + statusLabel(status) + ".");
             };
             case "MULTIPLY_NEXT_INCOMING_DAMAGE" -> ctx -> {
                 double multiplier = num(rule.params(), "multiplier", 1.0);
@@ -148,32 +168,77 @@ final class PerkRuleFactory {
                 ctx.owner().getDamage(amount);
                 return EffectResult.negative(ctx.owner().getName() + " paga " + amount + " de vida.");
             };
+            case "ADD_STATE_STACKS" -> ctx -> {
+                int amount = (int) num(rule.params(), "amount", 1);
+                int max = (int) num(rule.params(), "max", Integer.MAX_VALUE);
+                ctx.state().addStacks(amount, max);
+                return EffectResult.positive(str(rule.params(), "label", "guanya una càrrega."));
+            };
+            case "SET_STATE_STACKS" -> ctx -> {
+                ctx.state().setStacks((int) num(rule.params(), "value", 0));
+                return EffectResult.none();
+            };
+            case "CONSUME_STATE_STACK" -> ctx -> {
+                if (ctx.state().stacks() <= 0) return EffectResult.none();
+                ctx.state().setStacks(ctx.state().stacks() - 1);
+                return EffectResult.none();
+            };
+            case "TICK_COOLDOWN" -> ctx -> {
+                ctx.state().tickCooldown();
+                return EffectResult.none();
+            };
+            case "SET_COOLDOWN" -> ctx -> {
+                ctx.state().setCooldown((int) num(rule.params(), "turns", 1));
+                return EffectResult.none();
+            };
+            case "FORCE_CRITICAL" -> ctx -> {
+                ctx.hit().forceCritical();
+                return EffectResult.positive(str(rule.params(), "label", "el proper cop serà crític."));
+            };
+            case "MULTIPLY_OWNER_NEXT_INCOMING_DAMAGE" -> ctx -> {
+                double multiplier = num(rule.params(), "multiplier", 1.0);
+                ctx.owner().multiplyNextIncomingDamage(multiplier);
+                if (multiplier == 1.0) return EffectResult.none();
+                return EffectResult.warning(percentChangeText("modifica el proper dany rebut", multiplier));
+            };
+            case "SET_META" -> ctx -> {
+                ctx.hit().putMeta(str(rule.params(), "key", ""), rule.params().get("value"));
+                return EffectResult.none();
+            };
             default -> ctx -> EffectResult.none();
         };
     }
 
-    /** Obté el dany ja resolt o, en fases prèvies, el dany actual que es resoldria. */
+    /**
+     * Obté el dany resolt o el que es resoldria.
+     */
     private static double currentDamage(PerkContext ctx) {
         double dealt = ctx.hit().damageDealt();
         if (dealt > 0) return dealt;
         return ctx.hit().damageToResolve();
     }
 
-    /** Obté l'acció triada pel propietari real de la perk. */
+    /**
+     * Obté l'acció del propietari de la perk.
+     */
     private static Action ownerAction(PerkContext ctx) {
         return ctx.owner() == ctx.hit().defender()
                 ? ctx.hit().defenderAction()
                 : ctx.hit().attackerAction();
     }
 
-    /** Obté l'acció triada per l'oponent del propietari de la perk. */
+    /**
+     * Obté l'acció de l'oponent.
+     */
     private static Action opponentAction(PerkContext ctx) {
         return ctx.owner() == ctx.hit().defender()
                 ? ctx.hit().attackerAction()
                 : ctx.hit().defenderAction();
     }
 
-    /** Resol el destinatari d'una acció de perk. */
+    /**
+     * Resol el destinatari d'una acció.
+     */
     private static Character resolveTarget(PerkContext ctx, String target) {
         return switch (target) {
             case "OWNER" -> ctx.owner();
@@ -184,27 +249,61 @@ final class PerkRuleFactory {
         };
     }
 
-    /** Text curt per a multiplicadors percentuals. */
+    /**
+     * Retorna el nom llegible d'un estat.
+     */
+    private static String statusLabel(String status) {
+        return switch (status) {
+            case "VULNERABLE" -> "vulnerabilitat";
+            case "BLEED" -> "sagnat";
+            case "STAGGER" -> "aturdiment";
+            case "BLIND" -> "ceguesa";
+            case "FATIGUE" -> "fatiga";
+            default -> status == null ? "un estat" : status.toLowerCase();
+        };
+    }
+
+    /**
+     * Genera un text de canvi percentual.
+     */
     private static String percentChangeText(String label, double multiplier) {
         double percent = round2((multiplier - 1.0) * 100.0);
         return label + " " + (percent > 0 ? "+" : "") + percent + "%.";
     }
 
-    /** Obté un valor numèric dels paràmetres. */
+    /**
+     * Obté un valor numèric dels paràmetres.
+     */
     private static double num(Map<String, Object> params, String key, double def) {
         if (params == null) return def;
         Object value = params.get(key);
         return value instanceof Number n ? n.doubleValue() : def;
     }
 
-    /** Obté un text dels paràmetres. */
+    /**
+     * Obté un text dels paràmetres.
+     */
     private static String str(Map<String, Object> params, String key, String def) {
         if (params == null) return def;
         Object value = params.get(key);
         return value == null ? def : value.toString();
     }
 
-    /** Converteix un paràmetre a acció. */
+    /**
+     * Comprova si una llista conté un valor.
+     */
+    private static boolean listContains(Object raw, String value) {
+        if (raw instanceof Iterable<?> items) {
+            for (Object item : items) {
+                if (value.equals(String.valueOf(item))) return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Converteix un paràmetre a acció.
+     */
     private static Action action(Map<String, Object> params, String key) {
         try {
             return Action.valueOf(str(params, key, "ATTACK"));
@@ -213,7 +312,9 @@ final class PerkRuleFactory {
         }
     }
 
-    /** Converteix un paràmetre a esdeveniment. */
+    /**
+     * Converteix un paràmetre a esdeveniment.
+     */
     private static Event event(Map<String, Object> params, String key) {
         try {
             return Event.valueOf(str(params, key, "ON_HIT"));
@@ -222,7 +323,9 @@ final class PerkRuleFactory {
         }
     }
 
-    /** Arrodoneix a 2 decimals. */
+    /**
+     * Arrodoneix a dos decimals.
+     */
     private static double round2(double n) {
         return Math.round(n * 100.0) / 100.0;
     }

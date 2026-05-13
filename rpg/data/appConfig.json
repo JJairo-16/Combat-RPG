@@ -6,12 +6,22 @@
     "DEBUG_INVULNERABLE",
     "FULL_DEBUG"
   ],
-  "profile": "FAST_TEST",
+  "profile": "NORMAL",
+  "override": false,
   "paths": {
     "weaponsConfig": "rpg/data/weapons.json",
     "statusMenuModifier": "rpg/data/menuModifiers.json",
     "balanceConfig": "rpg/data/combatBalance.json",
-    "menuDescriptions": "rpg/data/menuDescription.json"
+    "gameModesConfig": "rpg/data/gameModes.json",
+    "menuDescriptions": "rpg/data/menuDescription.json",
+    "missionsConfig": "rpg/data/perks/missions.json",
+    "perksConfig": "rpg/data/perks/perks.json",
+    "divinePerksConfig": "rpg/data/perks/divinePerks.json",
+    "synergiesConfig": "rpg/data/perks/synergies.json",
+    "achievementsConfig": "rpg/data/achievements.json",
+    "achievementSaveFile": "achievements.json",
+    "discoveryCatalogConfig": "rpg/data/discoveryCatalog.json",
+    "discoverySaveFile": "discoveries.json"
   },
   "ui": {
     "showLoadingIntro": true,
@@ -23,6 +33,10 @@
     "postCreation": true,
     "antiStall": true,
     "chaos": 0.15
+  },
+  "gameMode": {
+    "selectionEnabled": true,
+    "defaultMode": "NORMAL"
   },
   "debug": {
     "enabled": false,
@@ -40,6 +54,6 @@
   "homeScreen": {
     "enabled": true,
     "allowReturnFromEnd": true,
-    "title": "RPG Combat"
+    "title": "El Llindar Trencat"
   }
 }

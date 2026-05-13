@@ -19,8 +19,10 @@ import java.util.Random;
  * </pre>
  *
  * <p>
- * Aquesta classe només s'encarrega de generar i consultar la preferència.
- * No aplica cap efecte directe sobre probabilitats ni tirades.
+ * Prop dels extrems del rang real, els trams neutrals o desfavorits poden
+ * quedar parcialment retallats. Això és intencionat: permet que el punt de
+ * gràcia divina pugui aparèixer prop de carismes baixos o alts sense quedar
+ * excessivament amortit pel radi neutral.
  */
 public final class DivineCharismaAffinity {
 
@@ -36,8 +38,8 @@ public final class DivineCharismaAffinity {
      * </p>
      *
      * <ul>
-     * <li>mínim aproximat: 10</li>
-     * <li>màxim aproximat: 30</li>
+     * <li>mínim aproximat: 8</li>
+     * <li>màxim aproximat: 20</li>
      * </ul>
      *
      * <p>
@@ -45,28 +47,10 @@ public final class DivineCharismaAffinity {
      * divina, evitant perfils desalineats amb el sistema real d'estadístiques.
      * </p>
      */
-    private static final int MIN_CHARISMA = 10;
-    private static final int MAX_CHARISMA = 25;
+    private static final int MIN_CHARISMA = 8;
+    private static final int MAX_CHARISMA = 20;
 
-    /**
-     * Radi del tram preferit.
-     *
-     * <p>
-     * Exemple amb centre 25 i radi 3:
-     * 22..28 = "cau bé".
-     * </p>
-     */
     private static final int DEFAULT_FAVORED_RADIUS = 1;
-
-    /**
-     * Radi total del tram neutral al voltant del centre preferit.
-     *
-     * <p>
-     * Exemple amb centre 25 i radi 7:
-     * 18..21 i 29..32 = "normal".
-     * Fora d'aquí = "cau malament".
-     * </p>
-     */
     private static final int DEFAULT_NEUTRAL_RADIUS = 3;
 
     /** Classificació resumida del carisma davant dels déus. */
@@ -130,10 +114,10 @@ public final class DivineCharismaAffinity {
                 throw new IllegalArgumentException("neutralRadius ha de ser >= favoredRadius");
             }
 
-            if (favoredCenter - neutralRadius < MIN_CHARISMA
-                    || favoredCenter + neutralRadius > MAX_CHARISMA) {
+            if (favoredCenter - favoredRadius < MIN_CHARISMA
+                    || favoredCenter + favoredRadius > MAX_CHARISMA) {
                 throw new IllegalArgumentException(
-                        "El perfil surt del rang real de carisma i produiria trams irregulars.");
+                        "El tram afavorit ha de cabre dins del rang real de carisma.");
             }
         }
     }
@@ -144,12 +128,14 @@ public final class DivineCharismaAffinity {
      * Genera una nova preferència divina per a la partida actual.
      *
      * <p>
-     * El centre preferit es genera deixant marge suficient perquè existeixin
-     * els 5 trams complets dins del rang real de carisma:
+     * El centre preferit només deixa marge perquè el tram afavorit complet
+     * càpiga dins del rang real. El radi neutral pot sobresortir dels extrems
+     * conceptualment; en consultar carisma, el valor es limita al rang real.
      * </p>
      *
      * <pre>
-     * cau malament - normal - cau bé - normal - cau malament
+     * Amb carisma 10..22 i favoredRadius = 2:
+     * centre possible = 12..20
      * </pre>
      */
     public static void rollForRun(Random rng) {
@@ -158,8 +144,8 @@ public final class DivineCharismaAffinity {
         int favoredRadius = DEFAULT_FAVORED_RADIUS;
         int neutralRadius = DEFAULT_NEUTRAL_RADIUS;
 
-        int minCenter = MIN_CHARISMA + neutralRadius;
-        int maxCenter = MAX_CHARISMA - neutralRadius;
+        int minCenter = MIN_CHARISMA + favoredRadius;
+        int maxCenter = MAX_CHARISMA - favoredRadius;
 
         int favoredCenter = minCenter + rng.nextInt(maxCenter - minCenter + 1);
 
@@ -228,18 +214,14 @@ public final class DivineCharismaAffinity {
 
         int safeCharisma = clampCharisma(charisma);
 
-        int center = profile.favoredCenter();
-        int favoredRadius = profile.favoredRadius();
-        int neutralRadius = profile.neutralRadius();
-
-        int delta = safeCharisma - center;
+        int delta = safeCharisma - profile.favoredCenter();
         int abs = Math.abs(delta);
 
-        if (abs <= favoredRadius) {
+        if (abs <= profile.favoredRadius()) {
             return Band.FAVORED;
         }
 
-        if (abs <= neutralRadius) {
+        if (abs <= profile.neutralRadius()) {
             return delta < 0 ? Band.NEUTRAL_LOW : Band.NEUTRAL_HIGH;
         }
 

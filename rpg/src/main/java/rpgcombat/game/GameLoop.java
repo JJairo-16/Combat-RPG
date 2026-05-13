@@ -2,18 +2,25 @@ package rpgcombat.game;
 
 import java.util.List;
 import java.util.Map;
+import rpgcombat.achievements.AchievementSystem;
 import rpgcombat.combat.CombatSystem;
 import rpgcombat.combat.models.Action;
 import rpgcombat.combat.models.Winner;
 import rpgcombat.config.ui.CinematicsOptions;
 import rpgcombat.config.ui.HomeScreenConfig;
+import rpgcombat.discovery.DiscoveryCategory;
+import rpgcombat.discovery.DiscoveryRuntime;
 import rpgcombat.game.cinematics.CinematicBuilder;
 import rpgcombat.game.menu.EndGameMenu;
 import rpgcombat.game.menu.MenuCenter;
+import rpgcombat.game.modifier.Actions;
 import rpgcombat.game.modifier.StatusMod;
+import rpgcombat.gamemode.model.GameModeRules;
+import rpgcombat.gamemode.model.MatchContext;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
+import rpgcombat.models.effects.triggers.gamemode.Chaos;
 import rpgcombat.perks.CombatPerkSystem;
 
 import rpgcombat.utils.cache.TextWrapCache;
@@ -21,8 +28,8 @@ import rpgcombat.utils.input.Menu;
 import rpgcombat.utils.interactive.WeaponMenu;
 import rpgcombat.utils.rng.DivineCharismaAffinity;
 import rpgcombat.utils.ui.Ansi;
-import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.Prettier;
+import rpgcombat.utils.ui.TerminalClear;
 
 import rpgcombat.weapons.Arsenal;
 import rpgcombat.weapons.Weapon;
@@ -43,24 +50,42 @@ public class GameLoop {
 
     private final CombatSystem combatSystem;
     private final CombatPerkSystem perkSystem;
-    private final Cleaner cls = new Cleaner();
     private final TextWrapCache wrapCache = new TextWrapCache();
     private final CinematicsOptions cinematicsOptions;
     private final HomeScreenConfig homeScreenConfig;
+    private final MatchContext matchContext;
+    private final GameModeRules rules;
+    private final AchievementSystem achievementSystem;
+    // Cache d'armes disponibles (assumim que no canvia durant la partida)
+    private final List<WeaponDefinition> entries;
 
-    // Cache d'armes (assumim que no canvia durant la partida)
-    private final List<WeaponDefinition> entries = Arsenal.values();
+    public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers,
+            Map<String, String> information, CinematicsOptions cinematicsOptions, HomeScreenConfig homeScreenConfig,
+            AchievementSystem achievementSystem) {
+        this(player1, player2, modifiers, information, cinematicsOptions, homeScreenConfig,
+                new MatchContext(null, false), achievementSystem);
+    }
 
-    public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers, Map<String, String> information, CinematicsOptions cinematicsOptions, HomeScreenConfig homeScreenConfig) {
+    public GameLoop(Character player1, Character player2, Map<String, List<StatusMod>> modifiers,
+            Map<String, String> information, CinematicsOptions cinematicsOptions, HomeScreenConfig homeScreenConfig,
+            MatchContext matchContext, AchievementSystem achievementSystem) {
         this.player1 = player1;
         this.player2 = player2;
-        this.perkSystem = new CombatPerkSystem(player1, player2);
-        this.combatSystem = new CombatSystem(player1, player2, new rpgcombat.combat.turnservice.DefaultTurnPriorityPolicy(), perkSystem);
+        this.matchContext = matchContext == null ? new MatchContext(null, false) : matchContext;
+        this.rules = this.matchContext.rules();
+        this.perkSystem = new CombatPerkSystem(player1, player2, achievementSystem, rules);
+        this.combatSystem = new CombatSystem(player1, player2,
+                new rpgcombat.combat.turnservice.DefaultTurnPriorityPolicy(), perkSystem, achievementSystem, rules);
 
-        this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers, information);
+        this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers,
+                information, rules);
         this.menu.setMissionTextProvider(perkSystem::missionSummary);
         this.cinematicsOptions = cinematicsOptions;
         this.homeScreenConfig = homeScreenConfig;
+        this.achievementSystem = achievementSystem;
+        this.entries = Arsenal.availableValues(rules);
+
+        Actions.configureAchievementTracking(achievementSystem, combatSystem::roundNumber);
     }
 
     /**
@@ -68,14 +93,19 @@ public class GameLoop {
      * empat).
      */
     public EndGameAction init() {
-        CinematicBuilder.playInit(cinematicsOptions, player1, player2);
+        CinematicBuilder.playInit(cinematicsOptions, matchContext);
+        registerChaosStartIfNeeded();
+        int completedAchievementsLastTurn = achievementSystem.consumePendingCompletedCount();
 
         Winner winner;
         do {
+            menu.setCompletedAchievementsBadgeCount(completedAchievementsLastTurn);
+
             Action action1 = menu.playPlayer1();
             Action action2 = menu.playPlayer2();
 
             winner = combatSystem.play(action1, action2);
+            completedAchievementsLastTurn = achievementSystem.consumePendingCompletedCount();
 
             perkSystem.resolvePendingChoices(player1);
             perkSystem.resolvePendingChoices(player2);
@@ -85,7 +115,18 @@ public class GameLoop {
             }
         } while (winner == Winner.NONE);
 
+        achievementSystem.onMatchFinished(winner, player1, player2, combatSystem.roundNumber());
         return finish(winner);
+    }
+
+    /** Registra els assoliments inicials relacionats amb el mode caòtic. */
+    private void registerChaosStartIfNeeded() {
+        if (achievementSystem == null) return;
+        boolean p1Chaos = player1.hasEffect(Chaos.INTERNAL_EFFECT_KEY);
+        boolean p2Chaos = player2.hasEffect(Chaos.INTERNAL_EFFECT_KEY);
+        if (p1Chaos) achievementSystem.onChaosTriggerAdded(player1, combatSystem.roundNumber());
+        if (p2Chaos) achievementSystem.onChaosTriggerAdded(player2, combatSystem.roundNumber());
+        if (p1Chaos || p2Chaos) achievementSystem.onChaosMatchStarted(player1, player2, combatSystem.roundNumber());
     }
 
     /** Mostra el resultat final del combat i demana què fer després. */
@@ -123,17 +164,17 @@ public class GameLoop {
         sb.append('\n');
         sb.append("====================================\n\n");
 
-        cls.clear();
+        TerminalClear.clearShared();
         System.out.print(sb.toString());
-        
+
         Menu.pause();
-        CinematicBuilder.playEnd(winner);
+        CinematicBuilder.playEnd(winner, matchContext);
 
         return EndGameMenu.ask(homeScreenConfig.allowReturnFromEnd());
     }
 
     private void showPlayerInfoWrapper(Character player) {
-        cls.clear();
+        TerminalClear.clearShared();
         getPlayerInfo(player);
         Menu.pause();
     }
@@ -152,7 +193,7 @@ public class GameLoop {
         filters.setOnlyEquippable(true);
 
         do {
-            cls.clear();
+            TerminalClear.clearShared();
 
             WeaponDefinition selected = WeaponMenu.chooseWeaponEntryWithFilters(
                     entries,
@@ -175,7 +216,13 @@ public class GameLoop {
             }
         } while (loop);
 
-        player.setWeapon(weapon);
+        if (weapon != null) {
+            player.setWeapon(weapon);
+            if (weapon.getId() != null) {
+                DiscoveryRuntime.discover(DiscoveryCategory.WEAPONS, weapon.getId());
+            }
+            achievementSystem.onWeaponEquipped(player);
+        }
     }
 
     private final StringBuilder playerInfo = new StringBuilder(24_000);

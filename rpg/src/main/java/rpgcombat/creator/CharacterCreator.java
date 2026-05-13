@@ -8,8 +8,11 @@ import java.util.regex.Pattern;
 
 import rpgcombat.models.breeds.*;
 import rpgcombat.models.characters.Character;
-import rpgcombat.models.effects.impl.SpiritualCallingFlag;
+import rpgcombat.discovery.DiscoveryCategory;
+import rpgcombat.discovery.DiscoveryRuntime;
+import rpgcombat.models.effects.impl.menu.SpiritualCallingFlag;
 import rpgcombat.models.effects.triggers.FractureTrigger;
+import rpgcombat.perks.divine.DivinePerkRegistry;
 import rpgcombat.utils.input.Menu;
 import rpgcombat.utils.rng.StatsBudget;
 import rpgcombat.utils.rng.StatsBudget.Result;
@@ -45,9 +48,17 @@ public class CharacterCreator {
      * @return personatge creat
      */
     public static Character createNewCharacter() {
+        return createNewCharacter(CharacterCreationOptions.defaultOptions());
+    }
+
+    /** Crea un personatge amb opcions derivades del mode de joc. */
+    public static Character createNewCharacter(CharacterCreationOptions options) {
+        CharacterCreationOptions effectiveOptions = options == null ? CharacterCreationOptions.defaultOptions() : options;
         CharacterDraft draft = CharacterDraft.from("Aventurer", MIN_AGE, autoGenerate());
-        new CharacterCreationEditor().edit(draft);
-        return convert(draft.name(), draft.age(), new Generation(draft.statsCopy(), draft.breed()));
+        new CharacterCreationEditor(effectiveOptions).edit(draft);
+        String divinePerkId = effectiveOptions.divinePerksEnabled() ? draft.divinePerkId() : null;
+        return convert(draft.name(), draft.age(), new Generation(draft.statsCopy(), draft.breed()), divinePerkId,
+                effectiveOptions);
     }
 
     /**
@@ -56,8 +67,15 @@ public class CharacterCreator {
      * @return personatge generat per a proves
      */
     public static Character createDebugCharacter() {
+        return createDebugCharacter(CharacterCreationOptions.defaultOptions());
+    }
+
+    /** Crea un personatge de depuració amb opcions de mode. */
+    public static Character createDebugCharacter(CharacterCreationOptions options) {
+        CharacterCreationOptions effectiveOptions = options == null ? CharacterCreationOptions.defaultOptions() : options;
         String name = "test" + id++;
-        return convert(name, MIN_AGE, autoGenerate());
+        String divinePerkId = effectiveOptions.divinePerksEnabled() ? DivinePerkRegistry.NO_EFFECT_ID : null;
+        return convert(name, MIN_AGE, autoGenerate(), divinePerkId, effectiveOptions);
     }
 
     /** Resultat de la generació d'estadístiques i raça. */
@@ -189,6 +207,14 @@ public class CharacterCreator {
 
     /** Converteix les dades en la classe concreta de personatge. */
     private static Character convert(String name, int age, Generation g) {
+        String divinePerkId = DivinePerkRegistry.defaultFor(g.breed()) == null ? null : DivinePerkRegistry.defaultFor(g.breed()).id();
+        return convert(name, age, g, divinePerkId, CharacterCreationOptions.defaultOptions());
+    }
+
+    /** Converteix les dades en la classe concreta de personatge amb opcions de mode. */
+    private static Character convert(String name, int age, Generation g, String divinePerkId,
+            CharacterCreationOptions options) {
+        CharacterCreationOptions effectiveOptions = options == null ? CharacterCreationOptions.defaultOptions() : options;
         Breed b = g.breed();
         int[] stats = g.stats();
 
@@ -202,7 +228,9 @@ public class CharacterCreator {
             default -> new Character(name, age, stats, b);
         };
 
-        addTriggers(character);
+        addTriggers(character, effectiveOptions);
+        DiscoveryRuntime.discover(DiscoveryCategory.BREEDS, b.name());
+        DivinePerkRegistry.create(divinePerkId).ifPresent(character::addEffect);
         return character;
     }
 
@@ -225,9 +253,11 @@ public class CharacterCreator {
         return stats;
     }
 
-    /** Afegeix efectes passius inicials. */
-    private static void addTriggers(Character character) {
-        character.addEffect(new SpiritualCallingFlag());
+    /** Afegeix efectes passius inicials segons opcions de mode. */
+    private static void addTriggers(Character character, CharacterCreationOptions options) {
+        if (options == null || options.specialActionsEnabled()) {
+            character.addEffect(new SpiritualCallingFlag());
+        }
         character.addEffect(new FractureTrigger());
     }
 }

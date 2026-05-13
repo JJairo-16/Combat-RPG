@@ -21,6 +21,12 @@ public final class PerkRegistry {
         perks = loaded == null ? List.of() : List.copyOf(loaded);
     }
 
+
+    /** Retorna totes les perks registrades. */
+    public static List<PerkDefinition> all() {
+        return perks;
+    }
+
     /**
      * Genera opcions de perk segons el mode indicat.
      *
@@ -41,8 +47,7 @@ public final class PerkRegistry {
 
         if (result.size() < count) {
             List<PerkDefinition> remaining = perks.stream()
-                    .filter(p -> p.family() != PerkFamily.CORRUPTED)
-                    .filter(p -> !result.contains(p))
+                    .filter(p -> p.family() != PerkFamily.CORRUPTED && !result.contains(p))
                     .toList();
             result.addAll(rollWeighted(remaining, count - result.size(), rng));
         }

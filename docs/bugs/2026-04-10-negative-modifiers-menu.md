@@ -1,7 +1,7 @@
 # Informe de proves i errors
 
 ## Informació general
-- Projecte: RPG Combat
+- Projecte: El Llindar Trencat
 - Mòdul / Funcionalitat: MenuStatusModifier (Modificador de les opcions del menú segons efectes)
 - Data: 10-04-2026
 - Autor: Jairo Linares

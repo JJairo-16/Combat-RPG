@@ -5,6 +5,7 @@ enum EditorAction {
     EDIT_NAME,
     EDIT_AGE,
     EDIT_BREED,
+    EDIT_DIVINE_PERK,
     EDIT_STRENGTH,
     EDIT_DEXTERITY,
     EDIT_CONSTITUTION,

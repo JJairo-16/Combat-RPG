@@ -9,7 +9,8 @@ import java.util.Random;
 public final class MissionRegistry {
     private static List<MissionDefinition> missions = List.of();
 
-    private MissionRegistry() {}
+    private MissionRegistry() {
+    }
 
     /**
      * Inicialitza el registre amb les missions carregades.
@@ -20,6 +21,12 @@ public final class MissionRegistry {
         missions = loaded == null ? List.of() : List.copyOf(loaded);
     }
 
+
+    /** Retorna totes les missions registrades. */
+    public static List<MissionDefinition> all() {
+        return missions;
+    }
+
     /**
      * Selecciona una missió aleatòria segons el seu pes.
      *
@@ -27,14 +34,37 @@ public final class MissionRegistry {
      * @return missió seleccionada o null si no n'hi ha
      */
     public static MissionDefinition roll(Random rng) {
-        if (missions.isEmpty()) return null;
+        if (missions.isEmpty())
+            return null;
         int total = missions.stream().mapToInt(MissionDefinition::weight).sum();
         int roll = rng.nextInt(Math.max(1, total));
         int acc = 0;
         for (MissionDefinition mission : missions) {
             acc += mission.weight();
-            if (roll < acc) return mission;
+            if (roll < acc)
+                return mission;
         }
         return missions.get(missions.size() - 1);
+    }
+
+    public static MissionDefinition rollExcluding(Random rng, List<String> excludedIds) {
+        List<MissionDefinition> pool = missions.stream()
+                .filter(m -> excludedIds == null || !excludedIds.contains(m.id()))
+                .toList();
+
+        if (pool.isEmpty())
+            return null;
+
+        int total = pool.stream().mapToInt(MissionDefinition::weight).sum();
+        int roll = rng.nextInt(Math.max(1, total));
+
+        int acc = 0;
+        for (MissionDefinition mission : pool) {
+            acc += mission.weight();
+            if (roll < acc)
+                return mission;
+        }
+
+        return pool.get(pool.size() - 1);
     }
 }

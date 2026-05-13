@@ -5,18 +5,29 @@ import java.util.Map;
 import rpgcombat.weapons.Skills;
 
 /**
- * Registre que associa un identificador textual amb la seva implementació d'atac.
+ * Registre que associa un identificador textual amb la seva implementació
+ * d'atac.
  */
 public final class AttackRegistry {
-    private static final Map<String, Attack> ATTACKS = Map.of(
-            "nothing", Skills::nothing,
-            "explosiveShot", Skills::explosiveShot,
-            "arcaneDisruption", Skills::arcaneDisruption,
-            "luckyBallista", Skills::luckyBallista,
-            "grimoriCipher", Skills::grimoriCipher,
-            "perforatingThrow", Skills::perforatingThrow,
-            "chronoWeave", Skills::chronoWeave,
-            "crossCut", Skills::crossCut);
+    private static final Map<String, Attack> ATTACKS = Map.ofEntries(
+            Map.entry("nothing", Skills::nothing),
+            Map.entry("explosiveShot", Skills::explosiveShot),
+            Map.entry("arcaneDisruption", Skills::arcaneDisruption),
+            Map.entry("luckyBallista", Skills::luckyBallista),
+            Map.entry("grimoriCipher", Skills::grimoriCipher),
+            Map.entry("perforatingThrow", Skills::perforatingThrow),
+            Map.entry("chronoWeave", Skills::chronoWeave),
+            Map.entry("crossCut", Skills::crossCut),
+            Map.entry("elementalDuality", Skills::elementalDuality),
+            Map.entry("firstOathStrike", Skills::firstOathStrike),
+            Map.entry("firstBloodKnife", Skills::firstBloodKnife),
+            Map.entry("brokenShieldBash", Skills::brokenShieldBash),
+            Map.entry("ancestralBellEcho", Skills::ancestralBellEcho),
+            Map.entry("chaosFragment", Skills::chaosFragment),
+            Map.entry("tacticalMirrorCast", Skills::tacticalMirrorCast),
+            Map.entry("retaliationShot", Skills::retaliationShot),
+            Map.entry("badOmenSling", Skills::badOmenSling),
+            Map.entry("coldStringShot", Skills::coldStringShot));
 
     private AttackRegistry() {
     }

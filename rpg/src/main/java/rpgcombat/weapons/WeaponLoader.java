@@ -56,6 +56,7 @@ public final class WeaponLoader {
                 WeaponType.valueOf(cfg.type()),
                 cfg.attackSkill(),
                 cfg.manaPrice(),
-                cfg.passives());
+                cfg.passives(),
+                cfg.unlock());
     }
 }

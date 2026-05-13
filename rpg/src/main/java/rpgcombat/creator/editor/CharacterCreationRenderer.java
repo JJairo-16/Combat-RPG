@@ -4,10 +4,13 @@ import rpgcombat.creator.CharacterCreator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.jline.terminal.Terminal;
 
+import rpgcombat.creator.CharacterCreationOptions;
 import rpgcombat.models.breeds.Breed;
+import rpgcombat.perks.divine.DivinePerkDefinition;
 import rpgcombat.models.characters.Stat;
 import rpgcombat.creator.score.CharacterBuildScore;
 import rpgcombat.utils.ui.Ansi;
@@ -15,11 +18,22 @@ import rpgcombat.utils.ui.Ansi;
 /** Renderitza el formulari de creació. */
 final class CharacterCreationRenderer {
     private final TerminalPainter painter = new TerminalPainter();
+    private final CharacterCreationOptions options;
+    private static final Pattern LINE_SPLITTER = Pattern.compile("\\s+");
+
+    CharacterCreationRenderer() {
+        this(CharacterCreationOptions.defaultOptions());
+    }
+
+    CharacterCreationRenderer(CharacterCreationOptions options) {
+        this.options = options == null ? CharacterCreationOptions.defaultOptions() : options;
+    }
 
     /** Dibuixa tot el formulari. */
     void renderAll(Terminal terminal, CharacterDraft draft, EditorAction selected, EditorAction editing,
             String editValue, int editCursor, String message) {
         painter.clear(terminal);
+        invalidateRightPanelCache();
         renderTitle(terminal, draft);
         renderIdentityBox(terminal, draft, selected, editing, editValue, editCursor);
         renderStatsBox(terminal, draft, selected);
@@ -43,8 +57,13 @@ final class CharacterCreationRenderer {
     void renderActionChange(Terminal terminal, CharacterDraft draft, EditorAction action, EditorAction selected,
             String message) {
         renderTitle(terminal, draft);
-        if (action == EditorAction.EDIT_BREED) {
+        if (action == EditorAction.EDIT_BREED || action == EditorAction.EDIT_DIVINE_PERK) {
             renderField(terminal, draft, action, selected, null, "", 0);
+
+            if (action == EditorAction.EDIT_BREED && options.divinePerksEnabled()) {
+                renderField(terminal, draft, EditorAction.EDIT_DIVINE_PERK, selected, null, "", 0);
+            }
+
             renderStatsBox(terminal, draft, selected);
             renderBreedInfoBox(terminal, draft);
             renderBuildScore(terminal, draft, EditorLayout.BUILD_SCORE_ROW);
@@ -113,7 +132,11 @@ final class CharacterCreationRenderer {
         renderField(terminal, draft, EditorAction.EDIT_NAME, selected, editing, editValue, editCursor);
         renderField(terminal, draft, EditorAction.EDIT_AGE, selected, editing, editValue, editCursor);
         renderField(terminal, draft, EditorAction.EDIT_BREED, selected, editing, editValue, editCursor);
-        painter.boxBottom(terminal, row + 3, EditorLayout.LEFT_COL, EditorLayout.LEFT_BOX_WIDTH);
+        if (options.divinePerksEnabled()) {
+            renderField(terminal, draft, EditorAction.EDIT_DIVINE_PERK, selected, editing, editValue, editCursor);
+        }
+        painter.boxBottom(terminal, row + (options.divinePerksEnabled() ? 4 : 3),
+                EditorLayout.LEFT_COL, EditorLayout.LEFT_BOX_WIDTH);
     }
 
     /** Dibuixa la caixa d'estadístiques. */
@@ -127,40 +150,130 @@ final class CharacterCreationRenderer {
         painter.boxBottom(terminal, row, EditorLayout.LEFT_COL, EditorLayout.LEFT_BOX_WIDTH);
     }
 
+    private static final String DESCRIPTION_FOOT = "Un altre déu et concedeix una ajuda discreta… no per fe, sinó per pietat.";
+
     /** Dibuixa la informació de raça. */
     private void renderBreedInfoBox(Terminal terminal, CharacterDraft draft) {
-        clearBreedArea(terminal);
-        Breed breed = draft.breed();
-        int row = painter.boxTop(terminal, EditorLayout.IDENTITY_ROW, EditorLayout.RIGHT_COL,
-                EditorLayout.RIGHT_BOX_WIDTH, "Informació de la raça");
+        int firstRow = EditorLayout.IDENTITY_ROW;
+        int maxRow = rightPanelLastRow();
+        List<String> lines = blankRightPanelLines(firstRow, maxRow);
 
-        painter.replaceLine(terminal, row++, EditorLayout.RIGHT_COL + 3,
-                Ansi.BOLD + Ansi.CYAN + breed.getName() + Ansi.RESET);
+        Breed breed = draft.breed();
+        int row = EditorLayout.IDENTITY_ROW;
+        putRightPanelLine(lines, firstRow, row++, rightBoxTop("Informació de la raça"));
+
+        putRightPanelContent(lines, firstRow, row++, Ansi.BOLD + Ansi.CYAN + breed.getName() + Ansi.RESET);
         row++;
 
         String bonus = "+" + (int) Math.round(breed.bonus() * 100.0) + "% a " + breed.bonusStat().getName();
-        painter.replaceLine(terminal, row++, EditorLayout.RIGHT_COL + 3, Ansi.GREEN + "Bonus racial" + Ansi.RESET
+        putRightPanelContent(lines, firstRow, row++, Ansi.GREEN + "Bonus racial" + Ansi.RESET
                 + Ansi.DARK_GRAY + "  │  " + Ansi.RESET + Ansi.BOLD + bonus + Ansi.RESET);
         row++;
 
-        painter.replaceLine(terminal, row++, EditorLayout.RIGHT_COL + 3, Ansi.BOLD + "Descripció" + Ansi.RESET);
-        for (String line : wrap(breed.getDescription(),
-                EditorLayout.RIGHT_BOX_WIDTH - EditorLayout.BOX_HORIZONTAL_PADDING)) {
-            painter.replaceLine(terminal, row++, EditorLayout.RIGHT_COL + 3, Ansi.DARK_GRAY + line + Ansi.RESET);
+        putRightPanelContent(lines, firstRow, row++, Ansi.BOLD + "Descripció" + Ansi.RESET);
+        row = putRightPanelWrappedContent(lines, firstRow, maxRow, row, breed.getDescription());
+
+        if (options.divinePerksEnabled()) {
+            row++;
+            DivinePerkDefinition perk = draft.divinePerk();
+            putRightPanelContent(lines, firstRow, row++, Ansi.BOLD + "Perk divina" + Ansi.RESET);
+            if (perk == null) {
+                putRightPanelContent(lines, firstRow, row++,
+                        Ansi.YELLOW + "No hi ha perks divines carregades per a aquesta raça." + Ansi.RESET);
+            } else {
+                putRightPanelContent(lines, firstRow, row++, Ansi.CYAN + perk.displayName() + Ansi.RESET);
+                if (!perk.shortDescription().isBlank()) {
+                    putRightPanelContent(lines, firstRow, row++, Ansi.DARK_GRAY + perk.shortDescription() + Ansi.RESET);
+                }
+                row = putRightPanelWrappedContent(lines, firstRow, maxRow, row, perk.description());
+            }
         }
 
         int bottom = Math.max(row + 1, EditorLayout.BOX_MIN_BREED_BOTTOM);
-        painter.boxBottom(terminal, bottom, EditorLayout.RIGHT_COL, EditorLayout.RIGHT_BOX_WIDTH);
-        painter.replaceLine(terminal, bottom + EditorLayout.BREED_HINT_GAP, EditorLayout.RIGHT_COL,
-                Ansi.DARK_GRAY + "Consell: selecciona la raça i usa ←/→ per comparar-les sense sortir del formulari."
-                        + Ansi.RESET);
+        bottom = Math.min(bottom, maxRow);
+        putRightPanelLine(lines, firstRow, bottom, rightBoxBottom());
+
+        int footRow = bottom + EditorLayout.BREED_HINT_GAP;
+        if (options.divinePerksEnabled() && footRow < EditorLayout.HELP_ROW) {
+            putRightPanelLine(lines, firstRow, footRow, Ansi.DARK_GRAY + DESCRIPTION_FOOT + Ansi.RESET);
+        }
+
+        paintRightPanelLines(terminal, firstRow, lines);
     }
 
-    /** Neteja la zona dreta de raça. */
-    private void clearBreedArea(Terminal terminal) {
-        for (int row = EditorLayout.IDENTITY_ROW; row < EditorLayout.HELP_ROW; row++) {
-            painter.replaceLine(terminal, row, EditorLayout.RIGHT_COL, "");
+    private List<String> lastRightPanelLines = List.of();
+
+    /** Crea línies buides per al panell dret. */
+    private List<String> blankRightPanelLines(int firstRow, int lastRow) {
+        int count = Math.max(0, lastRow - firstRow + 1);
+        List<String> lines = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            lines.add("");
         }
+        return lines;
+    }
+
+    /** Escriu una línia completa del panell dret al buffer de dibuix. */
+    private void putRightPanelLine(List<String> lines, int firstRow, int row, String text) {
+        int index = row - firstRow;
+        if (index >= 0 && index < lines.size()) {
+            lines.set(index, text == null ? "" : text);
+        }
+    }
+
+    /** Escriu una línia de contingut del panell dret al buffer de dibuix. */
+    private void putRightPanelContent(List<String> lines, int firstRow, int row, String text) {
+        putRightPanelLine(lines, firstRow, row, "   " + (text == null ? "" : text));
+    }
+
+    /** Escriu text partit al buffer del panell dret sense envair la zona d'ajuda. */
+    private int putRightPanelWrappedContent(List<String> lines, int firstRow, int maxRow, int row, String text) {
+        int width = EditorLayout.RIGHT_BOX_WIDTH - EditorLayout.BOX_HORIZONTAL_PADDING;
+        for (String line : wrap(text, width)) {
+            if (row > maxRow) {
+                return row;
+            }
+            putRightPanelContent(lines, firstRow, row++, Ansi.DARK_GRAY + line + Ansi.RESET);
+        }
+        return row;
+    }
+
+    /** Dibuixa només les línies que han canviat del panell dret. */
+    private void paintRightPanelLines(Terminal terminal, int firstRow, List<String> lines) {
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            String previous = i < lastRightPanelLines.size() ? lastRightPanelLines.get(i) : null;
+            if (!line.equals(previous)) {
+                painter.replaceLine(terminal, firstRow + i, EditorLayout.RIGHT_COL, line);
+            }
+        }
+
+        for (int i = lines.size(); i < lastRightPanelLines.size(); i++) {
+            painter.replaceLine(terminal, firstRow + i, EditorLayout.RIGHT_COL, "");
+        }
+
+        lastRightPanelLines = List.copyOf(lines);
+    }
+
+    /** Invalida la memòria del panell dret després d'una neteja completa. */
+    private void invalidateRightPanelCache() {
+        lastRightPanelLines = List.of();
+    }
+
+    /** Retorna la vora superior de la caixa dreta. */
+    private String rightBoxTop(String title) {
+        String line = "┌─ " + title + " " + "─".repeat(Math.max(0, EditorLayout.RIGHT_BOX_WIDTH - title.length() - 5)) + "┐";
+        return Ansi.DARK_GRAY + line + Ansi.RESET;
+    }
+
+    /** Retorna la vora inferior de la caixa dreta. */
+    private String rightBoxBottom() {
+        return Ansi.DARK_GRAY + "└" + "─".repeat(EditorLayout.RIGHT_BOX_WIDTH - 2) + "┘" + Ansi.RESET;
+    }
+
+    /** Retorna l'última fila segura del panell dret. */
+    private int rightPanelLastRow() {
+        return EditorLayout.HELP_ROW - 1;
     }
 
     /** Dibuixa la caixa d'accions. */
@@ -224,7 +337,7 @@ final class CharacterCreationRenderer {
         if (editing == null) {
             painter.replaceLine(terminal, EditorLayout.HELP_ROW, EditorLayout.CONTENT_COL,
                     Ansi.DARK_GRAY
-                            + "[↑/↓ o W/S] moure    [←/→ o A/D] ajustar estadístiques i raça    [Enter] editar o confirmar"
+                            + "[↑/↓ o W/S] moure    [←/→ o A/D] ajustar estadístiques i dades    [Enter] editar o confirmar"
                             + Ansi.RESET);
             return;
         }
@@ -271,10 +384,19 @@ final class CharacterCreationRenderer {
                     EditorLayout.AGE_INPUT_WIDTH, action, selected, editing, editValue, editCursor);
             case EDIT_BREED -> fieldLine("Raça", draft.breed().getName(), "←/→", 0, action, selected, editing,
                     editValue, editCursor);
+            case EDIT_DIVINE_PERK ->
+                fieldLine("Perk divina", divinePerkLine(draft), "←/→", 0, action, selected, editing,
+                        editValue, editCursor);
             case RANDOMIZE -> selectableLine("Generar valors aleatoris", false, selected == action);
             case CONFIRM -> selectableLine("Confirmar personatge", !canConfirm(draft), selected == action);
             default -> statLine(draft, action, selected == action);
         };
+    }
+
+    /** Retorna el text visible de la perk divina seleccionada. */
+    private String divinePerkLine(CharacterDraft draft) {
+        DivinePerkDefinition perk = draft.divinePerk();
+        return perk == null ? "Sense perk" : perk.name();
     }
 
     /** Crea una línia de camp simple. */
@@ -321,6 +443,7 @@ final class CharacterCreationRenderer {
 
     /** Crea la caixa visual d'edició. */
     private String inputBox(String value, int cursor, int width) {
+        boolean cursorVisible = (System.currentTimeMillis() / 530) % 2 == 0;
         int safeWidth = Math.max(1, width);
         String clipped = value == null ? "" : value;
         if (clipped.length() > safeWidth) {
@@ -332,8 +455,11 @@ final class CharacterCreationRenderer {
         String left = padded.substring(0, displayCursor);
         String current = String.valueOf(padded.charAt(displayCursor));
         String right = padded.substring(displayCursor + 1, safeWidth);
-        return Ansi.CYAN + "[" + Ansi.RESET + Ansi.BOLD + left + Ansi.RESET + "\u001b[7m" + current
-                + Ansi.RESET + Ansi.BOLD + right + Ansi.RESET + Ansi.CYAN + "]" + Ansi.RESET;
+        String cursorCell = cursorVisible
+                ? "\u001b[7m" + current + Ansi.RESET
+                : Ansi.BOLD + current + Ansi.RESET;
+        return Ansi.CYAN + "[" + Ansi.RESET + Ansi.BOLD + left + Ansi.RESET + cursorCell
+                + Ansi.BOLD + right + Ansi.RESET + Ansi.CYAN + "]" + Ansi.RESET;
     }
 
     /** Crea la barra d'estadística. */
@@ -429,7 +555,9 @@ final class CharacterCreationRenderer {
         }
         List<String> lines = new ArrayList<>();
         StringBuilder line = new StringBuilder();
-        for (String word : safe.split("\\s+")) {
+
+        String[] words = LINE_SPLITTER.split(safe);
+        for (String word : words) {
             if (line.isEmpty()) {
                 line.append(word);
             } else if (line.length() + 1 + word.length() <= maxWidth) {

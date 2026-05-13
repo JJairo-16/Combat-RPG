@@ -35,10 +35,10 @@ public class Statistics {
     private double stamina;
     private double resistance;
 
-    private static final int MAX_CONSTITUTION_FULL_EFFECT = 20;
+    private static final int MAX_CONSTITUTION_FULL_EFFECT = 22;
     private static final double CONSTITUTION_VALUE = 50.0;
 
-    private static final double HEALTH_SOFTCAP_FACTOR = 0.08;
+    private static final double HEALTH_SOFTCAP_FACTOR = 0.065;
     private static final double REGEN_SOFTCAP_FACTOR = 0.10;
 
     private static final double RESISTANCE_PRESSURE_START = 0.55;
@@ -177,20 +177,34 @@ public class Statistics {
      * Regenera vida i mana base.
      */
     public void reg() {
-        double hp = calculateHealthRegen(constitution);
-        double ma = intelligence * 0.9;
-        health = affectClamp(health, hp, maxHealth, 0);
-        mana = affectClamp(mana, ma, maxMana, 0);
+        reg(1.0, 1.0);
+    }
+
+    /**
+     * Regenera vida i mana base segons els canals habilitats.
+     */
+    public void reg(boolean healthEnabled, boolean manaEnabled) {
+        reg(1.0, 1.0, healthEnabled, manaEnabled);
     }
 
     /**
      * Regenera vida i mana amb bonus.
      */
     public void reg(double hpBonus, double manaBonus) {
-        double hp = calculateHealthRegen(constitution * hpBonus);
-        double ma = (intelligence * manaBonus) * 0.9;
-        health = affectClamp(health, hp, maxHealth, 0);
-        mana = affectClamp(mana, ma, maxMana, 0);
+        reg(hpBonus, manaBonus, true, true);
+    }
+
+    /**
+     * Regenera vida i mana amb bonus segons els canals habilitats.
+     */
+    public void reg(double hpBonus, double manaBonus, boolean healthEnabled, boolean manaEnabled) {
+        double ma = intelligence * 0.9;
+        if (healthEnabled) {
+            health = affectClamp(health, calculateHealthRegen(constitution * hpBonus), maxHealth, 0);
+        }
+        if (manaEnabled) {
+            mana = affectClamp(mana, ma * manaBonus, maxMana, 0);
+        }
     }
 
     /**
@@ -314,6 +328,30 @@ public class Statistics {
         double before = stamina;
         stamina = Math.min(maxStamina, stamina + amount);
         return stamina - before;
+    }
+
+    /**
+     * Consumeix estamina sense requerir que n'hi hagi prou.
+     */
+    public double consumeStamina(double amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+        double before = stamina;
+        stamina = Math.max(0, stamina - amount);
+        return before - stamina;
+    }
+
+    /**
+     * Consumeix resistència sense requerir que n'hi hagi prou.
+     */
+    public double consumeResistance(double amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+        double before = resistance;
+        resistance = Math.max(0, resistance - amount);
+        return before - resistance;
     }
 
 

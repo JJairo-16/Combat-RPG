@@ -14,6 +14,7 @@ import java.util.Map;
  * @param weight pes o probabilitat d'aparició
  * @param conditions llista de condicions a complir
  * @param actions llista d'accions a executar
+ * @param tags etiquetes opcionals per a sinergies
  */
 public record PerkConfig(
         String id,
@@ -23,7 +24,8 @@ public record PerkConfig(
         String trigger,
         Integer weight,
         List<RuleConfig> conditions,
-        List<RuleConfig> actions) {
+        List<RuleConfig> actions,
+        List<String> tags) {
 
     /**
      * Defineix una regla amb tipus i paràmetres.

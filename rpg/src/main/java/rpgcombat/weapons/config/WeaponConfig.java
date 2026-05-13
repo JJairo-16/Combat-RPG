@@ -18,6 +18,7 @@ public record WeaponConfig(
     double manaPrice,
 
     String attackSkill,
-    List<PassiveConfig> passives
+    List<PassiveConfig> passives,
+    UnlockConfig unlock
 ) {}
 

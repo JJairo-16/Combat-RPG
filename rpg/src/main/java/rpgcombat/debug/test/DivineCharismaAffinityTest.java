@@ -13,7 +13,7 @@ import rpgcombat.utils.rng.DivineCharismaAffinity.Standing;
 public final class DivineCharismaAffinityTest {
 
     private static final int SIMULATION_COUNT = 1_000_000;
-    private static final int TEST_CHARISMA = 16;
+    private static final int TEST_CHARISMA = 12;
 
     private DivineCharismaAffinityTest() {
     }

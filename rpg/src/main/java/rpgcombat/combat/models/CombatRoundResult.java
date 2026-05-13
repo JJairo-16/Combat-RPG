@@ -19,7 +19,6 @@ public record CombatRoundResult(
         CombatantStatus p2AfterDamage,
         CombatantStatus p1Final,
         CombatantStatus p2Final) {
-
     /**
      * Constructor compatible sense captures d'estat.
      */

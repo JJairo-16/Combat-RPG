@@ -12,10 +12,13 @@ public class Tiefling extends Character {
 
     @Override
     public AttackResult attack() {
+        if (weapon == null)
+            return unarmedAttack.attackUnarmed();
+
         AttackResult attack = super.attack();
         if (rng.nextDouble() < DOUBLE_ATTACK_PROB)
             return new AttackResult(attack.damage() * 2.0, attack.message(), attack.target());
-        
+
         return attack;
     }
 }

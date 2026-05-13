@@ -1,0 +1,800 @@
+[
+	{
+		"id": "OVERHEAL_ENGINE",
+		"name": "Motor de sobrecàrrega",
+		"description": "La vida sobrera comença a moure el combat al teu favor.",
+		"type": "BONUS_EXTRA",
+		"requiredPerks": [],
+		"requiredTags": ["MIXABLE_OVERHEAL"],
+		"minMembers": 2,
+		"scaling": {
+			"enabled": true,
+			"levels": [
+				{
+					"members": 2,
+					"trigger": "AFTER_HIT",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						}
+					],
+					"actions": [
+						{
+							"type": "OVERLOAD_HEAL_OWNER",
+							"params": {
+								"ratioOfDamage": 0.025
+							}
+						}
+					]
+				},
+				{
+					"members": 3,
+					"trigger": "MODIFY_DAMAGE",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "OWNER_HEALTH_ABOVE_MAX",
+							"params": {}
+						}
+					],
+					"actions": [
+						{
+							"type": "MULTIPLY_DAMAGE",
+							"params": {
+								"multiplier": 1.08
+							}
+						}
+					]
+				},
+				{
+					"members": 4,
+					"trigger": "AFTER_HIT",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "OWNER_HEALTH_AT_OR_ABOVE_MAX",
+							"params": {}
+						}
+					],
+					"actions": [
+						{
+							"type": "RESTORE_MANA",
+							"params": {
+								"amount": 18
+							}
+						},
+						{
+							"type": "GAIN_MOMENTUM",
+							"params": {
+								"amount": 1
+							}
+						}
+					]
+				}
+			]
+		}
+	},
+	{
+		"id": "MOMENTUM_TEMPO",
+		"name": "Tempo d'impuls",
+		"description": "Les perks d'impuls converteixen la pressió acumulada en cops més nets.",
+		"type": "BONUS_EXTRA",
+		"requiredPerks": [],
+		"requiredTags": ["MIXABLE_MOMENTUM"],
+		"minMembers": 2,
+		"scaling": {
+			"enabled": true,
+			"levels": [
+				{
+					"members": 2,
+					"trigger": "MODIFY_DAMAGE",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "HAS_MOMENTUM",
+							"params": {
+								"min": 1
+							}
+						}
+					],
+					"actions": [
+						{
+							"type": "MULTIPLY_DAMAGE",
+							"params": {
+								"multiplier": 1.04
+							}
+						}
+					]
+				},
+				{
+					"members": 3,
+					"trigger": "AFTER_HIT",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "HAS_MOMENTUM",
+							"params": {
+								"min": 1
+							}
+						},
+						{
+							"type": "CHANCE",
+							"params": {
+								"value": 0.25
+							}
+						}
+					],
+					"actions": [
+						{
+							"type": "GAIN_MOMENTUM",
+							"params": {
+								"amount": 1
+							}
+						}
+					]
+				},
+				{
+					"members": 4,
+					"trigger": "MODIFY_DAMAGE",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "HAS_MOMENTUM",
+							"params": {
+								"min": 2
+							}
+						}
+					],
+					"actions": [
+						{
+							"type": "MULTIPLY_DAMAGE",
+							"params": {
+								"multiplier": 1.1
+							}
+						}
+					]
+				}
+			]
+		}
+	},
+	{
+		"id": "ARCANE_RECOVERY_LOOP",
+		"name": "Cercle de recuperació",
+		"description": "La recuperació constant troba un ritme propi i retorna recursos quan mantens l'ofensiva.",
+		"type": "BONUS_EXTRA",
+		"requiredPerks": [],
+		"requiredTags": ["MIXABLE_SUSTAIN"],
+		"minMembers": 3,
+		"scaling": {
+			"enabled": true,
+			"levels": [
+				{
+					"members": 3,
+					"trigger": "AFTER_HIT",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "CHANCE",
+							"params": {
+								"value": 0.2
+							}
+						}
+					],
+					"actions": [
+						{
+							"type": "RESTORE_STAMINA",
+							"params": {
+								"amount": 8
+							}
+						},
+						{
+							"type": "RESTORE_MANA",
+							"params": {
+								"amount": 10
+							}
+						}
+					]
+				},
+				{
+					"members": 4,
+					"trigger": "AFTER_HIT",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "CHANCE",
+							"params": {
+								"value": 0.28
+							}
+						}
+					],
+					"actions": [
+						{
+							"type": "RESTORE_STAMINA",
+							"params": {
+								"amount": 12
+							}
+						},
+						{
+							"type": "RESTORE_MANA",
+							"params": {
+								"amount": 16
+							}
+						}
+					]
+				}
+			]
+		}
+	},
+	{
+		"id": "SERRATED_LUCK",
+		"name": "Sort serrada",
+		"description": "Els crítics afortunats troben esquerdes i deixen ferides que continuen obertes.",
+		"type": "ALTER_MEMBERS",
+		"requiredPerks": ["LUCKY_CRIT"],
+		"requiredTags": ["MIXABLE_BLEED"],
+		"minMembers": 1,
+		"alterations": [
+			{
+				"memberPerkId": "LUCKY_CRIT",
+				"trigger": "AFTER_HIT",
+				"descriptionAppend": "Quan un impacte és crític, Crític afortunat també pot obrir una ferida sagnant.",
+				"conditions": [
+					{
+						"type": "OWNER_IS_ATTACKER",
+						"params": {}
+					},
+					{
+						"type": "EVENT",
+						"params": {
+							"event": "ON_CRIT"
+						}
+					}
+				],
+				"actions": [
+					{
+						"type": "APPLY_STATUS",
+						"params": {
+							"target": "TARGET",
+							"status": "BLEED",
+							"turns": 1
+						}
+					}
+				]
+			}
+		]
+	},
+	{
+		"id": "HEAVY_FLOW",
+		"name": "Inèrcia pesada",
+		"description": "La preparació pesada deixa de ser només força bruta i es converteix en cadència.",
+		"type": "ALTER_MEMBERS",
+		"requiredPerks": ["HEAVY_PREPARATION", "MEASURED_CHARGE"],
+		"requiredTags": [],
+		"minMembers": 2,
+		"alterations": [
+			{
+				"memberPerkId": "HEAVY_PREPARATION",
+				"trigger": "AFTER_HIT",
+				"descriptionAppend": "Després d'encertar amb un atac carregat, Preparació pesada recupera una mica d'estamina.",
+				"conditions": [
+					{
+						"type": "OWNER_IS_ATTACKER",
+						"params": {}
+					},
+					{
+						"type": "META_TRUE",
+						"params": {
+							"key": "CHARGED_HIT"
+						}
+					}
+				],
+				"actions": [
+					{
+						"type": "RESTORE_STAMINA",
+						"params": {
+							"amount": 6
+						}
+					}
+				]
+			}
+		]
+	},
+	{
+		"id": "GUARDED_RHYTHM",
+		"name": "Ritme de guàrdia",
+		"description": "Una defensa ben encadenada ja no només aguanta: prepara la resposta.",
+		"type": "ALTER_MEMBERS",
+		"requiredPerks": ["GUARDED_COUNTER"],
+		"requiredTags": ["MIXABLE_DEFENSE", "MIXABLE_MOMENTUM"],
+		"minMembers": 2,
+		"alterations": [
+			{
+				"memberPerkId": "GUARDED_COUNTER",
+				"trigger": "AFTER_HIT",
+				"descriptionAppend": "Quan reps dany defensant, Contraatac guardat també recupera estamina per sostenir el ritme.",
+				"conditions": [
+					{
+						"type": "OWNER_IS_DEFENDER",
+						"params": {}
+					},
+					{
+						"type": "OWNER_ACTION_IS",
+						"params": {
+							"action": "DEFEND"
+						}
+					}
+				],
+				"actions": [
+					{
+						"type": "RESTORE_STAMINA",
+						"params": {
+							"amount": 7
+						}
+					}
+				]
+			}
+		]
+	},
+	{
+		"id": "BLOOD_OVERFLOW_BIND",
+		"name": "Sang desbordada",
+		"description": "El robatori de vida corrupte i la sang excedent aprenen a alimentar-se mútuament.",
+		"type": "ALTER_MEMBERS",
+		"requiredPerks": ["RED_FEAST", "BLOOD_SURPLUS"],
+		"requiredTags": [],
+		"minMembers": 2,
+		"alterations": [
+			{
+				"memberPerkId": "RED_FEAST",
+				"trigger": "AFTER_HIT",
+				"descriptionAppend": "Festí roig també converteix una petita part del dany infligit en vida sobrecarregada quan la sang corrupta ja desborda.",
+				"conditions": [
+					{
+						"type": "OWNER_IS_ATTACKER",
+						"params": {}
+					}
+				],
+				"actions": [
+					{
+						"type": "OVERLOAD_HEAL_OWNER",
+						"params": {
+							"ratioOfDamage": 0.035
+						}
+					}
+				]
+			}
+		]
+	},
+	{
+		"id": "ABYSSAL_TEMPO",
+		"name": "Tempo abissal",
+		"description": "La corrupció converteix l'impuls acumulat en una pressió més ferotge.",
+		"type": "BONUS_EXTRA",
+		"requiredPerks": [],
+		"requiredTags": ["CORRUPTED_MOMENTUM"],
+		"minMembers": 2,
+		"scaling": {
+			"enabled": true,
+			"levels": [
+				{
+					"members": 2,
+					"trigger": "MODIFY_DAMAGE",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "HAS_MOMENTUM",
+							"params": {
+								"min": 1
+							}
+						}
+					],
+					"actions": [
+						{
+							"type": "MULTIPLY_DAMAGE",
+							"params": {
+								"multiplier": 1.05
+							}
+						}
+					]
+				},
+				{
+					"members": 3,
+					"trigger": "AFTER_HIT",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "HAS_MOMENTUM",
+							"params": {
+								"min": 1
+							}
+						},
+						{
+							"type": "CHANCE",
+							"params": {
+								"value": 0.22
+							}
+						}
+					],
+					"actions": [
+						{
+							"type": "GAIN_MOMENTUM",
+							"params": {
+								"amount": 1
+							}
+						}
+					]
+				},
+				{
+					"members": 4,
+					"trigger": "MODIFY_DAMAGE",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "HAS_MOMENTUM",
+							"params": {
+								"min": 2
+							}
+						}
+					],
+					"actions": [
+						{
+							"type": "MULTIPLY_DAMAGE",
+							"params": {
+								"multiplier": 1.11
+							}
+						}
+					]
+				}
+			]
+		}
+	},
+	{
+		"id": "BLOOD_LOOP",
+		"name": "Bucle de sang",
+		"description": "La recuperació corrupta retorna vida, però només quan la build ja s'ha compromès amb la fam.",
+		"type": "BONUS_EXTRA",
+		"requiredPerks": [],
+		"requiredTags": ["CORRUPTED_SUSTAIN"],
+		"minMembers": 3,
+		"scaling": {
+			"enabled": true,
+			"levels": [
+				{
+					"members": 3,
+					"trigger": "AFTER_HIT",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						}
+					],
+					"actions": [
+						{
+							"type": "HEAL_OWNER",
+							"params": {
+								"ratioOfDamage": 0.025
+							}
+						}
+					]
+				},
+				{
+					"members": 4,
+					"trigger": "AFTER_HIT",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "OWNER_HEALTH_AT_OR_ABOVE_MAX",
+							"params": {}
+						}
+					],
+					"actions": [
+						{
+							"type": "RESTORE_MANA",
+							"params": {
+								"amount": 14
+							}
+						}
+					]
+				},
+				{
+					"members": 5,
+					"trigger": "MODIFY_DAMAGE",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "OWNER_HEALTH_BELOW",
+							"params": {
+								"ratio": 0.5
+							}
+						}
+					],
+					"actions": [
+						{
+							"type": "MULTIPLY_DAMAGE",
+							"params": {
+								"multiplier": 1.1
+							}
+						}
+					]
+				}
+			]
+		}
+	},
+	{
+		"id": "VOID_PRESSURE",
+		"name": "Pressió del buit",
+		"description": "El risc corrupte es converteix en poder constant quan acumules prou pactes perillosos.",
+		"type": "BONUS_EXTRA",
+		"requiredPerks": [],
+		"requiredTags": ["CORRUPTED_RISK"],
+		"minMembers": 3,
+		"scaling": {
+			"enabled": true,
+			"levels": [
+				{
+					"members": 3,
+					"trigger": "MODIFY_DAMAGE",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						}
+					],
+					"actions": [
+						{
+							"type": "MULTIPLY_DAMAGE",
+							"params": {
+								"multiplier": 1.04
+							}
+						}
+					]
+				},
+				{
+					"members": 4,
+					"trigger": "AFTER_HIT",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						}
+					],
+					"actions": [
+						{
+							"type": "RESTORE_MANA",
+							"params": {
+								"amount": 12
+							}
+						}
+					]
+				},
+				{
+					"members": 5,
+					"trigger": "MODIFY_DAMAGE",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "OWNER_HEALTH_BELOW",
+							"params": {
+								"ratio": 0.4
+							}
+						}
+					],
+					"actions": [
+						{
+							"type": "MULTIPLY_DAMAGE",
+							"params": {
+								"multiplier": 1.13
+							}
+						}
+					]
+				}
+			]
+		}
+	},
+	{
+		"id": "ABYSSAL_CONTROL",
+		"name": "Control abissal",
+		"description": "Els efectes corruptes de control es tornen més opressius quan s'acumulen.",
+		"type": "BONUS_EXTRA",
+		"requiredPerks": [],
+		"requiredTags": ["CORRUPTED_CONTROL"],
+		"minMembers": 3,
+		"scaling": {
+			"enabled": true,
+			"levels": [
+				{
+					"members": 3,
+					"trigger": "AFTER_HIT",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "CHANCE",
+							"params": {
+								"value": 0.16
+							}
+						}
+					],
+					"actions": [
+						{
+							"type": "APPLY_STATUS",
+							"params": {
+								"target": "TARGET",
+								"status": "VULNERABLE",
+								"turns": 1
+							}
+						}
+					]
+				},
+				{
+					"members": 4,
+					"trigger": "AFTER_HIT",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "CHANCE",
+							"params": {
+								"value": 0.18
+							}
+						}
+					],
+					"actions": [
+						{
+							"type": "APPLY_STATUS",
+							"params": {
+								"target": "TARGET",
+								"status": "STAGGER",
+								"turns": 1
+							}
+						}
+					]
+				},
+				{
+					"members": 5,
+					"trigger": "AFTER_HIT",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "CHANCE",
+							"params": {
+								"value": 0.2
+							}
+						}
+					],
+					"actions": [
+						{
+							"type": "APPLY_STATUS",
+							"params": {
+								"target": "TARGET",
+								"status": "BLIND",
+								"turns": 1
+							}
+						}
+					]
+				}
+			]
+		}
+	},
+	{
+		"id": "ROTTEN_CRIT_CHAIN",
+		"name": "Cadena crítica podrida",
+		"description": "Els crítics corruptes no només fan més mal: alimenten el següent cop.",
+		"type": "BONUS_EXTRA",
+		"requiredPerks": [],
+		"requiredTags": ["CORRUPTED_CRIT"],
+		"minMembers": 2,
+		"scaling": {
+			"enabled": true,
+			"levels": [
+				{
+					"members": 2,
+					"trigger": "ROLL_CRIT",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						}
+					],
+					"actions": [
+						{
+							"type": "ADD_CRIT_CHANCE",
+							"params": {
+								"amount": 0.025
+							}
+						}
+					]
+				},
+				{
+					"members": 3,
+					"trigger": "ROLL_CRIT",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						}
+					],
+					"actions": [
+						{
+							"type": "MULTIPLY_CRIT_DAMAGE",
+							"params": {
+								"multiplier": 1.08
+							}
+						}
+					]
+				},
+				{
+					"members": 4,
+					"trigger": "AFTER_HIT",
+					"conditions": [
+						{
+							"type": "OWNER_IS_ATTACKER",
+							"params": {}
+						},
+						{
+							"type": "EVENT",
+							"params": {
+								"event": "ON_CRIT"
+							}
+						}
+					],
+					"actions": [
+						{
+							"type": "GAIN_MOMENTUM",
+							"params": {
+								"amount": 1
+							}
+						}
+					]
+				}
+			]
+		}
+	}
+]

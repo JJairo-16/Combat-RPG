@@ -14,7 +14,7 @@ public abstract class Trigger implements Effect {
     /**
      * @param key identificador únic del trigger
      */
-    Trigger(String key) {
+    protected Trigger(String key) {
         this.key = key;
     }
 

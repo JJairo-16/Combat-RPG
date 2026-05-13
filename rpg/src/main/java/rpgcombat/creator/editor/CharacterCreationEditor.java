@@ -1,5 +1,6 @@
 package rpgcombat.creator.editor;
 
+import rpgcombat.creator.CharacterCreationOptions;
 import rpgcombat.creator.CharacterCreator;
 
 import java.io.IOException;
@@ -10,12 +11,18 @@ import org.jline.terminal.Terminal;
 import org.jline.utils.InfoCmp.Capability;
 
 import rpgcombat.models.breeds.Breed;
+import rpgcombat.perks.divine.DivinePerkDefinition;
+import rpgcombat.perks.divine.DivinePerkRegistry;
 import rpgcombat.utils.terminal.SharedTerminal;
+import rpgcombat.utils.terminal.TerminalInput;
 import rpgcombat.utils.terminal.TerminalSession;
 
 /** Formulari interactiu de terminal per crear personatges. */
 public final class CharacterCreationEditor {
-    private final CharacterCreationRenderer renderer = new CharacterCreationRenderer();
+    private static final int TEXT_INPUT_POLL_MS = 80;
+
+    private final CharacterCreationOptions options;
+    private final CharacterCreationRenderer renderer;
 
     private int cursor;
     private EditorAction editing;
@@ -25,6 +32,17 @@ public final class CharacterCreationEditor {
     private volatile boolean resizePending;
     private int terminalWidth;
     private int terminalHeight;
+
+    /** Crea un editor amb totes les opcions activades. */
+    public CharacterCreationEditor() {
+        this(CharacterCreationOptions.defaultOptions());
+    }
+
+    /** Crea un editor amb opcions derivades del mode de joc. */
+    public CharacterCreationEditor(CharacterCreationOptions options) {
+        this.options = options == null ? CharacterCreationOptions.defaultOptions() : options;
+        this.renderer = new CharacterCreationRenderer(this.options);
+    }
 
     /** Edita l'esborrany fins a confirmar-lo. */
     public void edit(CharacterDraft draft) {
@@ -43,8 +61,13 @@ public final class CharacterCreationEditor {
                     if (consumeResize(terminal, draft)) {
                         continue;
                     }
-                    InputAction input = reader.readBinding(keyMap);
-                    if (consumeResize(terminal, draft) || input == null) {
+                    InputAction input = TerminalInput.readBindingIgnoringMouse(reader, keyMap, terminal,
+                            InputAction.IGNORE);
+                    if (consumeResize(terminal, draft)) {
+                        continue;
+                    }
+                    if (input == null) {
+                        renderAll(terminal, draft);
                         continue;
                     }
                     switch (input) {
@@ -52,6 +75,7 @@ public final class CharacterCreationEditor {
                         case DOWN -> moveCursor(1, draft, terminal);
                         case LEFT -> adjustCurrentField(draft, -1, terminal);
                         case RIGHT -> adjustCurrentField(draft, 1, terminal);
+                        case RANDOMIZE -> randomizeDraft(draft, terminal);
                         case SELECT -> {
                             if (handleSelect(draft, terminal)) {
                                 return;
@@ -79,11 +103,14 @@ public final class CharacterCreationEditor {
                 message = "La raça es canvia amb ←/→ o A/D. Mira'n la informació a la dreta.";
                 renderSelectionState(terminal, draft);
             }
-            case RANDOMIZE -> {
-                draft.replaceGeneration(CharacterCreator.autoGenerate());
-                message = "Valors aleatoris generats.";
-                renderAll(terminal, draft);
+            case EDIT_DIVINE_PERK -> {
+                if (!options.divinePerksEnabled()) {
+                    return false;
+                }
+                message = "La perk divina es canvia amb ←/→ o A/D. Mira'n la descripció a la dreta.";
+                renderSelectionState(terminal, draft);
             }
+            case RANDOMIZE -> randomizeDraft(draft, terminal);
             case CONFIRM -> {
                 if (canConfirm(draft)) {
                     return true;
@@ -107,12 +134,14 @@ public final class CharacterCreationEditor {
         map.bind(InputAction.LEFT, "a", "A");
         map.bind(InputAction.RIGHT, "d", "D");
         map.bind(InputAction.SELECT, "\r", "\n");
+        map.bind(InputAction.RANDOMIZE, "r", "R");
         map.bind(InputAction.IGNORE, "\033[1;5A", "\033[1;5B", "\033[1;5C", "\033[1;5D");
         map.bind(InputAction.IGNORE, "\033[5C", "\033[5D");
         bindTerminalKey(map, InputAction.UP, terminal, Capability.key_up);
         bindTerminalKey(map, InputAction.DOWN, terminal, Capability.key_down);
         bindTerminalKey(map, InputAction.LEFT, terminal, Capability.key_left);
         bindTerminalKey(map, InputAction.RIGHT, terminal, Capability.key_right);
+        TerminalInput.bindMouseIgnore(map, terminal, InputAction.IGNORE);
         return map;
     }
 
@@ -141,6 +170,12 @@ public final class CharacterCreationEditor {
         EditorAction action = currentAction();
         switch (action) {
             case EDIT_BREED -> draft.setBreed(nextBreed(draft.breed(), delta));
+            case EDIT_DIVINE_PERK -> {
+                if (!options.divinePerksEnabled()) {
+                    return;
+                }
+                draft.setDivinePerk(nextDivinePerk(draft, delta));
+            }
             case EDIT_STRENGTH, EDIT_DEXTERITY, EDIT_INTELLIGENCE, EDIT_WISDOM, EDIT_CHARISMA,
                     EDIT_LUCK ->
                 adjustStat(draft, action.statIndex(), delta, CharacterCreator.MIN_STAT);
@@ -259,7 +294,10 @@ public final class CharacterCreationEditor {
 
     /** Llegeix una tecla d'un camp. */
     private TextKey readTextInput(Terminal terminal) throws IOException {
-        int ch = terminal.reader().read();
+        int ch = terminal.reader().read(TEXT_INPUT_POLL_MS);
+        if (ch == org.jline.utils.NonBlockingReader.READ_EXPIRED) {
+            return TextKey.NONE;
+        }
         if (ch == KeyCode.ESCAPE) {
             return readEscapeInput(terminal);
         }
@@ -301,6 +339,11 @@ public final class CharacterCreationEditor {
         int second = readPending(terminal);
         if (second < 0) {
             return TextKey.CANCEL;
+        }
+        String mousePrefix = TerminalInput.mousePrefixAfterEscape(first, second);
+        if (mousePrefix != null) {
+            TerminalInput.consumeMouseEvent(terminal, mousePrefix);
+            return TextKey.NONE;
         }
         return switch (second) {
             case KeyCode.ARROW_LEFT -> TextKey.LEFT;
@@ -501,6 +544,22 @@ public final class CharacterCreationEditor {
         return values[Math.floorMod(current.ordinal() + delta, values.length)];
     }
 
+    /** Retorna la perk divina següent compatible amb la raça actual. */
+    private DivinePerkDefinition nextDivinePerk(CharacterDraft draft, int delta) {
+        java.util.List<DivinePerkDefinition> options = DivinePerkRegistry.availableFor(draft.breed());
+        if (options.isEmpty())
+            return null;
+        DivinePerkDefinition current = draft.divinePerk();
+        int index = current == null ? 0 : Math.max(0, options.indexOf(current));
+        return options.get(Math.floorMod(index + delta, options.size()));
+    }
+
+    private void randomizeDraft(CharacterDraft draft, Terminal terminal) {
+        draft.replaceGeneration(CharacterCreator.autoGenerate());
+        message = "Valors aleatoris generats.";
+        renderAll(terminal, draft);
+    }
+
     /** Limita un valor a un rang. */
     private int clampLong(long value, int min, int max) {
         if (value < min) {
@@ -559,7 +618,7 @@ public final class CharacterCreationEditor {
 
     /** Retorna els camps navegables. */
     private FormField[] fields() {
-        return FormField.VALUES;
+        return FormField.valuesFor(options.divinePerksEnabled());
     }
 
     /** Insereix caràcters filtrats. */
@@ -616,6 +675,7 @@ public final class CharacterCreationEditor {
         LEFT,
         RIGHT,
         SELECT,
+        RANDOMIZE,
         IGNORE
     }
 

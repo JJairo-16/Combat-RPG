@@ -1,6 +1,7 @@
 package rpgcombat;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,7 +24,7 @@ import rpgcombat.game.modifier.Actions;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
-import rpgcombat.models.effects.impl.MagicalTiredness;
+import rpgcombat.models.effects.impl.menu.MagicalTiredness;
 
 class BloodPactTest {
 
@@ -170,6 +171,19 @@ class BloodPactTest {
 
 		assertEquals(1.0, dummy.getStatistics().getHealth(), 0.0001,
 				"El Pacte de sang no hauria de poder deixar el jugador per sota d'1 de vida.");
+		assertEquals(dummy.getStatistics().getMaxMana(), dummy.getStatistics().getMana(), 0.0001,
+				"El mana s'hauria de restaurar completament.");
+	}
+
+	@Test
+	void shouldAllowBloodPactBelowOneHealthWithoutCrashing() {
+		setManaTo(0.0, dummy);
+		setHealthToRaw(0.5, dummy);
+		syncBloodPactEffect();
+
+		assertDoesNotThrow(() -> invokeBloodPactCore(dummy));
+		assertEquals(0.5, dummy.getStatistics().getHealth(), 0.0001,
+				"Per sota d'1 de vida, el cost no pot tenir rang negatiu.");
 		assertEquals(dummy.getStatistics().getMaxMana(), dummy.getStatistics().getMana(), 0.0001,
 				"El mana s'hauria de restaurar completament.");
 	}

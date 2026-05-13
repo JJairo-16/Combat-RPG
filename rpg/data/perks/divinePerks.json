@@ -1,0 +1,420 @@
+[
+  {
+    "id": "CERNUNNOS_WILD_PULSE",
+    "name": "Pols Salvatge",
+    "god": "Cernunnos",
+    "shortDescription": "Alterna entre ferocitat i guàrdia a cada torn propi.",
+    "description": "En torns parells infligeix +18% de dany, però rep +15% de dany. En torns senars infligeix -12% de dany, però rep -18% de dany.",
+    "allowedBreeds": ["ORC", "ELF"],
+    "trigger": "START_TURN",
+    "conditions": [
+      {
+        "type": "OWNER_BREED_IS",
+        "params": {
+          "breed": "ORC"
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "ADD_STATE_STACKS",
+        "params": {
+          "amount": 1,
+          "label": "canvia de postura salvatge."
+        }
+      }
+    ],
+    "awakening": {
+      "maxCharge": 4,
+      "chargeBy": "START_OWN_TURN",
+      "description": "Guanya força a cada torn propi."
+    },
+    "tags": ["DIVINE", "STANCE"]
+  },
+  {
+    "id": "ARES_BLOOD_OATH",
+    "name": "Jurament de Sang",
+    "god": "Ares",
+    "shortDescription": "Premia atacar sense trencar la cadena.",
+    "description": "Atacar de manera consecutiva acumula fúria. El tercer atac consecutiu guanya +35% de dany i reinicia la cadena. Defensar, esquivar o carregar trenca el jurament.",
+    "allowedBreeds": ["ORC"],
+    "trigger": "END_TURN",
+    "conditions": [
+      {
+        "type": "OWNER_ACTION_IN",
+        "params": {
+          "actions": ["ATTACK"]
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "ADD_STATE_STACKS",
+        "params": {
+          "amount": 1,
+          "max": 2,
+          "label": "manté el jurament."
+        }
+      }
+    ],
+    "awakening": {
+      "maxCharge": 2,
+      "chargeBy": "COMPLETE_ATTACK_CHAIN",
+      "description": "Completa cadenes de tres atacs consecutius."
+    },
+    "tags": ["DIVINE", "AGGRESSION"]
+  },
+  {
+    "id": "MORRIGAN_RAVEN_OMEN",
+    "name": "Presagi de Corbs",
+    "god": "Morrigan",
+    "shortDescription": "Una crisi de vida es converteix en un crític anunciat.",
+    "description": "La primera vegada que el portador comença un torn amb 35% de vida o menys, el pròxim atac serà crític, però rep fatiga durant 1 torn.",
+    "allowedBreeds": ["ORC", "TIEFLING"],
+    "trigger": "START_TURN",
+    "conditions": [
+      {
+        "type": "OWNER_HEALTH_BELOW",
+        "params": {
+          "ratio": 0.35
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "FORCE_CRITICAL",
+        "params": {
+          "label": "el presagi prepara un crític."
+        }
+      }
+    ],
+    "awakening": {
+      "maxCharge": 2,
+      "chargeBy": "LOW_HEALTH_CRISIS",
+      "description": "Comença un torn amb 35% de vida o menys."
+    },
+    "tags": ["DIVINE", "COMEBACK"]
+  },
+  {
+    "id": "ARTEMIS_MOON_HUNTER",
+    "name": "Caçadora Lunar",
+    "god": "Artemis",
+    "shortDescription": "Esquivar bé prepara una resposta letal.",
+    "description": "Després d'una esquiva amb èxit, el següent atac guanya +25% de probabilitat crítica i, si impacta, aplica sagnat durant 1 torn.",
+    "allowedBreeds": ["ELF"],
+    "trigger": "AFTER_DEFENSE",
+    "conditions": [
+      {
+        "type": "EVENT",
+        "params": {
+          "event": "ON_DODGE"
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "SET_STATE_STACKS",
+        "params": {
+          "value": 1
+        }
+      }
+    ],
+    "awakening": {
+      "maxCharge": 2,
+      "chargeBy": "SUCCESSFUL_DODGE",
+      "description": "Fes esquives perfectes."
+    },
+    "tags": ["DIVINE", "DODGE"]
+  },
+  {
+    "id": "BRIGID_OATH_FLAME",
+    "name": "Flama del Jurament",
+    "god": "Brigid",
+    "shortDescription": "No s'activa per curació passiva; exigeix una acció no ofensiva voluntària.",
+    "description": "Defensar, esquivar o carregar encén Inspiració. El pròxim atac consumeix la càrrega per guanyar +16% de dany i +8% de probabilitat crítica.",
+    "allowedBreeds": ["ELF", "GNOME"],
+    "trigger": "END_TURN",
+    "conditions": [
+      {
+        "type": "OWNER_ACTION_IN",
+        "params": {
+          "actions": ["DEFEND", "DODGE", "CHARGE"]
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "SET_STATE_STACKS",
+        "params": {
+          "value": 1
+        }
+      }
+    ],
+    "awakening": {
+      "maxCharge": 2,
+      "chargeBy": "VOLUNTARY_NON_OFFENSIVE_ACTION",
+      "description": "Acaba torns amb defensar, esquivar o carregar."
+    },
+    "tags": ["DIVINE", "SETUP"]
+  },
+  {
+    "id": "HEPHAESTUS_INNER_FORGE",
+    "name": "Forja Interior",
+    "god": "Hephaestus",
+    "shortDescription": "Defensar converteix la paciència en un cop perforant.",
+    "description": "Cada defensa acumula tremp fins a 3 càrregues. Amb 3 càrregues, el pròxim atac obté +28% de dany i consumeix tot el tremp.",
+    "allowedBreeds": ["DWARF"],
+    "trigger": "AFTER_DEFENSE",
+    "conditions": [
+      {
+        "type": "OWNER_ACTION_IN",
+        "params": {
+          "actions": ["DEFEND"]
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "ADD_STATE_STACKS",
+        "params": {
+          "amount": 1,
+          "max": 3,
+          "label": "acumula tremp."
+        }
+      }
+    ],
+    "awakening": {
+      "maxCharge": 3,
+      "chargeBy": "DEFEND",
+      "description": "Defensa per acumular tremp."
+    },
+    "tags": ["DIVINE", "GUARD"]
+  },
+  {
+    "id": "THOR_HELD_THUNDER",
+    "name": "Tro Reprès",
+    "god": "Thor",
+    "shortDescription": "Carregar també protegeix i el cop carregat desequilibra.",
+    "description": "Carregar un atac redueix el pròxim dany rebut un 18%. Si el següent cop carregat impacta, aplica atordiment lleu durant 1 torn.",
+    "allowedBreeds": ["DWARF"],
+    "trigger": "END_TURN",
+    "conditions": [
+      {
+        "type": "OWNER_ACTION_IN",
+        "params": {
+          "actions": ["CHARGE"]
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "MULTIPLY_OWNER_NEXT_INCOMING_DAMAGE",
+        "params": {
+          "multiplier": 0.82
+        }
+      }
+    ],
+    "awakening": {
+      "maxCharge": 2,
+      "chargeBy": "CHARGE",
+      "description": "Carrega atacs."
+    },
+    "tags": ["DIVINE", "CHARGE"]
+  },
+  {
+    "id": "HESTIA_UNBROKEN_HEARTH",
+    "name": "Llar Inquebrantable",
+    "god": "Hestia",
+    "shortDescription": "Renunciar a atacar reforça la supervivència.",
+    "description": "Acabar el torn sense atacar redueix el pròxim dany rebut un 16%.",
+    "allowedBreeds": ["DWARF", "HUMAN"],
+    "trigger": "END_TURN",
+    "conditions": [
+      {
+        "type": "OWNER_ACTION_IN",
+        "params": {
+          "actions": ["DEFEND", "DODGE", "CHARGE"]
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "MULTIPLY_OWNER_NEXT_INCOMING_DAMAGE",
+        "params": {
+          "multiplier": 0.84
+        }
+      }
+    ],
+    "awakening": {
+      "maxCharge": 2,
+      "chargeBy": "END_TURN_WITHOUT_ATTACKING",
+      "description": "Acaba torns sense atacar."
+    },
+    "tags": ["DIVINE", "DEFENSE"]
+  },
+  {
+    "id": "THOTH_FATE_SCRIPT",
+    "name": "Escriptura del Destí",
+    "god": "Thoth",
+    "shortDescription": "Castiga el rival si repeteix patrons.",
+    "description": "Si el rival repeteix acció, el portador infligeix +18% de dany contra ell o rep -14% de dany d'ell.",
+    "allowedBreeds": ["GNOME", "HUMAN"],
+    "trigger": "END_TURN",
+    "conditions": [],
+    "actions": [
+      {
+        "type": "SET_META",
+        "params": {
+          "key": "THOTH_TRACK",
+          "value": true
+        }
+      }
+    ],
+    "awakening": {
+      "maxCharge": 2,
+      "chargeBy": "PUNISH_REPEATED_ENEMY_ACTION",
+      "description": "Aprofita accions repetides del rival."
+    },
+    "tags": ["DIVINE", "PREDICTION"]
+  },
+  {
+    "id": "ATHENA_DIVINE_STRATEGIST",
+    "name": "Estratega Divina",
+    "god": "Athena",
+    "shortDescription": "Canviar d'acció construeix avantatge tàctic.",
+    "description": "Canviar d'acció respecte al torn anterior acumula tàctica fins a 3 càrregues. Els atacs guanyen +6% de dany per càrrega. Repetir acció reinicia la tàctica.",
+    "allowedBreeds": ["HUMAN"],
+    "trigger": "END_TURN",
+    "conditions": [],
+    "actions": [
+      {
+        "type": "ADD_STATE_STACKS",
+        "params": {
+          "amount": 1,
+          "max": 3,
+          "label": "reajusta la seva tàctica."
+        }
+      }
+    ],
+    "awakening": {
+      "maxCharge": 2,
+      "chargeBy": "CHANGE_ACTION_FROM_PREVIOUS_TURN",
+      "description": "Canvia d'acció respecte al teu torn anterior."
+    },
+    "tags": ["DIVINE", "TACTIC"]
+  },
+  {
+    "id": "HECATE_CURSED_THRESHOLD",
+    "name": "Llindar Maleït",
+    "god": "Hecate",
+    "shortDescription": "El dany alt rebut queda marcat per retornar-lo.",
+    "description": "Quan el portador rep en un sol cop almenys un 15% de la seva vida màxima, marca l'enemic. El pròxim impacte retorna un 35% d'aquest dany.",
+    "allowedBreeds": ["TIEFLING"],
+    "trigger": "AFTER_DEFENSE",
+    "conditions": [
+      {
+        "type": "DAMAGE_AT_LEAST",
+        "params": {
+          "amount": 1
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "SET_STATE_STACKS",
+        "params": {
+          "value": 1
+        }
+      }
+    ],
+    "awakening": {
+      "maxCharge": 2,
+      "chargeBy": "RECEIVE_HEAVY_HIT",
+      "description": "Rep cops forts i retorna el dolor marcat."
+    },
+    "tags": ["DIVINE", "CURSE"]
+  },
+  {
+    "id": "LOKI_BROKEN_RULE",
+    "name": "Regla Trencada",
+    "god": "Loki",
+    "shortDescription": "Converteix un error ocasional en un cop feble.",
+    "description": "Un cop cada 3 torns propis, si l'atac no produiria dany, Loki el converteix en un cop feble.",
+    "allowedBreeds": ["TIEFLING", "GNOME"],
+    "trigger": "START_TURN",
+    "conditions": [
+      {
+        "type": "COOLDOWN_READY",
+        "params": {}
+      }
+    ],
+    "actions": [
+      {
+        "type": "TICK_COOLDOWN",
+        "params": {}
+      }
+    ],
+    "awakening": {
+      "maxCharge": 2,
+      "chargeBy": "OWN_TURNS_SURVIVED",
+      "description": "Deixa que Loki trenqui un atac fallit."
+    },
+    "tags": ["DIVINE", "TRICK"]
+  },
+  {
+    "id": "JANUS_BETWEEN_DOORS",
+    "name": "Entre Dues Portes",
+    "god": "Janus",
+    "shortDescription": "Alternar entre atac i no atac obre una finestra d'avantatge.",
+    "description": "Canviar entre una acció ofensiva i una no ofensiva obre una porta. El següent atac obté +14% de dany, o el següent cop rebut es redueix un 14%.",
+    "allowedBreeds": ["HALFLING"],
+    "trigger": "END_TURN",
+    "conditions": [],
+    "actions": [
+      {
+        "type": "SET_META",
+        "params": {
+          "key": "JANUS_DOOR_TRACK",
+          "value": true
+        }
+      }
+    ],
+    "awakening": {
+      "maxCharge": 2,
+      "chargeBy": "SWITCH_BETWEEN_OFFENSIVE_AND_NON_OFFENSIVE",
+      "description": "Alterna entre una acció ofensiva i una no ofensiva."
+    },
+    "tags": ["DIVINE", "TRANSITION"]
+  },
+  {
+    "id": "HERMES_STOLEN_STEP",
+    "name": "Pas Robat",
+    "god": "Hermes",
+    "shortDescription": "Esquivar o no atacar prepara un cop ràpid.",
+    "description": "Després d'esquivar amb èxit o acabar un torn sense atacar, el següent atac obté +12% de dany i consumeix l'impuls.",
+    "allowedBreeds": ["HALFLING"],
+    "trigger": "AFTER_DEFENSE",
+    "conditions": [
+      {
+        "type": "EVENT",
+        "params": {
+          "event": "ON_DODGE"
+        }
+      }
+    ],
+    "actions": [
+      {
+        "type": "SET_STATE_STACKS",
+        "params": {
+          "value": 1
+        }
+      }
+    ],
+    "awakening": {
+      "maxCharge": 2,
+      "chargeBy": "DODGE_OR_END_TURN_WITHOUT_ATTACKING",
+      "description": "Esquiva o acaba el torn sense atacar."
+    },
+    "tags": ["DIVINE", "MOBILITY"]
+  }
+]

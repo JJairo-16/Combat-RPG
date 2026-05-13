@@ -53,7 +53,8 @@ public final class PerkLoader {
                 enumValue(Phase.class, value(cfg.trigger(), "AFTER_HIT"), cfg.id(), "trigger"),
                 cfg.weight() == null ? 1 : Math.max(1, cfg.weight()),
                 rules(cfg.conditions()),
-                rules(cfg.actions()));
+                rules(cfg.actions()),
+                tags(cfg.tags()));
     }
 
     /** Converteix configuracions JSON en regles de perk. */
@@ -62,6 +63,17 @@ public final class PerkLoader {
         return configs.stream()
                 .filter(r -> r != null && r.type() != null && !r.type().isBlank())
                 .map(r -> new Rule(r.type(), r.params() == null ? java.util.Map.of() : r.params()))
+                .toList();
+    }
+
+    /** Normalitza etiquetes opcionals de perk. */
+    private static List<String> tags(List<String> raw) {
+        if (raw == null || raw.isEmpty()) return List.of();
+        return raw.stream()
+                .filter(tag -> tag != null && !tag.isBlank())
+                .map(String::trim)
+                .map(String::toUpperCase)
+                .distinct()
                 .toList();
     }
 

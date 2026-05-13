@@ -19,13 +19,20 @@ import rpgcombat.combat.ui.messages.CombatMessageBuffer;
 import rpgcombat.combat.ui.messages.MessageColor;
 import rpgcombat.combat.ui.messages.MessageSymbol;
 import rpgcombat.creator.score.CharacterBuildScore;
+import rpgcombat.discovery.DiscoveryCategory;
+import rpgcombat.discovery.DiscoveryRuntime;
+import rpgcombat.game.modifier.ultimate.UltimateActionEffect;
+import rpgcombat.game.modifier.ultimate.UltimateActionType;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.StackingRule;
 import rpgcombat.models.effects.impl.Exhaustion;
-import rpgcombat.models.effects.impl.SpiritualCallingFlag;
+import rpgcombat.models.effects.impl.menu.SpiritualCallingFlag;
 import rpgcombat.models.effects.triggers.InternalConflict;
+import rpgcombat.models.effects.types.EndRoundRecoveryEffect;
+import rpgcombat.models.effects.types.MenuTurnEffect;
+import rpgcombat.models.effects.types.RoundScopedEffect;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;
 import rpgcombat.weapons.passives.HitContext;
@@ -66,6 +73,8 @@ public class Character {
     private int momentumStacks = 0;
     private boolean adrenalineSurgeUsed = false;
     private double adrenaline = 0.0;
+    private boolean specialMenuActionUsedThisTurn = false;
+    private boolean specialActionsEnabled = true;
 
     private double attackModifierThisTurn = 1.0;
     private double defenseModifierThisTurn = 1.0;
@@ -86,6 +95,7 @@ public class Character {
         this.unarmedAttack = new UnarmedAttack(this.stats, rng);
 
         applyInternalConflictIfNeeded(stats);
+        installUltimateActionFlags();
     }
 
     private void applyInternalConflictIfNeeded(int[] stats) {
@@ -93,6 +103,13 @@ public class Character {
             return;
 
         addEffect(new InternalConflict());
+    }
+
+    /** Instal·la els indicadors interns de les ultis de segona etapa sense descobrir-los com a efectes visibles. */
+    private void installUltimateActionFlags() {
+        for (UltimateActionType type : UltimateActionType.values()) {
+            addInternalEffect(new UltimateActionEffect(type));
+        }
     }
 
     /**
@@ -177,8 +194,16 @@ public class Character {
         return bleedTurns > 0;
     }
 
+    public int bleedTurnsRemaining() {
+        return bleedTurns;
+    }
+
     public boolean isStaggered() {
         return staggerTurns > 0;
+    }
+
+    public int staggerTurnsRemaining() {
+        return staggerTurns;
     }
 
     public int getMomentumStacks() {
@@ -259,7 +284,8 @@ public class Character {
      * Determina si pot activar la crida espiritual.
      */
     public boolean canUseSpiritualCalling() {
-        return hasEffect(SpiritualCallingFlag.INTERNAL_EFFECT_KEY)
+        return specialActionsEnabled
+                && hasEffect(SpiritualCallingFlag.INTERNAL_EFFECT_KEY)
                 && spiritualCallingCooldown <= 0
                 && isAtOrBelowHealthRatio(SPIRITUAL_CALLING_THRESHOLD);
     }
@@ -270,6 +296,10 @@ public class Character {
     public boolean setWeapon(Weapon w) {
         if (w == null)
             return false;
+
+        if (weapon != null && w.getId().equals(weapon.getId()))
+            return true;
+
         if (!w.canEquip(stats))
             return false;
         weapon = w;
@@ -422,7 +452,9 @@ public class Character {
 
         if (recived <= 0)
             return new Result(0, name + " ha esquivat l'atac.");
-        return new Result(recived, name + " ha rebut l'atac de ple.");
+        if (recived > attack)
+            return new Result(recived, name + " falla l'esquiva i rep l'impacte en mala posició.");
+        return new Result(recived, name + " no aconsegueix esquivar l'atac.");
     }
 
     /**
@@ -444,8 +476,9 @@ public class Character {
                 cfg.finalMinClamp(),
                 cfg.finalMaxClamp());
 
-        double multiplier = (rng.nextDouble() < dodgeProb ? 0 : cfg.failedDodgeDamageMultiplier());
-        return new DodgeResult(attack * multiplier, false);
+        boolean dodged = rng.nextDouble() < dodgeProb;
+        double multiplier = dodged ? 0.0 : cfg.failedDodgeDamageMultiplier();
+        return new DodgeResult(round2(attack * multiplier), false);
     }
 
     /**
@@ -504,6 +537,13 @@ public class Character {
             chargedAttack = false;
         }
         return wasCharged;
+    }
+
+    /**
+     * Elimina qualsevol càrrega preparada sense aplicar-ne el multiplicador.
+     */
+    public void clearChargedAttack() {
+        chargedAttack = false;
     }
 
     /**
@@ -747,7 +787,21 @@ public class Character {
      * Aplica la regeneració natural del personatge.
      */
     public void regen() {
-        stats.reg();
+        stats.reg(!suppressesPassiveHealthRegen(), true);
+    }
+
+    /** Indica si algun efecte bloqueja la regeneració passiva de vida. */
+    protected boolean suppressesPassiveHealthRegen() {
+        if (effects.isEmpty()) {
+            return false;
+        }
+        for (Effect effect : effects) {
+            if (effect instanceof EndRoundRecoveryEffect recoveryEffect
+                    && recoveryEffect.suppressPassiveHealthRegen(this)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -757,12 +811,92 @@ public class Character {
         return rng;
     }
 
+    /** Activa o desactiva les accions especials de menú per mode de joc. */
+    public void setSpecialActionsEnabled(boolean enabled) {
+        specialActionsEnabled = enabled;
+    }
+
+    /** Indica si el mode actual permet accions especials de menú. */
+    public boolean specialActionsEnabled() {
+        return specialActionsEnabled;
+    }
+
+    /** Marca que ja s'ha utilitzat una acció especial de menú durant aquest torn. */
+    public void markSpecialMenuActionUsedThisTurn() {
+        specialMenuActionUsedThisTurn = true;
+    }
+
+    /** Indica si ja s'ha utilitzat una acció especial de menú durant aquest torn. */
+    public boolean hasSpecialMenuActionUsedThisTurn() {
+        return specialMenuActionUsedThisTurn;
+    }
+
+    /** Reinicia les restriccions transitòries de menú al final de la ronda. */
+    public void clearSpecialMenuActionUsedThisTurn() {
+        specialMenuActionUsedThisTurn = false;
+    }
+
+    /** Executa els efectes que avancen una vegada per ronda de menú. */
+    public void onMenuTurnEnd() {
+        if (!effects.isEmpty()) {
+            List<Effect> snapshot = List.copyOf(effects);
+            for (Effect effect : snapshot) {
+                if (effect instanceof MenuTurnEffect menuTurnEffect) {
+                    menuTurnEffect.onMenuTurnEnd(this);
+                }
+            }
+            cleanupExpiredEffects();
+        }
+        clearSpecialMenuActionUsedThisTurn();
+    }
+
+    /** Executa els efectes que preparen estat de ronda abans de decidir prioritats. */
+    public void onCombatRoundStart(int roundNumber, Random rng, CombatMessageBuffer out) {
+        if (effects.isEmpty()) {
+            return;
+        }
+        List<Effect> snapshot = List.copyOf(effects);
+        for (Effect effect : snapshot) {
+            if (effect instanceof RoundScopedEffect roundEffect) {
+                roundEffect.onRoundStart(this, roundNumber, rng == null ? this.rng : rng, out);
+            }
+        }
+        cleanupExpiredEffects();
+    }
+
+    /** Neteja l'estat transitori d'efectes de ronda. */
+    public void onCombatRoundEnd() {
+        if (effects.isEmpty()) {
+            return;
+        }
+        List<Effect> snapshot = List.copyOf(effects);
+        for (Effect effect : snapshot) {
+            if (effect instanceof RoundScopedEffect roundEffect) {
+                roundEffect.onRoundEnd(this);
+            }
+        }
+        cleanupExpiredEffects();
+    }
+
+    /** Afegeix un efecte intern sense registrar-lo al catàleg de descobriments. */
+    public void addInternalEffect(Effect incoming) {
+        addEffectInternal(incoming, false);
+    }
+
     /**
      * Afegeix un efecte al personatge segons la seva regla d'apilament.
      */
     public void addEffect(Effect incoming) {
+        addEffectInternal(incoming, true);
+    }
+
+    /** Implementació comuna per afegir efectes visibles o interns. */
+    private void addEffectInternal(Effect incoming, boolean discover) {
         if (incoming == null)
             return;
+        if (discover) {
+            DiscoveryRuntime.discover(DiscoveryCategory.EFFECTS, incoming.key());
+        }
         if (effects.isEmpty()) {
             effects.add(incoming);
             return;

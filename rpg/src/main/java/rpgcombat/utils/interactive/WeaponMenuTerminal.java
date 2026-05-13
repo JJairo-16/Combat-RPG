@@ -16,6 +16,7 @@ import rpgcombat.models.characters.Statistics;
 import rpgcombat.utils.cache.TextWrapCache;
 import rpgcombat.utils.interactive.helpers.JLineAnsi;
 import rpgcombat.utils.terminal.SharedTerminal;
+import rpgcombat.utils.terminal.TerminalInput;
 import rpgcombat.utils.terminal.TerminalSession;
 import rpgcombat.weapons.config.WeaponDefinition;
 import rpgcombat.weapons.config.WeaponType;
@@ -106,7 +107,7 @@ final class WeaponMenuTerminal implements AutoCloseable {
      * @return acció associada a la tecla premuda
      */
     WeaponMenu.Action readAction() {
-        return reader.readBinding(keyMap);
+        return TerminalInput.readBindingIgnoringMouse(reader, keyMap, terminal, WeaponMenu.Action.NONE);
     }
 
     /**
@@ -377,7 +378,8 @@ final class WeaponMenuTerminal implements AutoCloseable {
         int end = Math.min(filtered.size(), start + Math.max(MIN_VISIBLE_ROWS, visibleRows));
 
         for (int i = start; i < end; i++) {
-            lines.add(buildRowAnsi(weapons, filtered.get(i), stats, i == state.cursor));
+            String marker = scrollMarker(i, start, end, state.viewportStart > 0, end < filtered.size());
+            lines.add(withScrollMarker(buildRowAnsi(weapons, filtered.get(i), stats, i == state.cursor), marker));
         }
 
         return lines;
@@ -587,6 +589,27 @@ final class WeaponMenuTerminal implements AutoCloseable {
         return Math.clamp(remaining, 1, clampedVisibleRows);
     }
 
+    /** Retorna el marcador triangular per a una fila extrema visible. */
+    private String scrollMarker(int index, int start, int end, boolean hasAbove, boolean hasBelow) {
+        if (hasAbove && index == start) {
+            return "▲";
+        }
+        if (hasBelow && index == end - 1) {
+            return "▼";
+        }
+        return "";
+    }
+
+    /** Integra el marcador sense afegir files ni canviar el viewport. */
+    private String withScrollMarker(String line, String marker) {
+        if (marker == null || marker.isEmpty()) {
+            return line;
+        }
+        AttributedStringBuilder out = new AttributedStringBuilder(8);
+        JLineAnsi.append(out, JLineAnsi.DARK_GRAY, marker);
+        return line + " " + out.toAnsi(terminal);
+    }
+
     /**
      * Pinta totes les línies visibles de pantalla.
      *
@@ -715,6 +738,7 @@ final class WeaponMenuTerminal implements AutoCloseable {
         if (right != null) {
             map.bind(WeaponMenu.Action.RIGHT, right);
         }
+        TerminalInput.bindMouseIgnore(map, terminal, WeaponMenu.Action.NONE);
 
         return map;
     }

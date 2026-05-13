@@ -7,10 +7,10 @@ import rpgcombat.utils.cinematic.scene.TextBlock;
 import rpgcombat.utils.cinematic.terminal.CinematicInput;
 import rpgcombat.utils.cinematic.terminal.TerminalController;
 import rpgcombat.utils.cinematic.typing.TypingAnalyzer;
+import rpgcombat.utils.cinematic.typing.TypingAction;
 import rpgcombat.utils.cinematic.typing.TypingEngine;
 import rpgcombat.utils.terminal.SharedTerminal;
 import rpgcombat.utils.terminal.TerminalSession;
-import rpgcombat.utils.ui.Cleaner;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,15 +21,19 @@ import java.util.List;
  * Reprodueix una seqüència d'escenes de text amb animació.
  */
 public class TextCinematic {
-    private final List<Scene> scenes;
+    private final List<PreparedScene> scenes;
     private final CinematicConfig config;
-    private final TypingAnalyzer analyzer = new TypingAnalyzer();
-
-    private final Cleaner cleaner = new Cleaner();
 
     /** Constructor intern. */
     private TextCinematic(Builder builder) {
-        this.scenes = List.copyOf(builder.scenes);
+        TypingAnalyzer analyzer = new TypingAnalyzer();
+        this.scenes = builder.scenes.stream()
+                .map(scene -> new PreparedScene(
+                        scene,
+                        scene.blocks().stream()
+                                .map(block -> new PreparedBlock(block, analyzer.analyze(block)))
+                                .toList()))
+                .toList();
         this.config = builder.config;
     }
 
@@ -43,15 +47,17 @@ public class TextCinematic {
         try (TerminalSession session = SharedTerminal.openSession()) {
             Terminal terminal = session.terminal();
 
-            cleaner.clear();
+            if (scenes.isEmpty() || !scenes.get(0).scene().clearBefore()) {
+                TerminalController.clearScreen(terminal);
+            }
 
             CinematicInput input = new CinematicInput(terminal);
             input.discardPendingInput();
 
             TypingEngine engine = new TypingEngine(terminal);
 
-            for (Scene scene : scenes) {
-                if (scene.clearBefore()) {
+            for (PreparedScene scene : scenes) {
+                if (scene.scene().clearBefore()) {
                     TerminalController.clearScreen(terminal);
                 }
 
@@ -79,27 +85,36 @@ public class TextCinematic {
     }
 
     /** Reprodueix una escena. */
-    private boolean playScene(Terminal terminal, TypingEngine engine, Scene scene)
+    private boolean playScene(Terminal terminal, TypingEngine engine, PreparedScene scene)
             throws IOException, InterruptedException {
 
-        for (TextBlock block : scene.blocks()) {
-            boolean skipped = engine.play(analyzer.analyze(block));
+        for (PreparedBlock block : scene.blocks()) {
+            boolean skipped = engine.play(block.actions());
 
             if (skipped) {
                 return true;
             }
 
-            if (block.newLineAfter()) {
+            if (block.block().newLineAfter()) {
                 terminal.writer().println();
                 terminal.writer().flush();
             }
         }
 
-        if (scene.waitAtEnd()) {
+        if (scene.scene().waitAtEnd()) {
             return waitForSpaceOrEscape(terminal);
         }
 
         return false;
+    }
+
+    private record PreparedScene(Scene scene, List<PreparedBlock> blocks) {
+    }
+
+    private record PreparedBlock(TextBlock block, List<TypingAction> actions) {
+        private PreparedBlock {
+            actions = List.copyOf(actions);
+        }
     }
 
     /** Mostra animació d'espera fins que l'usuari interactua. */

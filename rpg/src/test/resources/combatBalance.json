@@ -68,13 +68,13 @@
 			"maxMultiplier": 1.08
 		},
 		"dodge": {
-			"dexterityOffsetFrom10Multiplier": 0.02,
-			"luckMultiplier": 0.0015,
+			"dexterityOffsetFrom10Multiplier": 0.018,
+			"luckMultiplier": 0.0012,
 			"baseMinClamp": 0.05,
-			"baseMaxClamp": 0.75,
+			"baseMaxClamp": 0.62,
 			"finalMinClamp": 0.03,
-			"finalMaxClamp": 0.85,
-			"failedDodgeDamageMultiplier": 1.25
+			"finalMaxClamp": 0.78,
+			"failedDodgeDamageMultiplier": 1.12
 		}
 	},
 	"guardBreak": {
@@ -126,7 +126,7 @@
 		"damageIncreasePerStep": 1.0
 	},
 	"bloodPact": {
-		"manaThreshold": 0.8,
+		"manaThreshold": 0.7,
 		"baseHpCostPercent": 0.45,
 		"wisdomReduction": 0.005,
 		"minHpCostPercent": 0.1
