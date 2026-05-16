@@ -11,13 +11,28 @@ import java.util.List;
 public final class CombatMessageBuffer {
     private final List<CombatMessage> messages = new ArrayList<>();
     private final List<String> legacyView = new LegacyView();
+    private final CombatMessagePhase defaultPhase;
+
+    /**
+     * Crea un buffer amb fase de creuament per defecte.
+     */
+    public CombatMessageBuffer() {
+        this(CombatMessagePhase.DURING_CROSS);
+    }
+
+    /**
+     * Crea un buffer amb una fase visual per defecte.
+     */
+    public CombatMessageBuffer(CombatMessagePhase defaultPhase) {
+        this.defaultPhase = defaultPhase == null ? CombatMessagePhase.DURING_CROSS : defaultPhase;
+    }
 
     /**
      * Afegeix un missatge estructurat.
      */
     public void add(CombatMessage message) {
         if (message != null && !message.text().isBlank()) {
-            messages.add(message);
+            messages.add(message.withPhase(defaultPhase));
         }
     }
 
@@ -43,7 +58,8 @@ public final class CombatMessageBuffer {
     }
 
     /**
-     * Afegeix un missatge de caos.
+     * Afegeix un missatge de caos. Caos es classifica com a mode de joc
+     * i de moment es renderitza com a normal.
      */
     public void chaos(String text) {
         add(CombatMessage.chaos(text));
@@ -61,6 +77,42 @@ public final class CombatMessageBuffer {
      */
     public void styled(MessageColor color, MessageSymbol symbol, String text) {
         add(CombatMessage.of(symbol, color, text));
+    }
+
+    /**
+     * Afegeix un missatge d'efecte d'estat al panell lateral.
+     */
+    public void statusEffect(MessageColor color, MessageSymbol symbol, String text) {
+        add(CombatMessage.statusEffect(symbol, color, text));
+    }
+
+
+    /**
+     * Afegeix un missatge de verí al panell lateral amb verd fosc.
+     */
+    public void poisonStatusEffect(MessageSymbol symbol, String text) {
+        statusEffect(MessageColor.DARK_GREEN, symbol, text);
+    }
+
+    /**
+     * Afegeix un missatge de passiva divina. De moment es renderitza com a normal.
+     */
+    public void divinePerk(MessageColor color, MessageSymbol symbol, String text) {
+        add(CombatMessage.divinePerk(symbol, color, text));
+    }
+
+    /**
+     * Afegeix un missatge de mode de joc. De moment es renderitza com a normal.
+     */
+    public void gamemode(MessageColor color, MessageSymbol symbol, String text) {
+        add(CombatMessage.gamemode(symbol, color, text));
+    }
+
+    /**
+     * Afegeix un missatge de mode de joc al panell lateral d'efectes.
+     */
+    public void gamemodeEffect(MessageColor color, MessageSymbol symbol, String text) {
+        add(CombatMessage.gamemodeEffect(symbol, color, text));
     }
 
     /**

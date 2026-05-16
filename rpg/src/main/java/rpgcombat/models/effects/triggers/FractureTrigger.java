@@ -35,10 +35,10 @@ public class FractureTrigger extends Trigger {
         double percent = getRatePercent(owner);
         if (rng.nextDouble() < percent) {
             owner.addEffect(new Fracture(config.duration()));
-            return EffectResult.styled(
+            return EffectResult.statusEffect(
                     MessageColor.RED,
                     MessageSymbol.WARNING,
-                    owner.getName() + " ha rebut una fractura.");
+                    "Ha rebut una fractura");
         }
 
         return EffectResult.none();

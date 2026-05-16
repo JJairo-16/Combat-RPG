@@ -36,9 +36,9 @@ public final class ChilledEffect extends DamageModifierEffect {
 
     @Override
     protected CombatMessage buildOutgoingMessage(double multiplier, Character owner) {
-        return CombatMessage.of(
+        return CombatMessage.statusEffect(
                 MessageSymbol.NEGATIVE,
                 MessageColor.CYAN,
-                "El fred menor fa més pesat l'atac de " + owner.getName() + ".");
+                "El fred menor fa més pesat l'atac");
     }
 }

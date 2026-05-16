@@ -40,10 +40,10 @@ public final class BurnEffect extends ConstantDamageEffect {
 
     @Override
     protected CombatMessage buildMessage(double appliedDamage, Character owner) {
-        return CombatMessage.of(
+        return CombatMessage.statusEffect(
                 MessageSymbol.NEGATIVE,
                 MessageColor.RED,
-                owner.getName() + " pateix " + appliedDamage + " de dany per cremada."
+                "Pateix " + appliedDamage + " de dany per cremada"
         );
     }
 

@@ -18,6 +18,7 @@ import rpgcombat.combat.services.EndRoundRegenBonus;
 import rpgcombat.combat.services.RoundRecoveryService;
 import rpgcombat.combat.ui.messages.CombatMessage;
 import rpgcombat.combat.ui.messages.CombatMessageBuffer;
+import rpgcombat.combat.ui.messages.CombatMessagePhase;
 import rpgcombat.combat.ui.messages.MessageColor;
 import rpgcombat.combat.ui.messages.MessageSymbol;
 import rpgcombat.gamemode.model.GameModeRules;
@@ -89,7 +90,7 @@ public class TurnResolver {
             Action defenderAction,
             EndRoundRegenBonus defenderBonus) {
 
-        CombatMessageBuffer startMessages = new CombatMessageBuffer();
+        CombatMessageBuffer startMessages = new CombatMessageBuffer(CombatMessagePhase.BEFORE_CROSS);
         attackerAction = rules.requireAllowed(attackerAction);
         defenderAction = rules.requireAllowed(defenderAction);
 
@@ -100,7 +101,7 @@ public class TurnResolver {
         attacker.onTurnStart(attackerAction, startMessages);
 
         if (!attacker.isAlive()) {
-            return new TurnResult(attacker.getName(), null, startMessages.messages(), List.of(), null, List.of(),
+            return new TurnResult(attacker, attacker.getName(), null, startMessages.messages(), List.of(), null, List.of(),
                     List.of(), 0, false, false, false, false, null, 0.0, 0.0, 0.0,
                     attacker.getWeapon() == null ? null : attacker.getWeapon().getId(),
                     attacker.getWeapon() == null ? null : attacker.getWeapon().getName(),
@@ -111,9 +112,9 @@ public class TurnResolver {
             return resolveNonAttackTurn(attacker, defender, attackerAction, defenderAction, startMessages, startTurnMeta);
         }
 
-        CombatMessageBuffer preDefenseMessages = new CombatMessageBuffer();
-        CombatMessageBuffer postDefenseMessages = new CombatMessageBuffer();
-        CombatMessageBuffer endTurnMessages = new CombatMessageBuffer();
+        CombatMessageBuffer preDefenseMessages = new CombatMessageBuffer(CombatMessagePhase.DURING_CROSS);
+        CombatMessageBuffer postDefenseMessages = new CombatMessageBuffer(CombatMessagePhase.DURING_CROSS);
+        CombatMessageBuffer endTurnMessages = new CombatMessageBuffer(CombatMessagePhase.AFTER_CROSS);
 
         Weapon preWeapon = attacker.getWeapon();
         if (isGrimori(preWeapon)) {
@@ -141,7 +142,7 @@ public class TurnResolver {
             double damage = attackResult.damage();
             if (damage > 0)
                 attacker.getDamage(damage);
-            return new TurnResult(attacker.getName(), attackerMessage, startMessages.messages(), List.of(), null,
+            return new TurnResult(attacker, attacker.getName(), attackerMessage, startMessages.messages(), List.of(), null,
                     List.of(),
                     List.of(), damage, false, true, false, false, failKind, damage, grimoireMultiplier, 0.0,
                     weaponId, weaponName, attackMeta);
@@ -219,7 +220,7 @@ public class TurnResolver {
             rhythmService.onAttackResolved(attacker, attackerAction, selfDamage, endTurnMessages);
             effectPipeline.runAttackerOnly(ctx, Phase.END_TURN, attacker, attackerRng, endTurnMessages);
 
-            return new TurnResult(attacker.getName(), attackerMessage, startMessages.messages(),
+            return new TurnResult(attacker, attacker.getName(), attackerMessage, startMessages.messages(),
                     preDefenseMessages.messages(),
                     selfResult.message(), postDefenseMessages.messages(), endTurnMessages.messages(), selfDamage,
                     critical, true, Boolean.TRUE.equals(ctx.getMeta("CHARGED_HIT")), false, failKind, selfDamage,
@@ -263,7 +264,7 @@ public class TurnResolver {
         }
         effectPipeline.runAttackerOnly(ctx, Phase.END_TURN, attacker, attackerRng, endTurnMessages);
 
-        return new TurnResult(attacker.getName(), attackerMessage, startMessages.messages(),
+        return new TurnResult(attacker, attacker.getName(), attackerMessage, startMessages.messages(),
                 preDefenseMessages.messages(), defenseMessage,
                 postDefenseMessages.messages(), endTurnMessages.messages(), ctx.damageDealt(), critical,
                 false, Boolean.TRUE.equals(ctx.getMeta("CHARGED_HIT")), isMiss(attackFailed, damageToResolve, ctx.damageDealt()),
@@ -359,7 +360,7 @@ public class TurnResolver {
             CombatMessageBuffer startMessages,
             Map<String, Object> startTurnMeta) {
 
-        CombatMessageBuffer endTurnMessages = new CombatMessageBuffer();
+        CombatMessageBuffer endTurnMessages = new CombatMessageBuffer(CombatMessagePhase.AFTER_CROSS);
         Random attackerRng = attacker.rng();
         HitContext ctx = new HitContext(
                 attacker,
@@ -384,7 +385,7 @@ public class TurnResolver {
         decayMomentumOnPassiveTurn(attacker, attackerAction, endTurnMessages);
 
         if (breakAttackChains(attacker, defender)) {
-            endTurnMessages.warning("La cadena del verí es trenca i el verí s'esvaeix.");
+            endTurnMessages.statusEffect(MessageColor.DARK_GREEN, MessageSymbol.WARNING, "La cadena del verí es trenca i el verí s'esvaeix");
         }
 
         Result defenderResult = attackResolver.resolveAttack(0, defender, defenderAction);
@@ -394,6 +395,7 @@ public class TurnResolver {
         Weapon weapon = attacker.getWeapon();
 
         return new TurnResult(
+                attacker,
                 attacker.getName(),
                 null,
                 startMessages.messages(),
@@ -515,19 +517,19 @@ public class TurnResolver {
 
         if (critical) {
             defender.applyBleed(2);
-            out.styled(MessageColor.RED, MessageSymbol.POSITIVE, "El cop crític obre una ferida: s'aplica sagnat.");
+            out.statusEffect(MessageColor.RED, MessageSymbol.WARNING, "El cop crític obre una ferida: s'aplica sagnat");
         }
 
         Object rawDamageInput = ctx.getMeta("RAW_DAMAGE");
         if (rawDamageInput instanceof Number rawDamage && ctx.damageDealt() >= rawDamage.doubleValue() * 0.90
                 && defenderAction == Action.DODGE) {
             defender.applyBleed(1);
-            out.styled(MessageColor.RED, MessageSymbol.POSITIVE, "L'esquiva fallida deixa un tall superficial.");
+            out.statusEffect(MessageColor.RED, MessageSymbol.POSITIVE, "L'esquiva fallida deixa un tall superficial");
         }
 
         if (ctx.getMeta("CHARGED_HIT") instanceof Boolean charged && Boolean.TRUE.equals(charged)) {
             defender.applyStagger(1);
-            out.styled(MessageColor.YELLOW, MessageSymbol.POSITIVE, "L'impacte carregat desequilibra el rival.");
+            out.statusEffect(MessageColor.YELLOW, MessageSymbol.POSITIVE, "L'impacte carregat desequilibra el rival");
         }
     }
 

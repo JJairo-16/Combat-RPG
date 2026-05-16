@@ -3,6 +3,7 @@ package rpgcombat.combat.ui;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.jline.terminal.Terminal;
 import org.jline.utils.NonBlockingReader;
@@ -11,6 +12,10 @@ import rpgcombat.combat.models.CombatRoundResult;
 import rpgcombat.combat.models.CombatantStatus;
 import rpgcombat.combat.models.Winner;
 import rpgcombat.combat.turnservice.TurnResult;
+import rpgcombat.combat.ui.messages.CombatMessage;
+import rpgcombat.combat.ui.messages.CombatMessageFormatter;
+import rpgcombat.combat.ui.messages.CombatMessagePhase;
+import rpgcombat.combat.ui.messages.CombatMessagePlacement;
 import rpgcombat.models.characters.Character;
 import rpgcombat.utils.terminal.SharedTerminal;
 import rpgcombat.utils.terminal.TerminalInput;
@@ -42,7 +47,11 @@ public final class RoundResultPager {
     private static final String THIN_DIV = Ansi.DARK_GRAY + "─".repeat(WIDTH) + Ansi.RESET;
     private static final String BLOCK_BOTTOM = Ansi.DARK_GRAY + "└" + "─".repeat(WIDTH - 2) + "┘" + Ansi.RESET;
 
+    private static final int PLAYER_BLOCK_WIDTH = 68;
+    private static final int EFFECT_BLOCK_WIDTH = 54;
+
     private final CombatRenderer renderer;
+    private final CombatMessageFormatter messageFormatter = new CombatMessageFormatter();
 
     /**
      * Crea el visor.
@@ -136,7 +145,7 @@ public final class RoundResultPager {
         }
         int second = reader.read(ESC_TIMEOUT_MS);
         if (second == NonBlockingReader.READ_EXPIRED) {
-            return first == '[' ? 0 : 0;
+            return 0;
         }
 
         String mousePrefix = TerminalInput.mousePrefixAfterEscape(first, second);
@@ -212,22 +221,216 @@ public final class RoundResultPager {
 
     private List<Page> buildPages(int roundNumber, Character player1, Character player2, CombatRoundResult round) {
         return List.of(
-                new Page("RONDA " + roundNumber + " — COMBAT", combatPage(round)),
-                new Page("RONDA " + roundNumber + " — ESTAT", statusPage(player1, player2, round))
-        );
+                new Page("RONDA " + roundNumber + " — COMBAT", combatPage(player1, player2, round)),
+                new Page("RONDA " + roundNumber + " — ESTAT", statusPage(player1, player2, round)));
     }
 
-    private String combatPage(CombatRoundResult round) {
+    private String combatPage(Character player1, Character player2, CombatRoundResult round) {
         StringBuilder sb = new StringBuilder();
-        appendBlock(sb, "Intercanvi", turnLines(round));
+        appendPlayerTurnRow(sb, player1, turnOf(round, player1, true));
+        appendPlayerTurnRow(sb, player2, turnOf(round, player2, false));
         appendBlock(sb, "Resultat del dany", List.of(
                 damageLine(round, true),
-                damageLine(round, false)
-        ));
+                damageLine(round, false)));
         if (round.winner() != Winner.NONE) {
             appendBlock(sb, "Final del combat", List.of(winnerText(round.winner())));
         }
         return sb.toString();
+    }
+
+    private TurnResult turnOf(CombatRoundResult round, Character player, boolean firstFallback) {
+        if (round == null || player == null) {
+            return null;
+        }
+        if (matchesActor(round.firstTurn(), player)) {
+            return round.firstTurn();
+        }
+        if (matchesActor(round.secondTurn(), player)) {
+            return round.secondTurn();
+        }
+        return firstFallback ? round.firstTurn() : round.secondTurn();
+    }
+
+    private boolean matchesActor(TurnResult turn, Character player) {
+        if (turn == null || player == null) {
+            return false;
+        }
+        if (turn.actor() != null) {
+            return turn.actor() == player;
+        }
+        String name = player.getName();
+        return name != null && name.equals(turn.actorName());
+    }
+
+    private void appendPlayerTurnRow(StringBuilder sb, Character player, TurnResult turn) {
+        Objects.requireNonNull(player, "El jugador no pot ser nul.");
+
+        String name = turn != null && turn.actorName() != null
+                ? turn.actorName()
+                : player.getName();
+
+        List<String> main = playerMainLines(turn);
+        List<String> effects = messageFormatter.effects(effectMessages(turn));
+
+        List<String> left = sideBlockLines(name, main, PLAYER_BLOCK_WIDTH);
+
+        if (effects.isEmpty()) {
+            for (String leftLine : left) {
+                sb.append(leftLine).append('\n');
+            }
+            sb.append('\n');
+            return;
+        }
+
+        List<String> right = effectBlockLines("Efectes", effects, EFFECT_BLOCK_WIDTH);
+        int rows = Math.max(left.size(), right.size());
+
+        for (int i = 0; i < rows; i++) {
+            String leftLine = i < left.size() ? left.get(i) : emptyBoxPadding(PLAYER_BLOCK_WIDTH);
+            String rightLine = i < right.size() ? right.get(i) : emptyBoxPadding(EFFECT_BLOCK_WIDTH);
+            sb.append(leftLine).append(' ').append(rightLine).append('\n');
+        }
+
+        sb.append('\n');
+    }
+
+    private List<String> playerMainLines(TurnResult turn) {
+        Objects.requireNonNull(turn, "El torn no pot ser nul");
+
+        List<String> lines = new ArrayList<>();
+        appendSection(lines, "ABANS",
+                messageLines(messagesOf(turn, CombatMessagePhase.BEFORE_CROSS, CombatMessagePlacement.MAIN_TIMELINE)));
+
+        List<String> during = new ArrayList<>();
+        String actorLine = messageFormatter.attacker(turn.attackerMessage());
+        if (actorLine == null && hasAnyMainMessage(turn)) {
+            actorLine = messageFormatter.attacker(turn.actorName());
+        }
+        if (actorLine != null) {
+            during.add(actorLine);
+        }
+        during.addAll(
+                messageLines(messagesOf(turn, CombatMessagePhase.DURING_CROSS, CombatMessagePlacement.MAIN_TIMELINE)));
+        String defenseLine = messageFormatter.defense(turn.defenseMessage());
+        if (defenseLine != null) {
+            during.add(defenseLine);
+        }
+        appendSection(lines, "DURANT", during);
+
+        appendSection(lines, "DESPRÉS",
+                messageLines(messagesOf(turn, CombatMessagePhase.AFTER_CROSS, CombatMessagePlacement.MAIN_TIMELINE)));
+        return lines;
+    }
+
+    private void appendSection(List<String> lines, String title, List<String> sectionLines) {
+        if (sectionLines == null || sectionLines.isEmpty()) {
+            return;
+        }
+        if (!lines.isEmpty()) {
+            lines.add("");
+        }
+        lines.add(Ansi.BOLD + title + Ansi.RESET);
+        lines.addAll(sectionLines);
+    }
+
+    private List<String> messageLines(List<CombatMessage> messages) {
+        return messageFormatter.effects(messages);
+    }
+
+    private List<CombatMessage> messagesOf(
+            TurnResult turn,
+            CombatMessagePhase phase,
+            CombatMessagePlacement placement) {
+
+        List<CombatMessage> result = new ArrayList<>();
+        for (CombatMessage message : allMessages(turn)) {
+            if (message.phase() == phase && message.placement() == placement) {
+                result.add(message);
+            }
+        }
+        return result;
+    }
+
+    private List<CombatMessage> effectMessages(TurnResult turn) {
+        List<CombatMessage> result = new ArrayList<>();
+        for (CombatMessage message : allMessages(turn)) {
+            if (message.placement() == CombatMessagePlacement.EFFECT_PANEL) {
+                result.add(message);
+            }
+        }
+        return result;
+    }
+
+    private List<CombatMessage> allMessages(TurnResult turn) {
+        List<CombatMessage> messages = new ArrayList<>();
+        if (turn == null) {
+            return messages;
+        }
+        addAll(messages, turn.startMessages());
+        addAll(messages, turn.preDefenseMessages());
+        addAll(messages, turn.postDefenseMessages());
+        addAll(messages, turn.endTurnMessages());
+        return messages;
+    }
+
+    private void addAll(List<CombatMessage> target, List<CombatMessage> source) {
+        if (source != null) {
+            target.addAll(source);
+        }
+    }
+
+    private boolean hasAnyMainMessage(TurnResult turn) {
+        return !messagesOf(turn, CombatMessagePhase.BEFORE_CROSS, CombatMessagePlacement.MAIN_TIMELINE).isEmpty()
+                || !messagesOf(turn, CombatMessagePhase.DURING_CROSS, CombatMessagePlacement.MAIN_TIMELINE).isEmpty()
+                || !messagesOf(turn, CombatMessagePhase.AFTER_CROSS, CombatMessagePlacement.MAIN_TIMELINE).isEmpty();
+    }
+
+    private List<String> sideBlockLines(String title, List<String> lines, int width) {
+        List<String> result = new ArrayList<>();
+        result.add(blockTop(title, width));
+        for (String line : lines) {
+            for (String wrappedLine : wrapBoxLine(line, width - 4)) {
+                result.add(boxLine(wrappedLine, width));
+            }
+        }
+        result.add(blockBottom(width));
+        return result;
+    }
+
+    private List<String> effectBlockLines(String title, List<String> lines, int width) {
+        List<String> result = new ArrayList<>();
+        result.add(blockTop(title, width));
+        for (String line : lines) {
+            for (String wrappedLine : wrapBoxLine(line, width - 3)) {
+                result.add(effectBoxLine(wrappedLine, width));
+            }
+        }
+        result.add(blockBottom(width));
+        return result;
+    }
+
+    private String boxLine(String line, int width) {
+        int contentWidth = width - 4;
+        int padding = Math.max(0, contentWidth - visibleLength(line));
+        return Ansi.DARK_GRAY + "│ " + Ansi.RESET
+                + line
+                + Ansi.RESET
+                + " ".repeat(padding)
+                + Ansi.DARK_GRAY + " │" + Ansi.RESET;
+    }
+
+    private String effectBoxLine(String line, int width) {
+        int contentWidth = width - 3;
+        int padding = Math.max(0, contentWidth - visibleLength(line));
+        return Ansi.DARK_GRAY + "│" + Ansi.RESET
+                + line
+                + Ansi.RESET
+                + " ".repeat(padding)
+                + Ansi.DARK_GRAY + " │" + Ansi.RESET;
+    }
+
+    private String emptyBoxPadding(int width) {
+        return " ".repeat(width);
     }
 
     private String statusPage(Character player1, Character player2, CombatRoundResult round) {
@@ -238,46 +441,12 @@ public final class RoundResultPager {
         if (round.winner() == Winner.NONE) {
             appendBlock(sb, "Regeneració", List.of(
                     regenLine(player1.getName(), round.p1Regen().healthRecovered(), round.p1Regen().manaRecovered()),
-                    regenLine(player2.getName(), round.p2Regen().healthRecovered(), round.p2Regen().manaRecovered())
-            ));
+                    regenLine(player2.getName(), round.p2Regen().healthRecovered(), round.p2Regen().manaRecovered())));
         }
 
         appendStatusBlock(sb, "Estat final",
                 statusOr(round.p1Final(), player1), statusOr(round.p2Final(), player2));
         return sb.toString();
-    }
-
-    private List<String> turnLines(CombatRoundResult round) {
-        List<String> lines = new ArrayList<>();
-        appendTurn(lines, round.firstTurn());
-        lines.add("");
-        appendTurn(lines, round.secondTurn());
-        return lines;
-    }
-
-    private void appendTurn(List<String> lines, TurnResult turn) {
-        StringBuilder sb = new StringBuilder(256);
-        renderer.appendTurnResult(sb, turn);
-        appendNonBlankLines(lines, sb);
-    }
-
-    private void appendNonBlankLines(List<String> lines, StringBuilder source) {
-        int start = 0;
-        int length = source.length();
-        for (int i = 0; i <= length; i++) {
-            if (i == length || source.charAt(i) == '\n' || source.charAt(i) == '\r') {
-                if (i > start) {
-                    String line = source.substring(start, i);
-                    if (!line.isBlank()) {
-                        lines.add(line);
-                    }
-                }
-                if (i + 1 < length && source.charAt(i) == '\r' && source.charAt(i + 1) == '\n') {
-                    i++;
-                }
-                start = i + 1;
-            }
-        }
     }
 
     private void appendStatusBlock(StringBuilder sb, String title, CombatantStatus p1, CombatantStatus p2) {
@@ -307,6 +476,18 @@ public final class RoundResultPager {
         return Ansi.DARK_GRAY + "┌" + Ansi.RESET
                 + Ansi.BOLD + label + Ansi.RESET
                 + Ansi.DARK_GRAY + "─".repeat(fill) + "┐" + Ansi.RESET;
+    }
+
+    private String blockTop(String title, int width) {
+        String label = " " + title + " ";
+        int fill = Math.max(1, width - visibleLength(label) - 2);
+        return Ansi.DARK_GRAY + "┌" + Ansi.RESET
+                + Ansi.BOLD + label + Ansi.RESET
+                + Ansi.DARK_GRAY + "─".repeat(fill) + "┐" + Ansi.RESET;
+    }
+
+    private String blockBottom(int width) {
+        return Ansi.DARK_GRAY + "└" + "─".repeat(width - 2) + "┘" + Ansi.RESET;
     }
 
     private String blockBottom() {

@@ -122,10 +122,13 @@ public abstract class DamageModifierEffect extends TimedEffect {
                 .reduce((a, b) -> a + " " + b)
                 .orElse("");
 
-        return CombatMessage.of(
+        return new CombatMessage(
                 first.symbol(),
                 first.color(),
-                text
+                text,
+                first.phase(),
+                first.kind(),
+                first.placement()
         );
     }
 

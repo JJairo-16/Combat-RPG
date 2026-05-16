@@ -59,6 +59,11 @@ public final class CombatMessageFormatter {
                 ? message.symbol().defaultColor()
                 : message.color();
         String ansi = color == null ? null : color.ansi();
+
+        if (message.kind() == CombatMessageKind.STATUS_EFFECT && ansi != null) {
+            return "  " + ansi + message.symbol().glyph() + " " + clean(message.text()) + Ansi.RESET;
+        }
+
         String prefix = ansi == null
                 ? message.symbol().glyph()
                 : ansi + message.symbol().glyph() + Ansi.RESET;
@@ -88,7 +93,13 @@ public final class CombatMessageFormatter {
                 || clean.startsWith("? ") || clean.startsWith("→ ")) {
             return CombatMessage.legacy(clean);
         }
-        return CombatMessage.of(fallback.symbol(), fallback.color(), clean);
+        return new CombatMessage(
+                fallback.symbol(),
+                fallback.color(),
+                clean,
+                fallback.phase(),
+                fallback.kind(),
+                fallback.placement());
     }
 
     private String clean(String text) {

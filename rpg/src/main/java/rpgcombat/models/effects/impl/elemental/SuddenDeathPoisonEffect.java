@@ -23,10 +23,10 @@ public class SuddenDeathPoisonEffect extends ConstantDamageEffect {
 
     @Override
     protected CombatMessage buildMessage(double appliedDamage, Character owner) {
-        return CombatMessage.of(
+        return CombatMessage.statusEffect(
                 MessageSymbol.WARNING,
-                MessageColor.RED,
-                owner.getName() + " pateix " + appliedDamage + " de dany per verí letal."
+                MessageColor.DARK_GREEN,
+                "Pateix " + appliedDamage + " de dany per verí letal"
         );
     }
 }

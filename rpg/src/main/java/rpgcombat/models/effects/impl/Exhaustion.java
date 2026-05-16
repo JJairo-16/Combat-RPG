@@ -35,10 +35,10 @@ public class Exhaustion extends DamageModifierEffect {
 
     @Override
     protected CombatMessage buildIncomingMessage(double multiplier, Character owner) {
-        return CombatMessage.of(
+        return CombatMessage.statusEffect(
                 MessageSymbol.NEGATIVE,
                 MessageColor.YELLOW,
-                "El cansament fa que " + owner.getName() + " rebi una mica més de dany."
+                "El cansament fa que rebi una mica més de dany"
         );
     }
 }

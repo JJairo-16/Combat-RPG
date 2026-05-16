@@ -36,6 +36,6 @@ public final class SelfDirectedAttackTrigger extends Trigger {
         ctx.putMeta("selfDirectedAttack", true);
         ctx.putMeta("selfDirectedAttackMultiplier", damageMultiplier);
         ctx.putMeta("selfDirectedAttackCanKill", canKill);
-        return EffectResult.warning(owner.getName() + " redirigeix l'atac contra si mateix.");
+        return EffectResult.gamemode(rpgcombat.combat.ui.messages.MessageColor.DEFAULT, rpgcombat.combat.ui.messages.MessageSymbol.WARNING, owner.getName() + " redirigeix l'atac contra si mateix.");
     }
 }

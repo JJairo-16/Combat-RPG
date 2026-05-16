@@ -348,9 +348,9 @@ public class Character {
 
         bleedDamage = round2(Math.max(0.0, bleedDamage));
         if (bleedDamage > 0 && out != null) {
-            String suffix = action == Action.DEFEND ? " però la defensa en redueix part." : ".";
-            out.styled(MessageColor.RED, MessageSymbol.NEGATIVE,
-                    name + " pateix " + bleedDamage + " de sagnat" + suffix);
+            String suffix = action == Action.DEFEND ? " però la defensa en redueix part" : "";
+            out.statusEffect(MessageColor.RED, MessageSymbol.NEGATIVE,
+                    "Pateix " + bleedDamage + " de sagnat" + suffix);
         }
 
         if (bleedDamage > 0) {
@@ -372,28 +372,28 @@ public class Character {
             case ATTACK -> {
                 attackModifierThisTurn = STAGGER_ATTACK_MULTIPLIER;
                 if (out != null) {
-                    out.styled(MessageColor.YELLOW, MessageSymbol.WARNING,
-                            name + " està desequilibrat: el seu atac perd força.");
+                    out.statusEffect(MessageColor.YELLOW, MessageSymbol.WARNING,
+                            "Està desequilibrat: el seu atac perd força");
                 }
             }
             case DEFEND -> {
                 defenseModifierThisTurn = STAGGER_DEFEND_MULTIPLIER;
                 if (out != null) {
-                    out.styled(MessageColor.YELLOW, MessageSymbol.WARNING,
-                            name + " defensa mal posicionat.");
+                    out.statusEffect(MessageColor.YELLOW, MessageSymbol.WARNING,
+                            "Defensa mal posicionat");
                 }
             }
             case DODGE -> {
                 dodgeModifierThisTurn = STAGGER_DODGE_MULTIPLIER;
                 if (out != null) {
-                    out.styled(MessageColor.YELLOW, MessageSymbol.WARNING,
-                            name + " intenta esquivar desequilibrat.");
+                    out.statusEffect(MessageColor.YELLOW, MessageSymbol.WARNING,
+                            "Intenta esquivar desequilibrat");
                 }
             }
             case CHARGE -> {
                 if (out != null) {
-                    out.styled(MessageColor.YELLOW, MessageSymbol.WARNING,
-                            name + " carrega lentament per l'aturdiment.");
+                    out.statusEffect(MessageColor.YELLOW, MessageSymbol.WARNING,
+                            "Carrega lentament per l'aturdiment");
                 }
             }
         }
