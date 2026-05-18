@@ -14,7 +14,9 @@ public record PathsConfig(
         String achievementsConfig,
         String achievementSaveFile,
         String discoveryCatalogConfig,
-        String discoverySaveFile) {
+        String discoverySaveFile,
+        String userSettingsConfig,
+        String userSettingsSaveFile) {
 
     public static final String PERKS_FOLDER = "rpg/data/perks";
 
@@ -33,6 +35,8 @@ public record PathsConfig(
     public static final String DEFAULT_ACHIEVEMENT_SAVE_FILE = "achievements.json";
     public static final String DEFAULT_DISCOVERY_CATALOG_CONFIG = "rpg/data/discoveryCatalog.json";
     public static final String DEFAULT_DISCOVERY_SAVE_FILE = "discoveries.json";
+    public static final String DEFAULT_USER_SETTINGS_CONFIG = "rpg/data/userSettings.json";
+    public static final String DEFAULT_USER_SETTINGS_SAVE_FILE = "settings.json";
 
     public PathsConfig {
         weaponsConfig = fallback(weaponsConfig, DEFAULT_WEAPONS_CONFIG);
@@ -48,6 +52,8 @@ public record PathsConfig(
         achievementSaveFile = fallback(achievementSaveFile, DEFAULT_ACHIEVEMENT_SAVE_FILE);
         discoveryCatalogConfig = fallback(discoveryCatalogConfig, DEFAULT_DISCOVERY_CATALOG_CONFIG);
         discoverySaveFile = fallback(discoverySaveFile, DEFAULT_DISCOVERY_SAVE_FILE);
+        userSettingsConfig = fallback(userSettingsConfig, DEFAULT_USER_SETTINGS_CONFIG);
+        userSettingsSaveFile = fallback(userSettingsSaveFile, DEFAULT_USER_SETTINGS_SAVE_FILE);
     }
 
     public static PathsConfig defaultConfig() {
@@ -64,7 +70,9 @@ public record PathsConfig(
                 DEFAULT_ACHIEVEMENTS_CONFIG,
                 DEFAULT_ACHIEVEMENT_SAVE_FILE,
                 DEFAULT_DISCOVERY_CATALOG_CONFIG,
-                DEFAULT_DISCOVERY_SAVE_FILE);
+                DEFAULT_DISCOVERY_SAVE_FILE,
+                DEFAULT_USER_SETTINGS_CONFIG,
+                DEFAULT_USER_SETTINGS_SAVE_FILE);
     }
 
     public static String perks(String path) {

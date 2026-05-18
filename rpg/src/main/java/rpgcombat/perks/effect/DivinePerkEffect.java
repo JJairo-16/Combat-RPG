@@ -210,8 +210,8 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
         if (phase == Phase.AFTER_DEFENSE && ctx.defender() == owner && ctx.hasEvent(Event.ON_DODGE)
                 && ctx.damageDealt() <= 0) {
             state.setStacks(1);
-            boolean awakened = awaken(ctx, 2);
-            return msg("l'esquiva perfecta prepara una caça lunar" + awakeningText(awakened, 2) + ".");
+            awaken(ctx, 2);
+            return msg("l'esquiva perfecta prepara una caça lunar.");
         }
         if (phase == Phase.ROLL_CRIT && ctx.attacker() == owner && state.stacks() > 0) {
             double bonus = switch (Math.min(awakening, 2)) {
@@ -260,9 +260,9 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
     private EffectResult hephaestus(HitContext ctx, Phase phase, Character owner) {
         if (phase == Phase.AFTER_DEFENSE && ctx.defender() == owner && ctx.defenderAction() == Action.DEFEND) {
             state.addStacks(1, 3);
-            boolean awakened = awaken(ctx, 3);
+            awaken(ctx, 3);
             return msg("acumula tremp de forja (" + state.stacks() + "/3)"
-                    + awakeningText(awakened, 3) + ".");
+                    + ".");
         }
         if (phase == Phase.MODIFY_DAMAGE && ctx.attacker() == owner && state.stacks() >= 3) {
             double bonus = switch (Math.min(awakening, 3)) {
@@ -360,7 +360,7 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
                 boolean awakened = awaken(ctx, 2);
                 state.addStacks(1, 1 + Math.min(awakening, 2));
                 if (awakened) {
-                    return msg("reajusta la seva tàctica" + awakeningText(true, 2) + ".");
+                    return msg("reajusta la seva tàctica.");
                 }
             }
             state.setDuration(actionCode);
@@ -433,10 +433,10 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
             int current = ctx.attackerAction().ordinal() + 1;
             int previous = state.remainingTurns();
             if (previous > 0 && isOffensiveCode(previous) != isOffensiveCode(current)) {
-                boolean awakened = awaken(ctx, 2);
+                awaken(ctx, 2);
                 state.setStacks(isOffensiveCode(current) ? 1 : 2);
                 state.setDuration(current);
-                return msg("obre una porta entre dues decisions" + awakeningText(awakened, 2) + ".");
+                return msg("obre una porta entre dues decisions.");
             }
             state.setDuration(current);
         }
@@ -462,13 +462,13 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
         if (phase == Phase.AFTER_DEFENSE && ctx.defender() == owner && ctx.defenderAction() == Action.DODGE
                 && ctx.damageDealt() <= 0) {
             state.setStacks(1);
-            boolean awakened = awaken(ctx, 2);
-            return msg("roba un pas al rival" + awakeningText(awakened, 2) + ".");
+            awaken(ctx, 2);
+            return msg("roba un pas al rival.");
         }
         if (phase == Phase.END_TURN && ctx.attacker() == owner && ctx.attackerAction() != Action.ATTACK) {
             state.setStacks(1);
-            boolean awakened = awaken(ctx, 2);
-            return msg("guarda impuls per actuar amb avantatge" + awakeningText(awakened, 2) + ".");
+            awaken(ctx, 2);
+            return msg("guarda impuls per actuar amb avantatge.");
         }
         if (phase == Phase.MODIFY_DAMAGE && ctx.attacker() == owner && state.stacks() > 0) {
             double bonus = 0.06 + 0.03 * Math.min(awakening, 2);
@@ -745,28 +745,6 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
         if (max <= 0)
             return 1.0;
         return MIN_POWER + (1.0 - MIN_POWER) * Math.min(awakening, max) / max;
-    }
-
-    /**
-     * Retorna el text visual de despertar si ha augmentat.
-     */
-    private String awakeningText(boolean awakened, int max) {
-        if (!awakened) {
-            return "";
-        }
-
-        return " " + awakeningSymbol(max);
-    }
-
-    /**
-     * Retorna el símbol del despertar actual.
-     */
-    private String awakeningSymbol(int max) {
-        if (max <= 0 || awakening >= max) {
-            return Ansi.CYAN + "✦" + Ansi.RESET;
-        }
-
-        return Ansi.YELLOW + "✧" + Ansi.RESET;
     }
 
     /**

@@ -27,6 +27,7 @@ import rpgcombat.models.characters.Result;
 import rpgcombat.models.characters.Statistics;
 import rpgcombat.models.effects.impl.elemental.PoisonEffect;
 import rpgcombat.models.effects.triggers.gamemode.Chaos;
+import rpgcombat.settings.UserSettingsRuntime;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;
 import rpgcombat.weapons.passives.HitContext;
@@ -176,7 +177,7 @@ public class TurnResolver {
         }
 
         if (attacker.getMomentumStacks() > 0) {
-            preDefenseMessages.styled(MessageColor.CYAN, MessageSymbol.POSITIVE,
+            addMomentumMessage(preDefenseMessages, MessageSymbol.POSITIVE,
                     attacker.getName() + " aprofita l'impuls del combat.");
         }
 
@@ -554,19 +555,18 @@ public class TurnResolver {
             if (!defenderUnderHeavyPressure) {
                 int before = attacker.getMomentumStacks();
                 attacker.gainMomentum();
-                if (attacker.getMomentumStacks() > before && out != null) {
-                    out.styled(MessageColor.CYAN, MessageSymbol.POSITIVE, attacker.getName() + " guanya impuls.");
+                if (attacker.getMomentumStacks() > before) {
+                    addMomentumMessage(out, MessageSymbol.POSITIVE, attacker.getName() + " guanya impuls.");
                 }
-            } else if (out != null && attacker.getMomentumStacks() > 0) {
-                out.styled(MessageColor.CYAN, MessageSymbol.EQUAL, "L'avantatge de " + attacker.getName()
+            } else if (attacker.getMomentumStacks() > 0) {
+                addMomentumMessage(out, MessageSymbol.EQUAL, "L'avantatge de " + attacker.getName()
                         + " no accelera més davant un rival acorralat.");
             }
 
             if (defender.getMomentumStacks() > 0) {
                 defender.loseMomentum();
-                if (out != null)
-                    out.styled(MessageColor.CYAN, MessageSymbol.NEGATIVE,
-                            defender.getName() + " perd impuls sota la pressió rival.");
+                addMomentumMessage(out, MessageSymbol.NEGATIVE,
+                        defender.getName() + " perd impuls sota la pressió rival.");
             }
             return;
         }
@@ -579,23 +579,21 @@ public class TurnResolver {
                 defender.gainMomentum();
             }
 
-            if (defender.getMomentumStacks() > before && out != null) {
-                out.styled(MessageColor.CYAN, MessageSymbol.POSITIVE,
+            if (defender.getMomentumStacks() > before) {
+                addMomentumMessage(out, MessageSymbol.POSITIVE,
                         defender.getName() + " llegeix el ritme i guanya impuls.");
             }
             if (attacker.getMomentumStacks() > 0) {
                 attacker.loseMomentum();
-                if (out != null)
-                    out.styled(MessageColor.CYAN, MessageSymbol.NEGATIVE,
-                            attacker.getName() + " perd impuls després de fallar.");
+                addMomentumMessage(out, MessageSymbol.NEGATIVE,
+                        attacker.getName() + " perd impuls després de fallar.");
             }
             return;
         }
 
         if (attacker.getMomentumStacks() > 0) {
             attacker.loseMomentum();
-            if (out != null)
-                out.styled(MessageColor.CYAN, MessageSymbol.NEGATIVE, attacker.getName() + " perd part de l'impuls.");
+            addMomentumMessage(out, MessageSymbol.NEGATIVE, attacker.getName() + " perd part de l'impuls.");
         }
     }
 
@@ -612,10 +610,15 @@ public class TurnResolver {
                 return;
             }
             actor.loseMomentum();
-            if (out != null) {
-                out.styled(MessageColor.CYAN, MessageSymbol.NEGATIVE,
-                        "L'impuls de " + actor.getName() + " es refreda una mica.");
-            }
+            addMomentumMessage(out, MessageSymbol.NEGATIVE,
+                    "L'impuls de " + actor.getName() + " es refreda una mica.");
+        }
+    }
+
+    /** Afegeix un missatge d'impuls només si l'usuari el vol veure. */
+    private void addMomentumMessage(CombatMessageBuffer out, MessageSymbol symbol, String text) {
+        if (out != null && UserSettingsRuntime.showMomentumMessages()) {
+            out.styled(MessageColor.CYAN, symbol, text);
         }
     }
 

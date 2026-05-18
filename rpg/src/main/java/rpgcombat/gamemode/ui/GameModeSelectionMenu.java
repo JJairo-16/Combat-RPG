@@ -287,7 +287,7 @@ public final class GameModeSelectionMenu {
 
         int innerWidth = CARD_WIDTH - 2;
         int paddedWidth = innerWidth - CONTENT_PADDING * 2;
-        List<String> subtitleLines = wrap(subtitle, paddedWidth, 2);
+        List<String> subtitleLines = paddedLines(wrap(subtitle, paddedWidth, 2), 2);
         List<String> detailLines = bulletLines(details, paddedWidth, DETAIL_LINES);
 
         String topLeft = selected ? "╔" : "┌";
@@ -387,6 +387,14 @@ public final class GameModeSelectionMenu {
         return lines;
     }
 
+    private static List<String> paddedLines(List<String> values, int count) {
+        List<String> lines = new ArrayList<>(values == null ? List.of() : values);
+        while (lines.size() < count) {
+            lines.add("");
+        }
+        return lines;
+    }
+
     private static List<String> wrap(String text, int width, int maxLines) {
         List<String> lines = new ArrayList<>();
         String safe = text == null ? "" : text.trim();
@@ -410,9 +418,6 @@ public final class GameModeSelectionMenu {
             lines.add(line);
         }
 
-        while (lines.size() < maxLines) {
-            lines.add("");
-        }
         return lines;
     }
 

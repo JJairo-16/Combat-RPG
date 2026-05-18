@@ -30,6 +30,10 @@ import rpgcombat.game.menu.HomeMenu;
 import rpgcombat.gamemode.model.GameModeDefinition;
 import rpgcombat.gamemode.registry.GameModeRegistry;
 import rpgcombat.gamemode.ui.GameModeSelectionMenu;
+import rpgcombat.settings.UserSettings;
+import rpgcombat.settings.UserSettingsRuntime;
+import rpgcombat.settings.UserSettingsStore;
+import rpgcombat.settings.ui.SettingsScreen;
 import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.LoadingIntro;
 import rpgcombat.utils.ui.Prettier;
@@ -40,7 +44,9 @@ public final class AppController {
     private static final String APP_CONFIG_PATH = "rpg/data/appConfig.json";
 
     private final ResourcePreloader preloader = new ResourcePreloader();
+    private UserSettingsStore settingsStore;
     private AppConfig config;
+    private UserSettings userSettings = UserSettings.defaults();
     private AchievementSystem achievementSystem;
     private DiscoverySystem discoverySystem;
     private List<Achievement> achievementViewModels = List.of();
@@ -49,6 +55,7 @@ public final class AppController {
     /** Inicia l'aplicació fins que l'usuari surt. */
     public void run() {
         loadConfig();
+        loadUserSettings();
 
         if (!preloadResources()) {
             return;
@@ -74,6 +81,12 @@ public final class AppController {
                         continue;
                     }
                     DiscoveryInteractiveViewer.show(discoveryOverview());
+                    continue;
+                }
+
+                if (action == HomeMenu.Action.SETTINGS) {
+                    userSettings = SettingsScreen.show(userSettings, settingsStore);
+                    UserSettingsRuntime.configure(userSettings);
                     continue;
                 }
 
@@ -141,6 +154,13 @@ public final class AppController {
             Prettier.error("No s'ha pogut carregar appConfig.json. S'usarà la configuració per defecte.");
             config = AppConfigLoader.defaultConfig();
         }
+    }
+
+    /** Carrega els ajustos persistents de l'usuari. */
+    private void loadUserSettings() {
+        settingsStore = new UserSettingsStore(config.paths().userSettingsConfig(), config.paths().userSettingsSaveFile());
+        userSettings = settingsStore.load();
+        UserSettingsRuntime.configure(userSettings);
     }
 
     /** Precarrega recursos amb intro o directament. */

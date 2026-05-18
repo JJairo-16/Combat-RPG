@@ -21,7 +21,9 @@
     "achievementsConfig": "rpg/data/achievements.json",
     "achievementSaveFile": "achievements.json",
     "discoveryCatalogConfig": "rpg/data/discoveryCatalog.json",
-    "discoverySaveFile": "discoveries.json"
+    "discoverySaveFile": "discoveries.json",
+    "userSettingsConfig": "rpg/data/userSettings.json",
+    "userSettingsSaveFile": "settings.json"
   },
   "ui": {
     "showLoadingIntro": true,
