@@ -60,7 +60,7 @@ public final class CombatMessageFormatter {
                 : message.color();
         String ansi = color == null ? null : color.ansi();
 
-        if (message.kind() == CombatMessageKind.STATUS_EFFECT && ansi != null) {
+        if (message.placement() == CombatMessagePlacement.EFFECT_PANEL && ansi != null) {
             return "  " + ansi + message.symbol().glyph() + " " + clean(message.text()) + Ansi.RESET;
         }
 
@@ -81,25 +81,17 @@ public final class CombatMessageFormatter {
             if (isBlank(rawLine)) {
                 continue;
             }
-            CombatMessage lineMessage = semanticLine(rawLine, message);
+            CombatMessage lineMessage = new CombatMessage(
+                message.symbol(),
+                message.color(),
+                rawLine,
+                message.phase(),
+                message.kind(),
+                message.placement()
+            );
             lines.add(render(lineMessage));
         }
         return lines;
-    }
-
-    private CombatMessage semanticLine(String line, CombatMessage fallback) {
-        String clean = clean(line);
-        if (clean.startsWith("+ ") || clean.startsWith("- ") || clean.startsWith("! ")
-                || clean.startsWith("? ") || clean.startsWith("→ ")) {
-            return CombatMessage.legacy(clean);
-        }
-        return new CombatMessage(
-                fallback.symbol(),
-                fallback.color(),
-                clean,
-                fallback.phase(),
-                fallback.kind(),
-                fallback.placement());
     }
 
     private String clean(String text) {

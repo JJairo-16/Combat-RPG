@@ -692,7 +692,7 @@ public class TurnResolver {
 
     private static double capNonLethalDamage(double amount, double currentHealth) {
         double maxSafeDamage = Math.max(0.0, currentHealth - 1.0);
-        return Math.min(Math.max(0.0, amount), maxSafeDamage);
+        return Math.clamp(amount, 0.0, maxSafeDamage);
     }
 
     private static String getWeaponId(Weapon weapon) {

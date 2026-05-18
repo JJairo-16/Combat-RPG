@@ -15,6 +15,7 @@ import rpgcombat.combat.turnservice.TurnResult;
 import rpgcombat.combat.ui.messages.CombatMessage;
 import rpgcombat.combat.ui.messages.CombatMessageFormatter;
 import rpgcombat.combat.ui.messages.CombatMessagePhase;
+import rpgcombat.combat.ui.messages.CombatMessageKind;
 import rpgcombat.combat.ui.messages.CombatMessagePlacement;
 import rpgcombat.models.characters.Character;
 import rpgcombat.utils.terminal.SharedTerminal;
@@ -35,8 +36,14 @@ public final class RoundResultPager {
     private static final int KEY_A_UPPER = 'A';
     private static final int KEY_D_LOWER = 'd';
     private static final int KEY_D_UPPER = 'D';
+    private static final int KEY_S_LOWER = 's';
+    private static final int KEY_S_UPPER = 'S';
+    private static final int KEY_W_LOWER = 'w';
+    private static final int KEY_W_UPPER = 'W';
     private static final int KEY_LEFT = 1_001;
     private static final int KEY_RIGHT = 1_002;
+    private static final int KEY_UP = 1_003;
+    private static final int KEY_DOWN = 1_004;
 
     private static final int ESC_TIMEOUT_MS = 35;
     private static final int QUIET_MS = 35;
@@ -47,8 +54,10 @@ public final class RoundResultPager {
     private static final String THIN_DIV = Ansi.DARK_GRAY + "─".repeat(WIDTH) + Ansi.RESET;
     private static final String BLOCK_BOTTOM = Ansi.DARK_GRAY + "└" + "─".repeat(WIDTH - 2) + "┘" + Ansi.RESET;
 
-    private static final int PLAYER_BLOCK_WIDTH = 68;
-    private static final int EFFECT_BLOCK_WIDTH = 54;
+    private static final int SIDE_BLOCK_GAP = 1;
+    private static final int PLAYER_BLOCK_WIDTH = 70;
+    private static final int EFFECT_BLOCK_WIDTH = WIDTH - PLAYER_BLOCK_WIDTH - SIDE_BLOCK_GAP;
+    private static final int SCROLL_STEP = 1;
 
     private final CombatRenderer renderer;
     private final CombatMessageFormatter messageFormatter = new CombatMessageFormatter();
@@ -79,15 +88,22 @@ public final class RoundResultPager {
     private void run(Terminal terminal, List<Page> pages) throws IOException {
         NonBlockingReader reader = terminal.reader();
         int currentPage = 0;
+        int[] scrollOffsets = new int[pages.size()];
 
         waitForQuiet(reader);
         while (true) {
-            render(terminal, pages, currentPage);
+            int maxScroll = maxScroll(terminal, pages.get(currentPage));
+            scrollOffsets[currentPage] = Math.clamp(scrollOffsets[currentPage], 0, maxScroll);
+            render(terminal, pages, currentPage, scrollOffsets[currentPage], maxScroll);
             int key = readNavigationKey(reader);
             int lastPage = pages.size() - 1;
 
             if (isEnter(key)) {
                 break;
+            } else if (isScrollUp(key)) {
+                scrollOffsets[currentPage] = Math.max(0, scrollOffsets[currentPage] - SCROLL_STEP);
+            } else if (isScrollDown(key)) {
+                scrollOffsets[currentPage] = Math.min(maxScroll, scrollOffsets[currentPage] + SCROLL_STEP);
             } else if (isPrevious(key)) {
                 currentPage = Math.max(0, currentPage - 1);
             } else if (isNext(key)) {
@@ -101,25 +117,57 @@ public final class RoundResultPager {
                 currentPage++;
             }
 
-            waitForQuiet(reader);
+            if (!isScrollUp(key) && !isScrollDown(key)) {
+                waitForQuiet(reader);
+            }
         }
     }
 
-    private void render(Terminal terminal, List<Page> pages, int index) {
+    private void render(Terminal terminal, List<Page> pages, int index, int scrollOffset, int maxScroll) {
         Page page = pages.get(index);
         StringBuilder screen = new StringBuilder(page.body().length() + 320);
-        TerminalClear.clear(terminal);
+        List<String> bodyLines = bodyLines(page);
+        int bodyHeight = bodyViewportHeight(terminal);
+        int from = Math.clamp(scrollOffset, 0, maxScroll);
+        int to = Math.min(bodyLines.size(), from + bodyHeight);
+
+        repaintFromTop(terminal);
         screen.append(BIG_DIV).append('\n');
         screen.append(Ansi.BOLD).append(page.title()).append(Ansi.RESET).append(' ')
                 .append(Ansi.DARK_GRAY).append("Pàgina ").append(index + 1).append('/')
                 .append(pages.size()).append(Ansi.RESET).append('\n');
         screen.append(BIG_DIV).append("\n\n");
-        screen.append(page.body()).append('\n');
+        for (int i = from; i < to; i++) {
+            screen.append(bodyLines.get(i)).append('\n');
+        }
+        screen.append('\n');
         screen.append(THIN_DIV).append('\n');
-        screen.append(controls(index == pages.size() - 1));
+        screen.append(controls(index == pages.size() - 1, maxScroll > 0, from, bodyLines.size()));
 
         terminal.writer().print(screen);
         terminal.writer().flush();
+    }
+
+    private void repaintFromTop(Terminal terminal) {
+        if (terminal == null) {
+            TerminalClear.clear(null);
+            return;
+        }
+        terminal.writer().print("\033[H\033[J");
+    }
+
+    private int maxScroll(Terminal terminal, Page page) {
+        return Math.max(0, bodyLines(page).size() - bodyViewportHeight(terminal));
+    }
+
+    private int bodyViewportHeight(Terminal terminal) {
+        int height = terminal == null ? 24 : terminal.getHeight();
+        return Math.max(1, height - 7);
+    }
+
+    private List<String> bodyLines(Page page) {
+        String body = page == null || page.body() == null ? "" : page.body();
+        return List.of(body.split("\\R", -1));
     }
 
     private int readNavigationKey(NonBlockingReader reader) throws IOException {
@@ -132,7 +180,8 @@ public final class RoundResultPager {
                 }
                 continue;
             }
-            if (isEnter(key) || key == KEY_SPACE || isPrevious(key) || isNext(key)) {
+            if (isEnter(key) || key == KEY_SPACE || isPrevious(key) || isNext(key)
+                    || isScrollUp(key) || isScrollDown(key)) {
                 return key;
             }
         }
@@ -156,20 +205,37 @@ public final class RoundResultPager {
 
         StringBuilder sequence = new StringBuilder();
         sequence.append((char) first).append((char) second);
+        int immediateArrow = arrowFromEscapeSequence(sequence.toString());
+        if (immediateArrow != 0) {
+            return immediateArrow;
+        }
         for (int i = 0; i < 4; i++) {
             int next = reader.read(ESC_TIMEOUT_MS);
             if (next == NonBlockingReader.READ_EXPIRED) {
                 break;
             }
             sequence.append((char) next);
+            int arrow = arrowFromEscapeSequence(sequence.toString());
+            if (arrow != 0) {
+                return arrow;
+            }
         }
 
-        String text = sequence.toString();
+        return arrowFromEscapeSequence(sequence.toString());
+    }
+
+    private int arrowFromEscapeSequence(String text) {
         if (text.contains("[D") || text.contains("OD")) {
             return KEY_LEFT;
         }
         if (text.contains("[C") || text.contains("OC")) {
             return KEY_RIGHT;
+        }
+        if (text.contains("[A") || text.contains("OA")) {
+            return KEY_UP;
+        }
+        if (text.contains("[B") || text.contains("OB")) {
+            return KEY_DOWN;
         }
         return 0;
     }
@@ -217,6 +283,14 @@ public final class RoundResultPager {
 
     private boolean isNext(int key) {
         return key == KEY_RIGHT || key == KEY_D_LOWER || key == KEY_D_UPPER;
+    }
+
+    private boolean isScrollUp(int key) {
+        return key == KEY_UP || key == KEY_W_LOWER || key == KEY_W_UPPER;
+    }
+
+    private boolean isScrollDown(int key) {
+        return key == KEY_DOWN || key == KEY_S_LOWER || key == KEY_S_UPPER;
     }
 
     private List<Page> buildPages(int roundNumber, Character player1, Character player2, CombatRoundResult round) {
@@ -270,11 +344,11 @@ public final class RoundResultPager {
                 : player.getName();
 
         List<String> main = playerMainLines(turn);
-        List<String> effects = messageFormatter.effects(effectMessages(turn));
+        PanelContent panel = panelContent(turn);
 
         List<String> left = sideBlockLines(name, main, PLAYER_BLOCK_WIDTH);
 
-        if (effects.isEmpty()) {
+        if (panel.lines().isEmpty()) {
             for (String leftLine : left) {
                 sb.append(leftLine).append('\n');
             }
@@ -282,13 +356,13 @@ public final class RoundResultPager {
             return;
         }
 
-        List<String> right = effectBlockLines("Efectes", effects, EFFECT_BLOCK_WIDTH);
+        List<String> right = effectBlockLines(panel.title(), panel.lines(), EFFECT_BLOCK_WIDTH);
         int rows = Math.max(left.size(), right.size());
 
         for (int i = 0; i < rows; i++) {
             String leftLine = i < left.size() ? left.get(i) : emptyBoxPadding(PLAYER_BLOCK_WIDTH);
             String rightLine = i < right.size() ? right.get(i) : emptyBoxPadding(EFFECT_BLOCK_WIDTH);
-            sb.append(leftLine).append(' ').append(rightLine).append('\n');
+            sb.append(leftLine).append(" ".repeat(SIDE_BLOCK_GAP)).append(rightLine).append('\n');
         }
 
         sb.append('\n');
@@ -351,7 +425,36 @@ public final class RoundResultPager {
         return result;
     }
 
-    private List<CombatMessage> effectMessages(TurnResult turn) {
+    private PanelContent panelContent(TurnResult turn) {
+        List<CombatMessage> statusMessages = new ArrayList<>();
+        List<CombatMessage> modeMessages = new ArrayList<>();
+
+        for (CombatMessage message : panelMessages(turn)) {
+            if (message.kind() == CombatMessageKind.GAMEMODE) {
+                modeMessages.add(message);
+            } else {
+                statusMessages.add(message);
+            }
+        }
+
+        if (modeMessages.isEmpty()) {
+            return new PanelContent("Efectes", messageFormatter.effects(statusMessages));
+        }
+        if (statusMessages.isEmpty()) {
+            return new PanelContent("Mode", messageFormatter.effects(modeMessages));
+        }
+
+        List<String> lines = new ArrayList<>();
+        lines.add("");
+        lines.add(Ansi.BOLD + "EFECTES" + Ansi.RESET);
+        lines.addAll(messageFormatter.effects(statusMessages));
+        lines.add("");
+        lines.add(Ansi.BOLD + "MODE" + Ansi.RESET);
+        lines.addAll(messageFormatter.effects(modeMessages));
+        return new PanelContent("Estat i mode", lines);
+    }
+
+    private List<CombatMessage> panelMessages(TurnResult turn) {
         List<CombatMessage> result = new ArrayList<>();
         for (CombatMessage message : allMessages(turn)) {
             if (message.placement() == CombatMessagePlacement.EFFECT_PANEL) {
@@ -513,6 +616,7 @@ public final class RoundResultPager {
         }
 
         List<String> wrapped = new ArrayList<>();
+        String continuationIndent = continuationIndent(safe);
         StringBuilder current = new StringBuilder();
         int visible = 0;
         int lastSpaceRaw = -1;
@@ -537,13 +641,14 @@ public final class RoundResultPager {
             if (visible >= width && hasVisibleText(safe, index)) {
                 if (lastSpaceRaw > 0) {
                     wrapped.add(trimTrailingSpaces(current.substring(0, lastSpaceRaw)));
-                    current = new StringBuilder(trimLeadingSpaces(current.substring(lastSpaceRaw)));
+                    current = new StringBuilder(continuationIndent)
+                            .append(trimLeadingSpaces(current.substring(lastSpaceRaw)));
                     visible = visibleLength(current.toString());
                     lastSpaceRaw = lastWhitespacePosition(current.toString());
                 } else {
                     wrapped.add(current.toString());
-                    current.setLength(0);
-                    visible = 0;
+                    current = new StringBuilder(continuationIndent);
+                    visible = visibleLength(continuationIndent);
                     lastSpaceRaw = -1;
                 }
             }
@@ -553,6 +658,47 @@ public final class RoundResultPager {
             wrapped.add(trimTrailingSpaces(current.toString()));
         }
         return wrapped;
+    }
+
+    private String continuationIndent(String text) {
+        String visible = CombatMessageFormatter.stripAnsi(text);
+        if (visible.isBlank()) {
+            return "";
+        }
+
+        int index = 0;
+        while (index < visible.length() && java.lang.Character.isWhitespace(visible.charAt(index))) {
+            index++;
+        }
+
+        if (index < visible.length()) {
+            int afterGlyph = index + 1;
+            if (afterGlyph < visible.length() && java.lang.Character.isWhitespace(visible.charAt(afterGlyph))) {
+                return " ".repeat(afterGlyph + 1) + leadingAnsiStyle(text);
+            }
+        }
+
+        return " ".repeat(index) + leadingAnsiStyle(text);
+    }
+
+    private String leadingAnsiStyle(String text) {
+        int index = 0;
+        while (index < text.length()) {
+            int ansiEnd = ansiSequenceEnd(text, index);
+            if (ansiEnd > index) {
+                String sequence = text.substring(index, ansiEnd);
+                if (!Ansi.RESET.equals(sequence)) {
+                    return sequence;
+                }
+                index = ansiEnd;
+                continue;
+            }
+            if (!java.lang.Character.isWhitespace(text.charAt(index))) {
+                return "";
+            }
+            index++;
+        }
+        return "";
     }
 
     private int ansiSequenceEnd(String text, int start) {
@@ -639,11 +785,19 @@ public final class RoundResultPager {
         return status != null && status.name() != null ? status.name() : fallback;
     }
 
-    private String controls(boolean lastPage) {
+    private String controls(boolean lastPage, boolean scrollable, int firstVisibleLine, int totalLines) {
         String action = lastPage ? "[ESPAI] Sortir" : "[ESPAI] Següent";
-        return Ansi.BOLD + "[←/→ o A/D]" + Ansi.RESET + " Navegar     "
-                + Ansi.BOLD + action + Ansi.RESET + "     "
-                + Ansi.BOLD + "[ENTER] Saltar pàgines" + Ansi.RESET + "\n";
+        StringBuilder sb = new StringBuilder();
+        sb.append(Ansi.BOLD).append("[←/→ o A/D]").append(Ansi.RESET).append(" Navegar     ")
+                .append(Ansi.BOLD).append(action).append(Ansi.RESET).append("     ")
+                .append(Ansi.BOLD).append("[ENTER] Saltar pàgines").append(Ansi.RESET);
+        if (scrollable) {
+            sb.append("     ")
+                    .append(Ansi.BOLD).append("[↑/↓ o W/S]").append(Ansi.RESET)
+                    .append(" Scroll ")
+                    .append(Ansi.DARK_GRAY).append(firstVisibleLine + 1).append('/').append(totalLines).append(Ansi.RESET);
+        }
+        return sb.append('\n').toString();
     }
 
     private void printFallback(List<Page> pages) {
@@ -687,5 +841,8 @@ public final class RoundResultPager {
     }
 
     private record Page(String title, String body) {
+    }
+
+    private record PanelContent(String title, List<String> lines) {
     }
 }

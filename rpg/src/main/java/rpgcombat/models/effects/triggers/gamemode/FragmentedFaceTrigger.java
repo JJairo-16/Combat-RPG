@@ -88,7 +88,7 @@ public final class FragmentedFaceTrigger extends Trigger implements RoundScopedE
             return EffectResult.none();
         }
         startMessageShown = true;
-        return EffectResult.msg(CombatMessage.info(
+        return EffectResult.msg(CombatMessage.gamemodeEffect(MessageSymbol.INFO, MessageColor.MAGENTA,
                 "+ " + activeBuff.title() + ": " + activeBuff.description()
                         + "\n- " + activeDebuff.title() + ": " + activeDebuff.description()));
     }
@@ -412,7 +412,7 @@ public final class FragmentedFaceTrigger extends Trigger implements RoundScopedE
             return 0.0;
         }
         double health = owner.getStatistics().getHealth();
-        double applied = Math.min(amount, Math.max(0.0, health - 1.0));
+        double applied = Math.clamp(health - 1.0, 0.0, amount);
         if (applied > 0) {
             owner.getStatistics().damage(applied);
         }
@@ -454,7 +454,7 @@ public final class FragmentedFaceTrigger extends Trigger implements RoundScopedE
     }
 
     private static EffectResult result(MessageSymbol symbol, String text) {
-        return EffectResult.msg(CombatMessage.of(symbol, MessageColor.MAGENTA, text));
+        return EffectResult.msg(CombatMessage.gamemodeEffect(symbol, MessageColor.MAGENTA, text));
     }
 
     private static double round2(double value) {

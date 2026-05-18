@@ -25,12 +25,12 @@ import rpgcombat.utils.ui.TerminalClear;
 /** Menú interactiu de cartes per escollir mode de joc abans de crear la partida. */
 public final class GameModeSelectionMenu {
     private static final int CARD_WIDTH = 54;
-    private static final int CARD_HEIGHT = 13;
+    private static final int CARD_HEIGHT = 16;
     private static final int GAP = 2;
     private static final int HEADER_LINES = 3;
     private static final int FOOTER_LINES = 3;
     private static final int CONTENT_PADDING = 2;
-    private static final int DETAIL_LINES = 5;
+    private static final int DETAIL_LINES = 8;
 
     private GameModeSelectionMenu() {
     }
@@ -297,21 +297,23 @@ public final class GameModeSelectionMenu {
         String horizontal = selected ? "═" : "─";
         String vertical = selected ? "║" : "│";
 
-        return new String[] {
-                border + topLeft + horizontal.repeat(CARD_WIDTH - 2) + topRight + RESET,
-                border + vertical + RESET + titleColor + paddedCell(title, innerWidth) + RESET + border + vertical + RESET,
-                border + vertical + RESET + textColor + paddedCell(subtitleLines.get(0), innerWidth) + RESET + border + vertical + RESET,
-                border + vertical + RESET + textColor + paddedCell(subtitleLines.get(1), innerWidth) + RESET + border + vertical + RESET,
-                border + vertical + RESET + textColor + paddedCell(section, innerWidth) + RESET + border + vertical + RESET,
-                border + vertical + RESET + textColor + paddedCell(detailLines.get(0), innerWidth) + RESET + border + vertical + RESET,
-                border + vertical + RESET + textColor + paddedCell(detailLines.get(1), innerWidth) + RESET + border + vertical + RESET,
-                border + vertical + RESET + textColor + paddedCell(detailLines.get(2), innerWidth) + RESET + border + vertical + RESET,
-                border + vertical + RESET + textColor + paddedCell(detailLines.get(3), innerWidth) + RESET + border + vertical + RESET,
-                border + vertical + RESET + textColor + paddedCell(detailLines.get(4), innerWidth) + RESET + border + vertical + RESET,
-                border + vertical + RESET + fit("", innerWidth) + border + vertical + RESET,
-                border + vertical + RESET + statusColor + paddedCell(status, innerWidth) + RESET + border + vertical + RESET,
-                border + bottomLeft + horizontal.repeat(CARD_WIDTH - 2) + bottomRight + RESET
-        };
+        List<String> lines = new ArrayList<>(CARD_HEIGHT);
+        lines.add(border + topLeft + horizontal.repeat(CARD_WIDTH - 2) + topRight + RESET);
+        lines.add(cardLine(border, vertical, titleColor, title, innerWidth));
+        lines.add(cardLine(border, vertical, textColor, subtitleLines.get(0), innerWidth));
+        lines.add(cardLine(border, vertical, textColor, subtitleLines.get(1), innerWidth));
+        lines.add(cardLine(border, vertical, textColor, section, innerWidth));
+        for (String detailLine : detailLines) {
+            lines.add(cardLine(border, vertical, textColor, detailLine, innerWidth));
+        }
+        lines.add(border + vertical + RESET + fit("", innerWidth) + border + vertical + RESET);
+        lines.add(cardLine(border, vertical, statusColor, status, innerWidth));
+        lines.add(border + bottomLeft + horizontal.repeat(CARD_WIDTH - 2) + bottomRight + RESET);
+        return lines.toArray(String[]::new);
+    }
+
+    private static String cardLine(String border, String vertical, String color, String text, int innerWidth) {
+        return border + vertical + RESET + color + paddedCell(text, innerWidth) + RESET + border + vertical + RESET;
     }
 
     private static List<String> menuDetails(GameModeDefinition mode) {
@@ -372,9 +374,10 @@ public final class GameModeSelectionMenu {
             if (lines.size() >= maxLines) {
                 break;
             }
-            List<String> wrapped = wrap(value, Math.max(1, width - 2), 1);
+            List<String> wrapped = wrap(value, Math.max(1, width - 2), maxLines - lines.size());
             for (int i = 0; i < wrapped.size() && lines.size() < maxLines; i++) {
-                lines.add("• " + wrapped.get(i));
+                String prefix = i == 0 ? "• " : "  ";
+                lines.add(prefix + wrapped.get(i));
             }
         }
 

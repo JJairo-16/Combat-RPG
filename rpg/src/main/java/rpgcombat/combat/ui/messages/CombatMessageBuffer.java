@@ -1,6 +1,5 @@
 package rpgcombat.combat.ui.messages;
 
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -10,7 +9,6 @@ import java.util.List;
  */
 public final class CombatMessageBuffer {
     private final List<CombatMessage> messages = new ArrayList<>();
-    private final List<String> legacyView = new LegacyView();
     private final CombatMessagePhase defaultPhase;
 
     /**
@@ -116,34 +114,9 @@ public final class CombatMessageBuffer {
     }
 
     /**
-     * Retorna una vista per a APIs antigues.
-     */
-    public List<String> legacyView() {
-        return legacyView;
-    }
-
-    /**
      * Retorna els missatges acumulats.
      */
     public List<CombatMessage> messages() {
         return Collections.unmodifiableList(messages);
-    }
-
-    private final class LegacyView extends AbstractList<String> {
-        @Override
-        public String get(int index) {
-            return messages.get(index).text();
-        }
-
-        @Override
-        public int size() {
-            return messages.size();
-        }
-
-        @Override
-        public boolean add(String text) {
-            CombatMessageBuffer.this.add(CombatMessage.legacy(text));
-            return true;
-        }
     }
 }
