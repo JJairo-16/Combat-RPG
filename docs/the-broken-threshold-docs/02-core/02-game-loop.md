@@ -38,9 +38,12 @@ public void init() {
 
 - demana accions
 - delega la resolució a `CombatSystem`
+- consulta el `MatchContext` per mostrar el mode i el terreny de la partida
 - mostra el final
 
 Això és important perquè la lògica real de combat queda desacoblada del flux d'entrada.
+
+El terreny ja arriba resolt des de `GameBootstrap`; el loop no en fa la selecció.
 
 ---
 

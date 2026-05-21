@@ -20,6 +20,8 @@ Un mode pot afectar:
 
 La base del combat continua sent la mateixa: crear personatges, escollir accions, gestionar recursos i adaptar-se al rival.
 
+Els terrenys es trien a part del mode. Si els tens activats als ajustos, poden afegir una condició global després de crear els personatges.
+
 ---
 
 ## Modes disponibles

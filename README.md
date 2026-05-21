@@ -112,6 +112,7 @@ La partida finalitza quan un personatge arriba a 0 de vida.
 - Pantalles interactives
 - Combat caotic
 - Modes de joc únics
+- Terrenys globals que afecten els dos combatents
 - Sistema d'assoliments i descubriments
 
 ### ▌Crida espiritual
@@ -149,6 +150,18 @@ Distribució conceptual:
 cau malament - normal - cau bé - normal - cau malament
 
 Això provoca que dos personatges amb el mateix nivell puguin tenir resultats diferents en la tirada del dau de 20 cares segons com encaixin amb aquesta preferència divina.
+
+### ▌Terrenys
+
+Els terrenys afegeixen un efecte d'escenari compartit per tota la partida.
+
+La forma de triar-los es controla des dels **Ajustos**:
+
+- **Sense terreny**: el combat comença sense modificadors d'escenari.
+- **Manual**: després de crear els personatges s'obre el selector interactiu de terrenys.
+- **A l'atzar**: el joc tria automàticament un terreny disponible.
+
+Quan un terreny està actiu, s'aplica als dos combatents per igual i els seus efectes es mostren com a part del context global del combat.
 
 ---
 
@@ -232,6 +245,11 @@ App.java
 La documentació interna del projecte es troba a [docs](./docs), principalment a [the-broken-threshold-docs](docs/the-broken-threshold-docs/).
 
 La guia d'usuari per a jugadors es troba a [docs/user-guide](docs/user-guide/INDEX.md).
+
+Documentació de terrenys:
+
+- [Sistema de terrenys](docs/the-broken-threshold-docs/17-terrenys/01-sistema-terrenys.md)
+- [Guia de terrenys per a jugadors](docs/user-guide/04-terrenys/guia.md)
 
 ---
 

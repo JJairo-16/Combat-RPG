@@ -14,6 +14,10 @@
 - [El rostre fragmentat](01-modes-de-joc/04-rostre-fragmentat.md)
 - [Fam eterna](01-modes-de-joc/05-fam-eterna.md)
 
+### Partida
+
+- [Terrenys](04-terrenys/guia.md)
+
 ### Progrés
 
 - [Assoliments](02-assoliments/guia.md)
@@ -37,6 +41,7 @@ Els modes **El rostre fragmentat** i **Fam eterna** estan pensats per a jugadors
 - Els **assoliments** premien fites concretes.
 - Els **descobriments** omplen la wiki a mesura que trobes accions, armes, efectes i sistemes.
 - Alguns continguts poden estar ocults fins que compleixis requisits.
+- Els **terrenys** poden afegir un efecte global compartit si els actives als ajustos.
 - Les pistes dels menús serveixen per orientar-te sense revelar-ho tot.
 
 ---
