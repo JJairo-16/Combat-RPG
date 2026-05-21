@@ -26,11 +26,17 @@ final class EffectTerrainTriggerDelegate implements TerrainTriggerDelegate {
         this.effect = effect;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public EffectResult onPhase(HitContext ctx, Phase phase, Random rng, Character owner) {
         return effect == null ? EffectResult.none() : effect.onPhase(ctx, phase, rng, owner);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onRoundStart(Character owner, int roundNumber, Random rng, CombatMessageBuffer out) {
         if (effect instanceof RoundScopedEffect roundScoped) {
@@ -38,6 +44,9 @@ final class EffectTerrainTriggerDelegate implements TerrainTriggerDelegate {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onRoundEnd(Character owner) {
         if (effect instanceof RoundScopedEffect roundScoped) {
@@ -45,6 +54,9 @@ final class EffectTerrainTriggerDelegate implements TerrainTriggerDelegate {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean suppressPassiveHealthRegen(Character owner) {
         return effect instanceof EndRoundRecoveryEffect recovery

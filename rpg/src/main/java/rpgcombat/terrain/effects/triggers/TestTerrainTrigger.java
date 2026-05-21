@@ -69,6 +69,14 @@ public final class TestTerrainTrigger extends Trigger {
         return EffectResult.none();
     }
 
+    /**
+     * Llegeix un paràmetre numèric del trigger amb un valor alternatiu segur.
+     *
+     * @param params paràmetres configurats
+     * @param key clau a cercar
+     * @param fallback valor usat quan la clau no existeix
+     * @return valor resolt
+     */
     private static double number(Map<String, Double> params, String key, double fallback) {
         if (params == null || key == null) {
             return fallback;

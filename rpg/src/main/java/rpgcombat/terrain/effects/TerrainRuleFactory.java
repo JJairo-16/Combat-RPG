@@ -117,14 +117,33 @@ final class TerrainRuleFactory {
         };
     }
 
+    /**
+     * Crea un resultat de terreny amb estil de missatge de mode de joc.
+     *
+     * @param symbol símbol visual del missatge
+     * @param text text que es mostrarà al combat
+     * @return resultat preparat
+     */
     private static EffectResult gamemode(MessageSymbol symbol, String text) {
         return EffectResult.gamemode(MessageColor.CYAN, symbol, text);
     }
 
+    /**
+     * Resol el generador aleatori actiu o en crea un de reserva.
+     *
+     * @param ctx context de la regla
+     * @return generador usable
+     */
     private static Random safeRng(TerrainContext ctx) {
         return ctx.rng() == null ? new Random() : ctx.rng();
     }
 
+    /**
+     * Converteix els paràmetres d'atzar del JSON en una probabilitat acotada.
+     *
+     * @param params paràmetres de la condició
+     * @return probabilitat entre zero i u
+     */
     private static double chance(Map<String, Object> params) {
         if (params == null) {
             return 0.0;
@@ -141,24 +160,57 @@ final class TerrainRuleFactory {
         return Math.clamp(num(params, "value", 0.0), 0.0, 1.0);
     }
 
+    /**
+     * Resol el dany que la regla ha de consultar en la fase actual.
+     *
+     * @param ctx context de la regla
+     * @return dany ja aplicat o pendent de resoldre
+     */
     private static double currentDamage(TerrainContext ctx) {
         double dealt = ctx.hit().damageDealt();
         return dealt > 0 ? dealt : ctx.hit().damageToResolve();
     }
 
+    /**
+     * Retorna l'acció del combatent que conté l'efecte de terreny.
+     *
+     * @param ctx context de la regla
+     * @return acció del propietari
+     */
     private static Action ownerAction(TerrainContext ctx) {
         return ctx.owner() == ctx.hit().defender() ? ctx.hit().defenderAction() : ctx.hit().attackerAction();
     }
 
+    /**
+     * Retorna l'acció del rival del combatent propietari.
+     *
+     * @param ctx context de la regla
+     * @return acció del rival
+     */
     private static Action opponentAction(TerrainContext ctx) {
         return ctx.owner() == ctx.hit().defender() ? ctx.hit().attackerAction() : ctx.hit().defenderAction();
     }
 
+    /**
+     * Escriu el canvi percentual produït per un multiplicador.
+     *
+     * @param label text base del missatge
+     * @param multiplier multiplicador aplicat
+     * @return frase llegible per al combat
+     */
     private static String percentChangeText(String label, double multiplier) {
         double percent = round2((multiplier - 1.0) * 100.0);
         return label + " " + (percent > 0 ? "+" : "") + percent + "%.";
     }
 
+    /**
+     * Llegeix un nombre de la configuració de regla.
+     *
+     * @param params paràmetres configurats
+     * @param key clau a cercar
+     * @param def valor alternatiu
+     * @return nombre resolt
+     */
     private static double num(Map<String, Object> params, String key, double def) {
         if (params == null) {
             return def;
@@ -167,6 +219,14 @@ final class TerrainRuleFactory {
         return value instanceof Number n ? n.doubleValue() : def;
     }
 
+    /**
+     * Llegeix un text de la configuració de regla.
+     *
+     * @param params paràmetres configurats
+     * @param key clau a cercar
+     * @param def valor alternatiu
+     * @return text resolt
+     */
     private static String str(Map<String, Object> params, String key, String def) {
         if (params == null) {
             return def;
@@ -175,6 +235,13 @@ final class TerrainRuleFactory {
         return value == null ? def : value.toString();
     }
 
+    /**
+     * Comprova si una llista de configuració conté un valor textual.
+     *
+     * @param raw valor llegit del JSON
+     * @param value text cercat
+     * @return {@code true} quan el valor hi és present
+     */
     private static boolean listContains(Object raw, String value) {
         if (raw instanceof Iterable<?> items) {
             for (Object item : items) {
@@ -186,6 +253,13 @@ final class TerrainRuleFactory {
         return false;
     }
 
+    /**
+     * Converteix un text configurat en una acció de combat segura.
+     *
+     * @param params paràmetres configurats
+     * @param key clau que conté l'acció
+     * @return acció resolta
+     */
     private static Action action(Map<String, Object> params, String key) {
         try {
             return Action.valueOf(str(params, key, "ATTACK"));
@@ -194,6 +268,12 @@ final class TerrainRuleFactory {
         }
     }
 
+    /**
+     * Arrodoneix un nombre a dues xifres decimals.
+     *
+     * @param n nombre original
+     * @return nombre arrodonit
+     */
     private static double round2(double n) {
         return Math.round(n * 100.0) / 100.0;
     }

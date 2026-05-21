@@ -134,6 +134,12 @@ public final class ConfigurableTerrainEffect extends Trigger implements RoundSco
         return delegate != null && delegate.suppressPassiveHealthRegen(owner);
     }
 
+    /**
+     * Converteix els missatges del trigger delegat en missatges de mode de joc.
+     *
+     * @param result resultat original del trigger
+     * @return resultat amb el tipus de missatge normalitzat
+     */
     private EffectResult normalize(EffectResult result) {
         if (result == null || result.message() == null) {
             return result == null ? EffectResult.none() : result;
@@ -148,6 +154,12 @@ public final class ConfigurableTerrainEffect extends Trigger implements RoundSco
                 result.changedState());
     }
 
+    /**
+     * Crea el delegat personalitzat d'un terreny quan n'ha declarat un.
+     *
+     * @param terrain definició que pot apuntar a un trigger propi
+     * @return delegat preparat o {@code null} quan no hi ha trigger
+     */
     private static TerrainTriggerDelegate compileDelegate(TerrainDefinition terrain) {
         if (terrain == null || terrain.trigger() == null) {
             return null;
@@ -155,6 +167,12 @@ public final class ConfigurableTerrainEffect extends Trigger implements RoundSco
         return new EffectTerrainTriggerDelegate(TerrainTriggerFactory.create(terrain.trigger()));
     }
 
+    /**
+     * Converteix les regles genèriques del terreny en regles executables.
+     *
+     * @param terrain definició que pot contenir regles genèriques
+     * @return regles compilades
+     */
     private static List<ExecutableRuleSet> compileRuleSets(TerrainDefinition terrain) {
         if (terrain == null || terrain.rules() == null) {
             return List.of();
@@ -164,6 +182,13 @@ public final class ConfigurableTerrainEffect extends Trigger implements RoundSco
                 .toList();
     }
 
+    /**
+     * Avalua totes les condicions d'una regla sobre el context actual.
+     *
+     * @param conditions condicions compilades
+     * @param context context d'execució
+     * @return {@code true} quan totes les condicions coincideixen
+     */
     private static boolean matchesAll(List<TerrainCondition> conditions, TerrainContext context) {
         for (TerrainCondition condition : conditions) {
             if (!condition.matches(context)) {
@@ -173,6 +198,15 @@ public final class ConfigurableTerrainEffect extends Trigger implements RoundSco
         return true;
     }
 
+    /**
+     * Aplica l'abast implícit de propietari quan la regla no el declara.
+     *
+     * @param ctx context del cop
+     * @param phase fase que s'està resolent
+     * @param owner combatent que conté l'efecte
+     * @param ruleSet regla executable actual
+     * @return {@code true} quan el propietari pot executar la regla
+     */
     private boolean defaultOwnerScopeMatches(HitContext ctx, Phase phase, Character owner, ExecutableRuleSet ruleSet) {
         if (ctx == null || owner == null || hasExplicitOwnerScope(ruleSet)) {
             return true;
@@ -184,25 +218,57 @@ public final class ConfigurableTerrainEffect extends Trigger implements RoundSco
         };
     }
 
+    /**
+     * Indica si una regla ja controla explícitament el propietari.
+     *
+     * @param ruleSet regla executable
+     * @return {@code true} quan la regla declara una condició d'abast
+     */
     private boolean hasExplicitOwnerScope(ExecutableRuleSet ruleSet) {
         return ruleSet != null && ruleSet.rawConditions().stream()
                 .anyMatch(rule -> "OWNER_IS_ATTACKER".equals(rule.type()) || "OWNER_IS_DEFENDER".equals(rule.type()));
     }
 
+    /**
+     * Elimina conjunts de regles nuls abans de compilar-los.
+     *
+     * @param ruleSets conjunts declarats
+     * @return conjunts no nuls
+     */
     private static List<TerrainRuleSet> safeRuleSets(List<TerrainRuleSet> ruleSets) {
         return ruleSets == null ? List.of() : ruleSets.stream().filter(Objects::nonNull).toList();
     }
 
+    /**
+     * Elimina regles nul·les abans de convertir-les en operacions.
+     *
+     * @param rules regles declarades
+     * @return regles no nul·les
+     */
     private static List<TerrainRule> safeRules(List<TerrainRule> rules) {
         return rules == null ? List.of() : rules.stream().filter(Objects::nonNull).toList();
     }
 
+    /**
+     * Regla genèrica preparada per executar-se durant el pipeline de combat.
+     *
+     * @param trigger fase d'activació
+     * @param rawConditions condicions originals per consultar-ne l'abast
+     * @param conditions condicions compilades
+     * @param actions accions compilades
+     */
     private record ExecutableRuleSet(
             Phase trigger,
             List<TerrainRule> rawConditions,
             List<TerrainCondition> conditions,
             List<TerrainAction> actions) {
 
+        /**
+         * Compila un conjunt de regles declarat al model.
+         *
+         * @param ruleSet regla declarada
+         * @return regla executable
+         */
         private static ExecutableRuleSet from(TerrainRuleSet ruleSet) {
             List<TerrainRule> conditions = safeRules(ruleSet.conditions());
             return new ExecutableRuleSet(

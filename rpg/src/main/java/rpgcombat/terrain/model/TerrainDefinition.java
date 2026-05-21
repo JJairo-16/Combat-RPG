@@ -65,6 +65,12 @@ public record TerrainDefinition(
                 null);
     }
 
+    /**
+     * Valida i normalitza l'identificador estable d'un terreny.
+     *
+     * @param value identificador rebut
+     * @return identificador normalitzat
+     */
     private static String requireId(String value) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("El terreny necessita un id.");
@@ -72,6 +78,13 @@ public record TerrainDefinition(
         return value.trim().toUpperCase();
     }
 
+    /**
+     * Resol un text opcional amb el valor alternatiu indicat.
+     *
+     * @param value text original
+     * @param fallback text usat quan l'original és buit
+     * @return text resolt
+     */
     private static String fallback(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value.trim();
     }
