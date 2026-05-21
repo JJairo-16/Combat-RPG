@@ -107,11 +107,13 @@ public class GameLoop {
             winner = combatSystem.play(action1, action2);
             completedAchievementsLastTurn = achievementSystem.consumePendingCompletedCount();
 
-            perkSystem.resolvePendingChoices(player1);
-            perkSystem.resolvePendingChoices(player2);
+            if (winner == Winner.NONE) {
+                perkSystem.resolvePendingChoices(player1);
+                perkSystem.resolvePendingChoices(player2);
 
-            if (cinematicsOptions.antiStall() && combatSystem.preAntiStall()) {
-                CinematicBuilder.playAntiStall();
+                if (cinematicsOptions.antiStall() && combatSystem.preAntiStall()) {
+                    CinematicBuilder.playAntiStall();
+                }
             }
         } while (winner == Winner.NONE);
 
@@ -261,6 +263,7 @@ public class GameLoop {
             sb.append(HR);
         }
 
+        appendTerrainCard(sb);
         appendDivineAffinityCard(sb, player);
 
         System.out.print(sb.toString());
@@ -359,6 +362,33 @@ public class GameLoop {
 
         sb.append('\n');
         sb.append(HR);
+    }
+
+    private void appendTerrainCard(StringBuilder out) {
+        var terrain = matchContext.terrain();
+        if (terrain == null) {
+            return;
+        }
+
+        out.append(' ')
+                .append(Ansi.WHITE).append(Ansi.BOLD).append("Terreny").append(Ansi.RESET)
+                .append("  ")
+                .append(Ansi.DARK_GRAY).append('·').append(Ansi.RESET)
+                .append("  ")
+                .append(terrain.isNone() ? Ansi.DARK_GRAY : Ansi.CYAN)
+                .append(Ansi.BOLD).append(terrain.name()).append(Ansi.RESET)
+                .append('\n');
+
+        String description = terrain.shortDescription() == null || terrain.shortDescription().isBlank()
+                ? terrain.description()
+                : terrain.shortDescription();
+        for (String line : wrapCache.get(description, 78)) {
+            out.append("   ")
+                    .append(Ansi.DARK_GRAY).append(line).append(Ansi.RESET)
+                    .append('\n');
+        }
+
+        out.append(HR);
     }
 
     private void appendDivineAffinityCard(StringBuilder out, Character player) {

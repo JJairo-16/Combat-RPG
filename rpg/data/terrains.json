@@ -1,0 +1,19 @@
+[
+  {
+    "id": "TEST",
+    "name": "Terreny de prova",
+    "shortDescription": "Escenari neutre per validar triggers globals.",
+    "description": "Un escenari deliberadament simple per comprovar que el motor de terrenys aplica efectes als dos combatents per igual.",
+    "effectLines": [
+      "Els atacs fan un 500% més de dany.",
+      "Defensar redueix un 5% addicional el dany rebut."
+    ],
+    "trigger": {
+      "file": "TestTerrainTrigger",
+      "parameters": {
+        "attackDamageMultiplier": 5.0,
+        "defendDamageMultiplier": 0.95
+      }
+    }
+  }
+]

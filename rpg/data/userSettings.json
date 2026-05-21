@@ -1,3 +1,4 @@
 {
-  "showMomentumMessages": true
+  "showMomentumMessages": true,
+  "terrainSelectionMode": "NONE"
 }

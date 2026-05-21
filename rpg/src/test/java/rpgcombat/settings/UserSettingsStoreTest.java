@@ -8,6 +8,8 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
+import rpgcombat.terrain.model.TerrainSelectionMode;
+
 /** Proves de persistència dels ajustos de l'usuari. */
 class UserSettingsStoreTest {
     @Test
@@ -17,9 +19,11 @@ class UserSettingsStoreTest {
         Files.writeString(defaults, "{\"showMomentumMessages\":true}");
         UserSettingsStore store = new UserSettingsStore(defaults, tempDir.resolve("settings.json"));
 
-        store.save(new UserSettings(false));
+        store.save(new UserSettings(false, TerrainSelectionMode.MANUAL));
 
         assertFalse(store.load().showMomentumMessages());
+        org.junit.jupiter.api.Assertions.assertEquals(TerrainSelectionMode.MANUAL,
+                store.load().terrainSelectionMode());
         assertTrue(Files.exists(store.resolveAppDataPath()));
 
         String saved = Files.readString(store.resolveAppDataPath());
@@ -35,6 +39,7 @@ class UserSettingsStoreTest {
         UserSettingsStore store = new UserSettingsStore(defaults, tempDir.resolve("missing.json"));
 
         assertTrue(store.load().showMomentumMessages());
+        org.junit.jupiter.api.Assertions.assertEquals(TerrainSelectionMode.NONE, store.load().terrainSelectionMode());
     }
 
     @Test
@@ -48,5 +53,6 @@ class UserSettingsStoreTest {
         UserSettingsStore store = new UserSettingsStore(defaults, settings);
 
         assertFalse(store.load().showMomentumMessages());
+        org.junit.jupiter.api.Assertions.assertEquals(TerrainSelectionMode.NONE, store.load().terrainSelectionMode());
     }
 }

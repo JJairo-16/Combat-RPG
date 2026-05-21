@@ -181,6 +181,7 @@ public final class AppController {
 
         if (error.get() != null) {
             Prettier.error("Hi ha hagut un error durant la precàrrega.");
+            error.get().printStackTrace();
             return false;
         }
 

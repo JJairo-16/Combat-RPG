@@ -9,9 +9,7 @@ import static rpgcombat.utils.ui.Ansi.RESET;
 import static rpgcombat.utils.ui.Ansi.YELLOW;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.jline.keymap.BindingReader;
 import org.jline.keymap.KeyMap;
@@ -21,6 +19,7 @@ import org.jline.utils.InfoCmp.Capability;
 import rpgcombat.config.paths.PathsConfig;
 import rpgcombat.settings.UserSettings;
 import rpgcombat.settings.UserSettingsStore;
+import rpgcombat.terrain.model.TerrainSelectionMode;
 import rpgcombat.utils.terminal.SharedTerminal;
 import rpgcombat.utils.terminal.TerminalInput;
 import rpgcombat.utils.terminal.TerminalSession;
@@ -46,7 +45,6 @@ public final class SettingsScreen {
     private boolean resizePending;
     private int terminalWidth;
     private int terminalHeight;
-    private final Map<String, String> paintedCells = new HashMap<>();
 
     private SettingsScreen(UserSettings initialSettings, UserSettingsStore store) {
         this.store = store == null
@@ -113,8 +111,12 @@ public final class SettingsScreen {
                 moveCursor(1, terminal);
                 yield false;
             }
-            case LEFT, RIGHT -> {
-                adjustCurrentOption(terminal);
+            case LEFT -> {
+                adjustCurrentOption(terminal, -1);
+                yield false;
+            }
+            case RIGHT -> {
+                adjustCurrentOption(terminal, 1);
                 yield false;
             }
             case SELECT -> handleSelectedAction(terminal);
@@ -129,8 +131,8 @@ public final class SettingsScreen {
 
     private boolean handleSelectedAction(Terminal terminal) {
         return switch (currentAction()) {
-            case TOGGLE_MOMENTUM_MESSAGES -> {
-                adjustCurrentOption(terminal);
+            case TOGGLE_MOMENTUM_MESSAGES, TERRAIN_SELECTION -> {
+                adjustCurrentOption(terminal, 1);
                 yield false;
             }
         };
@@ -142,12 +144,13 @@ public final class SettingsScreen {
         renderAll(terminal, false);
     }
 
-    private void adjustCurrentOption(Terminal terminal) {
-        if (currentAction() != SettingAction.TOGGLE_MOMENTUM_MESSAGES) {
-            return;
+    private void adjustCurrentOption(Terminal terminal, int direction) {
+        switch (currentAction()) {
+            case TOGGLE_MOMENTUM_MESSAGES -> draft.showMomentumMessages = !draft.showMomentumMessages;
+            case TERRAIN_SELECTION -> draft.terrainSelectionMode = direction < 0
+                    ? draft.terrainSelectionMode.previous()
+                    : draft.terrainSelectionMode.next();
         }
-
-        draft.showMomentumMessages = !draft.showMomentumMessages;
         message = "";
         renderAll(terminal, false);
     }
@@ -239,7 +242,6 @@ public final class SettingsScreen {
     private void renderAll(Terminal terminal, boolean clearFirst) {
         if (clearFirst) {
             clear(terminal);
-            paintedCells.clear();
         }
         replaceLine(terminal, TITLE_ROW, LEFT_COL, BOLD + CYAN + "Ajustos" + RESET);
         renderOptions(terminal);
@@ -256,6 +258,10 @@ public final class SettingsScreen {
                 SettingAction.TOGGLE_MOMENTUM_MESSAGES,
                 "Missatges d'impuls",
                 draft.showMomentumMessages ? "Activats" : "Desactivats"));
+        replaceLine(terminal, OPTIONS_ROW + 3, CONTENT_COL, optionLine(
+                SettingAction.TERRAIN_SELECTION,
+                "Terreny",
+                draft.terrainSelectionMode.label()));
     }
 
     private void renderStatus(Terminal terminal) {
@@ -278,6 +284,9 @@ public final class SettingsScreen {
         int row = detailStartRow();
         replaceLine(terminal, row++, col, sectionTitle("Detall"));
         row++;
+        for (int clearRow = row; clearRow < row + 10; clearRow++) {
+            replaceLine(terminal, clearRow, col, "");
+        }
         List<String> lines = detailLines();
         for (String line : lines) {
             replaceLine(terminal, row++, col, line);
@@ -301,6 +310,16 @@ public final class SettingsScreen {
                     "guanya, perd o aprofita l'impuls acumulat.",
                     "",
                     DARK_GRAY + "El càlcul de combat no canvia; només canvia el text." + RESET);
+            case TERRAIN_SELECTION -> List.of(
+                    BOLD + "Terreny" + RESET,
+                    "",
+                    "Defineix com es tria l'escenari global de combat.",
+                    "",
+                    GREEN + "Sense terreny" + RESET + ": no aplica cap modificador.",
+                    GREEN + "Manual" + RESET + ": obre la pantalla interactiva abans del combat.",
+                    GREEN + "A l'atzar" + RESET + ": tria automàticament un terreny disponible.",
+                    "",
+                    DARK_GRAY + "Els terrenys afecten els dos combatents per igual." + RESET);
         };
     }
 
@@ -342,22 +361,21 @@ public final class SettingsScreen {
     }
 
     private void replaceLine(Terminal terminal, int row, int col, String text) {
+        if (row < 1 || row > terminalHeight || col < 1 || col > terminalWidth) {
+            return;
+        }
         String safeText = text == null ? "" : text;
         int padding = Math.max(0, spanWidth(col) - visibleLength(safeText));
         String rendered = safeText + " ".repeat(padding);
-        String key = row + ":" + col;
-        if (rendered.equals(paintedCells.get(key))) {
-            return;
-        }
-        paintedCells.put(key, rendered);
         write(terminal, row, col, rendered);
     }
 
     private int spanWidth(int col) {
+        int available = Math.max(1, terminalWidth - col + 1);
         if (col >= RIGHT_COL) {
-            return RIGHT_BOX_WIDTH;
+            return Math.min(RIGHT_BOX_WIDTH, available);
         }
-        return Math.max(1, FULL_LINE_WIDTH - col);
+        return Math.clamp(FULL_LINE_WIDTH - (long) col, 1, available);
     }
 
     private void write(Terminal terminal, int row, int col, String text) {
@@ -388,7 +406,8 @@ public final class SettingsScreen {
     }
 
     private enum SettingAction {
-        TOGGLE_MOMENTUM_MESSAGES
+        TOGGLE_MOMENTUM_MESSAGES,
+        TERRAIN_SELECTION
     }
 
     private enum InputAction {
@@ -404,15 +423,17 @@ public final class SettingsScreen {
 
     private static final class Draft {
         private boolean showMomentumMessages;
+        private TerrainSelectionMode terrainSelectionMode;
 
         private static Draft from(UserSettings settings) {
             Draft draft = new Draft();
             draft.showMomentumMessages = settings.showMomentumMessages();
+            draft.terrainSelectionMode = settings.terrainSelectionMode();
             return draft;
         }
 
         private UserSettings toSettings() {
-            return new UserSettings(showMomentumMessages);
+            return new UserSettings(showMomentumMessages, terrainSelectionMode);
         }
     }
 }

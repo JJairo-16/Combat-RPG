@@ -11,6 +11,7 @@ public record PathsConfig(
         String perksConfig,
         String divinePerksConfig,
         String synergiesConfig,
+        String terrainsConfig,
         String achievementsConfig,
         String achievementSaveFile,
         String discoveryCatalogConfig,
@@ -30,6 +31,7 @@ public record PathsConfig(
     public static final String DEFAULT_PERKS_CONFIG = perks("perks.json");
     public static final String DEFAULT_DIVINE_PERKS_CONFIG = perks("divinePerks.json");
     public static final String DEFAULT_SYNERGIES_CONFIG = perks("synergies.json");
+    public static final String DEFAULT_TERRAINS_CONFIG = "rpg/data/terrains.json";
 
     public static final String DEFAULT_ACHIEVEMENTS_CONFIG = "rpg/data/achievements.json";
     public static final String DEFAULT_ACHIEVEMENT_SAVE_FILE = "achievements.json";
@@ -48,6 +50,7 @@ public record PathsConfig(
         perksConfig = fallback(perksConfig, DEFAULT_PERKS_CONFIG);
         divinePerksConfig = fallback(divinePerksConfig, DEFAULT_DIVINE_PERKS_CONFIG);
         synergiesConfig = fallback(synergiesConfig, DEFAULT_SYNERGIES_CONFIG);
+        terrainsConfig = fallback(terrainsConfig, DEFAULT_TERRAINS_CONFIG);
         achievementsConfig = fallback(achievementsConfig, DEFAULT_ACHIEVEMENTS_CONFIG);
         achievementSaveFile = fallback(achievementSaveFile, DEFAULT_ACHIEVEMENT_SAVE_FILE);
         discoveryCatalogConfig = fallback(discoveryCatalogConfig, DEFAULT_DISCOVERY_CATALOG_CONFIG);
@@ -67,6 +70,7 @@ public record PathsConfig(
                 DEFAULT_PERKS_CONFIG,
                 DEFAULT_DIVINE_PERKS_CONFIG,
                 DEFAULT_SYNERGIES_CONFIG,
+                DEFAULT_TERRAINS_CONFIG,
                 DEFAULT_ACHIEVEMENTS_CONFIG,
                 DEFAULT_ACHIEVEMENT_SAVE_FILE,
                 DEFAULT_DISCOVERY_CATALOG_CONFIG,

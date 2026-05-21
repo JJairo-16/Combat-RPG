@@ -15,6 +15,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import rpgcombat.persistence.AppDataPaths;
+import rpgcombat.terrain.model.TerrainSelectionMode;
 
 /** Llegeix i desa els ajustos de l'usuari a l'AppData del dispositiu. */
 public final class UserSettingsStore {
@@ -49,21 +50,21 @@ public final class UserSettingsStore {
 
     /** Desa els ajustos de manera segura. */
     public void save(UserSettings settings) throws IOException {
-        Path savePath = resolveAppDataPath();
+        Path localSavePath = resolveAppDataPath();
         UserSettings safeSettings = settings == null ? UserSettings.defaults() : settings;
-        if (savePath.getParent() != null) {
-            Files.createDirectories(savePath.getParent());
+        if (localSavePath.getParent() != null) {
+            Files.createDirectories(localSavePath.getParent());
         }
 
-        Path tmp = savePath.resolveSibling(savePath.getFileName() + ".tmp");
+        Path tmp = localSavePath.resolveSibling(localSavePath.getFileName() + ".tmp");
         try (Writer writer = Files.newBufferedWriter(tmp, StandardCharsets.UTF_8)) {
             GSON.toJson(SettingsData.from(safeSettings), writer);
         }
 
         try {
-            Files.move(tmp, savePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            Files.move(tmp, localSavePath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException atomicError) {
-            Files.move(tmp, savePath, StandardCopyOption.REPLACE_EXISTING);
+            Files.move(tmp, localSavePath, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
@@ -86,7 +87,8 @@ public final class UserSettingsStore {
 
     private UserSettings merge(JsonObject json, UserSettings fallback) {
         return new UserSettings(
-                getBoolean(json, "showMomentumMessages", fallback.showMomentumMessages()));
+                getBoolean(json, "showMomentumMessages", fallback.showMomentumMessages()),
+                getTerrainSelectionMode(json, fallback.terrainSelectionMode()));
     }
 
     private boolean getBoolean(JsonObject json, String key, boolean fallback) {
@@ -96,9 +98,16 @@ public final class UserSettingsStore {
         return json.get(key).getAsBoolean();
     }
 
-    private record SettingsData(boolean showMomentumMessages) {
+    private TerrainSelectionMode getTerrainSelectionMode(JsonObject json, TerrainSelectionMode fallback) {
+        if (!json.has("terrainSelectionMode") || json.get("terrainSelectionMode").isJsonNull()) {
+            return fallback;
+        }
+        return TerrainSelectionMode.from(json.get("terrainSelectionMode").getAsString(), fallback);
+    }
+
+    private record SettingsData(boolean showMomentumMessages, TerrainSelectionMode terrainSelectionMode) {
         private static SettingsData from(UserSettings settings) {
-            return new SettingsData(settings.showMomentumMessages());
+            return new SettingsData(settings.showMomentumMessages(), settings.terrainSelectionMode());
         }
     }
 }
