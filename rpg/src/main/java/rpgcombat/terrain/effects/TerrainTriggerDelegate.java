@@ -51,4 +51,15 @@ interface TerrainTriggerDelegate {
     default boolean suppressPassiveHealthRegen(Character owner) {
         return false;
     }
+
+    /**
+     * Consulta una pista curta que el menú d'accions pot mostrar abans de triar.
+     *
+     * @param owner combatent propietari
+     * @param nextRound ronda que començarà després de triar accions
+     * @return pista visible o text buit quan el trigger no en necessita
+     */
+    default String actionMenuHint(Character owner, int nextRound) {
+        return "";
+    }
 }

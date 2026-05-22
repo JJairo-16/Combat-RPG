@@ -48,10 +48,13 @@ Controls habituals:
 Fixa't sobretot en:
 
 - el resum curt
+- la dificultat en estrelles
 - la descripció
 - la llista d'efectes
 
 Si un terreny diu que modifica atacs, defenses o recursos, assumeix que la partida sencera girarà una mica al voltant d'això. El mateix efecte pot ajudar-te en un torn i afavorir el rival en el següent.
+
+Alguns terrenys necessiten anunciar què demanen aquesta ronda. Quan passi, el menú d'accions mostrarà una nota breu del terreny al panell de progrés perquè puguis decidir abans de triar.
 
 ---
 
@@ -59,10 +62,14 @@ Si un terreny diu que modifica atacs, defenses o recursos, assumeix que la parti
 
 Ara mateix pots trobar:
 
-- **Cap terreny**: combat sense efectes d'escenari.
-- **Terreny de prova**: escenari pensat per comprovar el funcionament dels efectes globals.
+- **La Campana del Primer Cop**: cada combatent intenta fer sonar el seu primer impacte de la ronda.
+- **El Pont Estret**: atacar alhora converteix el duel en un xoc obert.
+- **Els Fanals Apagats**: un fanal marca una acció diferent cada ronda.
+- **El Fossar de les Veus**: les veus conviden els dos combatents a repetir un mateix gest.
+- **Les Cadenes del Llindar**: triar diferent tensa el vincle fins que arrossega el següent cop.
+- **La Porta que Respira**: la partida alterna entre guardar alè i alliberar-lo.
 
-El terreny de prova no està pensat com una experiència equilibrada de partida normal.
+També pots jugar amb **Cap terreny**. Aquesta opció no forma part dels descobriments: és la manera de continuar sense un pacte d'escenari afegit.
 
 ---
 

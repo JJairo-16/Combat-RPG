@@ -30,6 +30,7 @@ public class MenuCenter {
     private final MenuStatusModifier mod2;
     private final GameModeRules rules;
     private Function<Character, String> missionTextProvider = player -> "";
+    private Function<Character, String> terrainHintTextProvider = player -> "";
 
     private int completedAchievementsBadgeCount;
 
@@ -85,9 +86,14 @@ public class MenuCenter {
         this.missionTextProvider = missionTextProvider == null ? player -> "" : missionTextProvider;
     }
 
+    public void setTerrainHintTextProvider(Function<Character, String> terrainHintTextProvider) {
+        this.terrainHintTextProvider = terrainHintTextProvider == null ? player -> "" : terrainHintTextProvider;
+    }
+
     public Action playPlayer1() {
         selector1.setInformationVisible(infoVisible1);
         selector1.setProgressText(missionTextProvider.apply(player1));
+        selector1.setTerrainHintText(terrainHintTextProvider.apply(player1));
         selector1.setCompletedAchievementsBadgeCount(completedAchievementsBadgeCount);
 
         mod1.mod(BASE_SNAP);
@@ -95,12 +101,14 @@ public class MenuCenter {
 
         this.infoVisible1 = selector1.getInformationVisible();
         selector1.setProgressText("");
+        selector1.setTerrainHintText("");
         return action;
     }
 
     public Action playPlayer2() {
         selector2.setInformationVisible(infoVisible2);
         selector2.setProgressText(missionTextProvider.apply(player2));
+        selector2.setTerrainHintText(terrainHintTextProvider.apply(player2));
         selector2.setCompletedAchievementsBadgeCount(completedAchievementsBadgeCount);
 
         mod2.mod(BASE_SNAP);
@@ -108,6 +116,7 @@ public class MenuCenter {
 
         this.infoVisible2 = selector2.getInformationVisible();
         selector2.setProgressText("");
+        selector2.setTerrainHintText("");
         return action;
     }
 

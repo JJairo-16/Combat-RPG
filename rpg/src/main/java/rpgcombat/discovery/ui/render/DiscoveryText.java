@@ -189,6 +189,10 @@ public final class DiscoveryText {
             String value = line.substring(colon + 1);
 
             out.append(BOLD).append(WHITE).append(label).append(RESET);
+            if (isDifficultyLabel(label)) {
+                appendDifficultyStars(out, value);
+                return out.toString();
+            }
             appendColoredValue(out, value, styleForLabel(label));
             return out.toString();
         }
@@ -380,6 +384,36 @@ public final class DiscoveryText {
         }
 
         return WHITE;
+    }
+
+    /** Indica si un camp del detall representa la dificultat d'un terreny. */
+    private static boolean isDifficultyLabel(String label) {
+        return lower(label).contains("dificultat");
+    }
+
+    /** Acoloreix les estrelles de dificultat amb la mateixa escala que el selector. */
+    private static void appendDifficultyStars(StringBuilder out, String value) {
+        String safe = value == null ? "" : value;
+        long stars = safe.chars().filter(ch -> ch == '★').count();
+        String filledColor = switch ((int) Math.clamp(stars, 0, 5)) {
+            case 0 -> DARK_GRAY;
+            case 1 -> GREEN;
+            case 2 -> CYAN;
+            case 3 -> YELLOW;
+            case 4 -> ORANGE;
+            default -> RED;
+        };
+
+        for (int i = 0; i < safe.length(); i++) {
+            char ch = safe.charAt(i);
+            if (ch == '★') {
+                out.append(filledColor).append(ch).append(RESET);
+            } else if (ch == '☆') {
+                out.append(DARK_GRAY).append(ch).append(RESET);
+            } else {
+                out.append(ch);
+            }
+        }
     }
 
     /** Indica si comença un número. */

@@ -26,6 +26,7 @@ La wiki pot incloure categories com:
 - perks
 - perks divines
 - sinergies
+- terrenys
 
 Algunes categories poden créixer a mesura que apareixen nous sistemes o quan el joc genera entrades a partir del que ja existeix.
 
@@ -44,6 +45,7 @@ Les entrades poden desbloquejar-se quan:
 - actives una perk divina
 - veus una sinergia
 - jugues o desbloqueges un mode
+- deixes que un terreny governi una partida
 - apareix un fragment del Rostre fragmentat
 
 La manera més fiable d'omplir la wiki és variar les partides.

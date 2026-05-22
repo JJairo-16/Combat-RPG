@@ -20,6 +20,8 @@ import rpgcombat.gamemode.model.MatchContext;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
+import rpgcombat.models.effects.Effect;
+import rpgcombat.models.effects.types.ActionMenuHintEffect;
 import rpgcombat.models.effects.triggers.gamemode.Chaos;
 import rpgcombat.perks.CombatPerkSystem;
 
@@ -80,6 +82,7 @@ public class GameLoop {
         this.menu = new MenuCenter(player1, player2, this::changeWeapon, this::showPlayerInfoWrapper, modifiers,
                 information, rules);
         this.menu.setMissionTextProvider(perkSystem::missionSummary);
+        this.menu.setTerrainHintTextProvider(this::actionMenuHints);
         this.cinematicsOptions = cinematicsOptions;
         this.homeScreenConfig = homeScreenConfig;
         this.achievementSystem = achievementSystem;
@@ -379,6 +382,13 @@ public class GameLoop {
                 .append(Ansi.BOLD).append(terrain.name()).append(Ansi.RESET)
                 .append('\n');
 
+        if (!terrain.isNone()) {
+            out.append("   ")
+                    .append(Ansi.DARK_GRAY).append("Dificultat: ").append(Ansi.RESET)
+                    .append(terrainDifficultyStars(terrain.difficulty()))
+                    .append('\n');
+        }
+
         String description = terrain.shortDescription() == null || terrain.shortDescription().isBlank()
                 ? terrain.description()
                 : terrain.shortDescription();
@@ -389,6 +399,43 @@ public class GameLoop {
         }
 
         out.append(HR);
+    }
+
+    /** Recull pistes d'efectes que necessiten parlar abans de triar acció. */
+    private String actionMenuHints(Character player) {
+        if (player == null) {
+            return "";
+        }
+
+        StringBuilder hints = new StringBuilder();
+        for (Effect effect : player.getEffects()) {
+            if (!(effect instanceof ActionMenuHintEffect hint)) {
+                continue;
+            }
+            String text = hint.actionMenuHint(player, combatSystem.roundNumber() + 1);
+            if (text == null || text.isBlank()) {
+                continue;
+            }
+            if (!hints.isEmpty()) {
+                hints.append("\n\n");
+            }
+            hints.append(text.trim());
+        }
+        return hints.toString();
+    }
+
+    /** Dona color a la dificultat visible d'un terreny. */
+    private String terrainDifficultyStars(int difficulty) {
+        int stars = Math.clamp(difficulty, 0, 5);
+        String color = switch (stars) {
+            case 0 -> Ansi.DARK_GRAY;
+            case 1 -> Ansi.GREEN;
+            case 2 -> Ansi.CYAN;
+            case 3 -> Ansi.YELLOW;
+            case 4 -> Ansi.ORANGE;
+            default -> Ansi.RED;
+        };
+        return color + "★".repeat(stars) + Ansi.DARK_GRAY + "☆".repeat(5 - stars) + Ansi.RESET;
     }
 
     private void appendDivineAffinityCard(StringBuilder out, Character player) {

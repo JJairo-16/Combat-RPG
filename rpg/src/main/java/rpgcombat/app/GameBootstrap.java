@@ -7,6 +7,8 @@ import rpgcombat.config.debug.DebugRuntime;
 import rpgcombat.config.ui.CinematicsOptions;
 import rpgcombat.creator.CharacterCreator;
 import rpgcombat.creator.CharacterCreationOptions;
+import rpgcombat.discovery.DiscoveryCategory;
+import rpgcombat.discovery.DiscoveryRuntime;
 import rpgcombat.game.GameLoop;
 import rpgcombat.game.cinematics.CinematicBuilder;
 import rpgcombat.gamemode.chaos.ChaosPolicy;
@@ -62,6 +64,12 @@ public class GameBootstrap {
         clearBetweenCharactersIfNeeded();
         Character p2 = createCharacter(config.characters().player2(), creationOptions);
         TerrainDefinition effectiveTerrain = terrain == null ? selectTerrain() : terrain;
+        if (!effectiveTerrain.isNone()) {
+            DiscoveryRuntime.discover(DiscoveryCategory.TERRAINS, effectiveTerrain.id());
+            if (achievementSystem != null) {
+                achievementSystem.onTerrainSelected(effectiveTerrain.id());
+            }
+        }
 
         p1.setSpecialActionsEnabled(effectiveMode.rules().specialActionsEnabled());
         p2.setSpecialActionsEnabled(effectiveMode.rules().specialActionsEnabled());

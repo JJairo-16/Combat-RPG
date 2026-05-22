@@ -6,6 +6,7 @@ import rpgcombat.combat.ui.messages.CombatMessageBuffer;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.EffectResult;
+import rpgcombat.models.effects.types.ActionMenuHintEffect;
 import rpgcombat.models.effects.types.EndRoundRecoveryEffect;
 import rpgcombat.models.effects.types.RoundScopedEffect;
 import rpgcombat.weapons.passives.HitContext;
@@ -61,5 +62,15 @@ final class EffectTerrainTriggerDelegate implements TerrainTriggerDelegate {
     public boolean suppressPassiveHealthRegen(Character owner) {
         return effect instanceof EndRoundRecoveryEffect recovery
                 && recovery.suppressPassiveHealthRegen(owner);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String actionMenuHint(Character owner, int nextRound) {
+        return effect instanceof ActionMenuHintEffect hint
+                ? hint.actionMenuHint(owner, nextRound)
+                : "";
     }
 }

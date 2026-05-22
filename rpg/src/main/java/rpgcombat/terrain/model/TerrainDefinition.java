@@ -9,6 +9,7 @@ import java.util.List;
  * @param name nom que es mostra al jugador
  * @param shortDescription resum curt per als selectors
  * @param description descripció detallada del terreny
+ * @param difficulty dificultat visible del terreny, entre {@code 0} i {@code 5}
  * @param effectLines línies llegibles amb els efectes principals
  * @param rules regles del motor genèric, si el terreny no delega en un trigger
  * @param trigger trigger personalitzat, si el terreny no usa regles genèriques
@@ -18,6 +19,7 @@ public record TerrainDefinition(
         String name,
         String shortDescription,
         String description,
+        int difficulty,
         List<String> effectLines,
         TerrainRulesDefinition rules,
         TerrainTriggerDefinition trigger) {
@@ -32,6 +34,7 @@ public record TerrainDefinition(
         name = fallback(name, id);
         shortDescription = shortDescription == null ? "" : shortDescription;
         description = description == null ? "" : description;
+        difficulty = Math.clamp(difficulty, 0, 5);
         effectLines = effectLines == null ? List.of() : List.copyOf(effectLines);
         if (rules != null && trigger != null) {
             throw new IllegalArgumentException("El terreny " + id + " no pot declarar rules i trigger alhora.");
@@ -58,9 +61,10 @@ public record TerrainDefinition(
         return new TerrainDefinition(
                 NONE_ID,
                 "Cap terreny",
-                "Combat sense modificadors d'escenari.",
-                "No s'aplica cap efecte global. El combat funciona amb les regles del mode seleccionat.",
-                List.of("Sense efectes addicionals."),
+                "El llindar queda nu sota els combatents.",
+                "Cap lloc reclama aquest duel. Només el mode triat dicta el pacte i la sang decideix la resta.",
+                0,
+                List.of("La terra no pren partit."),
                 null,
                 null);
     }

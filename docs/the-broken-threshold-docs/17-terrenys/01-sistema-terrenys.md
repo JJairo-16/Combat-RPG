@@ -21,7 +21,7 @@ Els missatges que produeix un terreny es mostren com a missatges de mode de joc.
 ## ▌Flux
 
 1. `ResourcePreloader` carrega `paths.terrainsConfig`
-2. `TerrainRegistry` conserva el catàleg i l'opció `Cap terreny`
+2. `TerrainRegistry` conserva el catàleg i l'opció neutra `Cap terreny`
 3. es creen els dos personatges
 4. `GameBootstrap` consulta `UserSettingsRuntime.terrainSelectionMode()`
 5. el terreny es resol com a neutre, aleatori o manual
@@ -46,6 +46,7 @@ MatchContext matchContext = new MatchContext(effectiveMode, chaosActive, effecti
 - `terrain/effects/TerrainRuleFactory.java`
 - `terrain/effects/TerrainTriggerFactory.java`
 - `terrain/ui/TerrainSelectionScreen.java`
+- `models/effects/types/ActionMenuHintEffect.java`
 
 ---
 
@@ -71,7 +72,9 @@ El selector manual mostra informació del terreny seleccionat i una graella de c
 
 ## ▌Definició JSON
 
-El catàleg viu a `rpg/data/terrains.json`. `TerrainLoader` hi afegeix sempre el terreny neutre; per això no cal declarar `Cap terreny` dins el JSON.
+El catàleg viu a `rpg/data/terrains.json`. `TerrainLoader` hi afegeix sempre el terreny neutre; per això no cal declarar `Cap terreny` dins el JSON i aquest no crea cap entrada de descobriment.
+
+El catàleg jugable conté terrenys de lectura ràpida i terrenys amb ritme propi. `TestTerrainTrigger` es manté com a exemple tècnic de trigger personalitzat, però no forma part del catàleg jugable.
 
 Cada definició ha d'escollir una sola via d'execució:
 
@@ -80,12 +83,15 @@ Cada definició ha d'escollir una sola via d'execució:
 
 No es poden declarar les dues alhora.
 
+Exemple de definició que delega en aquest trigger:
+
 ```json
 {
   "id": "TEST",
   "name": "Terreny de prova",
   "shortDescription": "Escenari neutre per validar triggers globals.",
   "description": "Un escenari simple per comprovar el motor de terrenys.",
+  "difficulty": 2,
   "effectLines": [
     "Els atacs fan un 500% més de dany."
   ],
@@ -103,7 +109,10 @@ Els camps de presentació alimenten el selector i la fitxa que mostra el loop al
 - `name`
 - `shortDescription`
 - `description`
+- `difficulty`, de `0` a `5`
 - `effectLines`
+
+El selector i la fitxa de combat mostren `difficulty` com una escala de cinc estrelles acolorides.
 
 ---
 
@@ -186,6 +195,16 @@ rpg/src/main/java/rpgcombat/terrain/effects/triggers
 
 Aquest camí és l'adequat quan el terreny ha de fer més que una combinació de condicions i accions genèriques.
 
+Quan un trigger necessita donar una pista abans de triar acció, pot implementar `ActionMenuHintEffect`. `ConfigurableTerrainEffect` la propaga i el menú la llegeix com una secció compacta del panell de progrés:
+
+```java
+public String actionMenuHint(Character owner, int nextRound) {
+    return "El terreny anuncia el gest que demanarà aquesta ronda.";
+}
+```
+
+Això evita que el menú conegui terrenys concrets i permet reservar el panell d'accions per pistes curtes com les del Fossar de les Veus o els Fanals Apagats.
+
 ---
 
 ## ▌Regles de disseny
@@ -193,6 +212,8 @@ Aquest camí és l'adequat quan el terreny ha de fer més que una combinació de
 - un terreny sempre afecta els dos combatents
 - cada combatent rep la seva instància de l'efecte
 - el terreny neutre no aplica modificadors
+- només els terrenys reals generen descobriments i progrés d'assoliments
+- les pistes de menú es publiquen via `ActionMenuHintEffect`, no des de la UI del trigger
 - el selector manual només s'obre en mode de selecció `MANUAL`
 - els textos del selector han d'explicar l'efecte sense convertir el terreny en una regla oculta
 

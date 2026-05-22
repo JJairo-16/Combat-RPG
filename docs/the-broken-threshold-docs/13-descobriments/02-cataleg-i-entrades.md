@@ -26,6 +26,7 @@ El catàleg genera entrades per contingut registrat:
 - missions des de `MissionRegistry`
 - accions des d'`Action.values()`
 - sinergies des de `SynergyRegistry`
+- terrenys des de `TerrainRegistry`, excloent l'opció neutra
 
 Les entrades automàtiques donen una base funcional encara que no hi hagi cap override manual.
 

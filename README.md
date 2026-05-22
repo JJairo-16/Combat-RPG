@@ -163,6 +163,8 @@ La forma de triar-los es controla des dels **Ajustos**:
 
 Quan un terreny està actiu, s'aplica als dos combatents per igual i els seus efectes es mostren com a part del context global del combat.
 
+Alguns terrenys anuncien una pista curta al menú d'accions quan la seva regla depèn de la ronda actual. El selector mostra la dificultat del terreny amb estrelles abans de triar-lo.
+
 ---
 
 ## ▌Dependències

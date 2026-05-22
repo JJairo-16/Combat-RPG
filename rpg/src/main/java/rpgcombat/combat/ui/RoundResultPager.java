@@ -674,31 +674,35 @@ public final class RoundResultPager {
         if (index < visible.length()) {
             int afterGlyph = index + 1;
             if (afterGlyph < visible.length() && java.lang.Character.isWhitespace(visible.charAt(afterGlyph))) {
-                return " ".repeat(afterGlyph + 1) + leadingAnsiStyle(text);
+                return " ".repeat(afterGlyph + 1) + activeAnsiStyleAt(text, afterGlyph + 1);
             }
         }
 
-        return " ".repeat(index) + leadingAnsiStyle(text);
+        return " ".repeat(index) + activeAnsiStyleAt(text, index);
     }
 
-    private String leadingAnsiStyle(String text) {
+    private String activeAnsiStyleAt(String text, int visibleOffset) {
         int index = 0;
+        int visible = 0;
+        String style = "";
+
         while (index < text.length()) {
             int ansiEnd = ansiSequenceEnd(text, index);
             if (ansiEnd > index) {
                 String sequence = text.substring(index, ansiEnd);
-                if (!Ansi.RESET.equals(sequence)) {
-                    return sequence;
-                }
+                style = Ansi.RESET.equals(sequence) ? "" : sequence;
                 index = ansiEnd;
                 continue;
             }
-            if (!java.lang.Character.isWhitespace(text.charAt(index))) {
-                return "";
+
+            if (visible >= visibleOffset) {
+                break;
             }
+
             index++;
+            visible++;
         }
-        return "";
+        return style;
     }
 
     private int ansiSequenceEnd(String text, int start) {

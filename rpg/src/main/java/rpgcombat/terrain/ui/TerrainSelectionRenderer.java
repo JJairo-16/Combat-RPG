@@ -13,9 +13,11 @@ import static rpgcombat.utils.ui.Ansi.BOLD;
 import static rpgcombat.utils.ui.Ansi.CYAN;
 import static rpgcombat.utils.ui.Ansi.DARK_GRAY;
 import static rpgcombat.utils.ui.Ansi.GREEN;
+import static rpgcombat.utils.ui.Ansi.ORANGE;
 import static rpgcombat.utils.ui.Ansi.RED;
 import static rpgcombat.utils.ui.Ansi.RESET;
 import static rpgcombat.utils.ui.Ansi.WHITE;
+import static rpgcombat.utils.ui.Ansi.YELLOW;
 
 /**
  * Pinta el selector de terrenys per zones fixes del terminal.
@@ -30,11 +32,13 @@ final class TerrainSelectionRenderer {
     private static final int CONTROL_SEPARATOR_OFFSET = 4;
     private static final int INFO_MIN_WIDTH = 46;
     private static final int INFO_MAX_WIDTH = 72;
-    private static final int CARD_MIN_WIDTH = 18;
-    private static final int CARD_MAX_WIDTH = 25;
-    private static final int CARD_HEIGHT = 5;
-    private static final int CARD_COLUMN_GAP = 3;
-    private static final int CARD_ROW_GAP = 1;
+    private static final int CARD_MIN_WIDTH = 24;
+    private static final int CARD_MAX_WIDTH = 34;
+    private static final int CARD_HEIGHT = 6;
+    private static final int CARD_COLUMN_GAP = 2;
+    private static final int CARD_ROW_GAP = 2;
+    private static final int CARD_HORIZONTAL_PADDING = 2;
+    private static final int CARD_TITLE_ROWS = 2;
 
     /**
      * Calcula la vista actual a partir de la mida del terminal.
@@ -146,6 +150,10 @@ final class TerrainSelectionRenderer {
             writeAt(terminal, row++, contentCol,
                     DARK_GRAY + fit(terrain.shortDescription(), contentWidth) + RESET);
         }
+        if (!terrain.isNone() && row <= lastContentRow) {
+            writeAt(terminal, row++, contentCol,
+                    DARK_GRAY + "Dificultat: " + RESET + fit(difficultyStars(terrain.difficulty()), contentWidth - 12));
+        }
         if (row <= lastContentRow) {
             writeAt(terminal, row++, contentCol, fit("", contentWidth));
         }
@@ -169,12 +177,14 @@ final class TerrainSelectionRenderer {
                 ? List.of("Sense efectes addicionals.")
                 : terrain.effectLines();
         for (String effect : effects) {
-            for (String line : wrap(effect, Math.max(1, contentWidth - 2), lastContentRow - row + 1)) {
+            List<String> wrapped = wrap(effect, Math.max(1, contentWidth - 2), lastContentRow - row + 1);
+            for (int index = 0; index < wrapped.size(); index++) {
                 if (row > lastContentRow) {
                     break;
                 }
+                String prefix = index == 0 ? GREEN + "· " + RESET : "  ";
                 writeAt(terminal, row++, contentCol,
-                        GREEN + "· " + RESET + fit(line, Math.max(1, contentWidth - 2)));
+                        prefix + fit(wrapped.get(index), Math.max(1, contentWidth - 2)));
             }
             if (row > lastContentRow) {
                 break;
@@ -309,18 +319,25 @@ final class TerrainSelectionRenderer {
         String bottomLeft = selected ? "╚" : "└";
         String bottomRight = selected ? "╝" : "┘";
         int innerWidth = Math.max(0, width - 2);
+        int titleWidth = Math.max(1, innerWidth - CARD_HORIZONTAL_PADDING * 2);
+        List<String> titleLines = wrap(terrain.name(), titleWidth, CARD_TITLE_ROWS);
 
         writeAt(terminal, row, col,
                 borderColor + topLeft + horizontal.repeat(innerWidth) + topRight + RESET);
         writeAt(terminal, row + 1, col,
                 borderColor + vertical + RESET + fit("", innerWidth) + borderColor + vertical + RESET);
-        writeAt(terminal, row + 2, col,
-                borderColor + vertical + RESET
-                        + titleColor + centered(terrain.name(), innerWidth) + RESET
-                        + borderColor + vertical + RESET);
-        writeAt(terminal, row + 3, col,
+        for (int titleRow = 0; titleRow < CARD_TITLE_ROWS; titleRow++) {
+            String title = titleRow < titleLines.size() ? titleLines.get(titleRow) : "";
+            writeAt(terminal, row + 2 + titleRow, col,
+                    borderColor + vertical + RESET
+                            + " ".repeat(CARD_HORIZONTAL_PADDING)
+                            + titleColor + centered(title, titleWidth) + RESET
+                            + " ".repeat(CARD_HORIZONTAL_PADDING)
+                            + borderColor + vertical + RESET);
+        }
+        writeAt(terminal, row + CARD_HEIGHT - 2, col,
                 borderColor + vertical + RESET + fit("", innerWidth) + borderColor + vertical + RESET);
-        writeAt(terminal, row + 4, col,
+        writeAt(terminal, row + CARD_HEIGHT - 1, col,
                 borderColor + bottomLeft + horizontal.repeat(innerWidth) + bottomRight + RESET);
     }
 
@@ -494,6 +511,25 @@ final class TerrainSelectionRenderer {
         String value = trim(text, width);
         int left = Math.max(0, (width - visibleLength(value)) / 2);
         return " ".repeat(left) + fit(value, width - left);
+    }
+
+    /**
+     * Representa la dificultat d'un terreny amb estrelles acolorides.
+     *
+     * @param difficulty dificultat declarada
+     * @return text visible amb cinc estrelles
+     */
+    private String difficultyStars(int difficulty) {
+        int stars = Math.clamp(difficulty, 0, 5);
+        String color = switch (stars) {
+            case 0 -> DARK_GRAY;
+            case 1 -> GREEN;
+            case 2 -> CYAN;
+            case 3 -> YELLOW;
+            case 4 -> ORANGE;
+            default -> RED;
+        };
+        return color + "★".repeat(stars) + DARK_GRAY + "☆".repeat(5 - stars) + RESET;
     }
 
     /**

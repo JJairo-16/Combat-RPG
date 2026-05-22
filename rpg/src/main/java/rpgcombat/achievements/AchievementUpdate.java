@@ -243,6 +243,14 @@ public record AchievementUpdate(
                 Set.of(AchievementEvent.GAME_MODE_SELECTED), safeFields(fields));
     }
 
+    /** Crea una actualització quan un terreny entra a la partida. */
+    public static AchievementUpdate terrainSelected(String terrainId) {
+        Map<String, Object> fields = baseFields(null, null, null, null, 0);
+        fields.put("terrainId", terrainId == null ? "" : terrainId);
+        return new AchievementUpdate(null, null, null, null, null, Winner.NONE, 0,
+                Set.of(AchievementEvent.TERRAIN_SELECTED), safeFields(fields));
+    }
+
     /** Crea una actualització de progrés d'una missió de perk encara no completada. */
     public static AchievementUpdate perkMissionProgress(Character owner, String missionId, String perkId,
             double progressBefore, double progressAfter, double target, int activeMissionCount, int roundNumber) {

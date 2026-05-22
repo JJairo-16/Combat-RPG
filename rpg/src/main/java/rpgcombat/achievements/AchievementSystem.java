@@ -63,6 +63,11 @@ public final class AchievementSystem {
         apply(AchievementUpdate.gameModeSelected(modeId));
     }
 
+    /** Registra que un terreny ha entrat a la partida. */
+    public void onTerrainSelected(String terrainId) {
+        apply(AchievementUpdate.terrainSelected(terrainId));
+    }
+
     /** Registra que una missió de perk ha avançat sense completar-se encara. */
     public void onPerkMissionProgress(Character player, String missionId, String perkId, double progressBefore,
             double progressAfter, double target, int activeMissionCount, int roundNumber) {

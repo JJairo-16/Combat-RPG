@@ -8,6 +8,7 @@ public final class DiscoveryUiStyle {
     public static final String CYAN = Ansi.CYAN;
     public static final String DARK_GRAY = Ansi.DARK_GRAY;
     public static final String GREEN = Ansi.GREEN;
+    public static final String ORANGE = Ansi.ORANGE;
     public static final String RED = Ansi.RED;
     public static final String RESET = Ansi.RESET;
 

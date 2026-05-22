@@ -11,6 +11,7 @@ import rpgcombat.combat.ui.messages.CombatMessageKind;
 import rpgcombat.combat.ui.messages.MessageColor;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.effects.EffectResult;
+import rpgcombat.models.effects.types.ActionMenuHintEffect;
 import rpgcombat.models.effects.types.EndRoundRecoveryEffect;
 import rpgcombat.models.effects.types.RoundScopedEffect;
 import rpgcombat.models.effects.triggers.Trigger;
@@ -23,11 +24,14 @@ import rpgcombat.weapons.passives.HitContext.Phase;
 /**
  * Trigger infinit que executa un terreny sobre cada combatent.
  *
- * <p>Un terreny pot usar el motor genèric de regles o delegar tota la seva
+ * <p>
+ * Un terreny pot usar el motor genèric de regles o delegar tota la seva
  * lògica a un trigger personalitzat. En tots dos casos els missatges es
- * normalitzen com a missatges de mode de joc.</p>
+ * normalitzen com a missatges de mode de joc.
+ * </p>
  */
-public final class ConfigurableTerrainEffect extends Trigger implements RoundScopedEffect, EndRoundRecoveryEffect {
+public final class ConfigurableTerrainEffect extends Trigger
+        implements RoundScopedEffect, EndRoundRecoveryEffect, ActionMenuHintEffect {
     private final TerrainDefinition terrain;
     private final List<ExecutableRuleSet> ruleSets;
     private final TerrainTriggerDelegate delegate;
@@ -135,19 +139,30 @@ public final class ConfigurableTerrainEffect extends Trigger implements RoundSco
     }
 
     /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String actionMenuHint(Character owner, int nextRound) {
+        return delegate == null ? "" : delegate.actionMenuHint(owner, nextRound);
+    }
+
+    /**
      * Converteix els missatges del trigger delegat en missatges de mode de joc.
      *
      * @param result resultat original del trigger
      * @return resultat amb el tipus de missatge normalitzat
      */
     private EffectResult normalize(EffectResult result) {
-        if (result == null || result.message() == null) {
-            return result == null ? EffectResult.none() : result;
-        }
-        CombatMessage message = result.message();
-        if (message.kind() == CombatMessageKind.GAMEMODE) {
+        if (result == null)
+            return EffectResult.none();
+
+        if (result.message() == null)
             return result;
-        }
+
+        CombatMessage message = result.message();
+        if (message.kind() == CombatMessageKind.GAMEMODE)
+            return result;
+
         return new EffectResult(
                 CombatMessage.gamemode(message.symbol(), message.color(), message.text()),
                 result.consumedCharge(),
@@ -186,7 +201,7 @@ public final class ConfigurableTerrainEffect extends Trigger implements RoundSco
      * Avalua totes les condicions d'una regla sobre el context actual.
      *
      * @param conditions condicions compilades
-     * @param context context d'execució
+     * @param context    context d'execució
      * @return {@code true} quan totes les condicions coincideixen
      */
     private static boolean matchesAll(List<TerrainCondition> conditions, TerrainContext context) {
@@ -201,9 +216,9 @@ public final class ConfigurableTerrainEffect extends Trigger implements RoundSco
     /**
      * Aplica l'abast implícit de propietari quan la regla no el declara.
      *
-     * @param ctx context del cop
-     * @param phase fase que s'està resolent
-     * @param owner combatent que conté l'efecte
+     * @param ctx     context del cop
+     * @param phase   fase que s'està resolent
+     * @param owner   combatent que conté l'efecte
      * @param ruleSet regla executable actual
      * @return {@code true} quan el propietari pot executar la regla
      */
@@ -252,10 +267,10 @@ public final class ConfigurableTerrainEffect extends Trigger implements RoundSco
     /**
      * Regla genèrica preparada per executar-se durant el pipeline de combat.
      *
-     * @param trigger fase d'activació
+     * @param trigger       fase d'activació
      * @param rawConditions condicions originals per consultar-ne l'abast
-     * @param conditions condicions compilades
-     * @param actions accions compilades
+     * @param conditions    condicions compilades
+     * @param actions       accions compilades
      */
     private record ExecutableRuleSet(
             Phase trigger,

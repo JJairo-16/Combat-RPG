@@ -8,11 +8,15 @@ import rpgcombat.models.effects.Effect;
 import rpgcombat.terrain.model.TerrainTriggerDefinition;
 
 /**
- * Resol triggers personalitzats de terreny a partir del fitxer declarat al JSON.
+ * Resol triggers personalitzats de terreny a partir del fitxer declarat al
+ * JSON.
  */
 final class TerrainTriggerFactory {
     private static final String TRIGGER_PACKAGE = "rpgcombat.terrain.effects.triggers";
     private static final Pattern CLASS_NAME_PATTERN = Pattern.compile("[A-Za-z_$][A-Za-z\\d_$]*");
+    private static final Pattern EXTENSION_PATTERN = Pattern.compile("\\.(?:java|class)$");
+
+    private static final Class<?>[][] SUPPORTED_SIGNATURES = supportedSignatures();
 
     private TerrainTriggerFactory() {
     }
@@ -36,8 +40,7 @@ final class TerrainTriggerFactory {
 
             if (!Effect.class.isAssignableFrom(rawType)) {
                 throw new IllegalArgumentException(
-                        "El trigger de terreny " + simpleName + " no implementa Effect."
-                );
+                        "El trigger de terreny " + simpleName + " no implementa Effect.");
             }
 
             Class<? extends Effect> effectType = rawType.asSubclass(Effect.class);
@@ -46,15 +49,14 @@ final class TerrainTriggerFactory {
         } catch (ReflectiveOperationException ex) {
             throw new IllegalArgumentException(
                     "No s'ha pogut crear el trigger de terreny: " + simpleName,
-                    ex
-            );
+                    ex);
         }
     }
 
     /**
      * Instancia un trigger amb la signatura suportada que hagi declarat.
      *
-     * @param type classe d'efecte resolta
+     * @param type       classe d'efecte resolta
      * @param definition paràmetres configurats pel terreny
      * @return efecte instanciat
      * @throws ReflectiveOperationException quan el constructor no es pot executar
@@ -84,7 +86,7 @@ final class TerrainTriggerFactory {
      * @return constructor suportat
      */
     private static Constructor<? extends Effect> findConstructor(Class<? extends Effect> type) {
-        for (Class<?>[] signature : supportedSignatures()) {
+        for (Class<?>[] signature : SUPPORTED_SIGNATURES) {
             try {
                 return type.getDeclaredConstructor(signature);
             } catch (NoSuchMethodException ignored) {
@@ -94,8 +96,7 @@ final class TerrainTriggerFactory {
 
         throw new IllegalArgumentException(
                 "El trigger de terreny " + type.getSimpleName()
-                        + " necessita un constructor Map, TerrainTriggerDefinition o buit."
-        );
+                        + " necessita un constructor Map, TerrainTriggerDefinition o buit.");
     }
 
     /**
@@ -122,9 +123,7 @@ final class TerrainTriggerFactory {
             throw new IllegalArgumentException("El nom de fitxer del trigger de terreny no pot ser buit.");
         }
 
-        String name = value.trim()
-                .replaceFirst("\\.java$", "")
-                .replaceFirst("\\.class$", "");
+        String name = EXTENSION_PATTERN.matcher(value.trim()).replaceFirst("");
 
         if (!CLASS_NAME_PATTERN.matcher(name).matches()) {
             throw new IllegalArgumentException("Nom de fitxer de trigger de terreny no vàlid: " + value);

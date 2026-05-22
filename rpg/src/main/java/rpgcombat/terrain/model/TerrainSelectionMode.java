@@ -4,9 +4,17 @@ package rpgcombat.terrain.model;
  * Forma en què es tria el terreny d'una partida.
  */
 public enum TerrainSelectionMode {
-    NONE,
-    MANUAL,
-    RANDOM;
+    NONE("Sense terreny"),
+    MANUAL("Manual"),
+    RANDOM("A l'atzar");
+
+    private final String label;
+
+    TerrainSelectionMode(String label) {
+        this.label = label;
+    }
+
+    private static final TerrainSelectionMode[] VALUES = values();
 
     /**
      * Converteix un valor persistent en un mode de selecció.
@@ -32,8 +40,7 @@ public enum TerrainSelectionMode {
      * @return mode següent
      */
     public TerrainSelectionMode next() {
-        TerrainSelectionMode[] values = values();
-        return values[(ordinal() + 1) % values.length];
+        return VALUES[(ordinal() + 1) % VALUES.length];
     }
 
     /**
@@ -42,8 +49,7 @@ public enum TerrainSelectionMode {
      * @return mode anterior
      */
     public TerrainSelectionMode previous() {
-        TerrainSelectionMode[] values = values();
-        return values[Math.floorMod(ordinal() - 1, values.length)];
+        return VALUES[Math.floorMod(ordinal() - 1, VALUES.length)];
     }
 
     /**
@@ -52,10 +58,6 @@ public enum TerrainSelectionMode {
      * @return etiqueta del mode
      */
     public String label() {
-        return switch (this) {
-            case NONE -> "Sense terreny";
-            case MANUAL -> "Manual";
-            case RANDOM -> "A l'atzar";
-        };
+        return label;
     }
 }
