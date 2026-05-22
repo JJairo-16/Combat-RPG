@@ -1,6 +1,7 @@
 package rpgcombat.perks.effect;
 
 import java.util.Random;
+import java.util.regex.Pattern;
 
 import rpgcombat.combat.models.Action;
 import rpgcombat.combat.ui.messages.CombatMessage;
@@ -22,6 +23,7 @@ import rpgcombat.weapons.passives.HitContext.Phase;
  */
 final class DivinePerkEffect implements Effect, DivineAwakeningView {
     private static final double MIN_POWER = 0.40;
+    private static final Pattern TOKEN_SPLIT_PATTERN = Pattern.compile("[|,]");
 
     private final PerkDefinition perk;
     private final EffectState state = new EffectState(0, 0, Integer.MAX_VALUE, 0);
@@ -711,7 +713,8 @@ final class DivinePerkEffect implements Effect, DivineAwakeningView {
             return;
         }
         String text = String.valueOf(previous);
-        for (String existing : text.split("[|,]")) {
+        String[] existingTokens = TOKEN_SPLIT_PATTERN.split(text);
+        for (String existing : existingTokens) {
             if (token.equals(existing.trim())) return;
         }
         ctx.putMeta(key, text + "|" + token);

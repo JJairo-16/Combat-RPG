@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 import rpgcombat.combat.ui.messages.CombatMessage;
 import rpgcombat.models.characters.Character;
@@ -20,6 +21,8 @@ import rpgcombat.weapons.passives.HitContext.Phase;
  * Avalua condicions i executa accions quan es compleix el trigger.
  */
 public final class ConfigurablePerkEffect implements Effect {
+    private static final Pattern TOKEN_SPLIT_PATTERN = Pattern.compile("[|,]");
+
     private final PerkDefinition perk;
     private final EffectState state = new EffectState(0, 0, Integer.MAX_VALUE, 0);
     private final List<PerkCondition> conditions;
@@ -139,7 +142,8 @@ public final class ConfigurablePerkEffect implements Effect {
             return;
         }
         String text = String.valueOf(previous);
-        for (String existing : text.split("[|,]")) {
+        String[] tokens = TOKEN_SPLIT_PATTERN.split(text);
+        for (String existing : tokens) {
             if (token.equals(existing.trim())) return;
         }
         ctx.putMeta(key, text + "|" + token);

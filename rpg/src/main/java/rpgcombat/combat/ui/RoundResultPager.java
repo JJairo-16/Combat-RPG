@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import org.jline.terminal.Terminal;
 import org.jline.utils.NonBlockingReader;
@@ -46,8 +47,8 @@ public final class RoundResultPager {
     private static final int KEY_DOWN = 1_004;
 
     private static final int ESC_TIMEOUT_MS = 35;
-    private static final int QUIET_MS = 35;
-    private static final int MAX_RELEASE_WAIT_MS = 250;
+    private static final int QUIET_MS = 20;
+    private static final int MAX_RELEASE_WAIT_MS = 90;
     private static final int WIDTH = CombatRenderer.DIV_WIDTH;
     private static final int CONTENT_WIDTH = WIDTH - 4;
     private static final String BIG_DIV = Ansi.DARK_GRAY + "═".repeat(WIDTH) + Ansi.RESET;
@@ -58,6 +59,8 @@ public final class RoundResultPager {
     private static final int PLAYER_BLOCK_WIDTH = 70;
     private static final int EFFECT_BLOCK_WIDTH = WIDTH - PLAYER_BLOCK_WIDTH - SIDE_BLOCK_GAP;
     private static final int SCROLL_STEP = 1;
+
+    private static final Pattern LINE_SPLIT = Pattern.compile("\\R");
 
     private final CombatRenderer renderer;
     private final CombatMessageFormatter messageFormatter = new CombatMessageFormatter();
@@ -167,7 +170,7 @@ public final class RoundResultPager {
 
     private List<String> bodyLines(Page page) {
         String body = page == null || page.body() == null ? "" : page.body();
-        return List.of(body.split("\\R", -1));
+        return List.of(LINE_SPLIT.split(body, -1));
     }
 
     private int readNavigationKey(NonBlockingReader reader) throws IOException {
@@ -263,7 +266,7 @@ public final class RoundResultPager {
                 return;
             }
         }
-        drain(reader, 50);
+        drain(reader, 20);
     }
 
     private void drain(NonBlockingReader reader, int millis) throws IOException {

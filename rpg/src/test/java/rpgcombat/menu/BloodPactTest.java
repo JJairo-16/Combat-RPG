@@ -1,4 +1,4 @@
-package rpgcombat;
+package rpgcombat.menu;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import rpgcombat.TestCombatBalance;
 import rpgcombat.balance.CombatBalanceRegistry;
 import rpgcombat.balance.config.character.BloodPactConfig;
 import rpgcombat.combat.CombatSystem;

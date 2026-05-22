@@ -15,7 +15,6 @@ import org.jline.utils.InfoCmp.Capability;
 import rpgcombat.utils.terminal.SharedTerminal;
 import rpgcombat.utils.terminal.TerminalInput;
 import rpgcombat.utils.terminal.TerminalSession;
-import rpgcombat.utils.ui.TerminalClear;
 
 /**
  * Visor interactiu d'assoliments en format de graella amb pàgines horitzontals,
@@ -194,7 +193,6 @@ public final class AchievementGridViewer {
             KeyMap<Action> keys = keys(terminal);
 
             terminal.puts(Capability.cursor_invisible);
-            TerminalClear.clear(terminal);
 
             int page = 0;
             String lastFrame = "";

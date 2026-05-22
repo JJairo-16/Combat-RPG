@@ -1,4 +1,4 @@
-package rpgcombat;
+package rpgcombat.menu;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -27,6 +27,7 @@ import com.google.gson.reflect.TypeToken;
 import menu.DynamicMenu;
 import menu.action.MenuAction;
 import menu.model.MenuResult;
+import rpgcombat.TestCombatBalance;
 import rpgcombat.combat.models.Action;
 import rpgcombat.creator.CharacterCreator;
 import rpgcombat.game.menu.MenuBuilder;

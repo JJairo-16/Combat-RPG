@@ -4,6 +4,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.List;
 import java.util.LinkedHashSet;
 
@@ -27,6 +28,8 @@ public record AchievementUpdate(
         int roundNumber,
         Set<AchievementEvent> events,
         Map<String, Object> fields) {
+
+    private static final Pattern TOKEN_SPLIT = Pattern.compile("[|,]");
 
     /** Constructor de compatibilitat. */
     public AchievementUpdate(
@@ -647,7 +650,8 @@ public record AchievementUpdate(
 
     private static String firstToken(String text) {
         if (text == null || text.isBlank()) return null;
-        String[] split = text.split("[|,]");
+
+        String[] split = TOKEN_SPLIT.split(text);
         return split.length == 0 ? text.trim() : split[0].trim();
     }
 

@@ -34,9 +34,9 @@ import rpgcombat.settings.UserSettings;
 import rpgcombat.settings.UserSettingsRuntime;
 import rpgcombat.settings.UserSettingsStore;
 import rpgcombat.settings.ui.SettingsScreen;
-import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.LoadingIntro;
 import rpgcombat.utils.ui.Prettier;
+import rpgcombat.utils.ui.TerminalClear;
 import rpgcombat.unlocks.UnlockRuntime;
 
 /** Controla el flux general de l'aplicació. */
@@ -102,7 +102,7 @@ public final class AppController {
                 case PLAY_AGAIN -> goHome = false;
                 case HOME -> goHome = config.homeScreen().enabled();
                 case EXIT -> {
-                    new Cleaner().clear();
+                    TerminalClear.clearShared();
                     return;
                 }
             }

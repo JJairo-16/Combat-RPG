@@ -21,7 +21,7 @@ public class MenuInputGate {
      * @param terminal terminal activa
      */
     public MenuInputGate(Terminal terminal) {
-        this(terminal, 80, 20);
+        this(terminal, 30, 10);
     }
 
     /**

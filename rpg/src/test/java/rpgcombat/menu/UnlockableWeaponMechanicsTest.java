@@ -1,4 +1,4 @@
-package rpgcombat;
+package rpgcombat.menu;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -12,6 +12,7 @@ import java.util.Random;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import rpgcombat.TestCombatBalance;
 import rpgcombat.combat.models.Action;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;

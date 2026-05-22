@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 import rpgcombat.combat.ui.messages.CombatMessage;
 import rpgcombat.models.characters.Character;
@@ -19,6 +20,8 @@ import rpgcombat.weapons.passives.HitContext.Phase;
 
 /** Efecte addicional generat per una sinergia de tipus bonus. */
 public final class SynergyBonusEffect implements Effect {
+    private static final Pattern TOKENS_PATTERN = Pattern.compile("[|,]");
+
     private final SynergyDefinition synergy;
     private final SynergyLevel level;
     private final EffectState state = new EffectState(0, 0, Integer.MAX_VALUE, 0);
@@ -110,7 +113,8 @@ public final class SynergyBonusEffect implements Effect {
             return;
         }
         String text = String.valueOf(previous);
-        for (String existing : text.split("[|,]")) {
+        String[] existingTokens = TOKENS_PATTERN.split(text);
+        for (String existing : existingTokens) {
             if (token.equals(existing.trim())) return;
         }
         ctx.putMeta(key, text + "|" + token);

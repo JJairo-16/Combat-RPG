@@ -20,7 +20,6 @@ import rpgcombat.gamemode.registry.GameModeRegistry;
 import rpgcombat.utils.terminal.SharedTerminal;
 import rpgcombat.utils.terminal.TerminalInput;
 import rpgcombat.utils.terminal.TerminalSession;
-import rpgcombat.utils.ui.TerminalClear;
 
 /** Menú interactiu de cartes per escollir mode de joc abans de crear la partida. */
 public final class GameModeSelectionMenu {
@@ -79,7 +78,6 @@ public final class GameModeSelectionMenu {
         KeyMap<Action> keys = keys(terminal);
 
         terminal.puts(Capability.cursor_invisible);
-        TerminalClear.clear(terminal);
 
         int selected = initialSelection(modes, achievements, discoveries, defaultModeId);
         int page = 0;
@@ -100,7 +98,7 @@ public final class GameModeSelectionMenu {
 
                 String frame = renderFrame(modes, achievements, discoveries, selected, page, width, height, grid);
                 if (dimensionsChanged || !frame.equals(lastFrame)) {
-                    paintFrame(terminal, frame, height, dimensionsChanged);
+                    paintFrame(terminal, frame, height);
                     terminal.flush();
                     lastFrame = frame;
                     lastWidth = width;
@@ -109,7 +107,7 @@ public final class GameModeSelectionMenu {
 
                 Action action = TerminalInput.readBindingIgnoringMouse(reader, keys, terminal, Action.IGNORE);
                 if (action == null) {
-                    paintFrame(terminal, frame, height, true);
+                    paintFrame(terminal, frame, height);
                     terminal.flush();
                     continue;
                 }
@@ -147,21 +145,13 @@ public final class GameModeSelectionMenu {
         }
     }
 
-    private static void paintFrame(Terminal terminal, String frame, int height, boolean clearFirst) {
-        if (clearFirst) {
-            clearScreen(terminal);
-        }
-
+    private static void paintFrame(Terminal terminal, String frame, int height) {
         String[] lines = frame.split("\n", -1);
         for (int row = 0; row < height; row++) {
             terminal.writer().print("\033[" + (row + 1) + ";1H");
             terminal.writer().print(row < lines.length ? lines[row] : "\033[K");
         }
         terminal.writer().print("\033[1;1H");
-    }
-
-    private static void clearScreen(Terminal terminal) {
-        TerminalClear.clear(terminal);
     }
 
     private static KeyMap<Action> keys(Terminal terminal) {

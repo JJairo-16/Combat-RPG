@@ -1,4 +1,4 @@
-package rpgcombat;
+package rpgcombat.menu;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import menu.model.MenuResult;
+import rpgcombat.TestCombatBalance;
 import rpgcombat.achievements.AchievementEvent;
 import rpgcombat.achievements.AchievementUpdate;
 import rpgcombat.combat.models.Action;

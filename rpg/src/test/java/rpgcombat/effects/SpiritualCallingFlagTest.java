@@ -1,4 +1,4 @@
-package rpgcombat;
+package rpgcombat.effects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import rpgcombat.TestCombatBalance;
 import rpgcombat.creator.CharacterCreator;
 import rpgcombat.game.menu.MenuCenter;
 import rpgcombat.game.modifier.Actions;

@@ -4,22 +4,21 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-import rpgcombat.utils.ui.Cleaner;
 import rpgcombat.utils.ui.Prettier;
+import rpgcombat.utils.ui.TerminalClear;
 
 public class Menu {
     private Menu() {
     }
 
     private static final Scanner scanner = new Scanner(System.in);
-    private static final Cleaner cls = new Cleaner();
 
     public static int getOption(List<String> options, String title) {
         boolean loop = true;
         int option = -1;
 
         while (loop) {
-            cls.clear();
+            TerminalClear.clearShared();
             Prettier.printTitle(title);
             printArr(options);
             System.out.println();

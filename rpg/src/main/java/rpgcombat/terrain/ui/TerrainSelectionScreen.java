@@ -102,8 +102,6 @@ public final class TerrainSelectionScreen {
             }
         } finally {
             terminal.writer().print(RESET);
-            terminal.puts(Capability.cursor_visible);
-            TerminalClear.clear(terminal);
             terminal.flush();
         }
     }

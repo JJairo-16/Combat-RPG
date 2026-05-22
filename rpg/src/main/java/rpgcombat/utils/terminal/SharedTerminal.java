@@ -60,6 +60,7 @@ public final class SharedTerminal {
      */
     public static void close() throws IOException {
         if (terminal != null) {
+            TerminalSession.restoreNow(terminal);
             terminal.close();
             terminal = null;
         }

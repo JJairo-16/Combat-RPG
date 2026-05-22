@@ -2,6 +2,7 @@ package rpgcombat.combat.ui.messages;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import rpgcombat.utils.ui.Ansi;
 
@@ -9,6 +10,7 @@ import rpgcombat.utils.ui.Ansi;
  * Dona estil visual als missatges del combat.
  */
 public final class CombatMessageFormatter {
+    private static final Pattern LINE_SPLIT = Pattern.compile("\\R");
 
     /**
      * Formata el missatge principal de l'acció.
@@ -77,7 +79,8 @@ public final class CombatMessageFormatter {
         }
 
         List<String> lines = new ArrayList<>();
-        for (String rawLine : text.split("\\R")) {
+        String[] rawLines = LINE_SPLIT.split(text);
+        for (String rawLine : rawLines) {
             if (isBlank(rawLine)) {
                 continue;
             }

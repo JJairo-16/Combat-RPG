@@ -297,7 +297,9 @@ public final class PerkChoiceMenu {
         if (text == null || text.isBlank()) return new ArrayList<>(List.of(""));
         List<String> lines = new ArrayList<>();
         StringBuilder line = new StringBuilder();
-        for (String word : text.trim().split("\\s+")) {
+
+        String[] words = text.trim().split("\\s+");
+        for (String word : words) {
             if (!line.isEmpty() && line.length() + word.length() + 1 > width) {
                 lines.add(line.toString());
                 line.setLength(0);

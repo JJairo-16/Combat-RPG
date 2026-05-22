@@ -71,7 +71,6 @@ public final class DiscoverySystem {
 
         progressByKey.put(key, DiscoveryProgress.newlyDiscovered(key));
         dirty = true;
-        saveIfDirty();
     }
 
     /** Converteix el progrés intern a models visuals per al visor temporal. */
@@ -129,6 +128,11 @@ public final class DiscoverySystem {
         } catch (IOException e) {
             Prettier.warn("No s'ha pogut desar el progrés dels descobriments: " + e.getMessage());
         }
+    }
+
+    /** Desa els descobriments acumulats quan comença una nova ronda. */
+    public void onRoundStart() {
+        saveIfDirty();
     }
 
     /** Retorna una còpia del progrés actual, útil per proves. */
