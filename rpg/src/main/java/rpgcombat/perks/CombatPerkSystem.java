@@ -134,7 +134,7 @@ public final class CombatPerkSystem {
             if (!sb.isEmpty())
                 sb.append("\n---\n");
 
-            DivineAwakeningView awakening = divineAwakeningFor(player, divinePerk.id());
+            DivineAwakeningView awakening = divineAwakeningFor(player, divinePerk.perk());
             String name = awakening == null ? coloredDivineName(divinePerk) : awakening.awakenedDisplayName();
             String description = awakening == null ? divineDescriptionFallback(divinePerk)
                     : awakening.awakenedDescription();
@@ -186,16 +186,13 @@ public final class CombatPerkSystem {
     }
 
     /** Cerca la vista de despertar diví activa al personatge. */
-    private DivineAwakeningView divineAwakeningFor(Character player, String divinePerkId) {
-        if (player == null || divinePerkId == null)
+    private DivineAwakeningView divineAwakeningFor(Character player, PerkDefinition divinePerk) {
+        if (player == null || divinePerk == null)
             return null;
 
-        for (Effect effect : player.getEffects()) {
-            if (effect instanceof DivineAwakeningView awakening && divinePerkId.equals(awakening.divinePerkId())) {
-                return awakening;
-            }
-        }
-        return null;
+        return player.getEffect(PerkEffectFactory.keyFor(divinePerk)) instanceof DivineAwakeningView awakening
+                ? awakening
+                : null;
     }
 
     /** Retorna la descripció base si l'efecte encara no exposa despertar. */

@@ -20,7 +20,6 @@ import rpgcombat.gamemode.model.GameModeRules;
 import rpgcombat.gamemode.model.MatchContext;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.Statistics;
-import rpgcombat.models.effects.Effect;
 import rpgcombat.models.effects.types.ActionMenuHintEffect;
 import rpgcombat.models.effects.triggers.gamemode.Chaos;
 import rpgcombat.perks.CombatPerkSystem;
@@ -197,10 +196,7 @@ public class GameLoop {
         }
 
         StringBuilder hints = new StringBuilder();
-        for (Effect effect : player.getEffects()) {
-            if (!(effect instanceof ActionMenuHintEffect hint)) {
-                continue;
-            }
+        for (ActionMenuHintEffect hint : player.effectsOfType(ActionMenuHintEffect.class)) {
             String text = hint.actionMenuHint(player, combatSystem.roundNumber() + 1);
             if (text == null || text.isBlank()) {
                 continue;

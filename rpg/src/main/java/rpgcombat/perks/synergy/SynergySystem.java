@@ -13,11 +13,10 @@ import rpgcombat.models.effects.Effect;
 import rpgcombat.perks.PerkDefinition;
 import rpgcombat.perks.PlayerPerkState;
 import rpgcombat.perks.effect.PerkEffectFactory;
+import rpgcombat.perks.effect.SynergyBonusEffect;
 
 /** Calcula, previsualitza i aplica sinergies de perks. */
 public final class SynergySystem {
-    private static final String SYNERGY_PREFIX = "SYNERGY_";
-
     private final List<SynergyDefinition> definitions;
 
     /** Inicialitza el sistema amb les sinergies disponibles. */
@@ -127,10 +126,8 @@ public final class SynergySystem {
 
     /** Elimina els efectes extra de sinergia del jugador. */
     private void removeSynergyBonuses(Character player) {
-        for (Effect effect : player.getEffects()) {
-            if (effect != null && effect.key() != null && effect.key().startsWith(SYNERGY_PREFIX)) {
-                player.removeEffect(effect.key());
-            }
+        for (SynergyBonusEffect effect : player.effectsOfType(SynergyBonusEffect.class)) {
+            player.removeEffect(effect.key());
         }
     }
 

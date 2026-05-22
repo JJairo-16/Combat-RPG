@@ -1,4 +1,4 @@
-package rpgcombat;
+package rpgcombat.achievements;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -12,8 +12,6 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import rpgcombat.achievements.AchievementEvent;
-import rpgcombat.achievements.AchievementProgress;
 import rpgcombat.achievements.config.AchievementDefinition;
 import rpgcombat.achievements.config.AchievementObjective;
 import rpgcombat.achievements.config.AchievementObjectiveType;

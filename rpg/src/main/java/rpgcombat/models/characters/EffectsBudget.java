@@ -29,16 +29,15 @@ import rpgcombat.models.effects.triggers.Trigger;
 import rpgcombat.weapons.passives.HitContext;
 
 /**
- * Contenidor indexat d'efectes preparat per substituir els recorreguts lineals
- * que encara viuen a {@link Character}.
+ * Contenidor indexat que emmagatzema els efectes d'un {@link Character}.
  *
  * <p>
  * El pressupost manté l'ordre per prioritat i crea índexs per clau, fase del
  * pipeline i jerarquia de tipus. Els tipus s'indexen descobrint automàticament
  * classes i interfícies de cada efecte; un tipus nou queda disponible sense
- * afegir un bucket manual aquí. Encara no és la font de veritat de
- * {@code Character}: es pot provar i completar en paral·lel abans de migrar
- * l'emmagatzematge existent.
+ * afegir un bucket manual aquí. Com que aquest objecte és la font de veritat
+ * dels efectes del personatge, qualsevol alta, baixa o expiració actualitza els
+ * índexs en la mateixa operació.
  * </p>
  */
 public final class EffectsBudget {

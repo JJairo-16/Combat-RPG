@@ -1,17 +1,21 @@
-package rpgcombat;
+package rpgcombat.effects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import rpgcombat.TestCombatBalance;
 import rpgcombat.combat.ui.messages.CombatMessageBuffer;
+import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.characters.Character;
 import rpgcombat.models.characters.EffectsBudget;
 import rpgcombat.models.effects.Effect;
@@ -25,6 +29,11 @@ import rpgcombat.models.effects.triggers.Trigger;
 import rpgcombat.weapons.passives.HitContext;
 
 class EffectsBudgetTest {
+    @BeforeAll
+    static void init() {
+        TestCombatBalance.init();
+    }
+
     @Test
     void indexesPhaseOverridesWithoutIncludingUnrelatedEffects() {
         EffectsBudget budget = new EffectsBudget();
@@ -101,6 +110,75 @@ class EffectsBudgetTest {
         assertTrue(budget.hasTrigger("trigger"));
         assertSame(trigger, budget.getTrigger("trigger"));
         assertFalse(budget.hasTrigger("role"));
+    }
+
+    @Test
+    void characterExposesIndexedEffectsByType() {
+        Character owner = new Character("Budget", 18, balancedStats(), Breed.HUMAN);
+        NovelRoleEffect roleEffect = new NovelRoleEffect("role", 1);
+        TestTrigger trigger = new TestTrigger("trigger");
+
+        owner.addInternalEffect(roleEffect);
+        owner.addInternalEffect(trigger);
+
+        assertEquals(List.of(roleEffect), owner.effectsOfType(NovelEffectRole.class));
+        assertTrue(owner.effectsOfType(Trigger.class).contains(trigger));
+    }
+
+    @Test
+    void exposesImmutableSnapshotsWithoutLeakingLaterIndexMutations() {
+        EffectsBudget budget = new EffectsBudget();
+        BeforeAttackEffect beforeAttack = new BeforeAttackEffect("before", 3);
+        NovelRoleEffect roleEffect = new NovelRoleEffect("role", 2);
+
+        budget.addEffect(roleEffect);
+        budget.addEffect(beforeAttack);
+
+        List<Effect> allEffects = budget.getEffects();
+        List<Effect> beforeAttackEffects = budget.effectsForPhase(HitContext.Phase.BEFORE_ATTACK);
+        List<NovelEffectRole> roleEffects = budget.effectsOfType(NovelEffectRole.class);
+
+        assertEquals(List.of(beforeAttack, roleEffect), allEffects);
+        assertEquals(List.of(beforeAttack), beforeAttackEffects);
+        assertEquals(List.of(roleEffect), roleEffects);
+        assertThrows(UnsupportedOperationException.class, allEffects::clear);
+        assertThrows(UnsupportedOperationException.class, beforeAttackEffects::clear);
+        assertThrows(UnsupportedOperationException.class, roleEffects::clear);
+
+        budget.clearEffects();
+
+        assertEquals(List.of(beforeAttack, roleEffect), allEffects);
+        assertEquals(List.of(beforeAttack), beforeAttackEffects);
+        assertEquals(List.of(roleEffect), roleEffects);
+        assertTrue(budget.getEffects().isEmpty());
+        assertTrue(budget.effectsForPhase(HitContext.Phase.BEFORE_ATTACK).isEmpty());
+        assertFalse(budget.containsType(NovelEffectRole.class));
+    }
+
+    @Test
+    void phaseDispatchDoesNotRunEffectsAddedByAnotherEffectUntilNextDispatch() {
+        EffectsBudget budget = new EffectsBudget();
+        CountingBeforeAttackEffect addedDuringDispatch = new CountingBeforeAttackEffect("late", 1);
+        MutatingBeforeAttackEffect mutating =
+                new MutatingBeforeAttackEffect("mutating", 2, budget, addedDuringDispatch);
+
+        budget.addEffect(mutating);
+
+        budget.triggerEffects(null, null, HitContext.Phase.BEFORE_ATTACK, new Random(0));
+
+        assertEquals(1, mutating.calls);
+        assertEquals(0, addedDuringDispatch.calls);
+        assertFalse(budget.hasEffect("mutating"));
+        assertTrue(budget.hasEffect("late"));
+
+        budget.triggerEffects(null, null, HitContext.Phase.BEFORE_ATTACK, new Random(0));
+
+        assertEquals(1, mutating.calls);
+        assertEquals(1, addedDuringDispatch.calls);
+    }
+
+    private int[] balancedStats() {
+        return new int[] { 20, 20, 20, 20, 20, 20, 20 };
     }
 
     private static class IdleEffect implements Effect {
@@ -185,6 +263,45 @@ class EffectsBudgetTest {
             calls++;
             charges.consumeCharge();
             return EffectResult.none();
+        }
+    }
+
+    private static class CountingBeforeAttackEffect extends BeforeAttackEffect {
+        int calls;
+
+        CountingBeforeAttackEffect(String key, int priority) {
+            super(key, priority);
+        }
+
+        @Override
+        public EffectResult beforeAttack(HitContext ctx, Random rng, Character owner) {
+            calls++;
+            return EffectResult.none();
+        }
+    }
+
+    private static final class MutatingBeforeAttackEffect extends CountingBeforeAttackEffect {
+        private final String key;
+        private final EffectsBudget budget;
+        private final Effect addedDuringDispatch;
+
+        MutatingBeforeAttackEffect(
+                String key,
+                int priority,
+                EffectsBudget budget,
+                Effect addedDuringDispatch) {
+            super(key, priority);
+            this.key = key;
+            this.budget = budget;
+            this.addedDuringDispatch = addedDuringDispatch;
+        }
+
+        @Override
+        public EffectResult beforeAttack(HitContext ctx, Random rng, Character owner) {
+            EffectResult result = super.beforeAttack(ctx, rng, owner);
+            budget.addEffect(addedDuringDispatch);
+            budget.removeEffect(key);
+            return result;
         }
     }
 

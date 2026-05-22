@@ -1,4 +1,4 @@
-package rpgcombat;
+package rpgcombat.achievements;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -9,9 +9,6 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import rpgcombat.achievements.AchievementEvent;
-import rpgcombat.achievements.AchievementSystem;
-import rpgcombat.achievements.AchievementUpdate;
 import rpgcombat.achievements.config.AchievementDefinition;
 import rpgcombat.achievements.config.AchievementObjective;
 import rpgcombat.achievements.config.AchievementObjectiveType;
