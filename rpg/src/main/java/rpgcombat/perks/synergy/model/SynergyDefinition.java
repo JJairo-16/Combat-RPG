@@ -1,4 +1,4 @@
-package rpgcombat.perks.synergy;
+package rpgcombat.perks.synergy.model;
 
 import java.util.LinkedHashSet;
 import java.util.List;

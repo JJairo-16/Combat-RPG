@@ -30,7 +30,7 @@ public final class DivinePerkRegistry {
                     1,
                     List.of(),
                     List.of(),
-                    List.of("DIVINE", "DEBUG")),
+                    java.util.Set.of("DIVINE", "DEBUG")),
             "Debug",
             "No modifica el combat.",
             List.of(Breed.values()),

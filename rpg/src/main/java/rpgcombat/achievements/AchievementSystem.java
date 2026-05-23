@@ -32,6 +32,7 @@ public final class AchievementSystem {
     private final PendingAchievementIndex pendingIndex;
     private boolean dirty;
     private final Map<String, MatchAchievementMemory> matchMemoryByActor = new HashMap<>();
+    private int completedCount;
 
     private int pendingCompletedCount = 0;
 
@@ -40,6 +41,7 @@ public final class AchievementSystem {
         this.savePath = savePath;
         this.progressById = progressById;
         this.pendingIndex = new PendingAchievementIndex(progressById.values());
+        this.completedCount = countCompleted(progressById.values());
     }
 
     /** Crea el sistema carregant progrés global des de l'AppData. */
@@ -96,7 +98,7 @@ public final class AchievementSystem {
 
     /** Registra que el jugador ha obtingut una perk. */
     public void onPerkGained(Character player, String perkId, String perkName, String family,
-            java.util.List<String> tags, int perkCount, int maxPerks, int roundNumber) {
+            java.util.Collection<String> tags, int perkCount, int maxPerks, int roundNumber) {
         apply(AchievementUpdate.perkGained(player, perkId, perkName, family, tags, perkCount, maxPerks, roundNumber));
     }
 
@@ -190,13 +192,7 @@ public final class AchievementSystem {
 
     /** Nombre total d'assoliments completats. */
     public int completedCount() {
-        int count = 0;
-        for (AchievementProgress progress : progressById.values()) {
-            if (progress.completed()) {
-                count++;
-            }
-        }
-        return count;
+        return completedCount;
     }
 
     /** Aplica una actualització sobre els assoliments pendents que la poden observar. */
@@ -227,11 +223,27 @@ public final class AchievementSystem {
 
         if (completedNow > 0) {
             pendingCompletedCount += completedNow;
+            completedCount += completedNow;
         }
 
         if (changed) {
             dirty = true;
         }
+    }
+
+    /** Compta els assoliments completats una sola vegada en carregar el progrés. */
+    private int countCompleted(Collection<AchievementProgress> progressItems) {
+        if (progressItems == null || progressItems.isEmpty()) {
+            return 0;
+        }
+
+        int count = 0;
+        for (AchievementProgress progress : progressItems) {
+            if (progress != null && progress.completed()) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /** Índex generat des de les definicions pendents per evitar barrids globals per event. */

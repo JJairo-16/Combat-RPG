@@ -1,5 +1,6 @@
 package rpgcombat.achievements;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -23,9 +24,12 @@ class AchievementSystemTest {
                 List.of(countAchievement("ATTACK_ONCE", AchievementEvent.ACTION_ATTACK)),
                 savePath.toString());
 
+        assertEquals(0, system.completedCount());
+
         system.onTurn(AchievementUpdate.simple(null, AchievementEvent.ACTION_ATTACK));
 
         assertTrue(system.isCompleted("ATTACK_ONCE"));
+        assertEquals(1, system.completedCount());
         assertFalse(Files.exists(savePath));
 
         system.onRoundStart();

@@ -3,18 +3,25 @@ package rpgcombat.perks;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import rpgcombat.perks.divine.DivinePerkDefinition;
+import rpgcombat.perks.mission.MissionBudget;
 import rpgcombat.perks.mission.MissionProgress;
+import rpgcombat.perks.mission.MissionUpdate;
 
 /**
  * Estat de perks, missions i sinergies d'un jugador durant el combat.
  */
 public final class PlayerPerkState {
     private final List<MissionProgress> missions = new ArrayList<>();
+    private final MissionBudget missionBudget = new MissionBudget(missions);
     private final List<PerkDefinition> perks = new ArrayList<>();
+    private final Set<String> perkIds = new LinkedHashSet<>();
+    private long perkRevision;
     private boolean pendingChoice;
     private Map<String, List<String>> synergyDescriptions = Map.of();
     private List<String> activeSynergyNames = List.of();
@@ -59,7 +66,7 @@ public final class PlayerPerkState {
 
     /** Comprova si el jugador ja té una perk concreta. */
     public boolean hasPerk(String perkId) {
-        return perkId != null && perks.stream().anyMatch(p -> p.id().equals(perkId));
+        return perkId != null && perkIds.contains(perkId);
     }
 
     /** Nombre de perks actuals. */
@@ -67,15 +74,32 @@ public final class PlayerPerkState {
         return perks.size();
     }
 
+    /** Revisió dels índexs de perks; canvia només quan entra una perk nova. */
+    public long perkRevision() {
+        return perkRevision;
+    }
+
     /** Afegeix una missió si és vàlida. */
     public void addMission(MissionProgress mission) {
-        if (mission != null)
+        if (mission != null) {
             missions.add(mission);
+            missionBudget.add(mission);
+        }
     }
 
     /** Retorna les missions (només lectura). */
     public List<MissionProgress> missions() {
         return Collections.unmodifiableList(missions);
+    }
+
+    /** Retorna les missions pendents que poden observar l'actualització indicada. */
+    public List<MissionProgress> missionCandidates(MissionUpdate update) {
+        return missionBudget.candidates(update);
+    }
+
+    /** Retira una missió dels índexs reactius quan ja no pot avançar. */
+    public void stopTrackingMission(MissionProgress mission) {
+        missionBudget.remove(mission);
     }
 
     /**
@@ -111,8 +135,9 @@ public final class PlayerPerkState {
 
     /** Afegeix una perk si no està repetida. */
     public void addPerk(PerkDefinition chosenPerk) {
-        if (chosenPerk != null && perks.stream().noneMatch(p -> p.id().equals(chosenPerk.id()))) {
+        if (chosenPerk != null && perkIds.add(chosenPerk.id())) {
             perks.add(chosenPerk);
+            perkRevision++;
         }
     }
 

@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.List;
 import java.util.LinkedHashSet;
 
 import rpgcombat.combat.models.Action;
@@ -285,7 +284,7 @@ public record AchievementUpdate(
 
     /** Crea una actualització de perk guanyada. */
     public static AchievementUpdate perkGained(Character owner, String perkId, String perkName, String family,
-            List<String> tags, int perkCount, int maxPerks, int roundNumber) {
+            Iterable<String> tags, int perkCount, int maxPerks, int roundNumber) {
         Map<String, Object> fields = baseFields(owner, null, null, null, roundNumber);
         fields.put("perkId", perkId);
         fields.put("perkName", perkName);
@@ -639,8 +638,8 @@ public record AchievementUpdate(
         return value != null && Boolean.parseBoolean(String.valueOf(value));
     }
 
-    private static String joinTokens(List<String> values) {
-        if (values == null || values.isEmpty()) return "";
+    private static String joinTokens(Iterable<String> values) {
+        if (values == null) return "";
         LinkedHashSet<String> tokens = new LinkedHashSet<>();
         for (String value : values) {
             if (value != null && !value.isBlank()) tokens.add(value.trim());

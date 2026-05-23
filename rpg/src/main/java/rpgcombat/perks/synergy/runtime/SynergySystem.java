@@ -1,9 +1,11 @@
-package rpgcombat.perks.synergy;
+package rpgcombat.perks.synergy.runtime;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,10 +16,19 @@ import rpgcombat.perks.PerkDefinition;
 import rpgcombat.perks.PlayerPerkState;
 import rpgcombat.perks.effect.PerkEffectFactory;
 import rpgcombat.perks.effect.SynergyBonusEffect;
+import rpgcombat.perks.synergy.model.MemberAlteration;
+import rpgcombat.perks.synergy.model.SynergyDefinition;
+import rpgcombat.perks.synergy.model.SynergyLevel;
+import rpgcombat.perks.synergy.model.SynergyType;
+import rpgcombat.perks.synergy.view.SynergyDisplayInfo;
+import rpgcombat.perks.synergy.view.SynergyPreview;
 
 /** Calcula, previsualitza i aplica sinergies de perks. */
 public final class SynergySystem {
     private final List<SynergyDefinition> definitions;
+    private final Map<PlayerPerkState, ActiveSynergyCache> activeCache = new IdentityHashMap<>();
+
+    private static final Comparator<ActiveSynergy> SINERGY_ORDER = Comparator.comparing(a -> a.definition().id());
 
     /** Inicialitza el sistema amb les sinergies disponibles. */
     public SynergySystem(List<SynergyDefinition> definitions) {
@@ -29,14 +40,15 @@ public final class SynergySystem {
         if (state == null || candidate == null)
             return SynergyPreview.empty();
 
-        List<PerkDefinition> before = state.perks();
-        List<PerkDefinition> after = new ArrayList<>(before);
-        if (after.stream().noneMatch(perk -> perk.id().equals(candidate.id()))) {
-            after.add(candidate);
-        }
+        return preview(PerkSnapshot.from(state.perks()), candidate);
+    }
 
-        Map<String, ActiveSynergy> beforeMap = activeMap(before);
-        Map<String, ActiveSynergy> afterMap = activeMap(after);
+    /** Previsualitza una candidata reutilitzant l'estat indexat previ. */
+    private SynergyPreview preview(PerkSnapshot before, PerkDefinition candidate) {
+        PerkSnapshot after = before.with(candidate);
+
+        Map<String, ActiveSynergy> beforeMap = activeMap(activeList(before));
+        Map<String, ActiveSynergy> afterMap = activeMap(activeList(after));
 
         List<String> activated = new ArrayList<>();
         List<String> upgraded = new ArrayList<>();
@@ -57,10 +69,11 @@ public final class SynergySystem {
     public Map<String, SynergyPreview> previewAll(PlayerPerkState state, List<PerkDefinition> candidates) {
         if (candidates == null || candidates.isEmpty())
             return Map.of();
+        PerkSnapshot before = state == null ? PerkSnapshot.empty() : PerkSnapshot.from(state.perks());
         Map<String, SynergyPreview> result = new HashMap<>();
         for (PerkDefinition candidate : candidates) {
             if (candidate != null) {
-                result.put(candidate.id(), preview(state, candidate));
+                result.put(candidate.id(), state == null ? SynergyPreview.empty() : preview(before, candidate));
             }
         }
         return result;
@@ -73,12 +86,15 @@ public final class SynergySystem {
 
         removeSynergyBonuses(player);
 
-        List<PerkDefinition> perks = state.perks();
-        Map<String, List<MemberAlteration>> alterationsByPerk = activeAlterationsByPerk(perks);
-        Map<String, List<String>> descriptionsByPerk = activeAlterationDescriptions(perks);
+        PerkSnapshot perks = PerkSnapshot.from(state.perks());
         List<ActiveSynergy> active = activeList(perks);
+        cacheActive(state, active);
+        Map<String, List<MemberAlteration>> alterationsByPerk =
+                activeAlterationsByPerk(active, perks.perkIds());
+        Map<String, List<String>> descriptionsByPerk =
+                activeAlterationDescriptions(active, perks.perkIds());
 
-        for (PerkDefinition perk : perks) {
+        for (PerkDefinition perk : perks.perks()) {
             player.removeEffect(PerkEffectFactory.keyFor(perk));
             List<MemberAlteration> alterations = alterationsByPerk.getOrDefault(perk.id(), List.of());
             player.addEffect(PerkEffectFactory.createAugmented(perk, alterations));
@@ -113,14 +129,39 @@ public final class SynergySystem {
         if (state == null)
             return List.of();
 
-        return activeList(state.perks()).stream()
-                .map(active -> new SynergyDisplayInfo(
-                        active.definition().id(),
-                        active.definition().name(),
-                        active.definition().description(),
-                        active.definition().type(),
-                        active.members(),
-                        active.rank()))
+        return activeFor(state).displayInfo();
+    }
+
+    /** Retorna la vista activa cachejada mentre l'estat de perks no canviï. */
+    private ActiveSynergyCache activeFor(PlayerPerkState state) {
+        ActiveSynergyCache cached = activeCache.get(state);
+        if (cached != null && cached.revision() == state.perkRevision()) {
+            return cached;
+        }
+
+        return cacheActive(state, activeList(PerkSnapshot.from(state.perks())));
+    }
+
+    /** Desa la vista activa després d'un càlcul inevitable de sinergies. */
+    private ActiveSynergyCache cacheActive(PlayerPerkState state, List<ActiveSynergy> active) {
+        ActiveSynergyCache cached = new ActiveSynergyCache(
+                state.perkRevision(),
+                List.copyOf(active),
+                displayInfo(active));
+        activeCache.put(state, cached);
+        return cached;
+    }
+
+    /** Converteix sinergies actives a models visuals una sola vegada per revisió. */
+    private List<SynergyDisplayInfo> displayInfo(List<ActiveSynergy> activeSynergies) {
+        return activeSynergies.stream()
+                .map(synergy -> new SynergyDisplayInfo(
+                        synergy.definition().id(),
+                        synergy.definition().name(),
+                        synergy.definition().description(),
+                        synergy.definition().type(),
+                        synergy.members(),
+                        synergy.rank()))
                 .toList();
     }
 
@@ -132,11 +173,12 @@ public final class SynergySystem {
     }
 
     /** Agrupa les alteracions actives per perk afectada. */
-    private Map<String, List<MemberAlteration>> activeAlterationsByPerk(List<PerkDefinition> perks) {
+    private Map<String, List<MemberAlteration>> activeAlterationsByPerk(
+            List<ActiveSynergy> activeSynergies,
+            Set<String> perkIds) {
         Map<String, List<MemberAlteration>> result = new HashMap<>();
-        Set<String> perkIds = perkIds(perks);
 
-        for (ActiveSynergy active : activeList(perks)) {
+        for (ActiveSynergy active : activeSynergies) {
             if (active.definition().type() != SynergyType.ALTER_MEMBERS)
                 continue;
             for (MemberAlteration alteration : active.definition().alterations()) {
@@ -149,11 +191,12 @@ public final class SynergySystem {
     }
 
     /** Agrupa les descripcions d’alteracions actives per perk. */
-    private Map<String, List<String>> activeAlterationDescriptions(List<PerkDefinition> perks) {
+    private Map<String, List<String>> activeAlterationDescriptions(
+            List<ActiveSynergy> activeSynergies,
+            Set<String> perkIds) {
         Map<String, List<String>> result = new HashMap<>();
-        Set<String> perkIds = perkIds(perks);
 
-        for (ActiveSynergy active : activeList(perks)) {
+        for (ActiveSynergy active : activeSynergies) {
             if (active.definition().type() != SynergyType.ALTER_MEMBERS)
                 continue;
             for (MemberAlteration alteration : active.definition().alterations()) {
@@ -172,17 +215,17 @@ public final class SynergySystem {
     }
 
     /** Retorna les sinergies actives indexades per identificador. */
-    private Map<String, ActiveSynergy> activeMap(List<PerkDefinition> perks) {
+    private Map<String, ActiveSynergy> activeMap(List<ActiveSynergy> activeSynergies) {
         Map<String, ActiveSynergy> result = new HashMap<>();
-        for (ActiveSynergy active : activeList(perks)) {
+        for (ActiveSynergy active : activeSynergies) {
             result.put(active.definition().id(), active);
         }
         return result;
     }
 
     /** Calcula la llista de sinergies actives. */
-    private List<ActiveSynergy> activeList(List<PerkDefinition> perks) {
-        if (definitions.isEmpty() || perks == null || perks.isEmpty())
+    private List<ActiveSynergy> activeList(PerkSnapshot perks) {
+        if (definitions.isEmpty() || perks == null || perks.perks().isEmpty())
             return List.of();
         List<ActiveSynergy> result = new ArrayList<>();
 
@@ -203,7 +246,7 @@ public final class SynergySystem {
             result.add(new ActiveSynergy(definition, members, rank, level));
         }
 
-        result.sort(Comparator.comparing(a -> a.definition().id()));
+        result.sort(SINERGY_ORDER);
         return List.copyOf(result);
     }
 
@@ -218,38 +261,95 @@ public final class SynergySystem {
     }
 
     /** Comprova si les perks requerides són presents. */
-    private boolean requiredPerksMet(SynergyDefinition definition, List<PerkDefinition> perks) {
-        Set<String> ids = perkIds(perks);
-        return ids.containsAll(definition.requiredPerks());
+    private boolean requiredPerksMet(SynergyDefinition definition, PerkSnapshot perks) {
+        return perks.perkIds().containsAll(definition.requiredPerks());
     }
 
     /** Compta els membres que compleixen els requisits de la sinergia. */
-    private int memberCount(SynergyDefinition definition, List<PerkDefinition> perks) {
-        Set<String> requiredTags = new HashSet<>(definition.requiredTags());
-        if (requiredTags.isEmpty()) {
-            return (int) perks.stream()
-                    .filter(perk -> definition.requiredPerks().contains(perk.id()))
-                    .count();
+    private int memberCount(SynergyDefinition definition, PerkSnapshot perks) {
+        if (definition.requiredTags().isEmpty()) {
+            return perks.countPresent(definition.requiredPerks());
         }
 
-        return (int) perks.stream()
-                .filter(perk -> perk.tags().stream().anyMatch(requiredTags::contains))
-                .count();
+        return perks.countWithAnyTag(definition.requiredTags());
     }
 
-    /** Extreu els identificadors de les perks. */
-    private Set<String> perkIds(List<PerkDefinition> perks) {
-        Set<String> ids = new HashSet<>();
-        if (perks != null) {
-            for (PerkDefinition perk : perks) {
-                if (perk != null)
-                    ids.add(perk.id());
-            }
+    /** Snapshot indexat de les perks d'un jugador per ids i tags. */
+    private record PerkSnapshot(
+            List<PerkDefinition> perks,
+            Set<String> perkIds,
+            Map<String, Set<String>> perkIdsByTag) {
+
+        static PerkSnapshot empty() {
+            return new PerkSnapshot(List.of(), Set.of(), Map.of());
         }
-        return ids;
+
+        static PerkSnapshot from(List<PerkDefinition> source) {
+            if (source == null || source.isEmpty()) {
+                return empty();
+            }
+
+            List<PerkDefinition> perks = new ArrayList<>();
+            Set<String> ids = new LinkedHashSet<>();
+            Map<String, Set<String>> idsByTag = new HashMap<>();
+            for (PerkDefinition perk : source) {
+                if (perk == null || perk.id() == null || !ids.add(perk.id())) {
+                    continue;
+                }
+
+                perks.add(perk);
+                for (String tag : perk.tags()) {
+                    idsByTag.computeIfAbsent(tag, ignored -> new LinkedHashSet<>()).add(perk.id());
+                }
+            }
+
+            Map<String, Set<String>> immutableIdsByTag = new HashMap<>();
+            idsByTag.forEach((tag, taggedIds) -> immutableIdsByTag.put(tag, Set.copyOf(taggedIds)));
+            return new PerkSnapshot(List.copyOf(perks), Set.copyOf(ids), Map.copyOf(immutableIdsByTag));
+        }
+
+        PerkSnapshot with(PerkDefinition candidate) {
+            if (candidate == null || candidate.id() == null || perkIds.contains(candidate.id())) {
+                return this;
+            }
+            List<PerkDefinition> next = new ArrayList<>(perks);
+            next.add(candidate);
+            return from(next);
+        }
+
+        int countPresent(Collection<String> ids) {
+            if (ids == null || ids.isEmpty()) {
+                return 0;
+            }
+            int count = 0;
+            for (String id : ids) {
+                if (perkIds.contains(id)) {
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        int countWithAnyTag(Collection<String> tags) {
+            if (tags == null || tags.isEmpty()) {
+                return 0;
+            }
+            Set<String> matches = new LinkedHashSet<>();
+            for (String tag : tags) {
+                matches.addAll(perkIdsByTag.getOrDefault(tag, Set.of()));
+            }
+            return matches.size();
+        }
     }
 
     /** Estat intern d’una sinergia activa. */
     private record ActiveSynergy(SynergyDefinition definition, int members, int rank, SynergyLevel level) {
+    }
+
+    /** Resultat actiu cachejat per revisió de l'estat de perks. */
+    private record ActiveSynergyCache(
+            long revision,
+            List<ActiveSynergy> active,
+            List<SynergyDisplayInfo> displayInfo) {
     }
 }

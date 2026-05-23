@@ -23,8 +23,8 @@ import rpgcombat.perks.divine.DivinePerkDefinition;
 import rpgcombat.perks.divine.DivinePerkRegistry;
 import rpgcombat.perks.mission.MissionDefinition;
 import rpgcombat.perks.mission.MissionRegistry;
-import rpgcombat.perks.synergy.SynergyDefinition;
-import rpgcombat.perks.synergy.SynergyRegistry;
+import rpgcombat.perks.synergy.catalog.SynergyRegistry;
+import rpgcombat.perks.synergy.model.SynergyDefinition;
 import rpgcombat.terrain.model.TerrainDefinition;
 import rpgcombat.terrain.registry.TerrainRegistry;
 import rpgcombat.weapons.Arsenal;
@@ -211,7 +211,7 @@ public final class DiscoveryCatalog {
                     "Completa missions de perk per poder triar-la.",
                     "Completa missions de perk per poder triar-la.",
                     "Completa missions de perk per poder triar-la.",
-                    perk.tags(),
+                    List.copyOf(perk.tags()),
                     true,
                     order++));
         }

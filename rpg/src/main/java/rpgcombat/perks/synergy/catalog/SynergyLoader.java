@@ -1,4 +1,4 @@
-package rpgcombat.perks.synergy;
+package rpgcombat.perks.synergy.catalog;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -13,7 +13,12 @@ import java.util.Map;
 import com.google.gson.Gson;
 
 import rpgcombat.perks.PerkDefinition.Rule;
-import rpgcombat.perks.synergy.SynergyConfig.LevelConfig;
+import rpgcombat.perks.synergy.catalog.SynergyConfig.LevelConfig;
+import rpgcombat.perks.synergy.model.MemberAlteration;
+import rpgcombat.perks.synergy.model.SynergyDefinition;
+import rpgcombat.perks.synergy.model.SynergyLevel;
+import rpgcombat.perks.synergy.model.SynergyScaling;
+import rpgcombat.perks.synergy.model.SynergyType;
 import rpgcombat.weapons.passives.HitContext.Phase;
 
 /** Carrega definicions de sinergies des d’un fitxer JSON. */

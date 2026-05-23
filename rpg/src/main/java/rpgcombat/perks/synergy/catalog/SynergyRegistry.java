@@ -1,7 +1,9 @@
-package rpgcombat.perks.synergy;
+package rpgcombat.perks.synergy.catalog;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import rpgcombat.perks.synergy.model.SynergyDefinition;
 
 /** Registre global de definicions de sinergia. */
 public final class SynergyRegistry {

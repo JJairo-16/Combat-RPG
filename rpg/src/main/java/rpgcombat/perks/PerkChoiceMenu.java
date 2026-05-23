@@ -14,7 +14,7 @@ import org.jline.terminal.Terminal;
 import org.jline.utils.InfoCmp.Capability;
 
 import rpgcombat.models.characters.Character;
-import rpgcombat.perks.synergy.SynergyPreview;
+import rpgcombat.perks.synergy.view.SynergyPreview;
 import rpgcombat.utils.terminal.SharedTerminal;
 import rpgcombat.utils.terminal.TerminalInput;
 import rpgcombat.utils.terminal.TerminalSession;

@@ -1,4 +1,4 @@
-package rpgcombat.perks.synergy;
+package rpgcombat.perks.synergy.catalog;
 
 import java.util.List;
 import java.util.Map;

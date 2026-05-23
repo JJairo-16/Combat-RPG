@@ -13,7 +13,7 @@ import rpgcombat.models.effects.EffectState;
 import rpgcombat.models.effects.StackingRule;
 import rpgcombat.perks.PerkDefinition;
 import rpgcombat.perks.PerkDefinition.Rule;
-import rpgcombat.perks.synergy.MemberAlteration;
+import rpgcombat.perks.synergy.model.MemberAlteration;
 import rpgcombat.weapons.passives.HitContext;
 import rpgcombat.weapons.passives.HitContext.Phase;
 

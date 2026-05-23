@@ -4,10 +4,14 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import rpgcombat.discovery.config.DiscoveryCatalog;
 import rpgcombat.discovery.config.DiscoveryCategoryDefinition;
@@ -25,6 +29,8 @@ public final class DiscoverySystem {
     private final DiscoveryStore store;
     private final Path savePath;
     private final Map<DiscoveryKey, DiscoveryProgress> progressByKey;
+    private final Map<DiscoveryCategory, Integer> discoveredByCategory = new EnumMap<>(DiscoveryCategory.class);
+    private final Map<TaggedDiscoveryKey, Integer> discoveredByCategoryAndTag = new HashMap<>();
     private boolean dirty;
 
     /** Crea el sistema amb el progrés carregat. */
@@ -34,6 +40,7 @@ public final class DiscoverySystem {
         this.store = store;
         this.savePath = savePath;
         this.progressByKey = new LinkedHashMap<>(progressByKey);
+        rebuildDiscoveryIndexes();
     }
 
     /** Crea el sistema carregant el progrés global des de l'AppData. */
@@ -55,6 +62,7 @@ public final class DiscoverySystem {
     public synchronized void setCatalog(DiscoveryCatalog catalog) {
         if (catalog != null) {
             this.catalog = catalog;
+            rebuildDiscoveryIndexes();
         }
     }
 
@@ -70,6 +78,7 @@ public final class DiscoverySystem {
         }
 
         progressByKey.put(key, DiscoveryProgress.newlyDiscovered(key));
+        indexDiscoveredKey(key);
         dirty = true;
     }
 
@@ -158,13 +167,7 @@ public final class DiscoverySystem {
         if (category == null) {
             return 0;
         }
-        int count = 0;
-        for (DiscoveryKey key : progressByKey.keySet()) {
-            if (key.category() == category) {
-                count++;
-            }
-        }
-        return count;
+        return discoveredByCategory.getOrDefault(category, 0);
     }
 
     /** Nombre d'entrades descobertes dins una categoria que tenen una etiqueta concreta. */
@@ -174,23 +177,45 @@ public final class DiscoverySystem {
         }
 
         String expected = normalizeTag(tag);
-        int count = 0;
+        return discoveredByCategoryAndTag.getOrDefault(new TaggedDiscoveryKey(category, expected), 0);
+    }
+
+    /** Regenera comptadors derivats des del progrés carregat i el catàleg actiu. */
+    private void rebuildDiscoveryIndexes() {
+        discoveredByCategory.clear();
+        discoveredByCategoryAndTag.clear();
         for (DiscoveryKey key : progressByKey.keySet()) {
-            if (key.category() != category) {
-                continue;
-            }
-            DiscoveryEntryDefinition definition = catalog.find(key.category(), key.id()).orElse(null);
-            if (definition == null) {
-                continue;
-            }
-            boolean hasTag = definition.tags().stream()
-                    .map(DiscoverySystem::normalizeTag)
-                    .anyMatch(expected::equals);
-            if (hasTag) {
-                count++;
+            indexDiscoveredKey(key);
+        }
+    }
+
+    /** Actualitza els comptadors quan una entrada passa a descoberta. */
+    private void indexDiscoveredKey(DiscoveryKey key) {
+        if (key == null || key.category() == null) {
+            return;
+        }
+
+        discoveredByCategory.merge(key.category(), 1, Integer::sum);
+        if (catalog == null) {
+            return;
+        }
+
+        DiscoveryEntryDefinition definition = catalog.find(key.category(), key.id()).orElse(null);
+        if (definition == null || definition.tags().isEmpty()) {
+            return;
+        }
+
+        Set<String> tags = new LinkedHashSet<>();
+        for (String tag : definition.tags()) {
+            String normalized = normalizeTag(tag);
+            if (!normalized.isBlank()) {
+                tags.add(normalized);
             }
         }
-        return count;
+
+        for (String tag : tags) {
+            discoveredByCategoryAndTag.merge(new TaggedDiscoveryKey(key.category(), tag), 1, Integer::sum);
+        }
     }
 
     /** Converteix una definició en model visual d'entrada. */
@@ -232,5 +257,9 @@ public final class DiscoverySystem {
     /** Normalitza etiquetes declaratives de catàleg per poder comparar-les. */
     private static String normalizeTag(String value) {
         return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    /** Clau normalitzada per als comptadors de descobriments etiquetats. */
+    private record TaggedDiscoveryKey(DiscoveryCategory category, String tag) {
     }
 }
