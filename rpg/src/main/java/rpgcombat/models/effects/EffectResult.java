@@ -36,6 +36,18 @@ public record EffectResult(
         return msg(CombatMessage.chaos(text));
     }
 
+    public static EffectResult statusEffect(MessageColor color, MessageSymbol symbol, String text) {
+        return msg(CombatMessage.statusEffect(symbol, color, text));
+    }
+
+    public static EffectResult divinePerk(MessageColor color, MessageSymbol symbol, String text) {
+        return msg(CombatMessage.divinePerk(symbol, color, text));
+    }
+
+    public static EffectResult gamemode(MessageColor color, MessageSymbol symbol, String text) {
+        return msg(CombatMessage.gamemode(symbol, color, text));
+    }
+
     public static EffectResult hit(String text) {
         return msg(CombatMessage.hit(text));
     }

@@ -51,9 +51,9 @@ public final class AchievementStore {
 
             result.put(definition.id(), new AchievementProgress(
                     definition,
-                    item.progress(),
-                    item.sequenceIndex(),
-                    item.completed(),
+                    item.progress() == null ? 0.0 : item.progress(),
+                    item.sequenceIndex() == null ? 0 : item.sequenceIndex(),
+                    Boolean.TRUE.equals(item.completed()),
                     parseInstant(item.completedAt()),
                     item.valueProgress(),
                     item.actorSequenceProgress()));
@@ -69,13 +69,7 @@ public final class AchievementStore {
         Map<String, AchievementSavedProgress> items = new LinkedHashMap<>();
         if (progress != null) {
             for (AchievementProgress item : progress) {
-                items.put(item.definition().id(), new AchievementSavedProgress(
-                        item.progress(),
-                        item.sequenceIndex(),
-                        item.completed(),
-                        item.completedAt() == null ? null : item.completedAt().toString(),
-                        item.valueProgress(),
-                        item.actorSequenceProgress()));
+                items.put(item.definition().id(), savedProgress(item));
             }
         }
 
@@ -118,6 +112,37 @@ public final class AchievementStore {
         } catch (Exception ignored) {
             return null;
         }
+    }
+
+    /** Compacta assoliments completats i limita decimals del progrés pendent. */
+    private AchievementSavedProgress savedProgress(AchievementProgress item) {
+        if (item.completed()) {
+            return AchievementSavedProgress.completed(item.completedAt() == null ? null : item.completedAt().toString());
+        }
+
+        return AchievementSavedProgress.pending(
+                round2(item.progress()),
+                item.sequenceIndex(),
+                roundValues(item.valueProgress()),
+                item.actorSequenceProgress());
+    }
+
+    private Map<String, Double> roundValues(Map<String, Double> values) {
+        if (values == null || values.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, Double> rounded = new LinkedHashMap<>();
+        values.forEach((key, value) -> {
+            if (key != null && value != null) {
+                rounded.put(key, round2(value));
+            }
+        });
+        return rounded;
+    }
+
+    private double round2(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 
 }

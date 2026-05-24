@@ -10,6 +10,7 @@ import rpgcombat.models.effects.EffectResult;
 import rpgcombat.models.effects.impl.BlindEffect;
 import rpgcombat.models.effects.impl.Fatigue;
 import rpgcombat.perks.PerkDefinition.Rule;
+import rpgcombat.settings.UserSettingsRuntime;
 import rpgcombat.weapons.passives.HitContext.Event;
 
 /**
@@ -134,6 +135,8 @@ final class PerkRuleFactory {
                     ctx.owner().gainMomentum();
                 if (ctx.owner().getMomentumStacks() <= before)
                     return EffectResult.none();
+                if (!UserSettingsRuntime.showMomentumMessages())
+                    return EffectResult.changed(null);
                 return EffectResult.styled(MessageColor.CYAN, MessageSymbol.POSITIVE,
                         ctx.owner().getName() + " guanya impuls.");
             };

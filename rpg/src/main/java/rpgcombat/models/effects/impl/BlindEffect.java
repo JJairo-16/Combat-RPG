@@ -59,10 +59,10 @@ public final class BlindEffect extends MissChanceEffect {
 
     @Override
     protected CombatMessage buildMessage(Character owner) {
-        return CombatMessage.of(
+        return CombatMessage.statusEffect(
                 MessageSymbol.NEGATIVE,
                 MessageColor.RED,
-                owner.getName() + " està encegat i falla l'atac."
+                "Està encegat i falla l'atac"
         );
     }
 

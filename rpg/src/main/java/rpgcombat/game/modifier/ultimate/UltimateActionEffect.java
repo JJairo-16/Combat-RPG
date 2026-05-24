@@ -222,8 +222,8 @@ public final class UltimateActionEffect implements Effect, MenuTurnEffect {
         if (owner == null || type == null) {
             return null;
         }
-        for (Effect effect : owner.getEffects()) {
-            if (effect instanceof UltimateActionEffect ultimate && ultimate.type == type) {
+        for (UltimateActionEffect ultimate : owner.effectsOfType(UltimateActionEffect.class)) {
+            if (ultimate.type == type) {
                 return ultimate;
             }
         }
@@ -242,8 +242,8 @@ public final class UltimateActionEffect implements Effect, MenuTurnEffect {
         if (owner == null) {
             return false;
         }
-        for (Effect effect : owner.getEffects()) {
-            if (effect instanceof UltimateActionEffect ultimate && ultimate.usedThisCombat()) {
+        for (UltimateActionEffect ultimate : owner.effectsOfType(UltimateActionEffect.class)) {
+            if (ultimate.usedThisCombat()) {
                 return true;
             }
         }
@@ -262,8 +262,8 @@ public final class UltimateActionEffect implements Effect, MenuTurnEffect {
         if (owner == null) {
             return false;
         }
-        for (Effect effect : owner.getEffects()) {
-            if (effect instanceof UltimateActionEffect ultimate && ultimate.usedThisTurn()) {
+        for (UltimateActionEffect ultimate : owner.effectsOfType(UltimateActionEffect.class)) {
+            if (ultimate.usedThisTurn()) {
                 return true;
             }
         }

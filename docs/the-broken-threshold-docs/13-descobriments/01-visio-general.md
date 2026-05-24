@@ -8,7 +8,7 @@
 
 El sistema de descobriments manté un grimori global del contingut que el jugador ha vist o activat.
 
-A diferència dels assoliments, els descobriments no mesuren objectius. La seva funció és revelar fitxes del catàleg a mesura que el jugador entra en contacte amb armes, races, accions, efectes, missions, perks o sinergies.
+A diferència dels assoliments, els descobriments no mesuren objectius. La seva funció és revelar fitxes del catàleg a mesura que el jugador entra en contacte amb armes, races, accions, efectes, missions, perks, sinergies o terrenys.
 
 ---
 
@@ -49,6 +49,7 @@ Les categories principals són:
 - `PERKS`
 - `DIVINE_PERKS`
 - `SYNERGIES`
+- `TERRAINS`
 
 Cada categoria pot tenir títol, descripció, ordre i política de mostrar entrades bloquejades.
 

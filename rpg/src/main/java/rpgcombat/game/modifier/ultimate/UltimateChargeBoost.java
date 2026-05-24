@@ -109,8 +109,8 @@ public final class UltimateChargeBoost implements Effect, MenuTurnEffect {
         if (owner == null) {
             return false;
         }
-        for (Effect effect : owner.getEffects()) {
-            if (effect instanceof UltimateChargeBoost boost && !boost.isExpired()) {
+        for (UltimateChargeBoost boost : owner.effectsOfType(UltimateChargeBoost.class)) {
+            if (!boost.isExpired()) {
                 return true;
             }
         }

@@ -6,7 +6,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.google.gson.Gson;
 
@@ -67,14 +69,13 @@ public final class PerkLoader {
     }
 
     /** Normalitza etiquetes opcionals de perk. */
-    private static List<String> tags(List<String> raw) {
-        if (raw == null || raw.isEmpty()) return List.of();
+    private static Set<String> tags(List<String> raw) {
+        if (raw == null || raw.isEmpty()) return Set.of();
         return raw.stream()
                 .filter(tag -> tag != null && !tag.isBlank())
                 .map(String::trim)
                 .map(String::toUpperCase)
-                .distinct()
-                .toList();
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
     }
 
     /**

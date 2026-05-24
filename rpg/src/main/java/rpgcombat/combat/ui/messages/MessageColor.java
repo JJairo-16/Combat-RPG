@@ -9,6 +9,7 @@ public enum MessageColor {
     DEFAULT(null),
     RED(Ansi.RED),
     GREEN(Ansi.GREEN),
+    DARK_GREEN("\u001B[32m"),
     YELLOW(Ansi.YELLOW),
     BLUE(Ansi.BLUE),
     MAGENTA(Ansi.MAGENTA),

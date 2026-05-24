@@ -34,9 +34,12 @@ import rpgcombat.perks.PerkRegistry;
 import rpgcombat.perks.mission.MissionDefinition;
 import rpgcombat.perks.mission.MissionLoader;
 import rpgcombat.perks.mission.MissionRegistry;
-import rpgcombat.perks.synergy.SynergyDefinition;
-import rpgcombat.perks.synergy.SynergyLoader;
-import rpgcombat.perks.synergy.SynergyRegistry;
+import rpgcombat.perks.synergy.catalog.SynergyLoader;
+import rpgcombat.perks.synergy.catalog.SynergyRegistry;
+import rpgcombat.perks.synergy.model.SynergyDefinition;
+import rpgcombat.terrain.io.TerrainLoader;
+import rpgcombat.terrain.model.TerrainDefinition;
+import rpgcombat.terrain.registry.TerrainRegistry;
 import rpgcombat.utils.rng.D20Terminal;
 import rpgcombat.utils.rng.DivineCharismaAffinity;
 import rpgcombat.utils.terminal.SharedTerminal;
@@ -112,6 +115,8 @@ public final class ResourcePreloader {
                     () -> DivinePerkLoader.load(Path.of(paths.divinePerksConfig())));
             Future<List<SynergyDefinition>> synergies = executor.submit(
                     () -> SynergyLoader.load(Path.of(paths.synergiesConfig())));
+            Future<List<TerrainDefinition>> terrains = executor.submit(
+                    () -> TerrainLoader.load(Path.of(paths.terrainsConfig())));
 
             Arsenal.preload(await(weapons, "armes"));
             modifiers = await(loadedModifiers, "modificadors de menú");
@@ -124,6 +129,7 @@ public final class ResourcePreloader {
             PerkRegistry.initialize(await(perks, "perks"));
             DivinePerkRegistry.initialize(await(divinePerks, "perks divines"));
             SynergyRegistry.initialize(await(synergies, "sinergies"));
+            TerrainRegistry.initialize(await(terrains, "terrenys"));
         }
 
         matchStaticLoaded = true;

@@ -77,15 +77,12 @@ public class SimpleMenu {
             Terminal.SignalHandler previousWinch =
                     terminal.handle(Terminal.Signal.WINCH, signal -> {
                         resizePending = true;
-                        terminalWidth = terminal.getWidth();
-                        terminalHeight = terminal.getHeight();
-                        renderFull(terminal, title, options, cursor[0]);
                     });
 
             try {
                 renderFull(terminal, title, options, cursor[0]);
 
-                new MenuInputGate(terminal, 80, 20).waitUntilReady();
+                new MenuInputGate(terminal).waitUntilReady();
 
                 BindingReader reader = new BindingReader(terminal.reader());
                 KeyMap<Action> keyMap = buildKeyMap(terminal);

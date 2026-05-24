@@ -93,7 +93,6 @@ public final class DiscoveryInteractiveViewer {
             KeyMap<Action> keys = keys(terminal);
 
             terminal.puts(Capability.cursor_invisible);
-            TerminalClear.clear(terminal);
 
             while (true) {
                 int width = Math.max(1, terminal.getWidth());

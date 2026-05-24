@@ -23,6 +23,122 @@
     }
   },
   {
+    "id": "GROUND_HAS_A_VOICE",
+    "name": "La terra té veu",
+    "description": "Comença una partida sota l'efecte d'un terreny.",
+    "objective": {
+      "event": "TERRAIN_SELECTED"
+    }
+  },
+  {
+    "id": "FOOTSTEPS_UNDER_PACTS",
+    "name": "Petjades sota pactes",
+    "description": "Comença 5 partides sota l'efecte d'un terreny.",
+    "goal": 5,
+    "objective": {
+      "event": "TERRAIN_SELECTED"
+    }
+  },
+  {
+    "id": "THE_FIELD_REMEMBERS",
+    "name": "El camp recorda",
+    "description": "Comença 20 partides sota l'efecte d'un terreny.",
+    "goal": 20,
+    "objective": {
+      "event": "TERRAIN_SELECTED"
+    }
+  },
+  {
+    "id": "FIRST_BELL_HEARD",
+    "name": "La campana et coneix",
+    "description": "Juga una partida a La Campana del Primer Cop.",
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "TERRAIN_SELECTED",
+      "conditions": [
+        {
+          "field": "terrainId",
+          "value": "FIRST_BELL"
+        }
+      ]
+    }
+  },
+  {
+    "id": "NARROW_BRIDGE_CROSSED",
+    "name": "Cap pas enrere",
+    "description": "Juga una partida al Pont Estret.",
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "TERRAIN_SELECTED",
+      "conditions": [
+        {
+          "field": "terrainId",
+          "value": "NARROW_BRIDGE"
+        }
+      ]
+    }
+  },
+  {
+    "id": "DARK_LANTERNS_LIT",
+    "name": "El gest sota el fanal",
+    "description": "Juga una partida als Fanals Apagats.",
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "TERRAIN_SELECTED",
+      "conditions": [
+        {
+          "field": "terrainId",
+          "value": "DARK_LANTERNS"
+        }
+      ]
+    }
+  },
+  {
+    "id": "WHISPERING_PIT_HEARD",
+    "name": "Escolta el fossar",
+    "description": "Juga una partida al Fossar de les Veus.",
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "TERRAIN_SELECTED",
+      "conditions": [
+        {
+          "field": "terrainId",
+          "value": "WHISPERING_PIT"
+        }
+      ]
+    }
+  },
+  {
+    "id": "THRESHOLD_CHAINS_WORN",
+    "name": "Lligat al llindar",
+    "description": "Juga una partida a les Cadenes del Llindar.",
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "TERRAIN_SELECTED",
+      "conditions": [
+        {
+          "field": "terrainId",
+          "value": "THRESHOLD_CHAINS"
+        }
+      ]
+    }
+  },
+  {
+    "id": "BREATHING_GATE_OPENED",
+    "name": "Quan la porta exhala",
+    "description": "Juga una partida a la Porta que Respira.",
+    "objective": {
+      "type": "CONDITIONAL_COUNT",
+      "event": "TERRAIN_SELECTED",
+      "conditions": [
+        {
+          "field": "terrainId",
+          "value": "BREATHING_GATE"
+        }
+      ]
+    }
+  },
+  {
     "id": "IMMOBILE_COIN",
     "name": "La moneda immòbil",
     "description": "Empata un combat.",

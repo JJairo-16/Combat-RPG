@@ -1,0 +1,84 @@
+[
+  {
+    "id": "FIRST_BELL",
+    "name": "La Campana del Primer Cop",
+    "shortDescription": "El primer impacte de cada combatent desperta la campana.",
+    "description": "Una campana esquerdada espera el primer cop net de cada duelista. Quan sona, el combat ja no torna a caminar amb el mateix pas.",
+    "difficulty": 1,
+    "effectLines": [
+      "El primer impacte net que cada combatent encerta cada ronda li dona impuls."
+    ],
+    "trigger": {
+      "file": "FirstBellTerrainTrigger"
+    }
+  },
+  {
+    "id": "NARROW_BRIDGE",
+    "name": "El Pont Estret",
+    "shortDescription": "Atacar alhora converteix el pas en un xoc obert.",
+    "description": "No hi ha espai per recular ni lloc per fingir calma. Quan dos atacants es troben al pont, el llindar els obliga a travessar.",
+    "difficulty": 1,
+    "effectLines": [
+      "Si tots dos combatents ataquen en la mateixa ronda, els seus atacs esdevenen crítics."
+    ],
+    "trigger": {
+      "file": "NarrowBridgeTerrainTrigger"
+    }
+  },
+  {
+    "id": "DARK_LANTERNS",
+    "name": "Els Fanals Apagats",
+    "shortDescription": "Cada ronda un fanal encén una acció concreta.",
+    "description": "Els fanals no il·luminen el camí sencer. Només mostren un gest, i qui el travessa amb decisió torna a sortir de l'ombra amb foc a les mans.",
+    "difficulty": 2,
+    "effectLines": [
+      "El menú d'accions mostra quina acció queda il·luminada aquesta ronda.",
+      "Qui la tria il·lumina el seu proper atac i el converteix en crític."
+    ],
+    "trigger": {
+      "file": "DarkLanternsTerrainTrigger"
+    }
+  },
+  {
+    "id": "WHISPERING_PIT",
+    "name": "El Fossar de les Veus",
+    "shortDescription": "El fossar murmura una acció per als dos combatents.",
+    "description": "Les veus del fossar no donen ordres: conviden. Quan els dos duelistes escolten el mateix murmuri, el lloc els retorna un eco que sap on ferir.",
+    "difficulty": 3,
+    "effectLines": [
+      "El menú d'accions mostra quin gest murmura el fossar aquesta ronda.",
+      "Si tots dos el trien, cadascú guarda un eco que fa crític el seu proper atac."
+    ],
+    "trigger": {
+      "file": "WhisperingPitTerrainTrigger"
+    }
+  },
+  {
+    "id": "THRESHOLD_CHAINS",
+    "name": "Les Cadenes del Llindar",
+    "shortDescription": "Les decisions diferents estiren les cadenes.",
+    "description": "El llindar no separa els combatents: els lliga. Quan els seus gestos prenen camins diferents massa vegades, les cadenes decideixen cap a on cau el següent cop.",
+    "difficulty": 3,
+    "effectLines": [
+      "Triar accions diferents dues vegades seguides prepara una estrebada per al combatent.",
+      "L'estrebada converteix el seu proper atac en crític."
+    ],
+    "trigger": {
+      "file": "ThresholdChainsTerrainTrigger"
+    }
+  },
+  {
+    "id": "BREATHING_GATE",
+    "name": "La Porta que Respira",
+    "shortDescription": "La porta alterna rondes d'inhalació i exhalació.",
+    "description": "La porta antiga respira al mateix ritme que el duel. Primer reté l'alè d'allò que no esclata; després el torna als qui s'atreveixen a obrir-la amb un atac.",
+    "difficulty": 4,
+    "effectLines": [
+      "En inhalació, defensar, esquivar o carregar guarda alè.",
+      "En exhalació, un atac amb alè guardat esdevé crític."
+    ],
+    "trigger": {
+      "file": "BreathingGateTerrainTrigger"
+    }
+  }
+]

@@ -38,6 +38,7 @@ Els descobriments solen passar quan:
 - una perk és obtinguda
 - una perk divina és assignada
 - una sinergia s'activa
+- un terreny real entra a la partida
 
 ---
 
@@ -66,5 +67,6 @@ Per exemple, equipar una arma pot descobrir-ne la fitxa i també avançar un ass
 
 - disparar el descobriment quan el jugador veu o usa el contingut real
 - no descobrir contingut només perquè existeix al JSON
+- no registrar `Cap terreny`, perquè representa l'absència d'escenari
 - no dependre de textos renderitzats per descobrir entrades
 - no registrar claus que no existeixen al catàleg

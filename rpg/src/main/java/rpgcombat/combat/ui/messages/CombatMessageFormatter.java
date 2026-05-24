@@ -2,6 +2,7 @@ package rpgcombat.combat.ui.messages;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import rpgcombat.utils.ui.Ansi;
 
@@ -9,6 +10,7 @@ import rpgcombat.utils.ui.Ansi;
  * Dona estil visual als missatges del combat.
  */
 public final class CombatMessageFormatter {
+    private static final Pattern LINE_SPLIT = Pattern.compile("\\R");
 
     /**
      * Formata el missatge principal de l'acció.
@@ -59,6 +61,11 @@ public final class CombatMessageFormatter {
                 ? message.symbol().defaultColor()
                 : message.color();
         String ansi = color == null ? null : color.ansi();
+
+        if (message.placement() == CombatMessagePlacement.EFFECT_PANEL && ansi != null) {
+            return "  " + ansi + message.symbol().glyph() + " " + clean(message.text()) + Ansi.RESET;
+        }
+
         String prefix = ansi == null
                 ? message.symbol().glyph()
                 : ansi + message.symbol().glyph() + Ansi.RESET;
@@ -72,23 +79,22 @@ public final class CombatMessageFormatter {
         }
 
         List<String> lines = new ArrayList<>();
-        for (String rawLine : text.split("\\R")) {
+        String[] rawLines = LINE_SPLIT.split(text);
+        for (String rawLine : rawLines) {
             if (isBlank(rawLine)) {
                 continue;
             }
-            CombatMessage lineMessage = semanticLine(rawLine, message);
+            CombatMessage lineMessage = new CombatMessage(
+                message.symbol(),
+                message.color(),
+                rawLine,
+                message.phase(),
+                message.kind(),
+                message.placement()
+            );
             lines.add(render(lineMessage));
         }
         return lines;
-    }
-
-    private CombatMessage semanticLine(String line, CombatMessage fallback) {
-        String clean = clean(line);
-        if (clean.startsWith("+ ") || clean.startsWith("- ") || clean.startsWith("! ")
-                || clean.startsWith("? ") || clean.startsWith("→ ")) {
-            return CombatMessage.legacy(clean);
-        }
-        return CombatMessage.of(fallback.symbol(), fallback.color(), clean);
     }
 
     private String clean(String text) {

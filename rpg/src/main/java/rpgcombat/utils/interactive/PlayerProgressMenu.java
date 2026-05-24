@@ -12,28 +12,36 @@ import org.jline.keymap.KeyMap;
 import org.jline.terminal.Terminal;
 
 /**
- * Menú d'accions que afegeix un panell independent per consultar missions i
- * perks del jugador sense acoblar-ho al menú lateral d'informació.
+ * Menú d'accions que afegeix panells independents per consultar missions,
+ * perks i pistes de terreny sense acoblar-los al menú lateral d'informació.
  */
 public final class PlayerProgressMenu extends MenuWithInformation {
     private static final int PANEL_WIDTH = 48;
     private static final int PANEL_MAX_LINES = 20;
+    private static final int TERRAIN_HINT_MAX_LINES = 5;
     private static final int PANEL_CONTROLS_GAP_ROWS = 1;
+    private static final int PANEL_STACK_GAP_ROWS = 1;
     private static final int BOTTOM_SAFE_MARGIN_ROWS = 2;
+    private static final int INFO_PANEL_SAFE_ROWS = 10;
 
     private static final Pattern SECTION_SEPARATOR_PATTERN = Pattern.compile("\\R---\\R");
-    private static final Pattern FIRST_LINE_PATTERN = Pattern.compile("\\R");
     private static final Pattern LINE_PATTERN = Pattern.compile("\\R");
+    private static final Pattern SPACE_PATTERN = Pattern.compile("\\s+");
     private static final Pattern FORMAT_NUMBERS_PATTERN = Pattern.compile("(?<!\\d)(\\d+)\\.0(?!\\d)");
     private static final Pattern ANSI_PATTERN = Pattern.compile("\\u001B\\[[;\\d]*m");
 
     private String progressText = "";
+    private String terrainHintText = "";
     private int selectedSection;
 
     private int lastPanelRow = -1;
     private int lastPanelHeight;
     private int lastPanelCol;
     private int lastPanelWidth;
+    private int lastTerrainPanelRow = -1;
+    private int lastTerrainPanelHeight;
+    private int lastTerrainPanelCol;
+    private int lastTerrainPanelWidth;
 
     private int completedAchievementsBadgeCount;
 
@@ -44,6 +52,11 @@ public final class PlayerProgressMenu extends MenuWithInformation {
     /** Defineix el text de missions/perks que es mostra al panell propi. */
     public void setProgressText(String text) {
         this.progressText = formatNumbers(safe(text));
+    }
+
+    /** Defineix la pista de terreny que es mostra en un panell propi. */
+    public void setTerrainHintText(String text) {
+        this.terrainHintText = formatNumbers(safe(text));
     }
 
     public void setCompletedAchievementsBadgeCount(int count) {
@@ -67,19 +80,32 @@ public final class PlayerProgressMenu extends MenuWithInformation {
             super.handleProgressAction(terminal, title, options, cursor);
             return;
         }
-        drawProgressPanel(terminal, terminal.getHeight() - BOTTOM_SAFE_MARGIN_ROWS);
+        int controlsRow = terminal.getHeight() - BOTTOM_SAFE_MARGIN_ROWS;
+        clearPreviousTerrainHintPanel(terminal);
+        drawProgressPanel(terminal, controlsRow);
+        drawTerrainHintPanel(terminal, controlsRow);
+        terminal.flush();
+    }
+
+    /** Recol·loca la pista quan s'obre o es tanca la informació d'accions. */
+    @Override
+    protected void handleInfoAction(Terminal terminal, String title, List<String> options, int cursor) {
+        super.handleInfoAction(terminal, title, options, cursor);
+        drawTerrainHintPanel(terminal, terminal.getHeight() - BOTTOM_SAFE_MARGIN_ROWS);
         terminal.flush();
     }
 
     @Override
     protected void afterContentRendered(Terminal terminal, List<String> options, int cursor, int controlsRow) {
         drawProgressPanel(terminal, controlsRow);
+        drawTerrainHintPanel(terminal, controlsRow);
         drawAchievementBadge(terminal);
     }
 
     @Override
     protected void beforeDynamicAreaCleared(Terminal terminal) {
         clearPreviousPanel(terminal);
+        clearPreviousTerrainHintPanel(terminal);
     }
 
     private void drawProgressPanel(Terminal terminal, int controlsRow) {
@@ -96,13 +122,7 @@ public final class PlayerProgressMenu extends MenuWithInformation {
         int width = Math.clamp(terminal.getWidth() - leftPadding - 2L, 24, PANEL_WIDTH);
         int innerWidth = width - 4;
 
-        List<PanelLine> lines = buildLines(section.body(), innerWidth);
-        if (lines.size() > PANEL_MAX_LINES) {
-            lines = new ArrayList<>(lines.subList(0, PANEL_MAX_LINES));
-            PanelLine last = lines.get(PANEL_MAX_LINES - 1);
-            lines.set(PANEL_MAX_LINES - 1,
-                    new PanelLine(truncateAnsi(last.text(), Math.max(1, width - 5)) + "…", last.style()));
-        }
+        List<PanelLine> lines = limitLines(buildLines(section.body(), innerWidth), PANEL_MAX_LINES, width);
 
         int contentHeight = lines.size() + 2;
         int row = Math.max(TITLE_ROW + 1, controlsRow - contentHeight - PANEL_CONTROLS_GAP_ROWS);
@@ -114,26 +134,41 @@ public final class PlayerProgressMenu extends MenuWithInformation {
         lastPanelWidth = width;
 
         String suffix = sections.size() > 1 ? " [P]" : "";
-        String headerRaw = section.title() + suffix;
-        String header = truncateAnsi(headerRaw, Math.max(1, width - 7));
-        int headerVisible = visibleLength(header);
+        drawPanelHeader(terminal, row++, col, width, section.title() + suffix);
+        drawPanelLines(terminal, row, col, innerWidth, lines);
+    }
 
-        moveCursor(terminal, row++, col);
-        terminal.writer().print(CYAN + "┌─ " + BOLD + header + RESET + CYAN + " "
-                + "─".repeat(Math.max(0, width - headerVisible - 5)) + RESET);
+    /** Dibuixa la pista de terreny en un apartat compacte separat del progrés. */
+    private void drawTerrainHintPanel(Terminal terminal, int controlsRow) {
+        clearPreviousTerrainHintPanel(terminal);
 
-        for (PanelLine line : lines) {
-            moveCursor(terminal, row++, col);
-
-            String style = line.style();
-            String text = fitAnsi(line.text(), innerWidth);
-
-            if (!style.isEmpty()) {
-                text = text.replace(RESET, RESET + style);
-            }
-
-            terminal.writer().print(CYAN + "│ " + RESET + style + text + RESET);
+        String text = safe(terrainHintText).trim();
+        if (text.isBlank()) {
+            return;
         }
+
+        int width = Math.clamp(terminal.getWidth() - leftPadding - 2L, 24, PANEL_WIDTH);
+        int innerWidth = width - 4;
+        int anchorRow = lastPanelRow >= 0 ? lastPanelRow : controlsRow;
+        int minRow = getInformationVisible() ? TITLE_ROW + INFO_PANEL_SAFE_ROWS : TITLE_ROW + 1;
+        int availableRows = anchorRow - PANEL_STACK_GAP_ROWS - minRow;
+        if (availableRows < 3) {
+            return;
+        }
+
+        int lineLimit = Math.min(TERRAIN_HINT_MAX_LINES, availableRows - 2);
+        List<PanelLine> lines = limitLines(buildLines(text, innerWidth), lineLimit, width);
+        int contentHeight = lines.size() + 2;
+        int row = Math.max(minRow, anchorRow - contentHeight - PANEL_STACK_GAP_ROWS);
+        int col = Math.max(leftPadding, terminal.getWidth() - width);
+
+        lastTerrainPanelRow = row;
+        lastTerrainPanelHeight = contentHeight;
+        lastTerrainPanelCol = col;
+        lastTerrainPanelWidth = width;
+
+        drawPanelHeader(terminal, row++, col, width, "Pista del terreny");
+        drawPanelLines(terminal, row, col, innerWidth, lines);
     }
 
     private List<ProgressSection> sections() {
@@ -146,7 +181,7 @@ public final class PlayerProgressMenu extends MenuWithInformation {
         List<ProgressSection> result = new ArrayList<>();
 
         for (String block : raw) {
-            String[] parts = FIRST_LINE_PATTERN.split(block.trim(), 2);
+            String[] parts = LINE_PATTERN.split(block.trim(), 2);
             if (parts.length == 0 || parts[0].isBlank()) {
                 continue;
             }
@@ -203,6 +238,45 @@ public final class PlayerProgressMenu extends MenuWithInformation {
         return result.isEmpty() ? List.of(new PanelLine("", "")) : result;
     }
 
+    /** Limita les línies d'un panell i marca visualment el text retallat. */
+    private List<PanelLine> limitLines(List<PanelLine> lines, int maxLines, int width) {
+        int safeLimit = Math.max(1, maxLines);
+        if (lines.size() <= safeLimit) {
+            return lines;
+        }
+
+        List<PanelLine> limited = new ArrayList<>(lines.subList(0, safeLimit));
+        PanelLine last = limited.get(safeLimit - 1);
+        limited.set(safeLimit - 1,
+                new PanelLine(truncateAnsi(last.text(), Math.max(1, width - 5)) + "…", last.style()));
+        return limited;
+    }
+
+    /** Pinta la capçalera oberta d'un panell auxiliar. */
+    private void drawPanelHeader(Terminal terminal, int row, int col, int width, String title) {
+        String header = truncateAnsi(title, Math.max(1, width - 7));
+        int headerVisible = visibleLength(header);
+
+        moveCursor(terminal, row, col);
+        terminal.writer().print(CYAN + "┌─ " + BOLD + header + RESET + CYAN + " "
+                + "─".repeat(Math.max(0, width - headerVisible - 5)) + RESET);
+    }
+
+    /** Pinta les línies interiors d'un panell auxiliar. */
+    private void drawPanelLines(Terminal terminal, int row, int col, int innerWidth, List<PanelLine> lines) {
+        for (PanelLine line : lines) {
+            moveCursor(terminal, row++, col);
+
+            String style = line.style();
+            String text = fitAnsi(line.text(), innerWidth);
+            if (!style.isEmpty()) {
+                text = text.replace(RESET, RESET + style);
+            }
+
+            terminal.writer().print(CYAN + "│ " + RESET + style + text + RESET);
+        }
+    }
+
     private void drawAchievementBadge(Terminal terminal) {
         if (completedAchievementsBadgeCount <= 0 || lastPanelRow < 0) {
             return;
@@ -229,7 +303,7 @@ public final class PlayerProgressMenu extends MenuWithInformation {
         List<String> lines = new ArrayList<>();
         StringBuilder line = new StringBuilder();
 
-        String[] words = safeText.split("\\s+");
+        String[] words = SPACE_PATTERN.split(safeText);
         for (String word : words) {
             if (line.isEmpty()) {
                 line.append(word);
@@ -323,6 +397,23 @@ public final class PlayerProgressMenu extends MenuWithInformation {
         lastPanelHeight = 0;
         lastPanelCol = 0;
         lastPanelWidth = 0;
+    }
+
+    /** Neteja la pista de terreny dibuixada a la iteració anterior. */
+    private void clearPreviousTerrainHintPanel(Terminal terminal) {
+        if (lastTerrainPanelRow < 0 || lastTerrainPanelHeight <= 0) {
+            return;
+        }
+
+        for (int row = lastTerrainPanelRow; row < lastTerrainPanelRow + lastTerrainPanelHeight; row++) {
+            moveCursor(terminal, row, lastTerrainPanelCol);
+            terminal.writer().print(" ".repeat(lastTerrainPanelWidth + 2));
+        }
+
+        lastTerrainPanelRow = -1;
+        lastTerrainPanelHeight = 0;
+        lastTerrainPanelCol = 0;
+        lastTerrainPanelWidth = 0;
     }
 
     private String formatNumbers(String text) {

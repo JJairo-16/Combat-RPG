@@ -101,6 +101,9 @@
 ### ▌Modes de joc
 - [Creació de modes](16-modes-joc/01-creacio-modes.md)
 
+### ▌Terrenys
+- [Sistema de terrenys](17-terrenys/01-sistema-terrenys.md)
+
 ---
 
 ## ▌Com llegir aquesta documentació
@@ -115,7 +118,8 @@ Ordre recomanat per integrar-se al projecte:
 6. Assoliments i descobriments
 7. Armes desbloquejables
 8. Ultis de segona etapa
-9. Configuració i extensió
+9. Modes de joc i terrenys
+10. Configuració i extensió
 
 ---
 

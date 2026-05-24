@@ -24,11 +24,11 @@ import rpgcombat.perks.mission.MissionDefinition;
 import rpgcombat.perks.mission.MissionProgress;
 import rpgcombat.perks.mission.MissionRegistry;
 import rpgcombat.perks.mission.MissionUpdate;
-import rpgcombat.perks.synergy.SynergyDisplayInfo;
-import rpgcombat.perks.synergy.SynergyPreview;
-import rpgcombat.perks.synergy.SynergyRegistry;
-import rpgcombat.perks.synergy.SynergySystem;
-import rpgcombat.perks.synergy.SynergyType;
+import rpgcombat.perks.synergy.catalog.SynergyRegistry;
+import rpgcombat.perks.synergy.model.SynergyType;
+import rpgcombat.perks.synergy.runtime.SynergySystem;
+import rpgcombat.perks.synergy.view.SynergyDisplayInfo;
+import rpgcombat.perks.synergy.view.SynergyPreview;
 import rpgcombat.utils.ui.Ansi;
 
 /** Coordina missions, perks, perks divines i sinergies durant el combat. */
@@ -83,13 +83,14 @@ public final class CombatPerkSystem {
             return;
 
         MissionUpdate update = MissionUpdate.from(actor, opponent, actorAction, opponentAction, result, roundNumber);
-        for (MissionProgress mission : state.missions()) {
+        for (MissionProgress mission : state.missionCandidates(update)) {
             if (!mission.rewardClaimed()) {
                 boolean wasCompleted = mission.completed();
                 double progressBefore = mission.progress();
                 mission.update(update);
                 double progressAfter = mission.progress();
                 if (!wasCompleted && mission.completed()) {
+                    state.stopTrackingMission(mission);
                     registerPerkMissionCompleted(actor, state, mission, roundNumber);
                 } else if (!mission.completed() && progressAfter > progressBefore) {
                     registerPerkMissionProgress(actor, state, mission, progressBefore, progressAfter, roundNumber);
@@ -134,7 +135,7 @@ public final class CombatPerkSystem {
             if (!sb.isEmpty())
                 sb.append("\n---\n");
 
-            DivineAwakeningView awakening = divineAwakeningFor(player, divinePerk.id());
+            DivineAwakeningView awakening = divineAwakeningFor(player, divinePerk.perk());
             String name = awakening == null ? coloredDivineName(divinePerk) : awakening.awakenedDisplayName();
             String description = awakening == null ? divineDescriptionFallback(divinePerk)
                     : awakening.awakenedDescription();
@@ -186,16 +187,13 @@ public final class CombatPerkSystem {
     }
 
     /** Cerca la vista de despertar diví activa al personatge. */
-    private DivineAwakeningView divineAwakeningFor(Character player, String divinePerkId) {
-        if (player == null || divinePerkId == null)
+    private DivineAwakeningView divineAwakeningFor(Character player, PerkDefinition divinePerk) {
+        if (player == null || divinePerk == null)
             return null;
 
-        for (Effect effect : player.getEffects()) {
-            if (effect instanceof DivineAwakeningView awakening && divinePerkId.equals(awakening.divinePerkId())) {
-                return awakening;
-            }
-        }
-        return null;
+        return player.getEffect(PerkEffectFactory.keyFor(divinePerk)) instanceof DivineAwakeningView awakening
+                ? awakening
+                : null;
     }
 
     /** Retorna la descripció base si l'efecte encara no exposa despertar. */

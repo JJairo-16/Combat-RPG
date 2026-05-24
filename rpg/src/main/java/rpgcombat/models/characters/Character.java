@@ -1,7 +1,5 @@
 package rpgcombat.models.characters;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
 
@@ -25,14 +23,9 @@ import rpgcombat.game.modifier.ultimate.UltimateActionEffect;
 import rpgcombat.game.modifier.ultimate.UltimateActionType;
 import rpgcombat.models.breeds.Breed;
 import rpgcombat.models.effects.Effect;
-import rpgcombat.models.effects.EffectResult;
-import rpgcombat.models.effects.StackingRule;
 import rpgcombat.models.effects.impl.Exhaustion;
 import rpgcombat.models.effects.impl.menu.SpiritualCallingFlag;
 import rpgcombat.models.effects.triggers.InternalConflict;
-import rpgcombat.models.effects.types.EndRoundRecoveryEffect;
-import rpgcombat.models.effects.types.MenuTurnEffect;
-import rpgcombat.models.effects.types.RoundScopedEffect;
 import rpgcombat.weapons.Weapon;
 import rpgcombat.weapons.attack.AttackResult;
 import rpgcombat.weapons.passives.HitContext;
@@ -60,7 +53,7 @@ public class Character {
     protected Weapon weapon;
 
     protected final Random rng = new Random();
-    protected final List<Effect> effects = new ArrayList<>();
+    private final EffectsBudget effects = new EffectsBudget(this::clearSpecialMenuActionUsedThisTurn);
     protected final UnarmedAttack unarmedAttack;
 
     private int spiritualCallingCooldown = 0;
@@ -228,29 +221,31 @@ public class Character {
     }
 
     public boolean hasEffect(String key) {
-        if (key == null || key.isBlank())
-            return false;
-        for (Effect effect : effects) {
-            if (effect != null && !effect.isExpired() && key.equals(effect.key()))
-                return true;
-        }
-        return false;
+        return effects.hasEffect(key);
     }
 
     public Effect getEffect(String key) {
-        if (key == null || key.isBlank())
-            return null;
-        for (Effect effect : effects) {
-            if (effect != null && !effect.isExpired() && key.equals(effect.key()))
-                return effect;
-        }
-        return null;
+        return effects.getEffect(key);
     }
 
     public boolean removeEffect(String key) {
-        if (key == null || key.isBlank() || effects.isEmpty())
-            return false;
-        return effects.removeIf(effect -> effect != null && key.equals(effect.key()));
+        return effects.removeEffect(key);
+    }
+
+    /**
+     * Retorna els efectes actius indexats per classe o interfície.
+     *
+     * <p>
+     * Aquesta consulta evita recórrer tots els efectes quan el consumidor ja sap
+     * quina capacitat necessita, com ara triggers o efectes de menú.
+     * </p>
+     *
+     * @param type classe o interfície que ha de complir l'efecte
+     * @param <T> tipus retornat
+     * @return instantània immutable dels efectes del tipus demanat
+     */
+    public <T> List<T> effectsOfType(Class<T> type) {
+        return effects.effectsOfType(type);
     }
 
     /**
@@ -348,9 +343,9 @@ public class Character {
 
         bleedDamage = round2(Math.max(0.0, bleedDamage));
         if (bleedDamage > 0 && out != null) {
-            String suffix = action == Action.DEFEND ? " però la defensa en redueix part." : ".";
-            out.styled(MessageColor.RED, MessageSymbol.NEGATIVE,
-                    name + " pateix " + bleedDamage + " de sagnat" + suffix);
+            String suffix = action == Action.DEFEND ? " però la defensa en redueix part" : "";
+            out.statusEffect(MessageColor.RED, MessageSymbol.NEGATIVE,
+                    "Pateix " + bleedDamage + " de sagnat" + suffix);
         }
 
         if (bleedDamage > 0) {
@@ -372,28 +367,28 @@ public class Character {
             case ATTACK -> {
                 attackModifierThisTurn = STAGGER_ATTACK_MULTIPLIER;
                 if (out != null) {
-                    out.styled(MessageColor.YELLOW, MessageSymbol.WARNING,
-                            name + " està desequilibrat: el seu atac perd força.");
+                    out.statusEffect(MessageColor.YELLOW, MessageSymbol.WARNING,
+                            "Està desequilibrat: el seu atac perd força");
                 }
             }
             case DEFEND -> {
                 defenseModifierThisTurn = STAGGER_DEFEND_MULTIPLIER;
                 if (out != null) {
-                    out.styled(MessageColor.YELLOW, MessageSymbol.WARNING,
-                            name + " defensa mal posicionat.");
+                    out.statusEffect(MessageColor.YELLOW, MessageSymbol.WARNING,
+                            "Defensa mal posicionat");
                 }
             }
             case DODGE -> {
                 dodgeModifierThisTurn = STAGGER_DODGE_MULTIPLIER;
                 if (out != null) {
-                    out.styled(MessageColor.YELLOW, MessageSymbol.WARNING,
-                            name + " intenta esquivar desequilibrat.");
+                    out.statusEffect(MessageColor.YELLOW, MessageSymbol.WARNING,
+                            "Intenta esquivar desequilibrat");
                 }
             }
             case CHARGE -> {
                 if (out != null) {
-                    out.styled(MessageColor.YELLOW, MessageSymbol.WARNING,
-                            name + " carrega lentament per l'aturdiment.");
+                    out.statusEffect(MessageColor.YELLOW, MessageSymbol.WARNING,
+                            "Carrega lentament per l'aturdiment");
                 }
             }
         }
@@ -792,16 +787,7 @@ public class Character {
 
     /** Indica si algun efecte bloqueja la regeneració passiva de vida. */
     protected boolean suppressesPassiveHealthRegen() {
-        if (effects.isEmpty()) {
-            return false;
-        }
-        for (Effect effect : effects) {
-            if (effect instanceof EndRoundRecoveryEffect recoveryEffect
-                    && recoveryEffect.suppressPassiveHealthRegen(this)) {
-                return true;
-            }
-        }
-        return false;
+        return effects.suppressesPassiveHealthRegen(this);
     }
 
     /**
@@ -838,44 +824,17 @@ public class Character {
 
     /** Executa els efectes que avancen una vegada per ronda de menú. */
     public void onMenuTurnEnd() {
-        if (!effects.isEmpty()) {
-            List<Effect> snapshot = List.copyOf(effects);
-            for (Effect effect : snapshot) {
-                if (effect instanceof MenuTurnEffect menuTurnEffect) {
-                    menuTurnEffect.onMenuTurnEnd(this);
-                }
-            }
-            cleanupExpiredEffects();
-        }
-        clearSpecialMenuActionUsedThisTurn();
+        effects.onMenuTurnEnd(this);
     }
 
     /** Executa els efectes que preparen estat de ronda abans de decidir prioritats. */
     public void onCombatRoundStart(int roundNumber, Random rng, CombatMessageBuffer out) {
-        if (effects.isEmpty()) {
-            return;
-        }
-        List<Effect> snapshot = List.copyOf(effects);
-        for (Effect effect : snapshot) {
-            if (effect instanceof RoundScopedEffect roundEffect) {
-                roundEffect.onRoundStart(this, roundNumber, rng == null ? this.rng : rng, out);
-            }
-        }
-        cleanupExpiredEffects();
+        effects.onCombatRoundStart(this, roundNumber, rng, out);
     }
 
     /** Neteja l'estat transitori d'efectes de ronda. */
     public void onCombatRoundEnd() {
-        if (effects.isEmpty()) {
-            return;
-        }
-        List<Effect> snapshot = List.copyOf(effects);
-        for (Effect effect : snapshot) {
-            if (effect instanceof RoundScopedEffect roundEffect) {
-                roundEffect.onRoundEnd(this);
-            }
-        }
-        cleanupExpiredEffects();
+        effects.onCombatRoundEnd(this);
     }
 
     /** Afegeix un efecte intern sense registrar-lo al catàleg de descobriments. */
@@ -897,92 +856,42 @@ public class Character {
         if (discover) {
             DiscoveryRuntime.discover(DiscoveryCategory.EFFECTS, incoming.key());
         }
-        if (effects.isEmpty()) {
-            effects.add(incoming);
-            return;
-        }
-
-        for (int i = 0; i < effects.size(); i++) {
-            Effect existing = effects.get(i);
-            if (!existing.key().equals(incoming.key()))
-                continue;
-            StackingRule rule = existing.stackingRule();
-            switch (rule) {
-                case IGNORE -> {
-                    return;
-                }
-                case REPLACE -> {
-                    effects.set(i, incoming);
-                    return;
-                }
-                case REFRESH, STACK -> {
-                    existing.mergeFrom(incoming);
-                    return;
-                }
-            }
-        }
-
-        effects.add(incoming);
-        effects.sort(Comparator.comparingInt(Effect::priority).reversed());
+        effects.addEffect(incoming);
     }
 
     /**
      * Elimina tots els efectes actius.
      */
     public void clearEffects() {
-        effects.clear();
+        effects.clearEffects();
     }
 
     /**
      * Dispara els efectes d'una fase i retorna els missatges generats.
      */
     public List<CombatMessage> triggerEffects(HitContext ctx, HitContext.Phase phase, Random rng) {
-        if (effects.isEmpty())
-            return List.of();
-
-        CombatMessageBuffer messages = new CombatMessageBuffer();
-        triggerEffects(ctx, phase, rng, messages);
-        return messages.messages();
+        return effects.triggerEffects(this, ctx, phase, rng);
     }
 
     /**
      * Dispara els efectes d'una fase i afegeix els missatges a la sortida donada.
      */
     public void triggerEffects(HitContext ctx, HitContext.Phase phase, Random rng, CombatMessageBuffer out) {
-        if (effects.isEmpty())
-            return;
-
-        List<Effect> snapshot = List.copyOf(effects);
-
-        for (Effect e : snapshot) {
-            if (!e.isActive())
-                continue;
-
-            EffectResult r = e.onPhase(ctx, phase, rng, this);
-
-            if (r != null && r.message() != null && out != null) {
-                out.add(r.message());
-            }
-
-        }
-
-        cleanupExpiredEffects();
+        effects.triggerEffects(this, ctx, phase, rng, out);
     }
 
     /**
      * Elimina els efectes expirats.
      */
     protected void cleanupExpiredEffects() {
-        if (effects.isEmpty())
-            return;
-        effects.removeIf(Effect::isExpired);
+        effects.cleanupExpiredEffects();
     }
 
     /**
      * Retorna una còpia immutable dels efectes actius.
      */
     public List<Effect> getEffects() {
-        return List.copyOf(effects);
+        return effects.getEffects();
     }
 
     /**

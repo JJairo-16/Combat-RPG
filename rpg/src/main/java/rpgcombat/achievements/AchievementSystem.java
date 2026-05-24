@@ -4,17 +4,22 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 import rpgcombat.achievements.config.AchievementDefinition;
+import rpgcombat.achievements.config.AchievementObjective;
+import rpgcombat.achievements.config.AchievementObjectiveType;
 import rpgcombat.achievements.config.AchievementVisibility;
 import rpgcombat.achievements.persistence.AchievementStore;
 import rpgcombat.achievements.ui.Achievement;
+import rpgcombat.combat.models.Action;
 import rpgcombat.combat.models.Winner;
 import rpgcombat.models.characters.Character;
 import rpgcombat.utils.ui.Prettier;
@@ -24,8 +29,10 @@ public final class AchievementSystem {
     private final AchievementStore store;
     private final Path savePath;
     private final Map<String, AchievementProgress> progressById;
+    private final PendingAchievementIndex pendingIndex;
     private boolean dirty;
     private final Map<String, MatchAchievementMemory> matchMemoryByActor = new HashMap<>();
+    private int completedCount;
 
     private int pendingCompletedCount = 0;
 
@@ -33,6 +40,8 @@ public final class AchievementSystem {
         this.store = store;
         this.savePath = savePath;
         this.progressById = progressById;
+        this.pendingIndex = new PendingAchievementIndex(progressById.values());
+        this.completedCount = countCompleted(progressById.values());
     }
 
     /** Crea el sistema carregant progrés global des de l'AppData. */
@@ -43,9 +52,14 @@ public final class AchievementSystem {
         return new AchievementSystem(store, savePath, progress);
     }
 
-    /** Actualitza assoliments a partir d'un torn i desa si hi ha canvis. */
+    /** Actualitza assoliments a partir d'un torn; la ronda següent desa els canvis pendents. */
     public void onTurn(AchievementUpdate update) {
         apply(update);
+    }
+
+    /** Desa el progrés acumulat abans de començar una ronda nova. */
+    public void onRoundStart() {
+        saveIfDirty();
     }
 
     /** Registra el final del combat una sola vegada perquè el progrés és global. */
@@ -61,6 +75,11 @@ public final class AchievementSystem {
     /** Registra que s'ha triat un mode de joc per començar partida. */
     public void onGameModeSelected(String modeId) {
         apply(AchievementUpdate.gameModeSelected(modeId));
+    }
+
+    /** Registra que un terreny ha entrat a la partida. */
+    public void onTerrainSelected(String terrainId) {
+        apply(AchievementUpdate.terrainSelected(terrainId));
     }
 
     /** Registra que una missió de perk ha avançat sense completar-se encara. */
@@ -79,7 +98,7 @@ public final class AchievementSystem {
 
     /** Registra que el jugador ha obtingut una perk. */
     public void onPerkGained(Character player, String perkId, String perkName, String family,
-            java.util.List<String> tags, int perkCount, int maxPerks, int roundNumber) {
+            java.util.Collection<String> tags, int perkCount, int maxPerks, int roundNumber) {
         apply(AchievementUpdate.perkGained(player, perkId, perkName, family, tags, perkCount, maxPerks, roundNumber));
     }
 
@@ -173,16 +192,10 @@ public final class AchievementSystem {
 
     /** Nombre total d'assoliments completats. */
     public int completedCount() {
-        int count = 0;
-        for (AchievementProgress progress : progressById.values()) {
-            if (progress.completed()) {
-                count++;
-            }
-        }
-        return count;
+        return completedCount;
     }
 
-    /** Aplica una actualització i persisteix immediatament qualsevol canvi. */
+    /** Aplica una actualització sobre els assoliments pendents que la poden observar. */
     private void apply(AchievementUpdate update) {
         Objects.requireNonNull(update, "La informació de l'event no pot ser nula.");
         
@@ -190,7 +203,7 @@ public final class AchievementSystem {
         boolean changed = false;
         int completedNow = 0;
 
-        for (AchievementProgress progress : progressById.values()) {
+        for (AchievementProgress progress : pendingIndex.candidates(effectiveUpdate)) {
             boolean wasCompleted = progress.completed();
 
             boolean progressChanged = progress.update(effectiveUpdate);
@@ -198,6 +211,7 @@ public final class AchievementSystem {
 
             if (!wasCompleted && progress.completed()) {
                 completedNow++;
+                pendingIndex.remove(progress);
             }
         }
 
@@ -209,11 +223,111 @@ public final class AchievementSystem {
 
         if (completedNow > 0) {
             pendingCompletedCount += completedNow;
+            completedCount += completedNow;
         }
 
         if (changed) {
             dirty = true;
-            saveIfDirty();
+        }
+    }
+
+    /** Compta els assoliments completats una sola vegada en carregar el progrés. */
+    private int countCompleted(Collection<AchievementProgress> progressItems) {
+        if (progressItems == null || progressItems.isEmpty()) {
+            return 0;
+        }
+
+        int count = 0;
+        for (AchievementProgress progress : progressItems) {
+            if (progress != null && progress.completed()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /** Índex generat des de les definicions pendents per evitar barrids globals per event. */
+    private static final class PendingAchievementIndex {
+        private final Map<AchievementEvent, LinkedHashSet<AchievementProgress>> byEvent =
+                new EnumMap<>(AchievementEvent.class);
+        private final LinkedHashSet<AchievementProgress> always = new LinkedHashSet<>();
+
+        PendingAchievementIndex(Collection<AchievementProgress> progressItems) {
+            if (progressItems == null) return;
+            for (AchievementProgress progress : progressItems) {
+                add(progress);
+            }
+        }
+
+        List<AchievementProgress> candidates(AchievementUpdate update) {
+            LinkedHashSet<AchievementProgress> result = new LinkedHashSet<>(always);
+            if (update != null && update.events() != null) {
+                for (AchievementEvent event : update.events()) {
+                    LinkedHashSet<AchievementProgress> indexed = byEvent.get(event);
+                    if (indexed != null) {
+                        result.addAll(indexed);
+                    }
+                }
+            }
+            return List.copyOf(result);
+        }
+
+        void remove(AchievementProgress progress) {
+            always.remove(progress);
+            for (Set<AchievementProgress> indexed : byEvent.values()) {
+                indexed.remove(progress);
+            }
+        }
+
+        private void add(AchievementProgress progress) {
+            if (progress == null || progress.completed() || progress.definition() == null) {
+                return;
+            }
+
+            AchievementObjective objective = progress.definition().objective();
+            AchievementObjectiveType type = objective == null ? null : objective.type();
+            if (type == null || requiresEveryUpdate(type)) {
+                always.add(progress);
+                return;
+            }
+
+            if (type == AchievementObjectiveType.ACTION_SEQUENCE) {
+                indexActionSequence(progress);
+                return;
+            }
+
+            if (objective.event() == null) {
+                always.add(progress);
+                return;
+            }
+
+            index(objective.event(), progress);
+        }
+
+        private boolean requiresEveryUpdate(AchievementObjectiveType type) {
+            return type == AchievementObjectiveType.AVOID_EVENT_FOR_TURNS
+                    || type == AchievementObjectiveType.CONSECUTIVE_EVENT
+                    || type == AchievementObjectiveType.STATE_MAINTAINED;
+        }
+
+        private void indexActionSequence(AchievementProgress progress) {
+            index(actionEvent(Action.ATTACK), progress);
+            index(actionEvent(Action.DEFEND), progress);
+            index(actionEvent(Action.DODGE), progress);
+            index(actionEvent(Action.CHARGE), progress);
+        }
+
+        private AchievementEvent actionEvent(Action action) {
+            return switch (action) {
+                case ATTACK -> AchievementEvent.ACTION_ATTACK;
+                case DEFEND -> AchievementEvent.ACTION_DEFEND;
+                case DODGE -> AchievementEvent.ACTION_DODGE;
+                case CHARGE -> AchievementEvent.ACTION_CHARGE;
+            };
+        }
+
+        private void index(AchievementEvent event, AchievementProgress progress) {
+            byEvent.computeIfAbsent(event, ignored -> new LinkedHashSet<>()).add(progress);
         }
     }
 

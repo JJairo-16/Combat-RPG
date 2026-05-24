@@ -30,6 +30,9 @@ import rpgcombat.combat.models.Action;
 import rpgcombat.combat.models.Winner;
 import rpgcombat.combat.turnservice.DefaultTurnPriorityPolicy;
 import rpgcombat.combat.turnservice.TurnResult;
+import rpgcombat.combat.ui.messages.CombatMessageFormatter;
+import rpgcombat.combat.ui.messages.CombatMessageKind;
+import rpgcombat.combat.ui.messages.CombatMessagePlacement;
 import rpgcombat.game.menu.MenuCenter;
 import rpgcombat.game.modifier.StatusMod;
 import rpgcombat.discovery.DiscoveryCategory;
@@ -442,6 +445,29 @@ class GameModeRulesTest {
         trigger.onRoundEnd(player);
 
         assertFalse(player.isBleeding());
+    }
+
+    @Test
+    void fragmentedFaceStartMessageIsRenderedAsEffectPanelModeMessage() {
+        Character player = character("Player");
+        Character opponent = character("Opponent");
+        FragmentedFaceTrigger trigger = new FragmentedFaceTrigger();
+
+        trigger.onRoundStart(player, 1, new FixedIntRandom(
+                FragmentedFaceTrigger.Buff.EDGE_OF_GLASS.ordinal(),
+                FragmentedFaceTrigger.Debuff.COLD_PULSE.ordinal()), null);
+
+        HitContext ctx = new HitContext(player, opponent, testWeapon(), new Random(0), Action.ATTACK, Action.DEFEND);
+        var result = trigger.startTurn(ctx, new Random(0), player);
+
+        assertEquals(CombatMessagePlacement.EFFECT_PANEL, result.message().placement());
+        assertEquals(CombatMessageKind.GAMEMODE, result.message().kind());
+        assertTrue(result.message().text().contains("Vora de vidre"));
+        assertTrue(result.message().text().contains("Pols fred"));
+
+        List<String> rendered = new CombatMessageFormatter().effects(List.of(result.message()));
+        assertTrue(CombatMessageFormatter.stripAnsi(rendered.get(0)).contains("+ Vora de vidre"));
+        assertTrue(CombatMessageFormatter.stripAnsi(rendered.get(1)).contains("- Pols fred"));
     }
 
     @Test

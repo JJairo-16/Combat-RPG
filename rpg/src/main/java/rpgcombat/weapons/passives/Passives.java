@@ -170,10 +170,10 @@ public final class Passives {
                     return null;
                 }
 
-                return CombatMessage.of(
+                return CombatMessage.statusEffect(
                         MessageSymbol.NEGATIVE,
-                        MessageColor.YELLOW,
-                        "La cadena del verí es trenca i el verí s'esvaeix.");
+                        MessageColor.DARK_GREEN,
+                        "La cadena del verí es trenca i el verí s'esvaeix");
             }
 
             @Override
@@ -191,11 +191,10 @@ public final class Passives {
                 PoisonEffect updated = PoisonEffect.from(ctx.defender());
                 int stacks = (updated == null) ? 1 : updated.stacks();
 
-                return CombatMessage.of(
+                return CombatMessage.statusEffect(
                         MessageSymbol.POSITIVE,
-                        MessageColor.GREEN,
-                        String.format("%s acumula verí (%d càrregues).",
-                                ctx.defender().getName(),
+                        MessageColor.DARK_GREEN,
+                        String.format("Acumula verí (%d càrregues)",
                                 stacks));
             }
         };
@@ -256,10 +255,10 @@ public final class Passives {
                     ctx.defender().addEffect(new BurnEffect(burnTurns, burnDamagePerTurn));
                     ctx.putMeta("elementalEffect", BurnEffect.INTERNAL_EFFECT_KEY);
                     ctx.putMeta("elementalBurnApplied", true);
-                    return CombatMessage.of(
+                    return CombatMessage.statusEffect(
                             MessageSymbol.NEGATIVE,
                             MessageColor.RED,
-                            ctx.defender().getName() + " queda marcat per una cremada elemental.");
+                            "Queda marcat per una cremada elemental");
                 }
 
                 ctx.defender().addEffect(new FrozenEffect(
@@ -268,10 +267,10 @@ public final class Passives {
                         frozenIncomingMultiplier));
                 ctx.putMeta("elementalEffect", FrozenEffect.INTERNAL_EFFECT_KEY);
                 ctx.putMeta("elementalFrozenApplied", true);
-                return CombatMessage.of(
+                return CombatMessage.statusEffect(
                         MessageSymbol.NEGATIVE,
                         MessageColor.CYAN,
-                        ctx.defender().getName() + " queda congelat per la dualitat elemental.");
+                        "Queda congelat per la dualitat elemental");
             }
         };
     }

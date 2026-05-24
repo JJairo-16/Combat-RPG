@@ -30,9 +30,13 @@ import rpgcombat.game.menu.HomeMenu;
 import rpgcombat.gamemode.model.GameModeDefinition;
 import rpgcombat.gamemode.registry.GameModeRegistry;
 import rpgcombat.gamemode.ui.GameModeSelectionMenu;
-import rpgcombat.utils.ui.Cleaner;
+import rpgcombat.settings.UserSettings;
+import rpgcombat.settings.UserSettingsRuntime;
+import rpgcombat.settings.UserSettingsStore;
+import rpgcombat.settings.ui.SettingsScreen;
 import rpgcombat.utils.ui.LoadingIntro;
 import rpgcombat.utils.ui.Prettier;
+import rpgcombat.utils.ui.TerminalClear;
 import rpgcombat.unlocks.UnlockRuntime;
 
 /** Controla el flux general de l'aplicació. */
@@ -40,7 +44,9 @@ public final class AppController {
     private static final String APP_CONFIG_PATH = "rpg/data/appConfig.json";
 
     private final ResourcePreloader preloader = new ResourcePreloader();
+    private UserSettingsStore settingsStore;
     private AppConfig config;
+    private UserSettings userSettings = UserSettings.defaults();
     private AchievementSystem achievementSystem;
     private DiscoverySystem discoverySystem;
     private List<Achievement> achievementViewModels = List.of();
@@ -49,6 +55,7 @@ public final class AppController {
     /** Inicia l'aplicació fins que l'usuari surt. */
     public void run() {
         loadConfig();
+        loadUserSettings();
 
         if (!preloadResources()) {
             return;
@@ -77,6 +84,12 @@ public final class AppController {
                     continue;
                 }
 
+                if (action == HomeMenu.Action.SETTINGS) {
+                    userSettings = SettingsScreen.show(userSettings, settingsStore);
+                    UserSettingsRuntime.configure(userSettings);
+                    continue;
+                }
+
                 if (action == HomeMenu.Action.CREDITS) {
                     CinematicBuilder.playCredits();
                     continue;
@@ -89,7 +102,7 @@ public final class AppController {
                 case PLAY_AGAIN -> goHome = false;
                 case HOME -> goHome = config.homeScreen().enabled();
                 case EXIT -> {
-                    new Cleaner().clear();
+                    TerminalClear.clearShared();
                     return;
                 }
             }
@@ -143,6 +156,13 @@ public final class AppController {
         }
     }
 
+    /** Carrega els ajustos persistents de l'usuari. */
+    private void loadUserSettings() {
+        settingsStore = new UserSettingsStore(config.paths().userSettingsConfig(), config.paths().userSettingsSaveFile());
+        userSettings = settingsStore.load();
+        UserSettingsRuntime.configure(userSettings);
+    }
+
     /** Precarrega recursos amb intro o directament. */
     private boolean preloadResources() {
         if (!mustShowLoadingIntro()) {
@@ -161,6 +181,7 @@ public final class AppController {
 
         if (error.get() != null) {
             Prettier.error("Hi ha hagut un error durant la precàrrega.");
+            error.get().printStackTrace();
             return false;
         }
 

@@ -41,7 +41,7 @@ public final class BleedEmphasisTrigger extends Trigger {
         ctx.putMeta("modeBleedEmphasis", true);
         ctx.putMeta("modeBleedEmphasisDamageMultiplier", damageMultiplier);
 
-        return EffectResult.styled(
+        return EffectResult.gamemode(
                 MessageColor.RED,
                 MessageSymbol.WARNING,
                 "El sagnat obert amplifica el cop.");
@@ -56,7 +56,7 @@ public final class BleedEmphasisTrigger extends Trigger {
         if (ctx.wasCritical()) {
             ctx.defender().applyBleed(criticalBleedTurns);
             ctx.putMeta("modeBleedEmphasisCriticalBleed", criticalBleedTurns);
-            return EffectResult.styled(
+            return EffectResult.gamemode(
                     MessageColor.RED,
                     MessageSymbol.POSITIVE,
                     "La ferida crítica sagna més temps.");
@@ -68,7 +68,7 @@ public final class BleedEmphasisTrigger extends Trigger {
                 && ctx.damageDealt() >= rawDamage.doubleValue() * 0.90) {
             ctx.defender().applyBleed(deepCutBleedTurns);
             ctx.putMeta("modeBleedEmphasisDeepCutBleed", deepCutBleedTurns);
-            return EffectResult.styled(
+            return EffectResult.gamemode(
                     MessageColor.RED,
                     MessageSymbol.POSITIVE,
                     "El tall superficial s'obre més del normal.");

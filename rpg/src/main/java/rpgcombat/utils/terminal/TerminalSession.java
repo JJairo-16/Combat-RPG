@@ -16,22 +16,19 @@ public final class TerminalSession implements AutoCloseable {
             "\033[?1000h\033[?1002h\033[?1005h\033[?1006h\033[?1015h\033[?1016h";
     private static final String DISABLE_MOUSE_FALLBACK =
             "\033[?1000l\033[?1002l\033[?1003l\033[?1005l\033[?1006l\033[?1015l\033[?1016l";
-    private static final long CURSOR_RESTORE_DELAY_MS = 75L;
-    private static final ScheduledExecutorService CURSOR_RESTORE_EXECUTOR =
+    private static final long INTERACTIVE_RESTORE_DELAY_MS = 75L;
+    private static final ScheduledExecutorService INTERACTIVE_RESTORE_EXECUTOR =
             Executors.newSingleThreadScheduledExecutor(task -> {
-                Thread thread = new Thread(task, "terminal-cursor-restore");
+                Thread thread = new Thread(task, "terminal-interactive-restore");
                 thread.setDaemon(true);
                 return thread;
             });
 
     private static int openSessions;
-    private static long cursorRestoreGeneration;
+    private static long restoreGeneration;
+    private static InteractiveState interactiveState;
 
     private final Terminal terminal;
-    private final boolean owner;
-    private final Attributes originalAttributes;
-    private final Terminal.MouseTracking originalMouseTracking;
-    private final boolean mouseTrackedByJLine;
     private boolean closed;
 
     /**
@@ -42,29 +39,36 @@ public final class TerminalSession implements AutoCloseable {
     TerminalSession(Terminal terminal) {
         this.terminal = terminal;
 
+        boolean mustEnterInteractiveMode;
         synchronized (TerminalSession.class) {
-            this.owner = openSessions == 0;
+            restoreGeneration++;
+            mustEnterInteractiveMode = openSessions == 0 && interactiveState == null;
             openSessions++;
         }
 
-        if (owner) {
-            this.originalAttributes = terminal.enterRawMode();
-            this.originalMouseTracking = terminal.getCurrentMouseTracking();
-            synchronized (TerminalSession.class) {
-                cursorRestoreGeneration++;
-            }
+        if (mustEnterInteractiveMode) {
+            Attributes originalAttributes = terminal.enterRawMode();
+            Terminal.MouseTracking originalMouseTracking = terminal.getCurrentMouseTracking();
             terminal.puts(Capability.keypad_xmit);
             terminal.puts(Capability.enter_ca_mode);
             terminal.puts(Capability.cursor_invisible);
-            this.mouseTrackedByJLine = terminal.trackMouse(Terminal.MouseTracking.Button);
+            boolean mouseTrackedByJLine = terminal.trackMouse(Terminal.MouseTracking.Button);
             if (!mouseTrackedByJLine) {
                 terminal.writer().print(ENABLE_MOUSE_FALLBACK);
             }
             terminal.flush();
+
+            synchronized (TerminalSession.class) {
+                interactiveState = new InteractiveState(
+                        terminal,
+                        originalAttributes,
+                        originalMouseTracking,
+                        mouseTrackedByJLine);
+            }
         } else {
-            this.originalAttributes = null;
-            this.originalMouseTracking = null;
-            this.mouseTrackedByJLine = false;
+            // Una pantalla anterior pot haver canviat la visibilitat del cursor.
+            terminal.puts(Capability.cursor_invisible);
+            terminal.flush();
         }
     }
 
@@ -82,7 +86,8 @@ public final class TerminalSession implements AutoCloseable {
      */
     @Override
     public void close() {
-        boolean shouldRestore;
+        boolean shouldScheduleRestore;
+        long generation;
 
         synchronized (TerminalSession.class) {
             if (closed) {
@@ -91,44 +96,81 @@ public final class TerminalSession implements AutoCloseable {
 
             closed = true;
             openSessions = Math.max(0, openSessions - 1);
-            shouldRestore = owner && openSessions == 0;
+            shouldScheduleRestore = openSessions == 0 && interactiveState != null;
+            generation = restoreGeneration;
         }
 
-        if (shouldRestore) {
-            long generation;
-            synchronized (TerminalSession.class) {
-                generation = cursorRestoreGeneration;
-            }
-            terminal.setAttributes(originalAttributes);
-            terminal.puts(Capability.keypad_local);
-            if (mouseTrackedByJLine) {
-                terminal.trackMouse(originalMouseTracking == null
-                        ? Terminal.MouseTracking.Off
-                        : originalMouseTracking);
-            } else {
-                terminal.writer().print(DISABLE_MOUSE_FALLBACK);
-            }
-            terminal.puts(Capability.exit_ca_mode);
-            terminal.flush();
-            scheduleCursorRestore(terminal, generation);
+        if (shouldScheduleRestore) {
+            scheduleInteractiveRestore(generation);
         }
     }
 
-    private static void scheduleCursorRestore(Terminal terminal, long generation) {
-        CURSOR_RESTORE_EXECUTOR.schedule(() -> {
+    /** Restaura immediatament el terminal compartit abans de tancar l'aplicació. */
+    static void restoreNow(Terminal terminal) {
+        InteractiveState state;
+
+        synchronized (TerminalSession.class) {
+            if (interactiveState == null || interactiveState.terminal() != terminal) {
+                return;
+            }
+            restoreGeneration++;
+            openSessions = 0;
+            state = detachInteractiveState();
+        }
+
+        restore(state);
+    }
+
+    private static void scheduleInteractiveRestore(long generation) {
+        INTERACTIVE_RESTORE_EXECUTOR.schedule(() -> {
+            InteractiveState state;
+
             synchronized (TerminalSession.class) {
-                if (openSessions != 0 || generation != cursorRestoreGeneration) {
+                if (openSessions != 0 || generation != restoreGeneration || interactiveState == null) {
                     return;
                 }
-                cursorRestoreGeneration++;
+                restoreGeneration++;
+                state = detachInteractiveState();
             }
 
-            try {
-                terminal.puts(Capability.cursor_visible);
-                terminal.flush();
-            } catch (RuntimeException ignored) {
-                // El terminal pot haver-se tancat en sortir de l'aplicació.
+            restore(state);
+        }, INTERACTIVE_RESTORE_DELAY_MS, TimeUnit.MILLISECONDS);
+    }
+
+    private static InteractiveState detachInteractiveState() {
+        InteractiveState state = interactiveState;
+        interactiveState = null;
+        return state;
+    }
+
+    private static void restore(InteractiveState state) {
+        if (state == null) {
+            return;
+        }
+
+        Terminal activeTerminal = state.terminal();
+        try {
+            activeTerminal.setAttributes(state.originalAttributes());
+            activeTerminal.puts(Capability.keypad_local);
+            if (state.mouseTrackedByJLine()) {
+                activeTerminal.trackMouse(state.originalMouseTracking() == null
+                        ? Terminal.MouseTracking.Off
+                        : state.originalMouseTracking());
+            } else {
+                activeTerminal.writer().print(DISABLE_MOUSE_FALLBACK);
             }
-        }, CURSOR_RESTORE_DELAY_MS, TimeUnit.MILLISECONDS);
+            activeTerminal.puts(Capability.cursor_visible);
+            activeTerminal.puts(Capability.exit_ca_mode);
+            activeTerminal.flush();
+        } catch (RuntimeException ignored) {
+            // El terminal pot haver-se tancat en sortir de l'aplicació.
+        }
+    }
+
+    private record InteractiveState(
+            Terminal terminal,
+            Attributes originalAttributes,
+            Terminal.MouseTracking originalMouseTracking,
+            boolean mouseTrackedByJLine) {
     }
 }

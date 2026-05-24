@@ -1,7 +1,9 @@
 package rpgcombat.perks;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import rpgcombat.weapons.passives.HitContext.Phase;
 
@@ -27,17 +29,20 @@ public record PerkDefinition(
         int weight,
         List<Rule> conditions,
         List<Rule> actions,
-        List<String> tags) {
+        Set<String> tags) {
 
     public PerkDefinition {
         conditions = conditions == null ? List.of() : List.copyOf(conditions);
         actions = actions == null ? List.of() : List.copyOf(actions);
-        tags = tags == null ? List.of() : tags.stream()
-                .filter(tag -> tag != null && !tag.isBlank())
-                .map(String::trim)
-                .map(String::toUpperCase)
-                .distinct()
-                .toList();
+        Set<String> normalizedTags = new LinkedHashSet<>();
+        if (tags != null) {
+            tags.stream()
+                    .filter(tag -> tag != null && !tag.isBlank())
+                    .map(String::trim)
+                    .map(String::toUpperCase)
+                    .forEach(normalizedTags::add);
+        }
+        tags = Set.copyOf(normalizedTags);
     }
 
     /**

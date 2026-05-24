@@ -6,8 +6,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.gson.Gson;
 
@@ -86,17 +88,16 @@ public final class DivinePerkLoader {
     /**
      * Normalitza i afegeix tags.
      */
-    private static List<String> tags(List<String> raw) {
-        if (raw == null || raw.isEmpty()) return List.of("DIVINE");
-        List<String> result = new ArrayList<>();
+    private static Set<String> tags(List<String> raw) {
+        if (raw == null || raw.isEmpty()) return Set.of("DIVINE");
+        Set<String> result = new LinkedHashSet<>();
         result.add("DIVINE");
         raw.stream()
                 .filter(s -> !blank(s))
                 .map(String::trim)
                 .map(String::toUpperCase)
-                .filter(s -> !result.contains(s))
                 .forEach(result::add);
-        return List.copyOf(result);
+        return Set.copyOf(result);
     }
 
     /**

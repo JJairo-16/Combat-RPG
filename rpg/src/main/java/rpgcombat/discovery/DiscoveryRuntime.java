@@ -25,6 +25,22 @@ public final class DiscoveryRuntime {
         }
     }
 
+    /** Desa els descobriments acumulats quan s'arriba a un checkpoint de partida. */
+    public static void saveIfDirty() {
+        DiscoverySystem active = system;
+        if (active != null) {
+            active.saveIfDirty();
+        }
+    }
+
+    /** Desa els descobriments acumulats en el checkpoint d'inici de ronda. */
+    public static void onRoundStart() {
+        DiscoverySystem active = system;
+        if (active != null) {
+            active.onRoundStart();
+        }
+    }
+
     /**
      * Executa una operació sense registrar descobriments.
      *

@@ -21,10 +21,10 @@ public class Fracture extends TimedEffect {
     @Override
     public EffectResult afterHit(HitContext ctx, Random rng, Character owner) {
         ctx.multiplyDamage(damageMultiplier);
-        return EffectResult.styled(
+        return EffectResult.statusEffect(
                 MessageColor.RED,
                 MessageSymbol.NEGATIVE,
-                "La defensa de " + owner.getName() + " s'ha vist reduïda per la fractura.");
+                "La defensa s'ha vist reduïda per la fractura");
     }
 
     @Override

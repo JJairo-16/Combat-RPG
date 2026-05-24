@@ -13,7 +13,8 @@ public enum DiscoveryCategory {
     MISSIONS("Missions"),
     PERKS("Perks"),
     DIVINE_PERKS("Perks divines"),
-    SYNERGIES("Sinergies");
+    SYNERGIES("Sinergies"),
+    TERRAINS("Terrenys");
 
     private final String defaultTitle;
 

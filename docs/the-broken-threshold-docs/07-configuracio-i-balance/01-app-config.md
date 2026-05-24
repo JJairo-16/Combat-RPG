@@ -16,10 +16,20 @@
 
 - `paths`
 - `ui`
+- `cinematic`
+- `gameMode`
 - `debug`
 - `characters`
+- `homeScreen`
 
 És la configuració arrel de l'aplicació.
+
+Els ajustos de jugador que es poden canviar des del menú no viuen dins `AppConfig`. Es llegeixen a partir de `paths.userSettingsConfig` i es desen a `paths.userSettingsSaveFile`.
+
+Ara mateix aquests ajustos inclouen:
+
+- visibilitat dels missatges d'impuls
+- forma de triar el terreny (`NONE`, `MANUAL`, `RANDOM`)
 
 ---
 

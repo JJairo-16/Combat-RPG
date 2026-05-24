@@ -58,7 +58,7 @@ public final class UniversalLifeStealTrigger extends Trigger implements EndRound
         ctx.putMeta("modeLifeStealPct", lifeStealPct);
         ctx.putMeta("modeLifeStealHeal", realHealed);
 
-        return EffectResult.styled(
+        return EffectResult.gamemode(
                 MessageColor.GREEN,
                 MessageSymbol.POSITIVE,
                 owner.getName() + " beu " + round1(realHealed) + " de vida de la ferida.");

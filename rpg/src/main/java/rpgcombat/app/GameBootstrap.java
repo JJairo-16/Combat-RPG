@@ -7,6 +7,8 @@ import rpgcombat.config.debug.DebugRuntime;
 import rpgcombat.config.ui.CinematicsOptions;
 import rpgcombat.creator.CharacterCreator;
 import rpgcombat.creator.CharacterCreationOptions;
+import rpgcombat.discovery.DiscoveryCategory;
+import rpgcombat.discovery.DiscoveryRuntime;
 import rpgcombat.game.GameLoop;
 import rpgcombat.game.cinematics.CinematicBuilder;
 import rpgcombat.gamemode.chaos.ChaosPolicy;
@@ -15,6 +17,12 @@ import rpgcombat.gamemode.registry.GameModeRegistry;
 import rpgcombat.gamemode.model.MatchContext;
 import rpgcombat.gamemode.effects.ModeEffectApplier;
 import rpgcombat.models.characters.Character;
+import rpgcombat.terrain.effects.TerrainEffectApplier;
+import rpgcombat.terrain.model.TerrainDefinition;
+import rpgcombat.terrain.model.TerrainSelectionMode;
+import rpgcombat.terrain.registry.TerrainRegistry;
+import rpgcombat.terrain.ui.TerrainSelectionScreen;
+import rpgcombat.settings.UserSettingsRuntime;
 import rpgcombat.utils.ui.TerminalClear;
 
 /** Construeix una partida nova amb els recursos ja precarregats. */
@@ -37,6 +45,11 @@ public class GameBootstrap {
 
     /** Crea una partida llesta per iniciar-se amb el mode indicat. */
     public GameLoop createGame(GameModeDefinition gameMode) {
+        return createGame(gameMode, null);
+    }
+
+    /** Crea una partida llesta per iniciar-se amb el mode i terreny indicats. */
+    public GameLoop createGame(GameModeDefinition gameMode, TerrainDefinition terrain) {
         GameModeDefinition effectiveMode = gameMode == null
                 ? GameModeRegistry.getOrDefault(config.gameMode().defaultMode())
                 : gameMode;
@@ -50,13 +63,21 @@ public class GameBootstrap {
         Character p1 = createCharacter(config.characters().player1(), creationOptions);
         clearBetweenCharactersIfNeeded();
         Character p2 = createCharacter(config.characters().player2(), creationOptions);
+        TerrainDefinition effectiveTerrain = terrain == null ? selectTerrain() : terrain;
+        if (!effectiveTerrain.isNone()) {
+            DiscoveryRuntime.discover(DiscoveryCategory.TERRAINS, effectiveTerrain.id());
+            if (achievementSystem != null) {
+                achievementSystem.onTerrainSelected(effectiveTerrain.id());
+            }
+        }
 
         p1.setSpecialActionsEnabled(effectiveMode.rules().specialActionsEnabled());
         p2.setSpecialActionsEnabled(effectiveMode.rules().specialActionsEnabled());
         ModeEffectApplier.apply(effectiveMode.rules(), p1, p2);
+        TerrainEffectApplier.apply(effectiveTerrain, p1, p2);
 
         boolean chaosActive = ChaosPolicy.apply(effectiveMode, p1, p2, new java.util.Random());
-        MatchContext matchContext = new MatchContext(effectiveMode, chaosActive);
+        MatchContext matchContext = new MatchContext(effectiveMode, chaosActive, effectiveTerrain);
 
         applyDebugOptionsIfNeeded(p1, p2);
 
@@ -69,6 +90,16 @@ public class GameBootstrap {
                 config.homeScreen(),
                 matchContext,
                 achievementSystem);
+    }
+
+    /** Tria el terreny després de crear els personatges i abans de la cinemàtica d'inici. */
+    private TerrainDefinition selectTerrain() {
+        TerrainSelectionMode mode = UserSettingsRuntime.terrainSelectionMode();
+        return switch (mode) {
+            case NONE -> TerrainRegistry.none();
+            case RANDOM -> TerrainRegistry.randomPlayable(new java.util.Random());
+            case MANUAL -> TerrainSelectionScreen.choose(TerrainRegistry.all());
+        };
     }
 
     /** Crea un personatge segons el mode indicat. */

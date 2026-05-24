@@ -158,6 +158,19 @@ Per crear un trigger:
 4. Implementar lògica
 5. Retornar `EffectResult`
 
+Els terrenys poden delegar a triggers ja implementats dins `rpgcombat.terrain.effects.triggers`. En aquest cas `terrains.json` indica el fitxer o nom de classe i `TerrainTriggerFactory` en busca un constructor compatible.
+
+```json
+"trigger": {
+  "file": "TestTerrainTrigger",
+  "parameters": {
+    "attackDamageMultiplier": 5.0
+  }
+}
+```
+
+Un trigger de terreny pot exposar un constructor amb `Map`, amb `TerrainTriggerDefinition` o sense paràmetres. El terreny el rep com un efecte infinit sobre els dos combatents i els seus missatges es normalitzen com a missatges de mode de joc.
+
 ---
 
 ## ▌Notes finals

@@ -23,8 +23,10 @@ import rpgcombat.perks.divine.DivinePerkDefinition;
 import rpgcombat.perks.divine.DivinePerkRegistry;
 import rpgcombat.perks.mission.MissionDefinition;
 import rpgcombat.perks.mission.MissionRegistry;
-import rpgcombat.perks.synergy.SynergyDefinition;
-import rpgcombat.perks.synergy.SynergyRegistry;
+import rpgcombat.perks.synergy.catalog.SynergyRegistry;
+import rpgcombat.perks.synergy.model.SynergyDefinition;
+import rpgcombat.terrain.model.TerrainDefinition;
+import rpgcombat.terrain.registry.TerrainRegistry;
 import rpgcombat.weapons.Arsenal;
 import rpgcombat.weapons.config.WeaponDefinition;
 
@@ -209,7 +211,7 @@ public final class DiscoveryCatalog {
                     "Completa missions de perk per poder triar-la.",
                     "Completa missions de perk per poder triar-la.",
                     "Completa missions de perk per poder triar-la.",
-                    perk.tags(),
+                    List.copyOf(perk.tags()),
                     true,
                     order++));
         }
@@ -284,6 +286,27 @@ public final class DiscoveryCatalog {
                     "Combina perks compatibles per revelar aquesta sinergia.",
                     "Combina perks compatibles per revelar aquesta sinergia.",
                     List.of("sinergia"),
+                    true,
+                    order++));
+        }
+
+        order = 100;
+        for (TerrainDefinition terrain : TerrainRegistry.all()) {
+            if (terrain.isNone()) {
+                continue;
+            }
+            put(entries, new DiscoveryEntryDefinition(
+                    DiscoveryCategory.TERRAINS,
+                    terrain.id(),
+                    terrain.name(),
+                    "???",
+                    terrain.shortDescription(),
+                    terrainDetails(terrain),
+                    "Es descobreix quan aquest terreny governa una partida.",
+                    "Tria un escenari i deixa que el combat n'escolti la veu.",
+                    "Tria un escenari i deixa que el combat n'escolti la veu.",
+                    "Aquest lloc ja ha deixat senyal al teu grimori.",
+                    List.of("terreny", "escenari"),
                     true,
                     order++));
         }
@@ -417,6 +440,23 @@ public final class DiscoveryCatalog {
             details.add("Membres mínims: " + synergy.minMembers());
         }
         return List.copyOf(details);
+    }
+
+    /** Genera els detalls visibles d'un terreny descobert. */
+    private static List<String> terrainDetails(TerrainDefinition terrain) {
+        List<String> details = new ArrayList<>();
+        details.add("Dificultat: " + difficultyStars(terrain.difficulty()));
+        if (!terrain.description().isBlank()) {
+            details.add(terrain.description());
+        }
+        details.addAll(terrain.effectLines());
+        return List.copyOf(details);
+    }
+
+    /** Representa la dificultat d'un terreny dins el grimori. */
+    private static String difficultyStars(int difficulty) {
+        int stars = Math.clamp(difficulty, 0, 5);
+        return "★".repeat(stars) + "☆".repeat(5 - stars);
     }
 
     /** Genera els detalls visibles d'un mode de joc. */

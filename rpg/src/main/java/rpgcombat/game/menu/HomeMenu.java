@@ -13,6 +13,7 @@ public final class HomeMenu {
         START,
         ACHIEVEMENTS,
         DISCOVERIES,
+        SETTINGS,
         CREDITS,
         EXIT
     }
@@ -20,14 +21,15 @@ public final class HomeMenu {
     /** Mostra el menú d'inici i retorna l'acció seleccionada. */
     public static Action show(String title) {
         int option = new SimpleMenu(1).getOption(
-                List.of("Començar a jugar", "Assoliments", "Descobriments", "Crèdits", "Sortir"),
+                List.of("Començar a jugar", "Assoliments", "Descobriments", "Ajustos", "Crèdits", "Sortir"),
                 title);
 
         return switch (option) {
             case 1 -> Action.START;
             case 2 -> Action.ACHIEVEMENTS;
             case 3 -> Action.DISCOVERIES;
-            case 4 -> Action.CREDITS;
+            case 4 -> Action.SETTINGS;
+            case 5 -> Action.CREDITS;
             default -> Action.EXIT;
         };
     }

@@ -4,11 +4,13 @@ import java.util.List;
 import java.util.Map;
 
 import rpgcombat.combat.ui.messages.CombatMessage;
+import rpgcombat.models.characters.Character;
 
 /**
  * Representa el resultat complet d'un torn de combat.
  */
 public record TurnResult(
+        Character actor,
         String actorName,
         String attackerMessage,
         List<CombatMessage> startMessages,
@@ -31,6 +33,34 @@ public record TurnResult(
 
     public TurnResult {
         meta = cleanMeta(meta);
+        if (actorName == null && actor != null) {
+            actorName = actor.getName();
+        }
+    }
+
+    public TurnResult(
+            String actorName,
+            String attackerMessage,
+            List<CombatMessage> startMessages,
+            List<CombatMessage> preDefenseMessages,
+            String defenseMessage,
+            List<CombatMessage> postDefenseMessages,
+            List<CombatMessage> endTurnMessages,
+            double damageDealt,
+            boolean critical,
+            boolean selfHit,
+            boolean chargedHit,
+            boolean missed,
+            String failKind,
+            double damageToResolve,
+            double grimoireMultiplier,
+            double lifeStolen,
+            String weaponId,
+            String weaponName,
+            Map<String, Object> meta) {
+        this(null, actorName, attackerMessage, startMessages, preDefenseMessages, defenseMessage,
+                postDefenseMessages, endTurnMessages, damageDealt, critical, selfHit, chargedHit, missed,
+                failKind, damageToResolve, grimoireMultiplier, lifeStolen, weaponId, weaponName, meta);
     }
 
     public TurnResult(

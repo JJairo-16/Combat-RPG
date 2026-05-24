@@ -4,9 +4,9 @@ import java.util.List;
 
 import rpgcombat.models.effects.Effect;
 import rpgcombat.perks.PerkDefinition;
-import rpgcombat.perks.synergy.MemberAlteration;
-import rpgcombat.perks.synergy.SynergyDefinition;
-import rpgcombat.perks.synergy.SynergyLevel;
+import rpgcombat.perks.synergy.model.MemberAlteration;
+import rpgcombat.perks.synergy.model.SynergyDefinition;
+import rpgcombat.perks.synergy.model.SynergyLevel;
 
 /** Factoria per crear efectes de combat a partir de perks i sinergies. */
 public final class PerkEffectFactory {

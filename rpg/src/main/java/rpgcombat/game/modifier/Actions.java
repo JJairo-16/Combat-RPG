@@ -270,7 +270,7 @@ public final class Actions {
         double scaling = 1.0 + (missingMana / maxMana) * 0.5;
         double hpCost = missingMana * hpCostPercent * scaling;
 
-        hpCost = Math.min(Math.max(0.0, hpCost), Math.max(0.0, currentHp - 1.0));
+        hpCost = Math.clamp(hpCost, 0.0, Math.max(0.0, currentHp - 1.0));
 
         player.getStatistics().restoreMana(missingMana);
         player.getStatistics().damage(hpCost);

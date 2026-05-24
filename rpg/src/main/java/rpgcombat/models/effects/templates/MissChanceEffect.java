@@ -23,10 +23,10 @@ public abstract class MissChanceEffect extends TimedEffect {
     protected abstract double missChance(HitContext ctx, Random rng, Character owner);
 
     protected CombatMessage buildMessage(Character owner) {
-        return CombatMessage.of(
+        return CombatMessage.statusEffect(
                 MessageSymbol.NEGATIVE,
                 MessageColor.RED,
-                owner.getName() + " falla l'atac."
+                "Falla l'atac"
         );
     }
 

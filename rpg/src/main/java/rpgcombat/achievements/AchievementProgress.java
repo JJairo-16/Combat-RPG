@@ -60,6 +60,7 @@ public final class AchievementProgress {
         recomputeCollectionProgress();
         recomputeActorProgress();
         this.completed = completed || this.progress >= effectiveTarget();
+        if (this.completed) this.progress = Math.max(this.progress, effectiveTarget());
         this.completedAt = completedAt;
         if (this.completed && this.completedAt == null) this.completedAt = Instant.now();
     }

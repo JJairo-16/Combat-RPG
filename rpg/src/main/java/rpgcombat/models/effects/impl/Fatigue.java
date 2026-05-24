@@ -37,10 +37,10 @@ public class Fatigue extends DamageModifierEffect {
 
     @Override
     protected CombatMessage buildOutgoingMessage(double multiplier, Character owner) {
-        return CombatMessage.of(
+        return CombatMessage.statusEffect(
                 MessageSymbol.NEGATIVE,
                 MessageColor.YELLOW,
-                "La fatiga rebaixa una mica el dany de " + owner.getName() + "."
+                "La fatiga rebaixa una mica el dany"
         );
     }
 }

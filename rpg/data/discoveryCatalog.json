@@ -62,6 +62,12 @@
       "title": "Sinergies",
       "description": "Combinacions especials de perks activades durant una partida.",
       "sortOrder": 80
+    },
+    {
+      "id": "TERRAINS",
+      "title": "Terrenys",
+      "description": "Llocs que imposen el mateix pacte d'escenari als dos combatents.",
+      "sortOrder": 90
     }
   ],
   "entries": [
@@ -841,6 +847,48 @@
         "càrrega"
       ],
       "sortOrder": 140
+    },
+    {
+      "category": "TERRAINS",
+      "id": "FIRST_BELL",
+      "hint": "Busca el lloc que no espera la victòria: només vol escoltar el primer cop.",
+      "unlockHint": "Busca el lloc que no espera la victòria: només vol escoltar el primer cop.",
+      "discoveryHint": "Busca el lloc que no espera la victòria: només vol escoltar el primer cop."
+    },
+    {
+      "category": "TERRAINS",
+      "id": "NARROW_BRIDGE",
+      "hint": "Hi ha passos on dos atacs no poden esquivar-se sense deixar de ser duel.",
+      "unlockHint": "Hi ha passos on dos atacs no poden esquivar-se sense deixar de ser duel.",
+      "discoveryHint": "Hi ha passos on dos atacs no poden esquivar-se sense deixar de ser duel."
+    },
+    {
+      "category": "TERRAINS",
+      "id": "DARK_LANTERNS",
+      "hint": "No tots els fanals mostren camins; alguns només il·luminen un gest.",
+      "unlockHint": "No tots els fanals mostren camins; alguns només il·luminen un gest.",
+      "discoveryHint": "No tots els fanals mostren camins; alguns només il·luminen un gest."
+    },
+    {
+      "category": "TERRAINS",
+      "id": "WHISPERING_PIT",
+      "hint": "Escolta un lloc on les veus no exigeixen obediència, però recorden els cors.",
+      "unlockHint": "Escolta un lloc on les veus no exigeixen obediència, però recorden els cors.",
+      "discoveryHint": "Escolta un lloc on les veus no exigeixen obediència, però recorden els cors."
+    },
+    {
+      "category": "TERRAINS",
+      "id": "THRESHOLD_CHAINS",
+      "hint": "Quan dos gestos divergeixen massa, el llindar pot voler estirar-los de nou.",
+      "unlockHint": "Quan dos gestos divergeixen massa, el llindar pot voler estirar-los de nou.",
+      "discoveryHint": "Quan dos gestos divergeixen massa, el llindar pot voler estirar-los de nou."
+    },
+    {
+      "category": "TERRAINS",
+      "id": "BREATHING_GATE",
+      "hint": "Hi ha portes que no s'obren: retenen l'alè i després el tornen al combat.",
+      "unlockHint": "Hi ha portes que no s'obren: retenen l'alè i després el tornen al combat.",
+      "discoveryHint": "Hi ha portes que no s'obren: retenen l'alè i després el tornen al combat."
     }
   ]
 }

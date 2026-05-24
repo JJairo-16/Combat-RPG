@@ -38,19 +38,19 @@ public final class FrozenEffect extends DamageModifierEffect {
 
     @Override
     protected CombatMessage buildOutgoingMessage(double multiplier, Character owner) {
-        return CombatMessage.of(
+        return CombatMessage.statusEffect(
                 MessageSymbol.NEGATIVE,
                 MessageColor.CYAN,
-                "El gel entumeix l'atac de " + owner.getName() + "."
+                "El gel entumeix l'atac"
         );
     }
 
     @Override
     protected CombatMessage buildIncomingMessage(double multiplier, Character owner) {
-        return CombatMessage.of(
+        return CombatMessage.statusEffect(
                 MessageSymbol.NEGATIVE,
                 MessageColor.CYAN,
-                owner.getName() + " està congelat i rep el cop amb el cos rígid."
+                "Està congelat i rep el cop amb el cos rígid"
         );
     }
 }
